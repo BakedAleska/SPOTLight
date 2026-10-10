@@ -271,6 +271,17 @@ def test_fewshot_answers_are_short_reviewed_sentences_not_joined_claims():
         assert check_assessment(out, ex.prepared) == ()
 
 
+@pytest.mark.parametrize('fixture, own_example', [('fixtures/backend/data_quality.json', 'kit-data_quality'),
+                                                  ('fixtures/multimodal/gauge_disagree.json', 'kit-data_quality'),
+                                                  ('fixtures/backend/equipment.json', 'kit-equipment')])
+def test_backend_packet_of_a_kit_event_never_gets_that_event_as_fewshot(fixture, own_example):
+    p = prompts()
+    req = json.loads((ROOT / 'amd/system2' / fixture).read_text())['request']
+    prepared = normalize_packet(BackendAssessRequest.model_validate(req))
+    chosen = [e.case_id for e in p.select_examples(p.load_examples(), prepared)]
+    assert own_example not in chosen and len(chosen) == p.FEWSHOT_COUNT
+
+
 def test_current_dev_case_never_appears_as_its_own_fewshot():
     p = prompts()
     pool = p.load_examples()

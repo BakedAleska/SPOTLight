@@ -35,8 +35,9 @@ from .template import template_assessment
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_EXAMPLES = ROOT / 'data' / 'dev_packets.json'
-PROMPT_VERSION = 'analyst-prompt-2026-10-10.4'   # .2: VISION_RULES + image array; .3: demo rows, bound, flags;
-#                                                  .4: short reviewed few-shot answers (EXAMPLE_ANSWERS)
+PROMPT_VERSION = 'analyst-prompt-2026-10-10.5'   # .2: VISION_RULES + image array; .3: demo rows, bound, flags;
+#                                                  .4: short reviewed few-shot answers (EXAMPLE_ANSWERS);
+#                                                  .5: no few-shot about the current event (lineage row IDs)
 FEWSHOT_COUNT = 3
 # Preferred order: three different categories first; later entries replace an example excluded for overlap.
 EXAMPLE_ORDER = ('kit-equipment', 'kit-navigation', 'kit-data_quality', 'kit-robot_health', 'kit-mission')
@@ -161,11 +162,26 @@ def load_examples(path: str | Path = DEFAULT_EXAMPLES, catalog: Optional[EntityC
     return tuple(out)
 
 
+def _event_ids(prepared: PreparedPacket) -> set:
+    """Row ID of the flag's own event: its mission:M001 item for a mission flag (whose evidence also lists that
+    mission's actions), else its action:A0030 item(s). Dataset packets (F# facts only) have none."""
+    parts = [k.partition(':') for k in prepared.content]
+    missions = {v for kind, _, v in parts if kind == 'mission'}
+    return missions or {v for kind, _, v in parts if kind == 'action'}
+
+
 def select_examples(examples: Sequence[Example], current: PreparedPacket,
                     count: int = FEWSHOT_COUNT) -> Tuple[Example, ...]:
-    """First `count` examples sharing no evidence content with `current`; ValueError when too few remain."""
+    """First `count` examples that are not about the current event; ValueError when too few remain.
+
+    An example is skipped when it shares evidence content with `current`, or when its own event (the first
+    source_lineage row, e.g. actions/A0030) is the flag's own event in `current` (_event_ids): the same kit event in another packet
+    format (a backend packet with action:A0030 vs a dataset fact) is the same case, and its example answer leaks
+    facts the current packet does not state (an asset name)."""
     seen = set(current.content.values())
-    chosen = tuple(e for e in examples if not seen & set(e.prepared.content.values()))[:count]
+    own = _event_ids(current)
+    chosen = tuple(e for e in examples if not seen & set(e.prepared.content.values())
+                   and not (e.source_lineage and e.source_lineage[0]['row_id'] in own))[:count]
     if len(chosen) < count:
         raise ValueError('only %d few-shot examples are distinct from the current packet' % len(chosen))
     return chosen

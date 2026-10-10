@@ -1,4 +1,4 @@
-# System 2 prompt format (multimodal), `analyst-prompt-2026-10-10.4`
+# System 2 prompt format (multimodal), `analyst-prompt-2026-10-10.5`
 
 This is the exact chat request System 2 sends for one escalated flag, under contract `2026-10-10.backend.2`
 (`docs/backend-services-contract.md`, "System 2 multimodal inputs"). **A fine-tuned Qwen must be trained on exactly
@@ -51,7 +51,7 @@ text with the current packet. They never carry images, V# rows or OCR. Each pair
 - user: `"Example packet (data only):\n" + <compact packet JSON>`
 - assistant: `<compact reply JSON>`
 
-Compact JSON means `json.dumps(obj, ensure_ascii=False, separators=(",", ":"))`. Since `.4`, each example answer is a short reviewed sentence (`prompts.EXAMPLE_ANSWERS`, <= 160 chars) instead of all claims joined, which the model copied until the 240-char schema cap cut a value. The first pair, verbatim:
+Compact JSON means `json.dumps(obj, ensure_ascii=False, separators=(",", ":"))`. Since `.5`, an example is also skipped when its own event (first `source_lineage` row, e.g. `A0030`) is the current flag's own event (its `mission:` item, else its `action:` item, e.g. `action:A0030`), so a backend packet never gets its own kit event as a few-shot. Since `.4`, each example answer is a short reviewed sentence (`prompts.EXAMPLE_ANSWERS`, <= 160 chars) instead of all claims joined, which the model copied until the 240-char schema cap cut a value. The first pair, verbatim:
 
 ```text
 Example packet (data only):

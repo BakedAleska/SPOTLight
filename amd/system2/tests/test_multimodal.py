@@ -418,7 +418,7 @@ def test_retry_errors_follow_the_packet_in_the_text_part():
 def test_vision_rules_text_is_the_documented_text():
     doc = (S2 / 'PROMPT_FORMAT.md').read_text(encoding='utf-8')
     assert pr.VISION_RULES in doc and pr.SYSTEM in doc and pr.IMAGE_NOTE in doc
-    assert pr.PROMPT_VERSION == 'analyst-prompt-2026-10-10.4' and pr.PROMPT_VERSION in doc
+    assert pr.PROMPT_VERSION == 'analyst-prompt-2026-10-10.5' and pr.PROMPT_VERSION in doc
 
 
 @pytest.mark.parametrize('name', ['gauge_disagree', 'gauge_demo'])

@@ -1,5 +1,5 @@
 {
- "prompt_version": "analyst-prompt-2026-10-10.4",
+ "prompt_version": "analyst-prompt-2026-10-10.5",
  "fixture": "gauge_demo.json",
  "request_body": {
   "model": "system2-vision",
@@ -26,11 +26,11 @@
    },
    {
     "role": "user",
-    "content": "Example packet (data only):\n{\"evidence\":{\"F1\":\"action_id=A0030; mission_id=M003; timestamp=2026-09-02T10:28:00; action_type=GAUGE_READING; location_id=WP04; asset_id=COMP-214; battery_pct=17; status=FAILED; failure_type=SENSOR_TIMEOUT; duration_sec=87\",\"F2\":\"reading_id=R0053; action_id=A0030; mission_id=M003; timestamp=2026-09-02T10:28:00; asset_id=COMP-214; location_id=WP04; measurement_type=PRESSURE_PSI; value=114.2; unit=psi; quality=QUESTIONABLE\"},\"allowed_actions\":[\"CHECK_SENSOR_PAYLOAD\",\"MANUAL_READING\",\"MONITOR\",\"REINSPECT_NEXT_ROUTE\",\"REINSPECT_NOW\",\"MANUAL_REVIEW\"],\"suggested_action\":\"REINSPECT_NOW\",\"question\":\"What needs operator attention for this data_quality event?\"}"
+    "content": "Example packet (data only):\n{\"evidence\":{\"F1\":\"action_id=A0007; mission_id=M001; timestamp=2026-09-01T18:21:42; action_type=VISUAL_INSPECTION; location_id=WP15; asset_id=PUMP-205; battery_pct=35; status=SUCCESS; duration_sec=42\"},\"allowed_actions\":[\"ABORT_MISSION\",\"CHARGE_BEFORE_NEXT_MISSION\",\"CHECK_COMMS\",\"MONITOR\",\"RETURN_TO_DOCK\",\"MANUAL_REVIEW\"],\"suggested_action\":\"CHARGE_BEFORE_NEXT_MISSION\",\"question\":\"What needs operator attention for this robot_health event?\"}"
    },
    {
     "role": "assistant",
-    "content": "{\"evidence\":[{\"claim\":\"action_type=GAUGE_READING; asset_id=COMP-214; battery_pct=17; status=FAILED; failure_type=SENSOR_TIMEOUT\",\"ids\":[\"F1\"]},{\"claim\":\"asset_id=COMP-214; measurement_type=PRESSURE_PSI; value=114.2; unit=psi; quality=QUESTIONABLE\",\"ids\":[\"F2\"]}],\"answer\":\"The gauge reading on COMP-214 failed with SENSOR_TIMEOUT and the logged 114.2 psi is QUESTIONABLE, so reinspect now.\",\"question\":\"What needs operator attention for this data_quality event?\",\"recommended_action\":\"REINSPECT_NOW\",\"confidence\":\"medium\",\"insufficient_context\":false}"
+    "content": "{\"evidence\":[{\"claim\":\"action_type=VISUAL_INSPECTION; asset_id=PUMP-205; battery_pct=35; status=SUCCESS\",\"ids\":[\"F1\"]}],\"answer\":\"Battery was 35% after the visual inspection of PUMP-205, so charge before the next mission.\",\"question\":\"What needs operator attention for this robot_health event?\",\"recommended_action\":\"CHARGE_BEFORE_NEXT_MISSION\",\"confidence\":\"medium\",\"insufficient_context\":false}"
    },
    {
     "role": "user",
