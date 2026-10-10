@@ -713,13 +713,18 @@ body {
 }
 
 .spotlight-radar-blip {
-  animation: spotlight-radar-blip 1s ease-out both;
+  animation: spotlight-radar-detect 180ms ease-out both,
+    spotlight-radar-fade 400ms ease-out var(--blip-life) forwards;
 }
 
-@keyframes spotlight-radar-blip {
-  0%, 45% { opacity: 0; }
-  12%, 60% { opacity: 1; }
-  100% { opacity: 0; }
+@keyframes spotlight-radar-detect {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes spotlight-radar-fade {
+  from { opacity: 1; }
+  to { opacity: 0; }
 }
 
 /* Reduced motion. Zeroing duration alone is not enough, and each extra line
@@ -735,7 +740,7 @@ body {
    - scroll-behavior: smooth scrolling is motion the duration overrides never
      touch, because it isn't an animation or a transition. */
 @media (prefers-reduced-motion: reduce) {
-  .spotlight-radar-blip { display: none; }
+  .spotlight-radar-blip, .spotlight-radar-trail { display: none; }
   .spotlight-radar-sweep {
     animation: none !important;
   }
