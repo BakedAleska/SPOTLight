@@ -13,8 +13,7 @@ const PERIOD = 12;
 /** CSS shares the sweep's clock, so returns work before hydration too. */
 export function RadarBlips() {
   const [triangles, setTriangles] = useState(() => RETURNS.map((_, index) => index % 2 === 0));
-  function roll(index: number) {
-    const triangle = Math.random() < 0.5;
+  function roll(index: number, triangle: boolean) {
     setTriangles((current) => current.map((value, i) => i === index ? triangle : value));
   }
   return (
@@ -23,8 +22,8 @@ export function RadarBlips() {
         const angle = Math.atan2(y - 1042.42, x - 1008);
         const phase = ((angle - HEAD + Math.PI * 2) % (Math.PI * 2)) / (Math.PI * 2);
         return <g key={index} className="spotlight-radar-blip"
-          onAnimationStart={() => roll(index)}
-          onAnimationIteration={() => roll(index)}
+          onAnimationStart={() => roll(index, Math.random() < 0.5)}
+          onAnimationIteration={() => roll(index, Math.random() < 0.5)}
           style={{ "--blip-delay": `${phase * PERIOD}s` } as CSSProperties}>
           {!triangles[index] ? <g className="spotlight-radar-dot">
             <circle cx={x} cy={y} r="62" opacity="0.3" />
