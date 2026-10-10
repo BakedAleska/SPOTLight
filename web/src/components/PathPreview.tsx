@@ -25,10 +25,10 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
   const [connection, setConnection] = useState("Connecting…");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   useEffect(() => {
-    if (!playing || mode !== "replay") return;
+    if (!playing || mode !== "replay" || index >= mission.events.length - 1) return;
     const timer = setInterval(() => setIndex(i => Math.min(i + 1, mission.events.length - 1)), 1400 / speed);
     return () => clearInterval(timer);
-  }, [playing, mode, speed, mission.events.length]);
+  }, [playing, mode, speed, mission.events.length, index]);
   useEffect(() => {
     if (mode !== "live") return;
     let stopped = false;
@@ -82,12 +82,12 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
           {points.map(p => {
             const fault = errors.some(e => e.locationId === p.id);
             return <g key={p.id} role="button" tabIndex={0} aria-label={`${p.id}: ${p.name}${fault ? ", error detected" : ""}`} onClick={() => setSelectedId(p.id)} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSelectedId(p.id); } }} className="cursor-pointer">
-              <title>{p.id} · {p.name}</title><circle cx={p.x} cy={p.y} r="22" fill="transparent" />
+              <title>{`${p.id} · ${p.name}`}</title><circle cx={p.x} cy={p.y} r="22" fill="transparent" />
               <circle cx={p.x} cy={p.y} r={selected?.id === p.id ? 12 : 7} fill={fault ? "var(--c-bad)" : "var(--c-surface)"} stroke={fault ? "white" : "var(--c-accent-ink)"} strokeWidth="3" />
               {fault && <text x={p.x} y={p.y + 5} textAnchor="middle" fill="white" fontSize="15" fontWeight="bold">!</text>}
             </g>;
           })}
-          {current && <g aria-label={`SPOT at ${current.id}`} style={{ transform: `translate(${current.x}px, ${current.y}px)` }}>
+          {current && <g aria-label={`SPOT at ${current.id}`} style={{ transform: `translate(${current.x}px, ${current.y}px)`, transition: playing && mode === "replay" ? `transform ${1000 / speed}ms linear` : undefined }}>
             <circle r="26" fill="var(--c-surface)" stroke="var(--c-accent-ink)" strokeWidth="3" />
             <image href="/spotlight-logo-small.svg" x="-18" y="-20" width="36" height="40" />
             <text y="42" textAnchor="middle" fill="white" stroke="black" strokeWidth="3" paintOrder="stroke" fontSize="15" fontWeight="bold">SPOT</text>
@@ -96,7 +96,11 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
         <p className="mt-3 text-xs text-muted">Dashed: planned route · Solid: observed waypoints · !: error · Logo: SPOT. Lines connect recorded stops; travel between them is not measured.</p>
         {mode === "replay" && <div className="mt-4 flex flex-col gap-3 border-t border-line pt-4">
           <label className="text-xs text-muted">Replay position · event {index + 1} of {mission.events.length}<input className="mt-2 w-full accent-accent-ink" type="range" min="0" max={Math.max(0, mission.events.length - 1)} value={index} onChange={e => setIndex(Number(e.target.value))} /></label>
-          <div className="flex flex-wrap items-center gap-2"><button className={control} disabled={index >= mission.events.length - 1} onClick={() => setPlaying(!playing)}>{playing && index < mission.events.length - 1 ? <Pause size={16} /> : <Play size={16} />}{playing && index < mission.events.length - 1 ? "Pause" : "Play"}</button><button className={control} onClick={() => { setIndex(0); setPlaying(false); }}><RotateCcw size={16} />Restart</button><label className="flex items-center gap-2 text-xs text-muted">Speed<select className={control} value={speed} onChange={e => setSpeed(Number(e.target.value))}>{[1, 2, 4].map(s => <option key={s} value={s}>{s}×</option>)}</select></label><span className="ml-auto font-mono text-xs text-muted">{last?.timestamp.replace("T", " · ") ?? "Awaiting events"}</span></div>
+          <div className="flex flex-wrap items-center gap-2"><button className={control} onClick={() => {
+            if (playing && index < mission.events.length - 1) { setPlaying(false); return; }
+            setIndex(i => i >= mission.events.length - 1 ? 0 : i + 1);
+            setPlaying(true);
+          }}>{playing && index < mission.events.length - 1 ? <Pause size={16} /> : <Play size={16} />}{playing && index < mission.events.length - 1 ? "Pause" : "Play"}</button><button className={control} onClick={() => { setIndex(0); setPlaying(false); }}><RotateCcw size={16} />Restart</button><label className="flex items-center gap-2 text-xs text-muted">Speed<select className={control} value={speed} onChange={e => setSpeed(Number(e.target.value))}>{[1, 2, 4].map(s => <option key={s} value={s}>{s}×</option>)}</select></label><span className="ml-auto font-mono text-xs text-muted">{last?.timestamp.replace("T", " · ") ?? "Awaiting events"}</span></div>
         </div>}
       </Panel>
       <div className="flex min-w-0 flex-col gap-4">
