@@ -720,10 +720,7 @@ body {
 /* The 90-degree trail takes three seconds to pass a return. Fade throughout
    that interval, reaching transparency at the tail rather than after it. */
 @keyframes spotlight-radar-return {
-  0% { opacity: 0; }
-  1.5% { opacity: 0.75; }
-  8% { opacity: 0.5; }
-  16% { opacity: 0.22; }
+  0% { opacity: 0.65; }
   25%, 100% { opacity: 0; }
 }
 
