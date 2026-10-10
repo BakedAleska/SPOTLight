@@ -41,15 +41,19 @@ export function RadarBlips() {
       const svg = layer.current?.ownerSVGElement;
       const sweep = svg?.querySelector<SVGGElement>(".spotlight-radar-sweep");
       let fresh: Blip | null = null;
-      if (svg && sweep && !document.hidden && Math.random() < 0.15) {
+      if (svg && sweep && !document.hidden && Math.random() < 0.45) {
         const style = getComputedStyle(sweep);
         const matrix = new DOMMatrixReadOnly(style.transform);
         const angle = Math.atan2(matrix.b, matrix.a) + ARROW_ANGLE;
-        const lifetime = parseFloat(style.animationDuration) * 1000 * TRAIL_DEGREES / 360;
-        for (let attempt = 0; attempt < 24; attempt++) {
+        const period = parseFloat(style.animationDuration) * 1000;
+        for (let attempt = 0; attempt < 64; attempt++) {
+          // Search the visible trail, rather than only its often-clipped head.
+          const behind = Math.random() * TRAIL_DEGREES * 0.7;
+          const position = angle - behind * Math.PI / 180;
+          const lifetime = period * (TRAIL_DEGREES - behind) / 360;
           const radius = Math.sqrt(180 ** 2 + Math.random() * (900 ** 2 - 180 ** 2));
-          const x = 1008 + Math.cos(angle) * radius;
-          const y = 1042.42 + Math.sin(angle) * radius;
+          const x = 1008 + Math.cos(position) * radius;
+          const y = 1042.42 + Math.sin(position) * radius;
           if (visible(svg, x, y)) {
             fresh = { id: ++id, x, y, lifetime, expires: now + lifetime + 400 };
             break;
@@ -64,7 +68,7 @@ export function RadarBlips() {
     function reset() {
       clearInterval(timer);
       setBlips([]);
-      if (!reducedMotion.matches) timer = setInterval(tick, 200);
+      if (!reducedMotion.matches) timer = setInterval(tick, 400);
     }
     reset();
     reducedMotion.addEventListener("change", reset);
@@ -75,12 +79,12 @@ export function RadarBlips() {
   }, []);
 
   return (
-    <g ref={layer} className="text-bad" fill="currentColor">
+    <g ref={layer} className="text-red-500" fill="currentColor">
       {blips.map((blip) => (
         <g key={blip.id} className="spotlight-radar-blip"
           style={{ "--blip-life": `${blip.lifetime}ms` } as CSSProperties}>
           <circle cx={blip.x} cy={blip.y} r="52" opacity="0.2" />
-          <circle cx={blip.x} cy={blip.y} r="22" />
+          <circle cx={blip.x} cy={blip.y} r="30" />
         </g>
       ))}
     </g>

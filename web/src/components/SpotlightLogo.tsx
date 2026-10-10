@@ -32,8 +32,8 @@ export function SpotlightLogo({ animated = false, blips = false, small = false, 
 
   return (
     <svg viewBox="0 0 2016 2051" fill="none" aria-hidden="true" focusable="false" className={className}>
-      <image href={small ? "/spotlight-logo-small.svg" : "/spotlight-arrow.svg"} width="2016" height="2051" />
-      <g transform="translate(1008 1042.42)">
+      <image className={blips ? "opacity-40" : undefined} href={small ? "/spotlight-logo-small.svg" : "/spotlight-arrow.svg"} width="2016" height="2051" />
+      <g transform="translate(1008 1042.42)" opacity={blips ? 0.4 : 1}>
         <g className="spotlight-radar-sweep">
           <RadarTrail />
           <image href="/spotlight-mark.svg" x="37.474" y="23.805" width="723" height="586" />

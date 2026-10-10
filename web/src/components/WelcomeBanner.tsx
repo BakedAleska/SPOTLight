@@ -57,7 +57,7 @@ export function WelcomeBanner({
         aria-hidden="true"
         className="pointer-events-none absolute -right-10 -bottom-16 size-[220px]"
       >
-        <SpotlightLogo animated blips className="absolute inset-0 h-full w-full opacity-40" />
+        <SpotlightLogo animated blips className="absolute inset-0 h-full w-full" />
       </div>
 
       <div className="relative max-w-2xl pt-8 sm:pt-0">
