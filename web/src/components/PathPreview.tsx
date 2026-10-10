@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Pause, Play, RotateCcw, Radio, Route, TriangleAlert } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Pause, Play, RotateCcw, Radio, Route, TriangleAlert, ScanLine, CheckCircle2, ArrowRight, AudioLines } from "lucide-react";
 import { Panel } from "./Panel";
 import type { PathEvent, PathFeed, PathMission, PathPoint } from "@/lib/path-types";
+
+import { buildPlayback, playbackAt, eventLabel } from "@/lib/path-playback";
 
 const control = "flex min-h-11 items-center justify-center gap-2 rounded border border-line bg-surface px-3 text-sm text-ink hover:bg-surface-2 disabled:opacity-40";
 export function PathPreview({ points, missions }: { points: PathPoint[]; missions: PathMission[] }) {
@@ -18,17 +20,30 @@ export function PathPreview({ points, missions }: { points: PathPoint[]; mission
 }
 function MissionPath({ mission, points }: { mission: PathMission; points: PathPoint[] }) {
   const [mode, setMode] = useState<"replay" | "live">("replay");
-  const [index, setIndex] = useState(0);
+  const [elapsed, setElapsed] = useState(0);
+  const segments = useMemo(() => buildPlayback(mission, points), [mission, points]);
+  const duration = segments.at(-1)?.end ?? 0;
+  const frame = playbackAt(segments, elapsed);
+  const index = frame?.eventIndex ?? 0;
+  const finished = elapsed >= duration;
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(1);
   const [liveEvents, setLiveEvents] = useState<PathEvent[]>([]);
   const [connection, setConnection] = useState("Connecting…");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   useEffect(() => {
-    if (!playing || mode !== "replay" || index >= mission.events.length - 1) return;
-    const timer = setInterval(() => setIndex(i => Math.min(i + 1, mission.events.length - 1)), 1400 / speed);
-    return () => clearInterval(timer);
-  }, [playing, mode, speed, mission.events.length, index]);
+    if (!playing || mode !== "replay") return;
+    let request: number;
+    let previous = performance.now();
+    function tick(now: number) {
+      const delta = Math.min(now - previous, 100) * speed;
+      previous = now;
+      setElapsed(value => Math.min(duration, value + delta));
+      request = requestAnimationFrame(tick);
+    }
+    request = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(request);
+  }, [playing, mode, speed, duration]);
   useEffect(() => {
     if (mode !== "live") return;
     let stopped = false;
@@ -59,7 +74,10 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
   // Completion records can omit location; retain the action's last known waypoint.
   const located = events.map(e => ({ ...e, locationId: e.locationId ?? events.find(start => start.actionId && start.actionId === e.actionId && start.locationId)?.locationId }));
   const visited = located.flatMap(e => { const p = points.find(p => p.id === e.locationId); return p ? [p] : []; }).filter((p, i, list) => i === 0 || list[i - 1].id !== p.id);
-  const current = visited.at(-1);
+  const current = mode === "replay" ? (frame?.moving ? frame.from : frame?.to) : visited.at(-1);
+  const marker = mode === "replay" && frame ? { x: frame.x, y: frame.y } : current;
+  const active = mode === "replay" && playing && !finished;
+  const activity = mode === "replay" ? frame?.activity ?? "Ready" : "Latest observed position";
   const errors = located.filter(e => e.error);
   const selected = points.find(p => p.id === selectedId) ?? current;
   const battery = events.filter(e => e.battery != null).at(-1)?.battery;
@@ -79,6 +97,7 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
           <image href="/kit/fictional_floor_plan.png" width="1095" height="595" />
           {mode === "replay" && <polyline points={path(planned)} fill="none" stroke="white" strokeWidth="3" strokeDasharray="8 8" opacity="0.65" />}
           <polyline points={path(visited)} fill="none" stroke="var(--c-accent-ink)" strokeWidth="5" strokeLinejoin="round" />
+          {mode === "replay" && frame?.moving && <line x1={frame.from?.x} y1={frame.from?.y} x2={frame.x} y2={frame.y} stroke="var(--c-accent-ink)" strokeWidth="5" />}
           {points.map(p => {
             const fault = errors.some(e => e.locationId === p.id);
             return <g key={p.id} role="button" tabIndex={0} aria-label={`${p.id}: ${p.name}${fault ? ", error detected" : ""}`} onClick={() => setSelectedId(p.id)} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSelectedId(p.id); } }} className="cursor-pointer">
@@ -87,26 +106,43 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
               {fault && <text x={p.x} y={p.y + 5} textAnchor="middle" fill="white" fontSize="15" fontWeight="bold">!</text>}
             </g>;
           })}
-          {current && <g aria-label={`SPOT at ${current.id}`} style={{ transform: `translate(${current.x}px, ${current.y}px)`, transition: playing && mode === "replay" ? `transform ${1000 / speed}ms linear` : undefined }}>
+          {current && marker && <g aria-label={`SPOT at ${current.id}`} transform={`translate(${marker.x} ${marker.y})`}>
+            {active && !frame?.moving && <circle className="spot-activity-ring" r="34" fill="none" stroke="var(--c-accent-ink)" strokeWidth="2" strokeDasharray="8 5" />}
             <circle r="26" fill="var(--c-surface)" stroke="var(--c-accent-ink)" strokeWidth="3" />
             <image href="/spotlight-logo-small.svg" x="-18" y="-20" width="36" height="40" />
             <text y="42" textAnchor="middle" fill="white" stroke="black" strokeWidth="3" paintOrder="stroke" fontSize="15" fontWeight="bold">SPOT</text>
           </g>}
         </svg>
-        <p className="mt-3 text-xs text-muted">Dashed: planned route · Solid: observed waypoints · !: error · Logo: SPOT. Lines connect recorded stops; travel between them is not measured.</p>
+        <p className="mt-3 text-xs text-muted">Dashed: planned route · Solid: visited route · !: error. Travel is interpolated between stops; activity durations are compressed from the logs.</p>
         {mode === "replay" && <div className="mt-4 flex flex-col gap-3 border-t border-line pt-4">
-          <label className="text-xs text-muted">Replay position · event {index + 1} of {mission.events.length}<input className="mt-2 w-full accent-accent-ink" type="range" min="0" max={Math.max(0, mission.events.length - 1)} value={index} onChange={e => setIndex(Number(e.target.value))} /></label>
+          <label className="text-xs text-muted">Replay position · event {index + 1} of {mission.events.length}<input className="mt-2 w-full accent-accent-ink" type="range" min="0" max={duration} value={elapsed} onChange={e => setElapsed(Number(e.target.value))} /></label>
           <div className="flex flex-wrap items-center gap-2"><button className={control} onClick={() => {
-            if (playing && index < mission.events.length - 1) { setPlaying(false); return; }
-            setIndex(i => i >= mission.events.length - 1 ? 0 : i + 1);
+            if (playing && !finished) { setPlaying(false); return; }
+            if (finished) setElapsed(0);
             setPlaying(true);
-          }}>{playing && index < mission.events.length - 1 ? <Pause size={16} /> : <Play size={16} />}{playing && index < mission.events.length - 1 ? "Pause" : "Play"}</button><button className={control} onClick={() => { setIndex(0); setPlaying(false); }}><RotateCcw size={16} />Restart</button><label className="flex items-center gap-2 text-xs text-muted">Speed<select className={control} value={speed} onChange={e => setSpeed(Number(e.target.value))}>{[1, 2, 4].map(s => <option key={s} value={s}>{s}×</option>)}</select></label><span className="ml-auto font-mono text-xs text-muted">{last?.timestamp.replace("T", " · ") ?? "Awaiting events"}</span></div>
+          }}>{active ? <Pause size={16} /> : <Play size={16} />}{active ? "Pause" : "Play"}</button><button className={control} onClick={() => { setElapsed(0); setPlaying(false); }}><RotateCcw size={16} />Restart</button><label className="flex items-center gap-2 text-xs text-muted">Speed<select className={control} value={speed} onChange={e => setSpeed(Number(e.target.value))}>{[1, 2, 4].map(s => <option key={s} value={s}>{s}×</option>)}</select></label><span className="ml-auto font-mono text-xs text-muted">{last?.timestamp.replace("T", " · ") ?? "Awaiting events"}</span></div>
         </div>}
       </Panel>
       <div className="flex min-w-0 flex-col gap-4">
+        <Panel title="SPOT activity" aside={active ? "IN PROGRESS" : finished ? "COMPLETE" : "PAUSED"}>
+          <div className="flex items-center gap-3"><div className={`grid size-12 shrink-0 place-items-center rounded-full border border-line bg-surface-2 text-accent-ink ${active && !frame?.moving ? "spot-activity-icon" : ""}`}>
+            {frame?.moving ? <ArrowRight size={24} /> : activity.includes("Listening") ? <AudioLines size={24} /> : finished ? <CheckCircle2 size={24} /> : <ScanLine size={24} />}
+          </div><div><p className="text-sm font-semibold text-ink">{activity}</p><p className="mt-1 text-xs text-muted">{frame?.moving ? `${frame.from?.id} → ${frame.to?.id}` : last?.assetName ?? current?.name ?? "Preparing mission"}</p></div></div>
+          {mode === "replay" && <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-surface-2"><div className="h-full bg-accent-ink" style={{ width: `${(frame?.progress ?? 0) * 100}%` }} /></div>}
+        </Panel>
         <Panel title="Selected waypoint"><p className="text-lg font-semibold text-ink">{selected?.id ?? "No position yet"}</p><p className="mt-1 text-sm text-muted">{selected?.name ?? "Waiting for a located action."}</p>{selected && <p className="mt-3 text-xs text-muted">Floor {selected.floor} · {errors.filter(e => e.locationId === selected.id).length} observed errors</p>}</Panel>
         <Panel title="Errors along the path" aside={String(errors.length)}><div className="flex flex-col gap-3" aria-live="polite">{errors.length === 0 ? <p className="text-sm text-muted">No errors observed at this point in the mission.</p> : errors.map(e => <button key={e.id} className="rounded border border-line bg-surface-2 p-3 text-left hover:border-bad" onClick={() => setSelectedId(e.locationId ?? null)}><p className="flex items-center gap-2 text-sm font-medium text-bad"><TriangleAlert size={16} />{e.locationId ?? "Unlocated"} · {e.severity ?? "FAILED"}</p><p className="mt-2 text-sm text-ink">{e.error?.replaceAll("_", " ")}</p><p className="mt-2 font-mono text-xs text-muted">{e.timestamp.split("T")[1]} · {e.actionId}</p></button>)}</div></Panel>
-        <Panel title="Event stream"><ol className="flex flex-col gap-3">{events.slice(-6).reverse().map(e => <li key={e.id} className="border-l-2 border-line pl-3"><p className="text-xs font-medium text-ink">{e.type.replaceAll("_", " ")}</p><p className="mt-1 font-mono text-xs text-muted">{e.timestamp.split("T")[1]} {e.locationId && `· ${e.locationId}`}</p></li>)}</ol>{!events.length && <p className="text-sm text-muted">Waiting for mission events.</p>}</Panel>
+        <Panel title="Mission timeline" aside={`${events.length} events`}>
+          <ol className="flex max-h-[32rem] flex-col gap-1 overflow-y-auto">{events.slice().reverse().map((e, i) => <li key={e.id}>
+            <button onClick={() => setSelectedId(e.locationId ?? null)} className={`flex w-full gap-3 rounded p-3 text-left transition-colors hover:bg-surface-2 ${i === 0 ? "border border-line bg-surface-2" : ""}`}>
+              <span className={`mt-0.5 shrink-0 ${e.error ? "text-bad" : "text-accent-ink"}`}>{e.error ? <TriangleAlert size={18} /> : e.type === "ACTION_STARTED" ? <ScanLine size={18} /> : <CheckCircle2 size={18} />}</span>
+              <span className="min-w-0"><span className="flex flex-wrap items-center gap-2 text-sm font-medium text-ink">{eventLabel(e)}{i === 0 && <span className="rounded bg-canvas px-1.5 py-0.5 text-[10px] text-accent-ink">LATEST</span>}</span>
+              <span className="mt-1 block text-xs text-muted">{e.locationId ?? "Mission"}{e.assetName ? ` · ${e.assetName}` : ""}</span>
+              {e.error && <span className="mt-1 block text-xs text-bad">{e.error.replaceAll("_", " ")}</span>}
+              <span className="mt-2 block font-mono text-xs text-muted">{e.timestamp.split("T")[1]}{e.durationSec && e.type === "ACTION_STARTED" ? ` · ${e.durationSec}s recorded` : ""}</span></span>
+            </button>
+          </li>)}</ol>{!events.length && <p className="text-sm text-muted">Waiting for mission events.</p>}
+        </Panel>
       </div>
     </div>
   </>;

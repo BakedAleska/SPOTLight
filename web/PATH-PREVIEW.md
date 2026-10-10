@@ -11,8 +11,11 @@ lines connect recorded stops and do not assert the robot's traveled geometry.
 The robot uses `spotlight-logo-small.svg`.
 
 Replay reads `data/kit/replay.ndjson`; the mission selector includes only missions
-with recorded events. Playback advances one recorded event per tick (1.4 seconds
-at 1×), not real robot time. No events are ingested into the backend by this page.
+with recorded events. Playback interpolates travel between waypoint anchors at a presentation speed
+of 100 image pixels per second. Activity dwell is the logged duration compressed
+25×, bounded to 0.9–4 seconds, with start/result order preserved even for equal
+timestamps. The activity panel and rotating scan ring indicate work in progress.
+Travel geometry and timing are illustrative, not measured robot telemetry. No events are ingested into the backend by this page.
 
 Live feed polls `/api/path-feed` every two seconds. The server forwards read-only
 requests to the existing backend `/api/v1/events` with the selected mission and

@@ -26,7 +26,8 @@ export function getPathData(): { points: PathPoint[]; missions: PathMission[] } 
         const action = e.details.action_id ? kit.actionById.get(e.details.action_id) : undefined;
         const anomaly = action ? kit.anomaliesByAction.get(action.action_id)?.[0] : undefined;
         return { id: e.event_id, missionId: e.mission_id, timestamp: e.timestamp, type: e.event_type,
-          actionId: e.details.action_id, locationId: e.details.location_id ?? action?.location_id,
+          actionId: e.details.action_id, actionType: action?.action_type, durationSec: action?.duration_sec,
+          assetName: action ? kit.assetById.get(action.asset_id)?.asset_name : undefined, locationId: e.details.location_id ?? action?.location_id,
           battery: e.details.battery_pct,
           error: e.event_type === "ACTION_FAILED" ? e.details.failure_type : e.event_type === "ACTION_COMPLETED" ? anomaly?.description : undefined,
           severity: anomaly?.severity };
