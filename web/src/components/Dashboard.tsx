@@ -74,7 +74,7 @@ export default function Dashboard({ initialData }: { initialData: DashboardData 
         </div>
       </section>
 
-      <div className="grid gap-4 xl:grid-cols-5">
+      <div className="panel-columns grid gap-4 xl:grid-cols-5">
         <div id="queue" className="scroll-mt-4 xl:col-span-3">
           <PriorityQueue flags={flags} total={data.flagCount} delay={STAGGER * stats.length} onSelect={data.features.flagDetails ? selectFlag : undefined} />
         </div>

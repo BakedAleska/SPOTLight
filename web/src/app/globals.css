@@ -698,6 +698,14 @@ body {
   border-radius: 2px;
 }
 
+/* Shared desktop panel rows: columns stretch together; the last panel in a
+   stack absorbs the remainder rather than leaving a blank column footer. */
+@media (min-width: 80rem) {
+  .panel-columns { align-items: stretch; }
+  .panel-columns > * { min-width: 0; min-height: 0; }
+  .panel-stack > section:last-child { flex: 1 1 auto; }
+}
+
 .spotlight-radar-sweep {
   transform-box: view-box;
   transform-origin: 0 0;

@@ -90,7 +90,7 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
       <button className={control} aria-pressed={mode === "live"} onClick={() => setMode("live")}><Radio size={16} />Live feed</button>
       <p className="ml-auto text-xs text-muted" role="status">{mode === "live" ? connection : "Recorded challenge-kit events · no robot connected"}</p>
     </div>
-    <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+    <div className="panel-columns grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
       <Panel title="Facility route" aside={mode === "live" ? "LIVE FEED" : "RECORDED REPLAY"}>
         <div className="mb-4 flex flex-wrap gap-6 text-sm text-muted"><span>Position <strong className="text-ink">{current?.id ?? "Awaiting waypoint"}</strong></span><span>Battery <strong className="text-ink">{battery == null ? "—" : `${battery}%`}</strong></span><span>Errors <strong className="text-bad">{errors.length}</strong></span></div>
         <svg viewBox="0 0 1095 595" className="w-full rounded border border-line bg-surface-2" role="group" aria-label="Facility map with mission route, waypoint buttons and SPOT position">
@@ -123,7 +123,7 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
           }}>{active ? <Pause size={16} /> : <Play size={16} />}{active ? "Pause" : "Play"}</button><button className={control} onClick={() => { setElapsed(0); setPlaying(false); }}><RotateCcw size={16} />Restart</button><label className="flex items-center gap-2 text-xs text-muted">Speed<select className={control} value={speed} onChange={e => setSpeed(Number(e.target.value))}>{[1, 2, 4].map(s => <option key={s} value={s}>{s}×</option>)}</select></label><span className="ml-auto font-mono text-xs text-muted">{last?.timestamp.replace("T", " · ") ?? "Awaiting events"}</span></div>
         </div>}
       </Panel>
-      <div className="flex min-w-0 flex-col gap-4">
+      <div className="panel-stack flex min-h-0 min-w-0 flex-col gap-4">
         <Panel title="SPOT activity" aside={active ? "IN PROGRESS" : finished ? "COMPLETE" : "PAUSED"}>
           <div className="flex items-center gap-3"><div className={`grid size-12 shrink-0 place-items-center rounded-full border border-line bg-surface-2 text-accent-ink ${active && !frame?.moving ? "spot-activity-icon" : ""}`}>
             {frame?.moving ? <ArrowRight size={24} /> : activity.includes("Listening") ? <AudioLines size={24} /> : finished ? <CheckCircle2 size={24} /> : <ScanLine size={24} />}
@@ -131,7 +131,7 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
           {mode === "replay" && <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-surface-2"><div className="h-full bg-accent-ink" style={{ width: `${(frame?.progress ?? 0) * 100}%` }} /></div>}
         </Panel>
         <Panel title="Selected waypoint"><p className="text-lg font-semibold text-ink">{selected?.id ?? "No position yet"}</p><p className="mt-1 text-sm text-muted">{selected?.name ?? "Waiting for a located action."}</p>{selected && <p className="mt-3 text-xs text-muted">Floor {selected.floor} · {errors.filter(e => e.locationId === selected.id).length} observed errors</p>}</Panel>
-        <Panel title="Errors along the path" aside={String(errors.length)}><div className="flex flex-col gap-3" aria-live="polite">{errors.length === 0 ? <p className="text-sm text-muted">No errors observed at this point in the mission.</p> : errors.map(e => <button key={e.id} className="rounded border border-line bg-surface-2 p-3 text-left hover:border-bad" onClick={() => setSelectedId(e.locationId ?? null)}><p className="flex items-center gap-2 text-sm font-medium text-bad"><TriangleAlert size={16} />{e.locationId ?? "Unlocated"} · {e.severity ?? "FAILED"}</p><p className="mt-2 text-sm text-ink">{e.error?.replaceAll("_", " ")}</p><p className="mt-2 font-mono text-xs text-muted">{e.timestamp.split("T")[1]} · {e.actionId}</p></button>)}</div></Panel>
+        <Panel title="Errors along the path" className="max-h-80" bodyClassName="overflow-y-auto p-4" aside={String(errors.length)}><div className="flex flex-col gap-3" aria-live="polite">{errors.length === 0 ? <p className="text-sm text-muted">No errors observed at this point in the mission.</p> : errors.map(e => <button key={e.id} className="rounded border border-line bg-surface-2 p-3 text-left hover:border-bad" onClick={() => setSelectedId(e.locationId ?? null)}><p className="flex items-center gap-2 text-sm font-medium text-bad"><TriangleAlert size={16} />{e.locationId ?? "Unlocated"} · {e.severity ?? "FAILED"}</p><p className="mt-2 text-sm text-ink">{e.error?.replaceAll("_", " ")}</p><p className="mt-2 font-mono text-xs text-muted">{e.timestamp.split("T")[1]} · {e.actionId}</p></button>)}</div></Panel>
         <Panel title="Mission timeline" aside={`${events.length} events`}>
           <ol className="flex max-h-[32rem] flex-col gap-1 overflow-y-auto">{events.slice().reverse().map((e, i) => <li key={e.id}>
             <button onClick={() => setSelectedId(e.locationId ?? null)} className={`flex w-full gap-3 rounded p-3 text-left transition-colors hover:bg-surface-2 ${i === 0 ? "border border-line bg-surface-2" : ""}`}>
