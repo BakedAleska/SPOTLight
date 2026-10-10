@@ -717,24 +717,8 @@ body {
   animation: spotlight-radar-return 12s linear var(--blip-delay) infinite;
 }
 
-/* Vary symbols between sweeps, independently of each return's fade clock. */
-.spotlight-radar-dot {
-  animation: spotlight-radar-dot var(--symbol-period) steps(1, end) var(--symbol-delay) infinite;
-}
-
 .spotlight-radar-caution {
   filter: drop-shadow(0 0 2px #ffca44);
-  animation: spotlight-radar-caution var(--symbol-period) steps(1, end) var(--symbol-delay) infinite;
-}
-
-@keyframes spotlight-radar-dot {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
-}
-
-@keyframes spotlight-radar-caution {
-  0%, 100% { opacity: 0; }
-  50% { opacity: 1; }
 }
 
 /* The 90-degree trail takes three seconds to pass a return. Fade throughout
@@ -796,4 +780,13 @@ body {
   :root:not([data-hero]) {
     animation: none !important;
   }
+}
+
+/* A small scanner around SPOT only while an action is underway. */
+.spot-activity-ring { animation: spot-scan 2.4s linear infinite; transform-box: fill-box; transform-origin: center; }
+.spot-activity-icon { animation: spot-reading 1.4s ease-in-out infinite; }
+@keyframes spot-scan { to { transform: rotate(360deg); } }
+@keyframes spot-reading { 50% { opacity: 0.45; } }
+@media (prefers-reduced-motion: reduce) {
+  .spot-activity-ring, .spot-activity-icon { animation: none; }
 }
