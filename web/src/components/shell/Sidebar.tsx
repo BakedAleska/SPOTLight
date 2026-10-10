@@ -99,7 +99,7 @@ export function Sidebar({ onClose }: { onClose: () => void }) {
   return (
     <div className="flex h-full w-60 flex-col border-r border-line bg-chrome">
       <div className="flex h-12 shrink-0 items-center gap-2 border-b border-line px-3">
-        <SpotlightLogo className="size-7 shrink-0" />
+        <SpotlightLogo small className="size-7 shrink-0" />
         <span className="font-semibold tracking-tight">SPOTlight</span>
         <button
           type="button"

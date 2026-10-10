@@ -31,15 +31,7 @@ export const nav: NavItem[] = [
       { label: "Replay" },
     ],
   },
-  {
-    label: "Analytics",
-    icon: ChartColumn,
-    children: [
-      { label: "Battery cliff" },
-      { label: "V1 vs V2" },
-      { label: "Failure patterns" },
-    ],
-  },
+  { label: "Analytics", icon: ChartColumn, href: "/analytics" },
   { label: "Assets", icon: Boxes },
   { label: "AI review", icon: Sparkles },
   { label: "Settings", icon: Settings },
