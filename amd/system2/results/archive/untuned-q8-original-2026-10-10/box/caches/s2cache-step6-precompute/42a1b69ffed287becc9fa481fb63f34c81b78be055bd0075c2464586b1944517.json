@@ -1,0 +1,41 @@
+{
+  "key": {
+    "flag_id": 37,
+    "packet_hash": "ed79328d4b850043372557bd55b78404782ecb51573992209947c0037f270993",
+    "model": "qwen3.8-27b-q8_0",
+    "prompt_ver": "analyst-prompt-2026-10-10.3:985c5f635a4eda75"
+  },
+  "response": {
+    "evidence": [
+      {
+        "claim": "anomaly_type=LOCALIZATION_ISSUE; severity=HIGH; operator_review_required=true",
+        "ids": [
+          "anomaly:AN025"
+        ]
+      },
+      {
+        "claim": "asset criticality=CRITICAL; name=Heat Exchanger 17",
+        "ids": [
+          "asset:HX-217"
+        ]
+      },
+      {
+        "claim": "category=navigation; escalated=true; priority=P1; status=OPEN",
+        "ids": [
+          "flag:37"
+        ]
+      }
+    ],
+    "answer": "anomaly_type=LOCALIZATION_ISSUE; severity=HIGH; operator_review_required=true; asset criticality=CRITICAL; name=Heat Exchanger 17; category=navigation; escalated=true; priority=P1; status=OPEN",
+    "question": "Is SPOT's position at WP06 reliable enough to keep inspecting Heat Exchanger 17?",
+    "recommended_action": "ADJUST_WAYPOINT",
+    "confidence": "high",
+    "insufficient_context": false,
+    "flag_id": 37,
+    "model": "/root/models/q38-27b/Qwen3.8-27B-Q8_0.gguf",
+    "latency_ms": 9042,
+    "tokens_per_sec": 22.48294839430204,
+    "path": "llm"
+  },
+  "created_at": "2026-10-10T20:31:44Z"
+}

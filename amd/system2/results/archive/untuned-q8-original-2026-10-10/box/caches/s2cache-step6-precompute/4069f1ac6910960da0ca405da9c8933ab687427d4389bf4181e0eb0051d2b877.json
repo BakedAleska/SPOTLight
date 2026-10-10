@@ -1,0 +1,41 @@
+{
+  "key": {
+    "flag_id": 3,
+    "packet_hash": "ba818c4fa1a0860a9b04e6ca4384938ac7db2f27ad8e886a87424f872b7bfe1d",
+    "model": "qwen3.8-27b-q8_0",
+    "prompt_ver": "analyst-prompt-2026-10-10.3:985c5f635a4eda75"
+  },
+  "response": {
+    "evidence": [
+      {
+        "claim": "action_type=NAVIGATION; asset_id=HX-201; battery_pct=75; status=FAILED; failure_type=OBSTACLE_DETECTION",
+        "ids": [
+          "F1"
+        ]
+      },
+      {
+        "claim": "asset_id=HX-201; measurement_type=LOCALIZATION_CONFIDENCE_PCT; value=44.4; unit=pct; quality=QUESTIONABLE",
+        "ids": [
+          "F2"
+        ]
+      },
+      {
+        "claim": "asset_id=HX-201; anomaly_type=NAVIGATION_OBSTRUCTION; severity=LOW",
+        "ids": [
+          "F3"
+        ]
+      }
+    ],
+    "answer": "action_type=NAVIGATION; asset_id=HX-201; battery_pct=75; status=FAILED; failure_type=OBSTACLE_DETECTION; asset_id=HX-201; measurement_type=LOCALIZATION_CONFIDENCE_PCT; value=44.4; unit=pct; quality=QUESTIONABLE; asset_id=HX-201; anomaly_id=",
+    "question": "What needs operator attention for this navigation event?",
+    "recommended_action": "CLEAR_PATH",
+    "confidence": "medium",
+    "insufficient_context": false,
+    "flag_id": 3,
+    "model": "/root/models/q38-27b/Qwen3.8-27B-Q8_0.gguf",
+    "latency_ms": 11152,
+    "tokens_per_sec": 22.478591794368544,
+    "path": "llm"
+  },
+  "created_at": "2026-10-10T20:30:59Z"
+}

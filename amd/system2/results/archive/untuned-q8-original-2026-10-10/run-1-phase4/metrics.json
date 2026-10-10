@@ -1,0 +1,1533 @@
+{
+  "report_version": "system2-report-2026-10-10.1",
+  "scope": {
+    "split": "heldout",
+    "headline_eligible": true,
+    "grounding_label": "mechanical consistency with cited packet content (not entailment, not correctness)",
+    "note": "Controlled packets from System 1 fold-2 held-out kit missions: dynamic evidence comes only from the flag's own mission at or before as_of, with no labels, targets or prior generated answers, and few-shots come from the training pool only. Headline numbers only for the full set; grounding is still mechanical consistency, not entailment.",
+    "n_flags": 38,
+    "n_missions": 8,
+    "missions": [
+      "M006",
+      "M009",
+      "M012",
+      "M013",
+      "M017",
+      "M018",
+      "M020",
+      "M023"
+    ]
+  },
+  "command": {
+    "run": "python scripts/report.py --runner both --model-url http://127.0.0.1:8080 --model qwen3.8-27b-q8_0 --label amd-gfx1100-rocm-qwen38-27b-q8 --out-dir results/report/amd-qwen38-27b-q8",
+    "rebuild": "python scripts/report.py --rebuild results/report/amd-qwen38-27b-q8"
+  },
+  "identity": {
+    "heldout": {
+      "harness_version": "system2-eval-2026-10-10.1",
+      "dataset": {
+        "content_hash": "588700df763b0114b3f7cb3a875ffe563bd9cfad663db7f85d3ff0771a6b4714",
+        "file_sha256": "4e0be1016f50fe49e27b25b668a600b9085585978a41ca17f3fbe29bd0b28d8e",
+        "policy_version": "saved-kit-fold2-heldout-asof-v1",
+        "holdout_fold": 2,
+        "holdout_missions": [
+          "M006",
+          "M009",
+          "M012",
+          "M013",
+          "M017",
+          "M018",
+          "M019",
+          "M020",
+          "M023"
+        ],
+        "case_count": 38,
+        "selected_case_ids": [
+          "heldout-A0055",
+          "heldout-A0057",
+          "heldout-A0058",
+          "heldout-A0059",
+          "heldout-A0060",
+          "heldout-A0085",
+          "heldout-A0086",
+          "heldout-A0088",
+          "heldout-A0089",
+          "heldout-A0090",
+          "heldout-A0116",
+          "heldout-A0117",
+          "heldout-A0118",
+          "heldout-A0119",
+          "heldout-A0120",
+          "heldout-A0121",
+          "heldout-A0125",
+          "heldout-A0127",
+          "heldout-A0128",
+          "heldout-A0129",
+          "heldout-A0130",
+          "heldout-A0166",
+          "heldout-A0167",
+          "heldout-A0168",
+          "heldout-A0169",
+          "heldout-A0170",
+          "heldout-A0179",
+          "heldout-A0180",
+          "heldout-A0191",
+          "heldout-A0194",
+          "heldout-A0200",
+          "heldout-A0228",
+          "heldout-mission-M006",
+          "heldout-mission-M009",
+          "heldout-mission-M012",
+          "heldout-mission-M013",
+          "heldout-mission-M017",
+          "heldout-mission-M020"
+        ],
+        "splits": [
+          "heldout"
+        ],
+        "packet_set_hash": "f8a978d67bf9a5ec71ad5698c29ef36bba35bf6d08d25349bd26542c8de9f498"
+      },
+      "runners": [
+        "template",
+        "model"
+      ],
+      "config": {
+        "seed": 20261010,
+        "limit": null,
+        "deadline_s": 15.0,
+        "timeout_s": 15.0,
+        "max_tokens": 350,
+        "model_url": "http://127.0.0.1:8080",
+        "model": "qwen3.8-27b-q8_0"
+      },
+      "prompt": {
+        "prompt_version": "analyst-prompt-2026-10-10.3",
+        "prompt_sha256s": [
+          "1a20523c5eaf3eaa64bfb1b66b709b77f0c5b5d8a4f2ef17e884b2af6e1132dc"
+        ],
+        "max_tokens": 350,
+        "temperature": 0,
+        "thinking": false,
+        "example_case_ids": {
+          "heldout-A0055": [
+            "kit-equipment",
+            "kit-navigation",
+            "kit-data_quality"
+          ],
+          "heldout-A0057": [
+            "kit-equipment",
+            "kit-navigation",
+            "kit-data_quality"
+          ],
+          "heldout-A0058": [
+            "kit-equipment",
+            "kit-navigation",
+            "kit-data_quality"
+          ],
+          "heldout-A0059": [
+            "kit-equipment",
+            "kit-navigation",
+            "kit-data_quality"
+          ],
+          "heldout-A0060": [
+            "kit-equipment",
+            "kit-navigation",
+            "kit-data_quality"
+          ],
+          "heldout-A0085": [
+            "kit-equipment",
+            "kit-navigation",
+            "kit-data_quality"
+          ],
+          "heldout-A0086": [
+            "kit-equipment",
+            "kit-navigation",
+            "kit-data_quality"
+          ],
+          "heldout-A0088": [
+            "kit-equipment",
+            "kit-navigation",
+            "kit-data_quality"
+          ],
+          "heldout-A0089": [
+            "kit-equipment",
+            "kit-navigation",
+            "kit-data_quality"
+          ],
+          "heldout-A0090": [
+            "kit-equipment",
+            "kit-navigation",
+            "kit-data_quality"
+          ],
+          "heldout-A0116": [
+            "kit-equipment",
+            "kit-navigation",
+            "kit-data_quality"
+          ],
+          "heldout-A0117": [
+            "kit-equipment",
+            "kit-navigation",
+            "kit-data_quality"
+          ],
+          "heldout-A0118": [
+            "kit-equipment",
+            "kit-navigation",
+            "kit-data_quality"
+          ],
+          "heldout-A0119": [
+            "kit-equipment",
+            "kit-navigation",
+            "kit-data_quality"
+          ],
+          "heldout-A0120": [
+            "kit-equipment",
+            "kit-navigation",
+            "kit-data_quality"
+          ],
+          "heldout-A0121": [
+            "kit-equipment",
+            "kit-navigation",
+            "kit-data_quality"
+          ],
+          "heldout-A0125": [
+            "kit-equipment",
+            "kit-navigation",
+            "kit-data_quality"
+          ],
+          "heldout-A0127": [
+            "kit-equipment",
+            "kit-navigation",
+            "kit-data_quality"
+          ],
+          "heldout-A0128": [
+            "kit-equipment",
+            "kit-navigation",
+            "kit-data_quality"
+          ],
+          "heldout-A0129": [
+            "kit-equipment",
+            "kit-navigation",
+            "kit-data_quality"
+          ],
+          "heldout-A0130": [
+            "kit-equipment",
+            "kit-navigation",
+            "kit-data_quality"
+          ],
+          "heldout-A0166": [
+            "kit-equipment",
+            "kit-navigation",
+            "kit-data_quality"
+          ],
+          "heldout-A0167": [
+            "kit-equipment",
+            "kit-navigation",
+            "kit-data_quality"
+          ],
+          "heldout-A0168": [
+            "kit-equipment",
+            "kit-navigation",
+            "kit-data_quality"
+          ],
+          "heldout-A0169": [
+            "kit-equipment",
+            "kit-navigation",
+            "kit-data_quality"
+          ],
+          "heldout-A0170": [
+            "kit-equipment",
+            "kit-navigation",
+            "kit-data_quality"
+          ],
+          "heldout-A0179": [
+            "kit-equipment",
+            "kit-navigation",
+            "kit-data_quality"
+          ],
+          "heldout-A0180": [
+            "kit-equipment",
+            "kit-navigation",
+            "kit-data_quality"
+          ],
+          "heldout-A0191": [
+            "kit-equipment",
+            "kit-navigation",
+            "kit-data_quality"
+          ],
+          "heldout-A0194": [
+            "kit-equipment",
+            "kit-navigation",
+            "kit-data_quality"
+          ],
+          "heldout-A0200": [
+            "kit-equipment",
+            "kit-navigation",
+            "kit-data_quality"
+          ],
+          "heldout-A0228": [
+            "kit-equipment",
+            "kit-navigation",
+            "kit-data_quality"
+          ],
+          "heldout-mission-M006": [
+            "kit-equipment",
+            "kit-navigation",
+            "kit-data_quality"
+          ],
+          "heldout-mission-M009": [
+            "kit-equipment",
+            "kit-navigation",
+            "kit-data_quality"
+          ],
+          "heldout-mission-M012": [
+            "kit-equipment",
+            "kit-navigation",
+            "kit-data_quality"
+          ],
+          "heldout-mission-M013": [
+            "kit-equipment",
+            "kit-navigation",
+            "kit-data_quality"
+          ],
+          "heldout-mission-M017": [
+            "kit-equipment",
+            "kit-navigation",
+            "kit-data_quality"
+          ],
+          "heldout-mission-M020": [
+            "kit-equipment",
+            "kit-navigation",
+            "kit-data_quality"
+          ]
+        }
+      },
+      "catalog": {
+        "source": "amd/system1/data/kit",
+        "entity_count": 35,
+        "content_hash": "262d5cc3f6c0255da9a1016a3080afc9cd3c9f9b9aed60bd1a7e947e0678e534"
+      },
+      "code": {
+        "revision": "df63f64cf7a8baf3a1ecd4df5930cd9a60d5f995",
+        "dirty": false
+      },
+      "identity_hash": "361910609f3d5526aeb6718b08b19e903ca2706be799ad47b6bdcad92cc76d3b"
+    },
+    "development": {
+      "harness_version": "system2-eval-2026-10-10.1",
+      "dataset": {
+        "content_hash": "d7cafc688b6fcf12b7e58e4d97c08383090446b793bfb07ea72f5723de9ee8f1",
+        "file_sha256": "c0ce0fe088da69f3aa1afd1bd975c81c54c0740264e7f00b5e9e58105b374cc0",
+        "policy_version": "saved-kit-fold2-asof-v1",
+        "holdout_fold": 2,
+        "holdout_missions": [
+          "M006",
+          "M009",
+          "M012",
+          "M013",
+          "M017",
+          "M018",
+          "M019",
+          "M020",
+          "M023"
+        ],
+        "case_count": 6,
+        "selected_case_ids": [
+          "kit-data_quality",
+          "kit-equipment",
+          "kit-insufficient_context",
+          "kit-mission",
+          "kit-navigation",
+          "kit-robot_health"
+        ],
+        "splits": [
+          "train"
+        ],
+        "packet_set_hash": "5c9d636e09df74a8b4d7cf9269853106cdcb9e24204a5cf945686638dd8b20e2"
+      },
+      "runners": [
+        "template",
+        "model"
+      ],
+      "config": {
+        "seed": 20261010,
+        "limit": null,
+        "deadline_s": 15.0,
+        "timeout_s": 15.0,
+        "max_tokens": 350,
+        "model_url": "http://127.0.0.1:8080",
+        "model": "qwen3.8-27b-q8_0"
+      },
+      "prompt": {
+        "prompt_version": "analyst-prompt-2026-10-10.3",
+        "prompt_sha256s": [
+          "18650869012426519e671f646595c439fe9360ab54b4b3a295c9a1f178ec2973",
+          "1a20523c5eaf3eaa64bfb1b66b709b77f0c5b5d8a4f2ef17e884b2af6e1132dc",
+          "878fa6f576628508e56d4429487135d6aaa3386784e9ee1f7dce6547db666efc",
+          "d00e794f98055e181ac42f468e3bddde44e0972ddb912d7e5a29c4c73bcb62a2"
+        ],
+        "max_tokens": 350,
+        "temperature": 0,
+        "thinking": false,
+        "example_case_ids": {
+          "kit-data_quality": [
+            "kit-equipment",
+            "kit-navigation",
+            "kit-robot_health"
+          ],
+          "kit-equipment": [
+            "kit-navigation",
+            "kit-data_quality",
+            "kit-robot_health"
+          ],
+          "kit-insufficient_context": [
+            "kit-equipment",
+            "kit-navigation",
+            "kit-data_quality"
+          ],
+          "kit-mission": [
+            "kit-equipment",
+            "kit-navigation",
+            "kit-data_quality"
+          ],
+          "kit-navigation": [
+            "kit-equipment",
+            "kit-data_quality",
+            "kit-robot_health"
+          ],
+          "kit-robot_health": [
+            "kit-equipment",
+            "kit-navigation",
+            "kit-data_quality"
+          ]
+        }
+      },
+      "catalog": {
+        "source": "amd/system1/data/kit",
+        "entity_count": 35,
+        "content_hash": "262d5cc3f6c0255da9a1016a3080afc9cd3c9f9b9aed60bd1a7e947e0678e534"
+      },
+      "code": {
+        "revision": "df63f64cf7a8baf3a1ecd4df5930cd9a60d5f995",
+        "dirty": false
+      },
+      "identity_hash": "ed964c8969406e73dceceaeb33ad834cf46548734d2edddeda729a5087ba64e2"
+    },
+    "identity_hash": "76dcd391f6be862b48067935300e2859089b0b68eff43e24806a29cb48854a3f"
+  },
+  "measurement": {
+    "label": "amd-gfx1100-rocm-qwen38-27b-q8",
+    "endpoint": "http://127.0.0.1:8080",
+    "endpoint_loopback": true,
+    "host": "j-4khskqsnluneuceyxwcyvvuj56",
+    "source": "http model endpoint + in-process template",
+    "started_at": "2026-10-10T20:21:01.885989Z",
+    "finished_at": "2026-10-10T20:28:48.619358Z"
+  },
+  "ci": {
+    "method": "mission-level bootstrap: whole missions resampled with replacement, 2.5/97.5 percentiles, linear interpolation",
+    "level": 0.95,
+    "resamples": 1000,
+    "seed": 20261010
+  },
+  "headline": {
+    "runners": {
+      "template": {
+        "kind": "template",
+        "public_response_valid": {
+          "value": 1.0,
+          "count": 38,
+          "denominator": 38,
+          "missions": 8,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "final_schema_valid": {
+          "value": 1.0,
+          "count": 38,
+          "denominator": 38,
+          "missions": 8,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "final_citation_valid": {
+          "value": 1.0,
+          "count": 38,
+          "denominator": 38,
+          "missions": 8,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "final_numeric_consistent": {
+          "value": 1.0,
+          "count": 38,
+          "denominator": 38,
+          "missions": 8,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "final_name_consistent": {
+          "value": 1.0,
+          "count": 38,
+          "denominator": 38,
+          "missions": 8,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "final_all_checks": {
+          "value": 1.0,
+          "count": 38,
+          "denominator": 38,
+          "missions": 8,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "agreement_with_validator": {
+          "value": 1.0,
+          "count": 38,
+          "denominator": 38,
+          "missions": 8,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "by_category": {
+          "data_quality": {
+            "flags": 4,
+            "missions": 3
+          },
+          "equipment": {
+            "flags": 12,
+            "missions": 7
+          },
+          "mission": {
+            "flags": 6,
+            "missions": 6
+          },
+          "navigation": {
+            "flags": 2,
+            "missions": 2
+          },
+          "robot_health": {
+            "flags": 14,
+            "missions": 6
+          }
+        },
+        "aggregates": {
+          "kind": "template",
+          "cases": 38,
+          "sufficient_cases": 38,
+          "public_response_valid": {
+            "value": 1.0,
+            "count": 38,
+            "denominator": 38
+          },
+          "guarded_insufficient": {
+            "cases": 0,
+            "safe_manual_review": {
+              "value": null,
+              "count": 0,
+              "denominator": 0
+            }
+          },
+          "first_attempt": {
+            "parsed": {
+              "value": null,
+              "count": 0,
+              "denominator": 0
+            },
+            "schema_valid": {
+              "value": null,
+              "count": 0,
+              "denominator": 0
+            },
+            "citation_valid": {
+              "value": null,
+              "count": 0,
+              "denominator": 0
+            },
+            "numeric_consistent": {
+              "value": null,
+              "count": 0,
+              "denominator": 0
+            },
+            "name_consistent": {
+              "value": null,
+              "count": 0,
+              "denominator": 0
+            },
+            "accepted": {
+              "value": null,
+              "count": 0,
+              "denominator": 0
+            }
+          },
+          "final": {
+            "schema_valid": {
+              "value": 1.0,
+              "count": 38,
+              "denominator": 38
+            },
+            "citation_valid": {
+              "value": 1.0,
+              "count": 38,
+              "denominator": 38
+            },
+            "numeric_consistent": {
+              "value": 1.0,
+              "count": 38,
+              "denominator": 38
+            },
+            "name_consistent": {
+              "value": 1.0,
+              "count": 38,
+              "denominator": 38
+            }
+          },
+          "final_insufficient_among_sufficient": {
+            "value": 0.0,
+            "count": 0,
+            "denominator": 38
+          },
+          "generation": {
+            "cases": 0,
+            "attempted_outputs": 0,
+            "model_accepted": {
+              "value": null,
+              "count": 0,
+              "denominator": 0
+            },
+            "first_attempt_accepted": {
+              "value": null,
+              "count": 0,
+              "denominator": 0
+            },
+            "retry": {
+              "value": null,
+              "count": 0,
+              "denominator": 0
+            },
+            "fallback": {
+              "value": null,
+              "count": 0,
+              "denominator": 0
+            },
+            "attempt_statuses": {}
+          },
+          "paths": {
+            "llm": 0,
+            "retry": 0,
+            "fallback": 38,
+            "insufficient_context": 0
+          },
+          "models": {
+            "template": 38
+          },
+          "action": {
+            "metric_kind": "agreement_with_validator",
+            "reference_origin": "none",
+            "agreement_with_validator": {
+              "value": 1.0,
+              "count": 38,
+              "denominator": 38
+            },
+            "action_quality": {
+              "value": null,
+              "count": 0,
+              "denominator": 0
+            }
+          },
+          "latency_ms": {
+            "n": 38,
+            "p50": 2,
+            "p95": 2,
+            "max": 2,
+            "mean": 1.763,
+            "method": "nearest-rank",
+            "unit": "ms"
+          },
+          "tokens": {
+            "attempts_with_usage": 0,
+            "prompt_tokens": null,
+            "completion_tokens": null,
+            "tokens_per_sec_mean": {
+              "value": null,
+              "n": 0
+            }
+          }
+        }
+      },
+      "model": {
+        "kind": "model",
+        "public_response_valid": {
+          "value": 1.0,
+          "count": 38,
+          "denominator": 38,
+          "missions": 8,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "final_schema_valid": {
+          "value": 1.0,
+          "count": 38,
+          "denominator": 38,
+          "missions": 8,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "final_citation_valid": {
+          "value": 1.0,
+          "count": 38,
+          "denominator": 38,
+          "missions": 8,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "final_numeric_consistent": {
+          "value": 1.0,
+          "count": 38,
+          "denominator": 38,
+          "missions": 8,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "final_name_consistent": {
+          "value": 1.0,
+          "count": 38,
+          "denominator": 38,
+          "missions": 8,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "final_all_checks": {
+          "value": 1.0,
+          "count": 38,
+          "denominator": 38,
+          "missions": 8,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "agreement_with_validator": {
+          "value": 1.0,
+          "count": 38,
+          "denominator": 38,
+          "missions": 8,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "first_attempt_schema_valid": {
+          "value": 1.0,
+          "count": 38,
+          "denominator": 38,
+          "missions": 8,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "first_attempt_citation_valid": {
+          "value": 1.0,
+          "count": 38,
+          "denominator": 38,
+          "missions": 8,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "first_attempt_numeric_consistent": {
+          "value": 0.9736842105263158,
+          "count": 37,
+          "denominator": 38,
+          "missions": 8,
+          "ci95": [
+            0.918919,
+            1.0
+          ]
+        },
+        "first_attempt_name_consistent": {
+          "value": 0.9736842105263158,
+          "count": 37,
+          "denominator": 38,
+          "missions": 8,
+          "ci95": [
+            0.923077,
+            1.0
+          ]
+        },
+        "first_attempt_accepted": {
+          "value": 0.9473684210526315,
+          "count": 36,
+          "denominator": 38,
+          "missions": 8,
+          "ci95": [
+            0.886364,
+            1.0
+          ]
+        },
+        "model_accepted": {
+          "value": 0.9473684210526315,
+          "count": 36,
+          "denominator": 38,
+          "missions": 8,
+          "ci95": [
+            0.886364,
+            1.0
+          ]
+        },
+        "retry": {
+          "value": 0.05263157894736842,
+          "count": 2,
+          "denominator": 38,
+          "missions": 8,
+          "ci95": [
+            0.0,
+            0.113636
+          ]
+        },
+        "fallback": {
+          "value": 0.05263157894736842,
+          "count": 2,
+          "denominator": 38,
+          "missions": 8,
+          "ci95": [
+            0.0,
+            0.113636
+          ]
+        },
+        "by_category": {
+          "data_quality": {
+            "flags": 4,
+            "missions": 3,
+            "model_accepted": 4,
+            "fallback": 0
+          },
+          "equipment": {
+            "flags": 12,
+            "missions": 7,
+            "model_accepted": 10,
+            "fallback": 2
+          },
+          "mission": {
+            "flags": 6,
+            "missions": 6,
+            "model_accepted": 6,
+            "fallback": 0
+          },
+          "navigation": {
+            "flags": 2,
+            "missions": 2,
+            "model_accepted": 2,
+            "fallback": 0
+          },
+          "robot_health": {
+            "flags": 14,
+            "missions": 6,
+            "model_accepted": 14,
+            "fallback": 0
+          }
+        },
+        "aggregates": {
+          "kind": "model",
+          "cases": 38,
+          "sufficient_cases": 38,
+          "public_response_valid": {
+            "value": 1.0,
+            "count": 38,
+            "denominator": 38
+          },
+          "guarded_insufficient": {
+            "cases": 0,
+            "safe_manual_review": {
+              "value": null,
+              "count": 0,
+              "denominator": 0
+            }
+          },
+          "first_attempt": {
+            "parsed": {
+              "value": 1.0,
+              "count": 38,
+              "denominator": 38
+            },
+            "schema_valid": {
+              "value": 1.0,
+              "count": 38,
+              "denominator": 38
+            },
+            "citation_valid": {
+              "value": 1.0,
+              "count": 38,
+              "denominator": 38
+            },
+            "numeric_consistent": {
+              "value": 0.9736842105263158,
+              "count": 37,
+              "denominator": 38
+            },
+            "name_consistent": {
+              "value": 0.9736842105263158,
+              "count": 37,
+              "denominator": 38
+            },
+            "accepted": {
+              "value": 0.9473684210526315,
+              "count": 36,
+              "denominator": 38
+            }
+          },
+          "final": {
+            "schema_valid": {
+              "value": 1.0,
+              "count": 38,
+              "denominator": 38
+            },
+            "citation_valid": {
+              "value": 1.0,
+              "count": 38,
+              "denominator": 38
+            },
+            "numeric_consistent": {
+              "value": 1.0,
+              "count": 38,
+              "denominator": 38
+            },
+            "name_consistent": {
+              "value": 1.0,
+              "count": 38,
+              "denominator": 38
+            }
+          },
+          "final_insufficient_among_sufficient": {
+            "value": 0.0,
+            "count": 0,
+            "denominator": 38
+          },
+          "generation": {
+            "cases": 38,
+            "attempted_outputs": 40,
+            "model_accepted": {
+              "value": 0.9473684210526315,
+              "count": 36,
+              "denominator": 38
+            },
+            "first_attempt_accepted": {
+              "value": 0.9473684210526315,
+              "count": 36,
+              "denominator": 38
+            },
+            "retry": {
+              "value": 0.05263157894736842,
+              "count": 2,
+              "denominator": 38
+            },
+            "fallback": {
+              "value": 0.05263157894736842,
+              "count": 2,
+              "denominator": 38
+            },
+            "attempt_statuses": {
+              "accepted": 36,
+              "rejected": 2,
+              "timeout": 2
+            }
+          },
+          "paths": {
+            "llm": 36,
+            "retry": 0,
+            "fallback": 2,
+            "insufficient_context": 0
+          },
+          "models": {
+            "/root/models/q38-27b/Qwen3.8-27B-Q8_0.gguf": 36,
+            "template": 2
+          },
+          "action": {
+            "metric_kind": "agreement_with_validator",
+            "reference_origin": "none",
+            "agreement_with_validator": {
+              "value": 1.0,
+              "count": 38,
+              "denominator": 38
+            },
+            "action_quality": {
+              "value": null,
+              "count": 0,
+              "denominator": 0
+            }
+          },
+          "latency_ms": {
+            "n": 38,
+            "p50": 11188,
+            "p95": 15003,
+            "max": 15003,
+            "mean": 11015.316,
+            "method": "nearest-rank",
+            "unit": "ms"
+          },
+          "tokens": {
+            "attempts_with_usage": 38,
+            "prompt_tokens": 74399,
+            "completion_tokens": 8765,
+            "tokens_per_sec_mean": {
+              "value": 22.528,
+              "n": 38
+            }
+          }
+        }
+      }
+    },
+    "comparison": {
+      "model": "model",
+      "template": "template",
+      "note": "model minus template on the same flags",
+      "metrics": {
+        "public_response_valid": {
+          "value": 0.0,
+          "pairs": 38,
+          "missions": 8,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        },
+        "final_schema_valid": {
+          "value": 0.0,
+          "pairs": 38,
+          "missions": 8,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        },
+        "final_citation_valid": {
+          "value": 0.0,
+          "pairs": 38,
+          "missions": 8,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        },
+        "final_numeric_consistent": {
+          "value": 0.0,
+          "pairs": 38,
+          "missions": 8,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        },
+        "final_name_consistent": {
+          "value": 0.0,
+          "pairs": 38,
+          "missions": 8,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        },
+        "final_all_checks": {
+          "value": 0.0,
+          "pairs": 38,
+          "missions": 8,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        },
+        "agreement_with_validator": {
+          "value": 0.0,
+          "pairs": 38,
+          "missions": 8,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        }
+      }
+    }
+  },
+  "speed": {
+    "measured": true,
+    "label": "amd-gfx1100-rocm-qwen38-27b-q8",
+    "endpoint": "http://127.0.0.1:8080",
+    "endpoint_loopback": true,
+    "host": "j-4khskqsnluneuceyxwcyvvuj56",
+    "flags": 38,
+    "attempts": 40,
+    "latency_ms": {
+      "n": 38,
+      "p50": 11188,
+      "p95": 15003,
+      "max": 15003,
+      "mean": 11015.316,
+      "method": "nearest-rank",
+      "unit": "ms"
+    },
+    "within_15s_p95": false,
+    "decode_tokens_per_sec": {
+      "p50": 22.557410024248743,
+      "mean": 22.528,
+      "min": 22.18266778977539,
+      "max": 22.690164273723106,
+      "n": 38
+    },
+    "prompt_tokens": {
+      "p50": 1897,
+      "max": 2307,
+      "n": 38
+    },
+    "completion_tokens": {
+      "p50": 238,
+      "max": 316,
+      "n": 38
+    },
+    "truncated_attempts": 0,
+    "timeout_attempts": 2,
+    "models": [
+      "/root/models/q38-27b/Qwen3.8-27B-Q8_0.gguf"
+    ],
+    "peak_memory": {
+      "source": "sysfs",
+      "drm_root": "/sys/class/drm",
+      "available": true,
+      "reason": null,
+      "interval_s": 0.5,
+      "samples": 932,
+      "cards": [
+        {
+          "card": "card1",
+          "vendor": "0x1002",
+          "device": "0x744b"
+        },
+        {
+          "card": "card2",
+          "vendor": "0x1002",
+          "device": "0x744b"
+        },
+        {
+          "card": "card3",
+          "vendor": "0x1002",
+          "device": "0x744b"
+        },
+        {
+          "card": "card4",
+          "vendor": "0x1002",
+          "device": "0x744b"
+        },
+        {
+          "card": "card5",
+          "vendor": "0x1002",
+          "device": "0x744b"
+        },
+        {
+          "card": "card6",
+          "vendor": "0x1002",
+          "device": "0x744b"
+        },
+        {
+          "card": "card7",
+          "vendor": "0x1002",
+          "device": "0x744b"
+        },
+        {
+          "card": "card8",
+          "vendor": "0x1002",
+          "device": "0x744b"
+        }
+      ],
+      "baseline": {
+        "vram_bytes": 30407409664,
+        "vram_mib": 28998.8,
+        "gtt_bytes": 133832704,
+        "gtt_mib": 127.6,
+        "total_bytes": 30541242368,
+        "total_mib": 29126.4
+      },
+      "peak": {
+        "vram_bytes": 30605053952,
+        "vram_mib": 29187.3,
+        "gtt_bytes": 133832704,
+        "gtt_mib": 127.6,
+        "total_bytes": 30738886656,
+        "total_mib": 29314.9
+      },
+      "scope": "system-wide amdgpu VRAM+GTT in use while the report ran, including the loaded model and any other process"
+    },
+    "caveat": "Speed is attributed to the label and endpoint above; only an amd-* labelled run on the gfx1151 box is an AMD measurement."
+  },
+  "development": {
+    "split": "train",
+    "headline_eligible": false,
+    "note": "Approved development kit packets from training missions only (synthetic kit data, few-shots drawn from the same pool with the current case excluded). Not held-out and not independent real-world observations; never a headline number.",
+    "n_flags": 6,
+    "runners": {
+      "template": {
+        "kind": "template",
+        "cases": 6,
+        "sufficient_cases": 5,
+        "public_response_valid": {
+          "value": 1.0,
+          "count": 6,
+          "denominator": 6
+        },
+        "guarded_insufficient": {
+          "cases": 1,
+          "safe_manual_review": {
+            "value": 1.0,
+            "count": 1,
+            "denominator": 1
+          }
+        },
+        "first_attempt": {
+          "parsed": {
+            "value": null,
+            "count": 0,
+            "denominator": 0
+          },
+          "schema_valid": {
+            "value": null,
+            "count": 0,
+            "denominator": 0
+          },
+          "citation_valid": {
+            "value": null,
+            "count": 0,
+            "denominator": 0
+          },
+          "numeric_consistent": {
+            "value": null,
+            "count": 0,
+            "denominator": 0
+          },
+          "name_consistent": {
+            "value": null,
+            "count": 0,
+            "denominator": 0
+          },
+          "accepted": {
+            "value": null,
+            "count": 0,
+            "denominator": 0
+          }
+        },
+        "final": {
+          "schema_valid": {
+            "value": 1.0,
+            "count": 5,
+            "denominator": 5
+          },
+          "citation_valid": {
+            "value": 1.0,
+            "count": 5,
+            "denominator": 5
+          },
+          "numeric_consistent": {
+            "value": 1.0,
+            "count": 5,
+            "denominator": 5
+          },
+          "name_consistent": {
+            "value": 1.0,
+            "count": 5,
+            "denominator": 5
+          }
+        },
+        "final_insufficient_among_sufficient": {
+          "value": 0.0,
+          "count": 0,
+          "denominator": 5
+        },
+        "generation": {
+          "cases": 0,
+          "attempted_outputs": 0,
+          "model_accepted": {
+            "value": null,
+            "count": 0,
+            "denominator": 0
+          },
+          "first_attempt_accepted": {
+            "value": null,
+            "count": 0,
+            "denominator": 0
+          },
+          "retry": {
+            "value": null,
+            "count": 0,
+            "denominator": 0
+          },
+          "fallback": {
+            "value": null,
+            "count": 0,
+            "denominator": 0
+          },
+          "attempt_statuses": {}
+        },
+        "paths": {
+          "llm": 0,
+          "retry": 0,
+          "fallback": 5,
+          "insufficient_context": 1
+        },
+        "models": {
+          "template": 6
+        },
+        "action": {
+          "metric_kind": "agreement_with_validator",
+          "reference_origin": "none",
+          "agreement_with_validator": {
+            "value": 1.0,
+            "count": 6,
+            "denominator": 6
+          },
+          "action_quality": {
+            "value": null,
+            "count": 0,
+            "denominator": 0
+          }
+        },
+        "latency_ms": {
+          "n": 6,
+          "p50": 1,
+          "p95": 2,
+          "max": 2,
+          "mean": 1.167,
+          "method": "nearest-rank",
+          "unit": "ms"
+        },
+        "tokens": {
+          "attempts_with_usage": 0,
+          "prompt_tokens": null,
+          "completion_tokens": null,
+          "tokens_per_sec_mean": {
+            "value": null,
+            "n": 0
+          }
+        }
+      },
+      "model": {
+        "kind": "model",
+        "cases": 6,
+        "sufficient_cases": 5,
+        "public_response_valid": {
+          "value": 1.0,
+          "count": 6,
+          "denominator": 6
+        },
+        "guarded_insufficient": {
+          "cases": 1,
+          "safe_manual_review": {
+            "value": 1.0,
+            "count": 1,
+            "denominator": 1
+          }
+        },
+        "first_attempt": {
+          "parsed": {
+            "value": 1.0,
+            "count": 5,
+            "denominator": 5
+          },
+          "schema_valid": {
+            "value": 1.0,
+            "count": 5,
+            "denominator": 5
+          },
+          "citation_valid": {
+            "value": 1.0,
+            "count": 5,
+            "denominator": 5
+          },
+          "numeric_consistent": {
+            "value": 1.0,
+            "count": 5,
+            "denominator": 5
+          },
+          "name_consistent": {
+            "value": 1.0,
+            "count": 5,
+            "denominator": 5
+          },
+          "accepted": {
+            "value": 1.0,
+            "count": 5,
+            "denominator": 5
+          }
+        },
+        "final": {
+          "schema_valid": {
+            "value": 1.0,
+            "count": 5,
+            "denominator": 5
+          },
+          "citation_valid": {
+            "value": 1.0,
+            "count": 5,
+            "denominator": 5
+          },
+          "numeric_consistent": {
+            "value": 1.0,
+            "count": 5,
+            "denominator": 5
+          },
+          "name_consistent": {
+            "value": 1.0,
+            "count": 5,
+            "denominator": 5
+          }
+        },
+        "final_insufficient_among_sufficient": {
+          "value": 0.0,
+          "count": 0,
+          "denominator": 5
+        },
+        "generation": {
+          "cases": 5,
+          "attempted_outputs": 5,
+          "model_accepted": {
+            "value": 1.0,
+            "count": 5,
+            "denominator": 5
+          },
+          "first_attempt_accepted": {
+            "value": 1.0,
+            "count": 5,
+            "denominator": 5
+          },
+          "retry": {
+            "value": 0.0,
+            "count": 0,
+            "denominator": 5
+          },
+          "fallback": {
+            "value": 0.0,
+            "count": 0,
+            "denominator": 5
+          },
+          "attempt_statuses": {
+            "accepted": 5
+          }
+        },
+        "paths": {
+          "llm": 5,
+          "retry": 0,
+          "fallback": 0,
+          "insufficient_context": 1
+        },
+        "models": {
+          "/root/models/q38-27b/Qwen3.8-27B-Q8_0.gguf": 5,
+          "template": 1
+        },
+        "action": {
+          "metric_kind": "agreement_with_validator",
+          "reference_origin": "none",
+          "agreement_with_validator": {
+            "value": 1.0,
+            "count": 6,
+            "denominator": 6
+          },
+          "action_quality": {
+            "value": null,
+            "count": 0,
+            "denominator": 0
+          }
+        },
+        "latency_ms": {
+          "n": 6,
+          "p50": 6369,
+          "p95": 12925,
+          "max": 12925,
+          "mean": 7955.5,
+          "method": "nearest-rank",
+          "unit": "ms"
+        },
+        "tokens": {
+          "attempts_with_usage": 5,
+          "prompt_tokens": 8747,
+          "completion_tokens": 861,
+          "tokens_per_sec_mean": {
+            "value": 22.436,
+            "n": 5
+          }
+        }
+      }
+    }
+  },
+  "limitations": [
+    {
+      "requirement": "EVAL-02",
+      "item": "claim support judged by a different model",
+      "status": "not built",
+      "note": "Only the mechanical part is reported: schema, citation-ID, numeric and name consistency with the cited packet content."
+    },
+    {
+      "requirement": "EVAL-03",
+      "item": "LLM-vs-template judge rubric",
+      "status": "not built",
+      "note": "No judge model scores usefulness or clarity; model and template are compared on mechanical checks only."
+    },
+    {
+      "requirement": "EVAL-04",
+      "item": "action quality against human labels",
+      "status": "not built",
+      "note": "Only agreement with the validator's suggested_action is reported. That is agreement, not accuracy."
+    },
+    {
+      "requirement": "EVAL-07",
+      "item": "judge-vs-human agreement",
+      "status": "not built",
+      "note": "Neither a judge nor human labels exist, so their agreement cannot be measured."
+    },
+    {
+      "requirement": "grounding",
+      "item": "entailment / correctness of claims",
+      "status": "not built",
+      "note": "Grounding means mechanical consistency with cited packet content (not entailment, not correctness)."
+    },
+    {
+      "requirement": "comparison",
+      "item": "evidence that the model beats the template",
+      "status": "not built",
+      "note": "The template passes the mechanical checks by construction (it copies cited rows), so mechanical parity is expected and is not evidence that the model is better."
+    },
+    {
+      "requirement": "sample size",
+      "item": "tight intervals",
+      "status": "not built",
+      "note": "n is small (38 flags in 8 held-out missions), so the mission-level CIs are wide."
+    },
+    {
+      "requirement": "data",
+      "item": "independent real-world observations",
+      "status": "not built",
+      "note": "\"Real\" means sponsor kit missions as opposed to simulator output; the kit itself carries synthetic=True metadata. No synthetic or unrestricted-retrieval results are included."
+    }
+  ]
+}

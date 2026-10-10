@@ -1,0 +1,76 @@
+== /root/models/q38-27b/Qwen3.8-27B-Q8_0.gguf
+general.architecture qwen35
+general.type model
+general.sampling.top_k 20
+general.sampling.top_p 0.949999988079071
+general.sampling.temp 1.0
+general.name Qwen3.8-27B
+general.basename Qwen3.8-27B
+general.description Renewal of the beloved Qwen model, delivering unmatched intelligence density.
+general.quantized_by Unsloth
+general.size_label 27B
+general.license apache-2.0
+general.repo_url https://huggingface.co/unsloth
+general.base_model.count 1
+general.base_model.0.name Qwen3.8 27B
+general.base_model.0.organization Qwen
+general.base_model.0.repo_url https://huggingface.co/Qwen/Qwen3.8-27B
+general.tags ['unsloth']
+qwen35.block_count 65
+qwen35.context_length 262144
+qwen35.embedding_length 5120
+qwen35.feed_forward_length 17408
+qwen35.attention.head_count 24
+qwen35.attention.head_count_kv 4
+qwen35.rope.dimension_sections [11, 11, 10, 0]
+qwen35.rope.freq_base 10000000.0
+qwen35.attention.layer_norm_rms_epsilon 9.999999974752427e-07
+qwen35.attention.key_length 256
+qwen35.attention.value_length 256
+qwen35.nextn_predict_layers 1
+qwen35.ssm.conv_kernel 4
+qwen35.ssm.state_size 128
+qwen35.ssm.group_count 16
+qwen35.ssm.time_step_rank 48
+qwen35.ssm.inner_size 6144
+qwen35.full_attention_interval 4
+qwen35.rope.dimension_count 64
+general.quantization_version 2
+general.file_type 7
+tokenizer.chat_template <9993 chars>
+== /root/models/q38-27b/mmproj-F16.gguf
+general.architecture clip
+general.type mmproj
+general.sampling.top_k 20
+general.sampling.top_p 0.949999988079071
+general.sampling.temp 1.0
+general.name Qwen3.8-27B
+general.finetune 27b
+general.basename Qwen3.8-27B
+general.description Renewal of the beloved Qwen model, delivering unmatched intelligence density.
+general.quantized_by Unsloth
+general.size_label 461M
+general.license apache-2.0
+general.repo_url https://huggingface.co/unsloth
+general.base_model.count 1
+general.base_model.0.name Qwen3.8 27B
+general.base_model.0.organization Qwen
+general.base_model.0.repo_url https://huggingface.co/Qwen/Qwen3.8-27B
+general.tags ['unsloth']
+general.file_type 1
+clip.has_vision_encoder True
+clip.vision.projection_dim 5120
+clip.vision.image_size 768
+clip.vision.patch_size 16
+clip.vision.embedding_length 1152
+clip.vision.feed_forward_length 4304
+clip.vision.block_count 27
+clip.vision.attention.head_count 16
+clip.vision.image_mean [0.5, 0.5, 0.5]
+clip.vision.image_std [0.5, 0.5, 0.5]
+clip.projector_type qwen3vl_merger
+clip.use_gelu True
+clip.vision.spatial_merge_size 2
+clip.vision.attention.layer_norm_epsilon 9.999999974752427e-07
+clip.vision.is_deepstack_layers [False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False]
+general.quantization_version 2

@@ -1,0 +1,35 @@
+{
+  "key": {
+    "flag_id": 1,
+    "packet_hash": "edad0bafd3481b865ac1ebe9aea9c733a761176bef410726d31bd9f1a5827551",
+    "model": "qwen3.8-27b-q8_0",
+    "prompt_ver": "analyst-prompt-2026-10-10.3:985c5f635a4eda75"
+  },
+  "response": {
+    "evidence": [
+      {
+        "claim": "action_type=GAUGE_READING; asset_id=COMP-214; battery_pct=17; status=FAILED; failure_type=SENSOR_TIMEOUT",
+        "ids": [
+          "F1"
+        ]
+      },
+      {
+        "claim": "asset_id=COMP-214; measurement_type=PRESSURE_PSI; value=114.2; unit=psi; quality=QUESTIONABLE",
+        "ids": [
+          "F2"
+        ]
+      }
+    ],
+    "answer": "action_type=GAUGE_READING; asset_id=COMP-214; battery_pct=17; status=FAILED; failure_type=SENSOR_TIMEOUT; asset_id=COMP-214; measurement_type=PRESSURE_PSI; value=114.2; unit=psi; quality=QUESTIONABLE",
+    "question": "What needs operator attention for this data_quality event?",
+    "recommended_action": "REINSPECT_NOW",
+    "confidence": "medium",
+    "insufficient_context": false,
+    "flag_id": 1,
+    "model": "/root/models/q38-27b/Qwen3.8-27B-Q8_0.gguf",
+    "latency_ms": 9885,
+    "tokens_per_sec": 22.40186575196774,
+    "path": "llm"
+  },
+  "created_at": "2026-10-10T20:30:30Z"
+}

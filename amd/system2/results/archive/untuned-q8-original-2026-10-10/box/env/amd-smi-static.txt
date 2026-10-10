@@ -1,0 +1,190 @@
+GPU: 0
+    ASIC:
+        MARKET_NAME: AMD Radeon Pro W7900D
+        VENDOR_ID: 0x1002
+        VENDOR_NAME: Advanced Micro Devices Inc. [AMD/ATI]
+        SUBVENDOR_ID: 0x1002
+        DEVICE_ID: 0x744b
+        SUBSYSTEM_ID: 0x0e0c
+        REV_ID: 0x00
+        ASIC_SERIAL: 0x3D1E08EE04727918
+        OAM_ID: N/A
+        NUM_COMPUTE_UNITS: 96
+        TARGET_GRAPHICS_VERSION: gfx1100
+        FLAGS: 24
+    BUS:
+        BDF: 0000:03:00.0
+        MAX_PCIE_WIDTH: 16
+        MAX_PCIE_SPEED: 16 GT/s
+        PCIE_LEVELS:
+            0: (2.5 GT/s, 1)
+            1: (5.0 GT/s, 4)
+            2: (16.0 GT/s, 16)
+        PCIE_INTERFACE_VERSION: Gen 4
+        SLOT_TYPE: CEM
+    IFWI:
+        NAME: D70709 Navi31 XTW-C A0 GDDR6 48GB 2Slot
+        BUILD_DATE: 2025/09/02 04:45
+        PART_NUMBER: 113-D7070910-100
+        VERSION: 00162356
+    LIMIT:
+        PPT0:
+            MAX_POWER_LIMIT: 241 W
+            MIN_POWER_LIMIT: 144 W
+            SOCKET_POWER_LIMIT: 241 W
+        PPT1:
+            MAX_POWER_LIMIT: N/A
+            MIN_POWER_LIMIT: N/A
+            SOCKET_POWER_LIMIT: N/A
+        SLOWDOWN_EDGE_TEMPERATURE: 100 °C
+        SLOWDOWN_HOTSPOT_TEMPERATURE: 110 °C
+        SLOWDOWN_VRAM_TEMPERATURE: 105 °C
+        SHUTDOWN_EDGE_TEMPERATURE: 105 °C
+        SHUTDOWN_HOTSPOT_TEMPERATURE: 115 °C
+        SHUTDOWN_VRAM_TEMPERATURE: 110 °C
+        PTL_STATE: N/A
+        PTL_FORMAT: N/A
+    DRIVER:
+        NAME: amdgpu
+        VERSION: 6.16.13
+        OS_KERNEL_VERSION: 6.8.0-79-generic
+    BOARD:
+        MODEL_NUMBER: N/A
+        PRODUCT_SERIAL: N/A
+        FRU_ID: N/A
+        PRODUCT_NAME: N/A
+        MANUFACTURER_NAME: Advanced Micro Devices, Inc. [AMD/ATI]
+    RAS:
+        EEPROM_VERSION: N/A
+        BAD_PAGE_THRESHOLD: N/A
+        BAD_PAGE_THRESHOLD_EXCEEDED: N/A
+        PARITY_SCHEMA: N/A
+        SINGLE_BIT_SCHEMA: N/A
+        DOUBLE_BIT_SCHEMA: N/A
+        POISON_SCHEMA: N/A
+        ECC_BLOCK_STATE: N/A
+    SOC_PSTATE: N/A
+    XGMI_PLPD: N/A
+    PROFILE:
+        AVAILABLE_PROFILES:
+      - CUSTOM
+      - VIDEO
+      - POWER_SAVING
+      - COMPUTE
+      - VR
+      - 3D_FULL_SCREEN
+      - BOOTUP_DEFAULT
+        CURRENT: BOOTUP_DEFAULT
+        NUM_PROFILES: 24
+    PROCESS_ISOLATION: Disabled
+    NUMA:
+        NODE: 0
+        AFFINITY: 0
+        CPU_AFFINITY:
+            CPU_LIST_0:
+                BITMASK: 00000000FFFFFFFF
+                CPU_CORES_AFFINITY: 0-31
+            CPU_LIST_1:
+                BITMASK: 00000000FFFFFFFF
+                CPU_CORES_AFFINITY: 64-95
+        SOCKET_AFFINITY:
+            CPU_LIST_0:
+                BITMASK: 00000000FFFFFFFF
+                CPU_CORES_AFFINITY: 0-31
+            CPU_LIST_1:
+                BITMASK: 00000000FFFFFFFF
+                CPU_CORES_AFFINITY: 64-95
+    VRAM:
+        TYPE: GDDR6
+        VENDOR: SAMSUNG
+        SIZE: 49136 MB
+        BIT_WIDTH: 384
+        MAX_BANDWIDTH: N/A 
+    CACHE_INFO:
+        CACHE_0:
+            CACHE_PROPERTIES: DATA_CACHE, SIMD_CACHE
+            CACHE_SIZE: 32 KB
+            CACHE_LEVEL: 1
+            MAX_NUM_CU_SHARED: 1
+            NUM_CACHE_INSTANCE: 96
+        CACHE_1:
+            CACHE_PROPERTIES: INST_CACHE, SIMD_CACHE
+            CACHE_SIZE: 32 KB
+            CACHE_LEVEL: 1
+            MAX_NUM_CU_SHARED: 2
+            NUM_CACHE_INSTANCE: 48
+        CACHE_2:
+            CACHE_PROPERTIES: DATA_CACHE, SIMD_CACHE
+            CACHE_SIZE: 16 KB
+            CACHE_LEVEL: 1
+            MAX_NUM_CU_SHARED: 2
+            NUM_CACHE_INSTANCE: 48
+        CACHE_3:
+            CACHE_PROPERTIES: DATA_CACHE, SIMD_CACHE
+            CACHE_SIZE: 256 KB
+            CACHE_LEVEL: 1
+            MAX_NUM_CU_SHARED: 8
+            NUM_CACHE_INSTANCE: 12
+        CACHE_4:
+            CACHE_PROPERTIES: DATA_CACHE, SIMD_CACHE
+            CACHE_SIZE: 6144 KB
+            CACHE_LEVEL: 2
+            MAX_NUM_CU_SHARED: 96
+            NUM_CACHE_INSTANCE: 1
+        CACHE_5:
+            CACHE_PROPERTIES: DATA_CACHE, SIMD_CACHE
+            CACHE_SIZE: 98304 KB
+            CACHE_LEVEL: 3
+            MAX_NUM_CU_SHARED: 96
+            NUM_CACHE_INSTANCE: 1
+    MEM_CARVEOUT: N/A (UMA carveout is not supported on this ASIC/VBIOS)
+    CLOCK:
+        SYS:
+            CURRENT_LEVEL: 1
+            FREQUENCY_LEVELS:
+                LEVEL 0: 500 MHz
+                LEVEL 1: 159 MHz
+                LEVEL 2: 1760 MHz
+        MEM:
+            CURRENT_LEVEL: 0
+            FREQUENCY_LEVELS:
+                LEVEL 0: 96 MHz
+                LEVEL 1: 456 MHz
+                LEVEL 2: 772 MHz
+                LEVEL 3: 1124 MHz
+        DF:
+            CURRENT_LEVEL: 0
+            FREQUENCY_LEVELS:
+                LEVEL 0: 601 MHz
+                LEVEL 1: 1000 MHz
+                LEVEL 2: 1200 MHz
+                LEVEL 3: 1600 MHz
+                LEVEL 4: 1801 MHz
+                LEVEL 5: 2201 MHz
+                LEVEL 6: 2251 MHz
+                LEVEL 7: 2301 MHz
+        SOC:
+            CURRENT_LEVEL: 0
+            FREQUENCY_LEVELS:
+                LEVEL 0: 500 MHz
+                LEVEL 1: 1500 MHz
+        DCEF:
+            CURRENT_LEVEL: 0
+            FREQUENCY_LEVELS:
+                LEVEL 0: 145 MHz
+                LEVEL 1: 1563 MHz
+        VCLK0:
+            CURRENT_LEVEL: 1
+            FREQUENCY_LEVELS:
+                LEVEL 0: 513 MHz
+                LEVEL 1: 25 MHz
+                LEVEL 2: 2934 MHz
+        VCLK1: N/A
+        DCLK0:
+            CURRENT_LEVEL: 1
+            FREQUENCY_LEVELS:
+                LEVEL 0: 513 MHz
+                LEVEL 1: 25 MHz
+                LEVEL 2: 2200 MHz
+        DCLK1: N/A
+

@@ -1,0 +1,16 @@
+# ~21:08-21:10 UTC, same checkout and servers as 04. amd/system2/cache was emptied before each gauge run, so
+# both gauge runs below are genuine generations (x-system2-cache: miss). The script printed only the lines
+# kept by `grep -E "^==|SYSTEM2|cited"` for these two runs.
+== gauge run 1 | photo gauge_pressure_01.jpg | vision 7 ms | kind gauge | router {'label': 'gauge', 'method': 'kind', 'confidence': 1.0}
+   SYSTEM2 10363 ms wall | cache miss | image used | path llm | latency_ms 10360 | action REINSPECT_NOW
+   cited [['action:A0030'], ['reading:R0053'], ['flag:14']] | V# cited: []
+== gauge run 2 | photo gauge_pressure_01.jpg | vision 7 ms | kind gauge | router {'label': 'gauge', 'method': 'kind', 'confidence': 1.0}
+   SYSTEM2 9327 ms wall | cache miss | image used | path llm | latency_ms 9324 | action REINSPECT_NOW
+   cited [['action:A0030'], ['reading:R0053'], ['flag:14']] | V# cited: []
+== thermal attempt diagnostics (same body, in-process pipeline)
+path fallback
+attempt 1 rejected 11922 ms image_used True
+   err {'code': 'ungrounded_number', 'field': 'answer', 'claim': None, 'value': '1'}
+   raw: {"evidence":[{"claim":"action_type=THERMAL_INSPECTION; asset_id=PANEL-218; battery_pct=24; status=FAILED; failure_type=SENSOR_TIMEOUT","ids":["F1"]},{"claim":"asset_id=PANEL-218; measurement_type=TEMPERATURE_C; value=63.0; unit=C; quality=QUESTIONABLE","ids":["F2"]},{"claim":"asset_id=PANEL-218; anomaly_type=ABNORMAL_TEMPERATURE; severity=MEDIUM; description=Synthetic abnormal temperature detected.","ids":["F3"]}],"answer":"action_type=THERMAL_INSPECTION; asset_id=PANEL-218; battery_pct=24; status=FAILED; failure_type=SENSOR_TIMEOUT; asset_id=PANEL-218; measurement_type=TEMPERATURE_C; value=63.0; unit=C; quality=QUESTIONABLE; asset_id=PANEL-218; anomaly_type=1","question":"What needs operator attention for this equipment event?","recommended_action":"SCHEDULE_MAINTENANCE","confidence":"medium","insufficient_context":false}
+attempt 2 timeout 13078 ms image_used None timeout response not complete within 8.0 s
+# Post-hoc check: the answer string above is exactly 240 characters (ANSWER_CHARS).
