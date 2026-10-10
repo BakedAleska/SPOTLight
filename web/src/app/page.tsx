@@ -8,6 +8,7 @@ import { BatteryCliff } from "@/components/BatteryCliff";
 import { PriorityQueue } from "@/components/PriorityQueue";
 import { StatTile } from "@/components/StatTile";
 import { WelcomeBanner } from "@/components/WelcomeBanner";
+import { LoadingIndicator } from "@/components/LoadingIndicator";
 import type { DashboardData } from "@/lib/dashboard";
 
 async function fetchDashboard(url: string): Promise<DashboardData> {
@@ -35,13 +36,17 @@ export default function Dashboard() {
     window.history.replaceState(null, "", url);
   }
   const { data, error, isValidating, mutate } = useSWR<DashboardData>("/api/dashboard", fetchDashboard, {
-    refreshInterval: 10_000,
+    refreshInterval: (current) => current ? 10_000 : 0,
+    shouldRetryOnError: false,
+    revalidateOnFocus: false,
   });
   if (!data) {
+    if (!error || isValidating) return <LoadingIndicator label="Loading dashboard…" />;
     return (
-      <div className="p-6" role={error ? "alert" : "status"}>
-        <p>{error ? "Cannot load dashboard data. Check that the backend is running." : "Loading dashboard…"}</p>
-        {error && <button type="button" onClick={() => void mutate()} className="mt-3 rounded bg-accent px-4 py-2 text-on-accent">Retry</button>}
+      <div className="flex min-h-[60dvh] flex-col items-center justify-center gap-3 p-6 text-center" role="alert">
+        <p className="font-medium">Dashboard unavailable</p>
+        <p className="text-sm text-muted">The backend isn’t responding. Check its connection, then try again.</p>
+        <button type="button" onClick={() => void mutate()} className="rounded bg-accent px-4 py-2 text-on-accent">Retry</button>
       </div>
     );
   }

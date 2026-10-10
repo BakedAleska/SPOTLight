@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import useSWR from "swr";
+import { LoadingIndicator } from "./LoadingIndicator";
 import type { Flag } from "@/lib/types";
 import type { DashboardData } from "@/lib/dashboard";
 import { explanationLabel, type FlagAction, type FlagDetailData, type FlagExplanation } from "@/lib/flag-detail";
@@ -78,7 +79,7 @@ export function FlagDetails({ flag, features, onClose, onChanged }: {
       </div>
       <p className="mt-2 text-sm text-muted">{flag.assetName || data?.flag.asset_id || "No asset"} · {flag.locationName || data?.flag.location_id || "No waypoint"}</p>
       {error && <p role="alert" className="mt-4 text-bad">{error.message}</p>}
-      {!data && !error && <p role="status" className="mt-4">Loading flag details…</p>}
+      {!data && !error && <LoadingIndicator compact label="Loading flag details…" />}
       <button type="button" disabled={saving || isValidating} onClick={() => void mutate()} className={`${BUTTON} mt-3`}>Refresh flag</button>
       {data && <>
         <p className="mt-4 text-sm">Status: <strong>{data.flag.status}</strong> · {data.flag.severity} · score {data.flag.score}</p>
@@ -89,8 +90,9 @@ export function FlagDetails({ flag, features, onClose, onChanged }: {
         </ul>
         {features.flagExplanations && <section className="mt-5" aria-label="Flag explanation">
           <button type="button" disabled={explanation.isLoading} onClick={() => { setShowExplanation(true); if (showExplanation) void explanation.mutate(); }} className={BUTTON}>
-            {explanation.isLoading ? "Loading explanation…" : showExplanation ? "Reload explanation" : "Load explanation"}
+            {showExplanation ? "Reload explanation" : "Load explanation"}
           </button>
+          {explanation.isLoading && <LoadingIndicator compact label="Loading explanation…" />}
           {explanation.error && <p role="alert" className="mt-2 text-bad">{explanation.error.message}</p>}
           {explanation.data && <div className="mt-3 space-y-2 text-sm">
             <p className="text-muted">{explanationLabel(explanation.data)}</p>
@@ -121,7 +123,7 @@ export function FlagDetails({ flag, features, onClose, onChanged }: {
           </li>)}</ul>
         </section>}
       </>}
-      <p role="status" className="mt-3 text-sm">{saving ? "Saving…" : message}</p>
+      {saving ? <LoadingIndicator compact label="Saving flag…" /> : <p role="status" className="mt-3 text-sm">{message}</p>}
       {actionError && <p role="alert" className="mt-2 text-bad">{actionError}</p>}
     </dialog>
   );
