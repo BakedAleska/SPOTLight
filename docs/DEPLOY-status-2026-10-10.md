@@ -46,6 +46,10 @@ The existing `SpotTheDog` Neon project uses Postgres 18. An initial migration at
 
 The account owner needs to authorize project creation in the intended team and grant the Vercel GitHub app access to `JylerTackson/SpotTheDOT`. Then resume the ordered runbook: MCP → backend → web. Use production domains for cross-project URLs and redeploy after every environment change.
 
+## Publishing blocker
+
+The report is committed locally on `deploy/spotlight-production-20261010`. Git push has no terminal GitHub credentials, and the connected GitHub app returned HTTP 403 (`Resource not accessible by integration`) when creating that branch in `JylerTackson/SpotTheDOT`. Repository write access must be granted before this branch can be pushed and a PR to `main` created. Neither operation has succeeded yet.
+
 ## Requested service verification
 
 | Item | Result |
