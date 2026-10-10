@@ -45,11 +45,24 @@ export function DashboardSkeleton() {
         </div>
         <div className="xl:col-span-2">
           <Panel title="Action success by battery level" className="h-full">
-            <div className="flex flex-1 items-end gap-3" style={{ minHeight: 160 }}>
-              {["h-[70%]", "h-[95%]", "h-[90%]", "h-full", "h-[85%]"].map((height) => (
-                <Bar key={height} className={`flex-1 ${height}`} />
+            {/* Mirrors BatteryCliff's geometry — 18px of cap-label headroom,
+                a 168px plot, then the axis band — so the chart lands where its
+                placeholder was instead of shifting the caption. */}
+            <div className="mt-[18px] ml-9 flex items-end gap-2" style={{ height: 168 }}>
+              {["h-[46%]", "h-[88%]", "h-[92%]", "h-[96%]", "h-[90%]"].map((height) => (
+                <Bar key={height} className={`max-w-6 flex-1 ${height}`} />
               ))}
             </div>
+            <div className="ml-9 flex gap-2 border-t border-line pt-1.5">
+              {[0, 1, 2, 3, 4].map((band) => (
+                <div key={band} className="flex-1">
+                  <Bar className="h-3 w-full" />
+                  <Bar className="mt-1 h-2.5 w-2/3" />
+                </div>
+              ))}
+            </div>
+            <Bar className="mt-3 h-3 w-full" />
+            <Bar className="mt-1.5 h-3 w-4/5" />
           </Panel>
         </div>
       </div>

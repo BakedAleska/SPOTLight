@@ -24,6 +24,10 @@ export interface Headline {
   hiddenFailures: { count: number; ofCompleted: number };
   /** The battery chart's caption. */
   batteryCliff: string;
+  /** Action success across every band above the cliff — the chart's reference
+      line, and the number the caption compares the cliff against. Null when
+      the dataset has no actions above the cliff to average. */
+  aboveCliffRate: number | null;
   /** How much of the queue the mission status field would never have shown. */
   queuedInHiddenMissions: number;
 }
@@ -183,7 +187,8 @@ async function fromBackend(): Promise<Dashboard> {
   // which is the number the backend computes and quotes in its own pitch. The
   // old CSV copy said "on a full charge" while showing the best *band*, which
   // was usually 61-80% and not a full charge at all (audit P-11).
-  const aboveCliff = whole(asNumber(detail(cards, "battery_cliff").above_25_success_pct));
+  const aboveRaw = asNumber(detail(cards, "battery_cliff").above_25_success_pct);
+  const aboveCliff = whole(aboveRaw);
 
   // ── Green but broken ──
   const green = detail(cards, "green_but_broken");
@@ -271,6 +276,7 @@ async function fromBackend(): Promise<Dashboard> {
     batteryBands,
     headline: {
       hiddenFailures: { count: completedWithFailures, ofCompleted: reportedCompleted },
+      aboveCliffRate: aboveRaw === null ? null : whole(aboveRaw),
       batteryCliff: cliff
         ? `Success falls to ${cliff.successRate}% below 25% battery, from ${aboveCliff}% above it — ` +
           `a hard cue to send SPOT back to dock before it gets there.`

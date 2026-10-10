@@ -53,6 +53,7 @@ async function Briefing() {
           <BatteryCliff
             bands={batteryBands}
             caption={headline.batteryCliff}
+            benchmark={headline.aboveCliffRate}
             delay={STAGGER * (stats.length + 1)}
           />
         </div>
