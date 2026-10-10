@@ -35,5 +35,8 @@ Single source of truth. Each entry is the decision plus why, in one or two lines
 - **Vision service fails closed (2026-10-10).** `VISION_API_KEY` required (compose dev default), JPEG/PNG/WebP only, 12 MP, body cap, 2 concurrent analyses: a 107 KB PNG of 25 MP had pushed one request to ~2.5 GB RSS.
 - **Image requests get a longer deadline (2026-10-10):** System 2 25 s (`SYSTEM2_IMAGE_DEADLINE_S`, text stays 15 s), orchestrator System 2 node 28 s: image prefill needs room beyond 15 s (audit A-6), and the chain still ends inside the backend's 45 s.
 
+- **The web console is a pure HTTP client of the backend (2026-10-10).** `web/` opens no database connection: the Overview page reads `/insights/overview`, `/flags`, `/missions`, `/assets` and `/locations` (`web/src/lib/api.ts`, `dashboard.ts`). The backend already owns triage, `/explain`, `/ack` and `/replay`, so a second SQL client would be a second source of truth and still couldn't reach System 1 or System 2. `@neondatabase/serverless` in `web/package.json` is now dead weight. The CSV pass (`web/src/lib/analysis.ts`) survives only as a degraded-mode fallback, behind a banner that says the numbers aren't live, so a dead container never blanks the demo.
+- **The console is containerised and in compose (2026-10-10):** `web/Dockerfile` (standalone, non-root, HEALTHCHECK on `/api/health`) and a `web` service on 3000 in profiles local/hybrid/neon. It waits for `backend` to start but not to be healthy, so the dashboard comes up in degraded mode rather than not at all.
+
 ## Pending
 - Roles.
