@@ -232,6 +232,23 @@ def test_integer_identifiers_are_not_measurements(claim, code):
     assert [e.code for e in check(cand(p, [(claim, ['F1'])]), p)] == ([code] if code else [])
 
 
+@pytest.mark.parametrize('claim, ids, code', [
+    ('action:A0030 failure_type=SENSOR_TIMEOUT; battery_pct=17', ['action:A0030'], None),
+    ('flag:14 category=data_quality; priority=P2', ['flag:14'], None),
+    ('flag:14 battery_pct=15', ['flag:14'], 'ungrounded_number'),            # the ID is masked, not its claim
+    ('action:A0031 failure_type=SENSOR_TIMEOUT', ['action:A0030'], 'ungrounded_identifier'),
+    ('action:A0030 failure_type=SENSOR_TIMEOUT', ['flag:14'], 'ungrounded_identifier'),   # uncited ID
+    ('A0030 battery_pct=17', ['flag:14'], 'ungrounded_identifier'),
+    ('flag:14.5 priority=P2', ['flag:14'], 'ungrounded_number'),             # not the whole ID
+])
+def test_cited_namespaced_ids_in_text_are_references(claim, ids, code):
+    import json
+    body = json.loads((ROOT / 'amd/system2/fixtures/multimodal/gauge_disagree.json').read_text())['request']
+    p = normalize_packet(BackendAssessRequest.model_validate(body))
+    errs = check(cand(p, [(claim, ids)], action='MANUAL_READING'), p)
+    assert [e.code for e in errs if e.field == 'evidence'] == ([code] if code else [])
+
+
 @pytest.mark.parametrize('fact, claim, code', [
     ('battery_pct=17', 'Battery was 17%.', None),
     ('battery_pct=17', 'Battery was 17 percent.', None),

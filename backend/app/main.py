@@ -27,12 +27,14 @@ from .services.calllog import request_id_var
 from .services.flags import FlagNotFound, RequestDeadlineExceeded
 
 VERSION = "1.0.0"
+SERVERLESS_LOG_DRAIN_S = 2.0
 log = logging.getLogger("backend")
 
 TAGS = [
     {"name": "health", "description": "Liveness and dependency status."},
     {"name": "events", "description": "Ingest SPOT events through the 7-step pipeline; read the live feed."},
-    {"name": "replay", "description": "Stream the kit's replay.ndjson through the pipeline in the background."},
+    {"name": "replay", "description": "Stream the kit's replay.ndjson through the pipeline (background task, or "
+                                      "stepped by POST /replay/step on serverless)."},
     {"name": "flags", "description": "Escalated events: list, detail, System 2 context, explanation, operator ack."},
     {"name": "missions", "description": "Missions with True Mission Health, timelines and debriefs."},
     {"name": "system1", "description": "Laya (System 1) proxy and pre-action failure forecasts."},
@@ -56,7 +58,8 @@ def create_app(settings: Optional[Settings] = None, services: Optional[Services]
     async def lifespan(app: FastAPI):
         svc: Services = app.state.svc
         await svc.open()
-        log.info("backend up: triage_mode=%s system1=%s db=%s", settings.triage_mode, settings.system1_url,
+        log.info("backend up: triage_mode=%s replay_mode=%s serverless=%s system1=%s db=%s", settings.triage_mode,
+                 settings.replay_mode, settings.serverless, settings.system1_url,
                  "set" if settings.database_url else "unset")
         try:
             yield
@@ -95,6 +98,9 @@ def create_app(settings: Optional[Settings] = None, services: Optional[Services]
                 app.state.svc.sink.request(request_id=rid, route=getattr(route, "path", path),
                                            method=request.method, status=status,
                                            latency_ms=int((time.perf_counter() - t0) * 1000), error=error)
+            if settings.serverless:
+                # The instance may freeze once the response is sent: finish this request's log writes first.
+                await app.state.svc.sink.drain(timeout_s=SERVERLESS_LOG_DRAIN_S)
             request_id_var.reset(token)
 
     @app.exception_handler(AdminAuthError)

@@ -22,7 +22,7 @@ ROOT = Path(__file__).resolve().parents[1]
 COMPOSE_TEXT = (ROOT / "docker-compose.yml").read_text()
 COMPOSE = yaml.safe_load(COMPOSE_TEXT)
 SERVICES: dict = COMPOSE["services"]
-IMAGE_ONLY_FOLDERS = {"db": "db/"}          # services without a build, by the folder the contract lists them under
+IMAGE_ONLY_FOLDERS = {"db": "db/", "web": "web/"}          # services without a build, by the folder the contract lists them under
 PORT_RE = re.compile(r"^\$\{BIND_ADDR:-127\.0\.0\.1\}:(?P<host>\$\{[A-Z_]+:-(?P<hdef>\d+)\}|\d+):(?P<target>\d+)$")
 
 

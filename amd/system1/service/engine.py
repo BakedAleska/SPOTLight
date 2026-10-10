@@ -49,6 +49,22 @@ def _training_summary(cfg: dict) -> Optional[dict]:
     return out
 
 
+def resolve_checkpoint(checkpoint: str, subdir: Optional[str] = None) -> str:
+    """Local dir for `checkpoint`. With `subdir`, an HF repo id is fetched as `<subdir>/*` only (a private repo
+    reads HF_TOKEN) and the returned dir is `<snapshot>/<subdir>`; a local `checkpoint` ignores `subdir`."""
+    if subdir and not os.path.isdir(checkpoint):
+        from huggingface_hub import snapshot_download
+
+        root = snapshot_download(checkpoint, allow_patterns=["%s/*" % subdir])
+        path = os.path.join(root, subdir)
+        if not os.path.isdir(path):
+            raise FileNotFoundError("%s has no folder %r" % (checkpoint, subdir))
+        return path
+    from laya.train import resolve_checkpoint_dir
+
+    return resolve_checkpoint_dir(checkpoint)
+
+
 class Engine:
     def __init__(self, runner: LayaRunner, checkpoint: str, max_batch: int = 0,
                  resolved_dir: Optional[str] = None):
@@ -65,11 +81,10 @@ class Engine:
 
     # ── loading ──
     @classmethod
-    def load(cls, checkpoint: str, device: str = "auto", amp: bool = True, max_batch: int = 0) -> "Engine":
-        from laya.train import resolve_checkpoint_dir
-
+    def load(cls, checkpoint: str, device: str = "auto", amp: bool = True, max_batch: int = 0,
+             subdir: Optional[str] = None) -> "Engine":
         t0 = time.perf_counter()
-        resolved = resolve_checkpoint_dir(checkpoint)       # downloads to HF_HOME on first use
+        resolved = resolve_checkpoint(checkpoint, subdir)   # downloads to HF_HOME on first use
         runner = LayaRunner.load(resolved, device=device, amp=None if amp else False)
         runner.name = checkpoint
         eng = cls(runner, checkpoint, max_batch=max_batch, resolved_dir=resolved)

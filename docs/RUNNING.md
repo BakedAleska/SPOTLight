@@ -7,13 +7,13 @@ header table too) and this page. Ports and contracts are in `docs/backend-servic
 
 | Service | Port | Profiles | Image / folder | Notes |
 |---|---|---|---|---|
+| `web` | 3000 | local, hybrid, neon, frontend | `node:24`, `web/` | Next.js development dashboard. `/api/dashboard` reads backend data. Polls every 10 seconds; shows connection errors and retains the last successful update. |
 | `db` | 5433 (host: `DB_PORT`) | local, hybrid | `pgvector/pgvector:pg17` | Local stand-in for Neon. Named volume `pgdata`. |
 | `db-init` | n/a | local, hybrid, neon | `db/Dockerfile` | One-shot job: migrate, create login users, seed, ingest (embeds the RAG corpus), graph (rebuilds the Graph RAG `kg_nodes`/`kg_edges`, contract §7; embeds only changed node summaries; `DB_GRAPH_ARGS=--no-embed` skips embedding), status. Idempotent and non-destructive: `seed` only inserts missing rows and loads the demo baseline (events + flags) on a database's first seed, so `make up` never overwrites live or acknowledged flags or refills a reset demo (audit M5). |
 | `embed` | 8081 | local, models | `amd/embed/` | Qwen3-Embedding-0.6B. `TORCH_VARIANT` build arg. HF cache volume `hf-cache`. `EMBED_BATCH=8` (32 OOM-killed it). |
 | `system1` | 8082 | local, models | `amd/system1/service/` | Laya. `TORCH_VARIANT` build arg. Same `hf-cache` volume. Fine-tuned checkpoints are mounted at `/models/checkpoints`. |
 | `mcp` | 8090 | local, hybrid, neon | `amd/mcp/` | Logs in as `spot_mcp_user` (in `spot_mcp_reader`: read-only, plus INSERT on `app.*`). |
 | `backend` | 8000 | local, hybrid, neon | `backend/` | Logs in as `spot_app_user` (in `spot_app`). API docs at http://localhost:8000/docs. `ADMIN_TOKEN` (header `X-Admin-Token`) guards `/ops/*`, `/replay/*` and `POST /events*`; CORS allows `CORS_ORIGINS` only (default `http://localhost:3000`); `REQUEST_DEADLINE_S` (45) bounds `/flags/{id}/context` and `/explain`. |
-| `web` | 3000 | local, hybrid, neon | `web/` | Next.js 16 operator console (SPOTlight). Holds no database URL and no model: every number comes from the backend over HTTP (`BACKEND_URL`, default `http://backend:8000`; `BACKEND_TIMEOUT_MS` per read). Reads `/insights/overview`, `/flags`, `/missions`, `/assets`, `/locations`. It only waits for `backend` to *start*, not to be healthy: when the backend or Neon is unreachable the console renders the kit CSVs instead and says so in a banner, which is the one state it must never fail to show. Liveness: `/api/health`. |
 | `system2` | 8083 | local, hybrid, neon, system2 | `amd/system2/` | Non-root authenticated `/v1/assess` (contract `2026-10-10.backend.2`): packet-grounded stub (`model: stub`) by default, live checked pipeline when `SYSTEM2_LLAMA_URL`/`SYSTEM2_MODEL` are set (through the gateway, `http://gateway:4000`, or llama-server directly; explanation cache in `SYSTEM2_CACHE_DIR`). Optional multimodal inputs: `context.vision[]` V# rows, `context.ocr[]`, `image_b64` (requests with an image use `SYSTEM2_VISION_MODEL`, default `system2-vision`). Backend/orchestrator supply context; no MCP/database access. The image includes `data/` (approved saved packets); the kit is mounted read-only at `/app/kit` (`SPOT_KIT_DIR`). |
 | `gateway` | 4000 (host: `GATEWAY_PORT`) | local, hybrid, neon, system2 | `amd/gateway/` | LiteLLM proxy (`litellm[proxy]==1.104.1`, hash-locked). One OpenAI-compatible endpoint, `Authorization: Bearer $LITELLM_MASTER_KEY`. Aliases `system2` / `system2-vision` -> llama-server (`LLAMA_URL`, `VISION_LLAMA_URL`; default the SSH tunnel on host port 18080), `system1` -> Laya `/v1/predict`, `embed` -> embed; hidden `qwen3.5-9b-q4km` = `system2`. Retries 0, no fallbacks, no DB/UI/telemetry. `GET /health/liveliness` is public. |
 | `vision` | 8084 | local, hybrid, neon, vision | `amd/vision/` | CPU-only OCR (RapidOCR/onnxruntime) + code readers: thermal colorbar, dial gauge, spectrogram, Orbit Key Results. `POST /v1/vision` returns `V#` readings, vision-vs-log `comparison`, Orbit-style `key_results`/`alert` and an annotated JPEG; never calls a model. Required `VISION_API_KEY` (header `X-API-Key`; the service refuses to start without one; `/health` open). JPEG/PNG/WebP only, 12 MP max, 2 concurrent analyses (503 when busy; plan ~2 GB RSS). Models baked into the image; no runtime internet. Contract: `docs/vision-contract.md`. |
@@ -31,6 +31,15 @@ Published ports bind to `127.0.0.1` by default (`BIND_ADDR`). Inside the network
 6. Use `required: false` for any dependency that some profile doesn't start.
 
 ## Setup
+The dashboard starts with the stack at **http://localhost:3000**; no host Node.js installation is needed.
+Its server reads `WEB_BACKEND_URL` (default `http://backend:8000/api/v1` in Docker). Backend secrets stay on
+the backend; the dashboard's read endpoints require no admin token. This wires the overview and queue;
+flag details, explanations and acknowledge/resolve/reopen actions are available. The search box remains
+unfinished. `FEATURE_FLAG_DETAILS`, `FEATURE_FLAG_ACTIONS`, and `FEATURE_FLAG_EXPLANATIONS` independently
+disable features with `false` (disabling details also disables its dependent features). After changing
+the root `.env`, run `docker compose up -d --no-deps web`. `WEB_EXPLAIN_TIMEOUT_MS` (default 50000, 5000–120000) sets how
+long the dashboard waits for an explanation; raise it when System 2 runs a slow local model. Re-enable with `true`; data is retained.
+
 ```bash
 cp .env.example .env                # pick COMPOSE_PROFILES; dev passwords are fine locally
 sed -i.bak "s/^ADMIN_TOKEN=.*/ADMIN_TOKEN=$(openssl rand -hex 24)/" .env   # required for /ops, /replay, POST /events
@@ -92,9 +101,12 @@ make down      # or `make wipe` to drop the database volume too
 - **GPU expectation:** on the AMD GPU a 64-event batch is one forward pass (well under a second), so none of
   this throttling shows. Run the demo in `hybrid` mode, with the contract-default timeouts.
 - Memory: give Docker Desktop at least 8 GB. `LAYA_MAX_BATCH=16` keeps System 1 under ~3.5 GB on large batches.
-- Fine-tuned Laya: put the run under `amd/system1/checkpoints/` (mounted read-only at `/models/checkpoints`), set
-  `LAYA_CHECKPOINT=/models/checkpoints/<run>/best`, then run `docker compose up -d system1`.
-  Check with `curl localhost:8082/v1/model`: it should show `fine_tuned: true`.
+- Fine-tuned Laya is the default: on first start System 1 downloads only `run4_B_lora_lr4/best/` (~850 MB) from the
+  private HF repo `Jyler/KnightHacks-Laya-Model` into the `hf-cache` volume, then reuses it. Put a read token in `.env`
+  as `HF_TOKEN=hf_...`. Without one, System 1 logs a warning and loads base Laya (`LAYA_FALLBACK_CHECKPOINT`).
+  Another run: `LAYA_CHECKPOINT_SUBDIR=<run>/best`. A local run: put it under `amd/system1/checkpoints/` (mounted
+  read-only at `/models/checkpoints`) and set `LAYA_CHECKPOINT=/models/checkpoints/<run>/best`. After a change, run
+  `docker compose up -d system1`. Check with `curl localhost:8082/v1/model`: it should show `fine_tuned: true`.
 
 ## Mode 2: `hybrid`: models native on the AMD GPU box
 The current SSH-reachable box (Radeon Pro W7900D, gfx1100, 48 GB; `ssh spot-amd`): specs, proxy, the Hugging Face
@@ -138,6 +150,12 @@ E2E_DATABASE_URL=$DATABASE_URL backend/.venv/bin/python scripts/e2e.py
 `spot_mcp_user` with those passwords. If Neon refuses `CREATE ROLE`, create the users in the Neon console instead,
 then re-run. Make a Neon branch before any `reset`.
 
+### Backend on Vercel (no Docker)
+The backend also deploys as its own Vercel project (Root Directory `backend/`); steps, env vars and checks are in
+`backend/README.md` "Deploy on Vercel". Run `python db/setup.py migrate` against Neon first (`010_replay_runs.sql`).
+On Vercel the replay is `REPLAY_MODE=stepped`: after `POST /api/v1/replay/start`, something must call
+`POST /api/v1/replay/step` in a loop (contract "Serverless deployment and stepped replay"). Docker is unchanged.
+
 ## Timeouts and keys (how the layers nest)
 Each layer gives up before its caller does, so the caller always gets an answer it can store:
 
@@ -147,7 +165,7 @@ Each layer gives up before its caller does, so the caller always gets an answer 
 | backend -> orchestrator call | min(42 s, time left - 3 s) | `ORCHESTRATOR_TIMEOUT_S` (42) | the backend's own MCP -> System 2 -> template path with the time left |
 | orchestrator `/v1/assess` | 40 s total, `min(3 s, 10 %)` reserve | `ORCH_DEADLINE_S` (40) | template; `trace` shows the skipped/timed-out node |
 | orchestrator nodes | context 15 s (<= 40 %), System 1 6 s, vision 12 s, System 2 20 s, or 28 s when an image is sent (`ORCH_SYSTEM2_IMAGE_BUDGET_S`; vision is capped so that budget stays free, at least 3 s); each capped by what is left | `ORCH_*_BUDGET_S` | node `skipped`/`timeout`, the graph continues |
-| System 2 generation | 15 s over at most two attempts; **25 s for requests with an image** (`SYSTEM2_IMAGE_DEADLINE_S`): the image call keeps 8 s back and on a timeout the same attempt is re-sent text-only | 15 fixed / `SYSTEM2_IMAGE_DEADLINE_S` (25) | checked template, `path: fallback` |
+| System 2 generation | 15 s over at most two attempts; **25 s for requests with an image** (`SYSTEM2_IMAGE_DEADLINE_S`): the image call keeps 8 s back and on a timeout the same attempt is re-sent text-only | `SYSTEM2_DEADLINE_S` (15) / `SYSTEM2_IMAGE_DEADLINE_S` (25) | checked template, `path: fallback` |
 | gateway upstream | `system2` 15 s, `system2-vision` 30 s, `system1` 10 s, `embed` 10 s | `GATEWAY_*_TIMEOUT_S` | error to the caller (no retries, no fallback model) |
 
 System 2 closes its own socket at 15 s (25 s with an image), so the gateway's 30 s vision timeout only matters for
@@ -162,7 +180,7 @@ deadline. `/v1/ask` has its own 30 s (`ASK_DEADLINE_S`, at most 4 tool calls).
 | `ORCHESTRATOR_API_KEY` | `X-API-Key` | backend -> orchestrator (>= 16 chars; refuses to start without one) |
 | `LITELLM_MASTER_KEY` | `Authorization: Bearer` | system2 (`SYSTEM2_LLAMA_API_KEY`), orchestrator (`GATEWAY_KEY`) -> gateway (`sk-`, >= 16 chars) |
 | `VISION_API_KEY` | `X-API-Key` | orchestrator -> vision (required, >= 16 chars; refuses to start without one) |
-| `MCP_AUTH_TOKEN` | `Authorization: Bearer` | backend, orchestrator -> mcp (optional) |
+| `MCP_AUTH_TOKEN` | `Authorization: Bearer` | backend, orchestrator -> mcp (optional; required by the Vercel deploy) |
 
 ## Useful commands
 ```bash
@@ -213,6 +231,7 @@ pipeline: at most two llama-server attempts inside a 15 s deadline, then the che
 | `SYSTEM2_MODEL` | served model name, sent to llama-server and part of the cache key; required when the URL is set | unset |
 | `SYSTEM2_CACHE_DIR` | explanation cache directory | `amd/system2/cache` in a checkout; none in the image unless set to a writable mount |
 | `SYSTEM2_VISION_MODEL` | model for requests that carry `image_b64` (gateway alias `system2-vision`) | compose: `system2-vision`; native: `SYSTEM2_MODEL` |
+| `SYSTEM2_DEADLINE_S` | generation deadline for text requests (the 15 s p95 target); raise only for a slow local model; must be in (0, 120] | `15` |
 | `SYSTEM2_IMAGE_DEADLINE_S` | generation deadline for requests with `image_b64` (text keeps 15 s); must be in (0, 120] | `25` |
 | `SYSTEM2_LLAMA_API_KEY` | sent as `Authorization: Bearer` (the gateway's `LITELLM_MASTER_KEY`); a llama-server without `--api-key` ignores it | compose: `LITELLM_MASTER_KEY`; native: unset |
 

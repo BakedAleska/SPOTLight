@@ -47,6 +47,7 @@ from .prompts import PROMPT_VERSION, prompt_identity
 DEADLINE_S = 15.0   # live-explain p95 target (PROJECT constraint); shared by both attempts
 IMAGE_DEADLINE_S = 25.0   # requests with image_b64 (SYSTEM2_IMAGE_DEADLINE_S); text-only resend inside it (A-6)
 IMAGE_DEADLINE_ENV = 'SYSTEM2_IMAGE_DEADLINE_S'
+DEADLINE_ENV = 'SYSTEM2_DEADLINE_S'   # text requests; default DEADLINE_S (raise only for slow local models)
 URL_ENV, MODEL_ENV, CACHE_ENV = 'SYSTEM2_LLAMA_URL', 'SYSTEM2_MODEL', 'SYSTEM2_CACHE_DIR'
 LLAMA_KEY_ENV = 'SYSTEM2_LLAMA_API_KEY'   # Bearer key for a gateway in front of llama-server (never logged)
 VISION_MODEL_ENV = 'SYSTEM2_VISION_MODEL'   # model for requests with an image; default SYSTEM2_MODEL (backend.2)
@@ -196,6 +197,17 @@ class LiveAssessor:
         return response, status
 
 
+def _seconds_env(environ: Mapping[str, str], name: str, default: float) -> float:
+    raw = (environ.get(name) or '').strip()
+    try:
+        value = float(raw) if raw else default
+    except ValueError:
+        value = -1.0
+    if not 0 < value <= 120:
+        raise RuntimeError('%s must be a number of seconds in (0, 120], got %r' % (name, raw))
+    return value
+
+
 def assessor_from_env(environ: Mapping[str, str] = os.environ) -> Optional[LiveAssessor]:
     """None (stub) when SYSTEM2_LLAMA_URL is unset or blank; RuntimeError on an incomplete or unusable live config."""
     url = (environ.get(URL_ENV) or '').strip()
@@ -203,13 +215,8 @@ def assessor_from_env(environ: Mapping[str, str] = os.environ) -> Optional[LiveA
         return None
     model = (environ.get(MODEL_ENV) or '').strip()
     vision_model = (environ.get(VISION_MODEL_ENV) or '').strip() or None
-    raw_deadline = (environ.get(IMAGE_DEADLINE_ENV) or '').strip()
-    try:
-        image_deadline = float(raw_deadline) if raw_deadline else IMAGE_DEADLINE_S
-    except ValueError:
-        image_deadline = -1.0
-    if not 0 < image_deadline <= 120:
-        raise RuntimeError('%s must be a number of seconds in (0, 120], got %r' % (IMAGE_DEADLINE_ENV, raw_deadline))
+    deadline = _seconds_env(environ, DEADLINE_ENV, DEADLINE_S)
+    image_deadline = _seconds_env(environ, IMAGE_DEADLINE_ENV, IMAGE_DEADLINE_S)
     if not model:
         raise RuntimeError('%s is set but %s is empty; set the served model name (e.g. qwen3.5-9b-q4km)'
                            % (URL_ENV, MODEL_ENV))
@@ -218,8 +225,9 @@ def assessor_from_env(environ: Mapping[str, str] = os.environ) -> Optional[LiveA
     try:
         generator = LlamaGenerator(url, model=model, vision_model=vision_model,
                                    api_key=(environ.get(LLAMA_KEY_ENV) or '').strip() or None,
-                                   image_timeout_s=image_deadline)
+                                   timeout_s=deadline, image_timeout_s=image_deadline)
         return LiveAssessor(generator, model, cache=ExplanationCache(cache_dir) if cache_dir is not None else None,
+                            config=PipelineConfig(deadline_s=deadline, catalog=default_catalog()),
                             image_deadline_s=image_deadline)
     except (ValueError, OSError) as exc:
         raise RuntimeError('live System 2 config unusable (%s %s): %s'

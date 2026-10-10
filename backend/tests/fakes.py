@@ -61,6 +61,9 @@ class FakeRepo:
         self._ids = itertools.count(1)
         self._ack_ids = itertools.count(1)
         self._pred_ids = itertools.count(1)
+        self.replay_runs: List[Dict[str, Any]] = []
+        self.replay_advances = 0
+        self.replay_clock_skew = dt.timedelta(0)    # tests move "now" forward to make paced events due
 
     # ingest
     @_guard
@@ -219,6 +222,64 @@ class FakeRepo:
         self.last_search = ("fulltext", None, q)
         return [{"doc_id": "policy:battery_low", "kind": "policy", "title": "Low battery", "content": "battery",
                  "score": 0.1}]
+
+    # stepped replay (replay_runs): same semantics as the SQL in app/db/queries.py
+    def _run_row(self, r):
+        return {**r, "event_ids": list(r["event_ids"]), "counts": dict(r["counts"]),
+                "db_now": dt.datetime.now(dt.timezone.utc) + self.replay_clock_skew}
+
+    @_guard
+    async def replay_create(self, params, event_ids, job_run_id):
+        if any(r["state"] == "running" for r in self.replay_runs):
+            return None
+        r = {"run_id": len(self.replay_runs) + 1, "state": "running", "params": dict(params),
+             "event_ids": list(event_ids), "next_index": 0, "counts": {}, "last_event": None,
+             "job_run_id": job_run_id, "lease_token": None, "lease_until": None, "error": None,
+             "started_at": dt.datetime.now(dt.timezone.utc), "finished_at": None}
+        self.replay_runs.append(r)
+        return self._run_row(r)
+
+    @_guard
+    async def replay_latest(self):
+        return self._run_row(self.replay_runs[-1]) if self.replay_runs else None
+
+    @_guard
+    async def replay_claim(self, token, lease_s, run_id=None):
+        now = dt.datetime.now(dt.timezone.utc)
+        for r in self.replay_runs:
+            if r["state"] == "running" and (r["lease_until"] is None or r["lease_until"] < now) \
+                    and run_id in (None, r["run_id"]):
+                r["lease_token"], r["lease_until"] = token, now + dt.timedelta(seconds=lease_s)
+                return self._run_row(r)
+        return None
+
+    @_guard
+    async def replay_advance(self, run_id, token, next_index, counts, last_event):
+        self.replay_advances += 1
+        r = self.replay_runs[run_id - 1]
+        if r["lease_token"] != token or r["state"] != "running":
+            return False
+        r.update(next_index=next_index, counts=dict(counts), last_event=last_event)
+        return True
+
+    @_guard
+    async def replay_release(self, run_id, token, state=None, error=None):
+        r = self.replay_runs[run_id - 1]
+        if r["lease_token"] != token or r["state"] != "running":
+            return None
+        r.update(lease_token=None, lease_until=None)
+        if state:
+            r.update(state=state, error=error, finished_at=dt.datetime.now(dt.timezone.utc))
+        return self._run_row(r)
+
+    @_guard
+    async def replay_stop(self):
+        for r in self.replay_runs:
+            if r["state"] == "running":
+                r.update(state="stopped", lease_token=None, lease_until=None,
+                         finished_at=dt.datetime.now(dt.timezone.utc))
+                return self._run_row(r)
+        return None
 
     @_guard
     async def reset_demo(self, clear_predictions):

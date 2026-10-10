@@ -17,7 +17,7 @@ Ten parallel research passes, several with small local prototypes (scratchpad on
 
 Skipped:
 - training audio anomaly models (no audio in the kit)
-- fine-tuning a VLM for gauges (GRPO on synthetic dials took Qwen2.5-VL-7B only from 14.6% to 19.7% on real dials)
+- fine-tuning a VLM for gauges (GRPO on synthetic dials took Qwen2.5-VL-7B only from 14.6% to 19.7% on real images)
 - early fusion of image embeddings into Laya
 
 ## 2. What the kit actually contains
@@ -54,7 +54,7 @@ Skipped:
 
 ## 3. Core principle: code makes the numbers, models read labels and explain
 - **VLMs can't read the measurement itself:**
-  - MeasureBench: best model 30.3% on real gauges, though units are right more than 90% of the time ([2510.26865](https://arxiv.org/abs/2510.26865)).
+  - MeasureBench: best model (Gemini-2.5-Pro) 30.2% over all 26 real instrument types and 31.5% on real dials, though units are right more than 90% of the time; Qwen3-VL-8B gets 15.3%, and prior special-purpose gauge readers scored lower still (8.5%, or failed on all). Scoring is interval matching ([2510.26865](https://arxiv.org/abs/2510.26865), HTML Tables 2 and 7).
   - InSituMeasure: best of 24 models 25.7% ([2609.04014](https://arxiv.org/abs/2609.04014)).
   - ThermEval: 25 VLMs "consistently fail at temperature-grounded reasoning" ([2602.14989](https://arxiv.org/abs/2602.14989)).
   - MapEval routing: 50% vs 85% for humans ([2501.00316](https://arxiv.org/pdf/2501.00316)).
@@ -133,6 +133,19 @@ Not worth doing:
   | Dry-type transformer thermal | thermal | CC BY 4.0 | https://data.mendeley.com/datasets/8mg8mkc7k5 |
   | MIMII valve/pump | audio | CC BY-SA 4.0 | https://zenodo.org/records/3384388 |
 
+- **More Hugging Face candidates** (folded in from the 2026-10-10 dataset survey; sizes and labels checked via the HF datasets-server, nothing downloaded):
+
+  | Dataset | Modality | Size / labels | Licence | Use |
+  |---|---|---|---|---|
+  | [monica-sekoyan/MeasureBenchPressureGauge-DiverseSynthetic](https://huggingface.co/datasets/monica-sekoyan/MeasureBenchPressureGauge-DiverseSynthetic) | pressure gauges (MeasureBench renderers) | 1,000 / 50 / 100; exact psi, needle angle, scale-zero angle | not stated | Tune and test the gauge reader against exact truth; private use only |
+  | [moondream/synthetic-gauges-v6](https://huggingface.co/datasets/moondream/synthetic-gauges-v6) | synthetic dials | 262,144 (~20 GB); JSON value + tick/label pixel positions | not stated | Stream a slice if a learned needle/tick detector is ever needed |
+  | [LibreYOLO/corrosion-bi3q3](https://huggingface.co/datasets/LibreYOLO/corrosion-bi3q3) | real photos | 840 / 304 / 105; boxes: corrosion, crack, slippage (Roboflow 100) | CC BY 4.0 | VISUAL_DEFECT: VLM yes/no eval or a small detector |
+  | [lg227210/gas-valve-anomaly-dataset](https://huggingface.co/datasets/lg227210/gas-valve-anomaly-dataset) | real gas-valve wells | 1,301 images, 3,071 boxes: water, corrosion_rust, seepage, crack, coating damage, fog (VLM-made, human-verified) | MIT | Closest real plant-equipment defects |
+  | [khoaliamle/Corrosion_Rust](https://huggingface.co/datasets/khoaliamle/Corrosion_Rust) | photos | 750; rust / no rust | MIT | Simplest binary check |
+  | [HTill/dcase2025_task2_dev](https://huggingface.co/datasets/HTill/dcase2025_task2_dev) | machine audio | 5,000 / 1,000 / 700; machine type incl. **valve**, normal/anomaly | MIT | Acoustic, only if audio ever replaces the spectrogram image |
+  | [stdt1/mimii_pump_datasets](https://huggingface.co/datasets/stdt1/mimii_pump_datasets) | pump audio as mel spectrograms | 8,830 / 1,893 / 1,892; normal/abnormal, SNR | not stated (MIMII itself is CC BY-SA 4.0) | Same |
+
+  Not useful: HF thermal sets are unlabelled solar panels or "rgb vs thermal" folders (`nealgoogs/thermal-fault-detection-dataset`), so the Mendeley sets above stay the thermal check. `Voxel51/mvtec-ad` is factory parts under CC BY-NC-SA. `Mileeena/synthetic-analog-gauges` (CC BY 4.0, COCO boxes) is gated. MeasureBench's real split has 118 pressure gauges and its synthetic test split 120.
 - **Per-reader metrics:**
   - gauge: MAE as % of full scale, and the share within ±2% FS
   - thermal: max-°C MAE, and hotspot localization error in px

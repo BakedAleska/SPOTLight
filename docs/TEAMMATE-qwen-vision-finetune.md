@@ -55,8 +55,8 @@ must be on the HF Hub with cards.
 ## 2. The core rule: code computes every number, the VLM explains
 
 The research is clear that VLMs can't be trusted to read instruments:
-- **MeasureBench:** the best model scores 30.3% on real gauges, even though units are right more than 90% of the
-  time ([arXiv 2510.26865](https://arxiv.org/abs/2510.26865)).
+- **MeasureBench:** the best model scores 30.2% over all real instruments (31.5% on dials; Qwen3-VL-8B 15.3%), even
+  though units are right more than 90% of the time ([arXiv 2510.26865](https://arxiv.org/abs/2510.26865)).
 - **InSituMeasure:** the best of 24 MLLMs reaches 25.7% joint value-unit accuracy
   ([arXiv 2609.04014](https://arxiv.org/abs/2609.04014)).
 - **ThermEval:** across 25 VLMs, models "consistently fail at temperature-grounded reasoning"
@@ -90,6 +90,8 @@ JSON). Goal (a) is what wins the demo, and only this kind of example teaches it.
 | [RaptorMaps/InfraredSolarModules](https://github.com/RaptorMaps/InfraredSolarModules) | thermal (solar) | **MIT** (repo) | 20K images, **24×40 px**, 12 classes (Hot-Spot, Diode…) | Weak fit: tiny images and a different domain. Use only for a hotspot / no-hotspot auxiliary. |
 
 None of these come with our V# rows. They teach perception. **The faithfulness behaviour comes from §3.2.**
+More HF candidates (exact-psi synthetic gauges, corrosion and valve-defect sets, machine audio) are in the research
+file §6, "More Hugging Face candidates".
 
 ### 3.2 How to build supervision (in order of value)
 
@@ -149,7 +151,7 @@ None of these come with our V# rows. They teach perception. **The faithfulness b
 | Starting hyper-params | r=16, alpha=16 (Unsloth example; "alpha ≥ r"), lr **1e-4** for adapters (TRL tip), warmup 10 steps, 1–2 epochs (or 100–300 steps), batch 1 × grad-accum 8, bf16, gradient checkpointing, `max_length=None` (TRL: truncation can cut image tokens), loss on completion/assistant only | Unsloth guide, TRL docs |
 | Output | Must validate against System 2's packet-scoped schema: `GeneratedAssessment` / `response_schema()` in `amd/system2/analyst/generation.py`. Six fields in this order: `evidence[{claim≤160, ids}]` (≤3), `answer≤240`, `question` (copied verbatim), `recommended_action` (from the packet's `allowed_actions`), `confidence` `high\|medium\|low`, `insufficient_context` | Run `validate_generated()` on **every** target before training |
 
-**Skip RL.** MeasureBench's GRPO on synthetic dials took Qwen2.5-VL-7B from only 14.6% to 19.7% on real dials
+**Skip RL.** MeasureBench's GRPO on synthetic dials took Qwen2.5-VL-7B from only 14.6% to 19.7% on real images
 (research file §1). That isn't worth a weekend.
 
 ## 5. Export and serving

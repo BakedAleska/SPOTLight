@@ -6,9 +6,8 @@
 // The CSV columns are the ones db/migrations/001_core.sql uses, so the field
 // names here are the Neon column names.
 //
-// THIS IS THE FALLBACK PATH. The console reads the backend (@/lib/api,
-// @/lib/dashboard); this module and @/lib/analysis only run when the backend
-// can't be reached, behind the banner in @/components/DegradedNotice.
+// OFFLINE ANALYSIS ONLY. The console reads the backend via @/lib/backend.
+// This module and @/lib/analysis are retained for offline kit analysis.
 //
 // SERVER ONLY. This touches the filesystem, so it must never be reached from a
 // Client Component — import types from @/lib/types there instead.

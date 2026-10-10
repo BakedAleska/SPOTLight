@@ -4,6 +4,11 @@
 container) is down; queries then raise `DatabaseUnavailable`, which the app maps to a 503 (never a 500).
 It also introspects which columns exist, so the backend can use additive columns (e.g. `flags.priority`,
 `raw.spot_event_log.request_id`) when the migration has them and skip them when it doesn't.
+
+Neon's pooled endpoint is PgBouncer in transaction mode: no prepared statements (`prepare_threshold=None`), no
+session state (autocommit, no SET/LISTEN/advisory locks/temp tables; multi-statement work uses `transaction()`).
+Serverless (Vercel): `min_size=0` and `check=True` (a connection idle across a frozen instance is tested on checkout
+and replaced, instead of failing the request and tripping the breaker).
 """
 from __future__ import annotations
 
@@ -25,10 +30,12 @@ class DatabaseUnavailable(RuntimeError):
 
 class Database:
     def __init__(self, url: Optional[str], *, name: str = "main", pool_max: int = 10,
-                 connect_timeout_s: float = 3.0):
+                 connect_timeout_s: float = 3.0, pool_min: int = 1, check: bool = False):
         self.url = url
         self.name = name
         self.pool_max = pool_max
+        self.pool_min = max(0, min(pool_min, pool_max))
+        self.check = check
         self.connect_timeout_s = connect_timeout_s
         self.pool: Optional[AsyncConnectionPool] = None
         self._columns: Dict[Tuple[str, str], Set[str]] = {}
@@ -48,9 +55,11 @@ class Database:
             return
         # prepare_threshold=None: Neon's pooled endpoint (PgBouncer, transaction mode) rejects prepared statements.
         self.pool = AsyncConnectionPool(
-            conninfo=self.url, min_size=1, max_size=self.pool_max, open=False, timeout=self.connect_timeout_s,
+            conninfo=self.url, min_size=self.pool_min, max_size=self.pool_max, open=False,
+            timeout=self.connect_timeout_s,
             kwargs={"autocommit": True, "row_factory": dict_row, "prepare_threshold": None,
                     "connect_timeout": max(1, int(self.connect_timeout_s))},
+            check=AsyncConnectionPool.check_connection if self.check else None,
             name="backend-%s" % self.name, reconnect_timeout=0)
         await self.pool.open(wait=False)
 

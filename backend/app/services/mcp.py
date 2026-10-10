@@ -45,15 +45,20 @@ class MCPClient:
         self.timeout_s = timeout_s
         self.breaker = breaker or Breaker()
 
-    async def _rpc(self, method: str, params: Dict[str, Any], session: Optional[str],
-                   request_id: Optional[str], notify: bool = False) -> tuple[Optional[Dict[str, Any]], Optional[str]]:
-        headers = {"Accept": "application/json, text/event-stream", "Content-Type": "application/json",
-                   "X-Request-ID": request_id or ""}
+    def _session_headers(self, session: Optional[str], request_id: Optional[str]) -> Dict[str, str]:
+        """Auth + session headers, shared by every POST and the closing DELETE (the server checks auth on both)."""
+        headers = {"X-Request-ID": request_id or ""}
         if self.auth_token:
             headers["Authorization"] = "Bearer " + self.auth_token
         if session:
             headers["Mcp-Session-Id"] = session
             headers["MCP-Protocol-Version"] = PROTOCOL_VERSION
+        return headers
+
+    async def _rpc(self, method: str, params: Dict[str, Any], session: Optional[str],
+                   request_id: Optional[str], notify: bool = False) -> tuple[Optional[Dict[str, Any]], Optional[str]]:
+        headers = {"Accept": "application/json, text/event-stream", "Content-Type": "application/json",
+                   **self._session_headers(session, request_id)}
         msg: Dict[str, Any] = {"jsonrpc": "2.0", "method": method, "params": params}
         rid = None
         if not notify:
@@ -95,7 +100,7 @@ class MCPClient:
         finally:
             if session:
                 try:
-                    await self.http.delete(self.url, headers={"Mcp-Session-Id": session}, timeout=2.0)
+                    await self.http.delete(self.url, headers=self._session_headers(session, request_id), timeout=2.0)
                 except httpx.HTTPError:
                     pass
         self.breaker.success()

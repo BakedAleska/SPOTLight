@@ -1,47 +1,86 @@
-# web: SPOTlight operator console (Next.js)
+# SPOTlight dashboard
 
-The operator-facing UI. The system map is in `docs/ARCHITECTURE.md`.
+Run the frontend and backend together from the repository root:
 
 ```bash
-cd web && npm install && npm run dev   # http://localhost:3000
+make up
 ```
-It reads the backend at `BACKEND_URL` (default `http://localhost:8000`), so start that first — `make up` at the
-repo root brings up the whole stack including this console on port 3000 (`web/Dockerfile`, profile `local`).
 
-## Current state (2026-10-10)
-- One page, `/` (`src/app/page.tsx`): the shift-start briefing. It shows the hidden-failures headline, stat tiles, the priority queue and the battery-cliff chart.
-- The other sidebar items (Missions, Analytics, Assets, AI review, Settings) are placeholders (`src/components/shell/nav.ts`).
-- **Data comes from the backend API**, read in the server process: `src/lib/api.ts` (the only place this app
-  speaks HTTP) and `src/lib/dashboard.ts` (maps the responses onto the panels' props). The page calls
-  `/insights/overview`, `/flags`, `/missions`, `/assets` and `/locations`; the flags are the ones the backend
-  triaged with Laya and the policy validator, in Neon. Contract: `docs/backend-services-contract.md`,
-  "Web console consumption".
-- **Degraded mode.** If the backend can't be read, the page renders `src/lib/analysis.ts` instead — the kit CSVs in
-  `data/kit/`, triaged in-process — behind a banner saying the numbers aren't live. A console that goes blank when
-  one container is down is worse than one that shows sample data and labels it.
-- `/api/health` is liveness for the container; it deliberately does not probe the backend.
+Open http://localhost:3000. Docker supplies Node.js and installs frontend dependencies automatically.
+To start just the dashboard against the existing Docker backend:
 
-## Next: the act half of the loop
-The backend already serves the parts this page doesn't use yet:
-- explanations (`POST /api/v1/flags/{id}/explain`) — Orbit-style question / answer / reasoning / action
-- operator acknowledgements (`POST /api/v1/flags/{id}/ack`)
-- the live replay (`POST /api/v1/replay/start`, needs `X-Admin-Token`)
-- the live feed (`/api/v1/events`), forecasts, missions, search and `/api/v1/ask`
+```bash
+docker compose up -d web
+```
 
-Those are writes, so they belong in Route Handlers or Server Actions, not in a Client Component: `BACKEND_URL` is
-an internal address and `BACKEND_ADMIN_TOKEN` is a secret. Routes are listed in `backend/README.md`.
+The overview fetches `/api/dashboard` immediately and every 10 seconds while visible. This Next.js server
+route requests `/api/v1/insights/overview`, `/flags?status=OPEN&limit=500`, `/assets`, `/locations`, and
+`/insights/reliability?group_by=battery_band` from FastAPI. Backend order and scores are preserved.
+Up to 500 open escalated flags are displayed, with the total shown when the queue is larger. Metrics and
+battery bands come from backend data, replacing the frontend CSV analysis. The battery chart uses a
+0–100 axis, visible bars and the backend's above-25% success rate as its reference line. Failed requests show an error
+and Retry; a failed refresh retains the last successful data with a connection warning. Refresh now
+requests an immediate update.
 
-## Design rules (Figma track)
-- Never show status by color alone: use color + icon + word.
-- Everything works from the keyboard.
-- Text meets WCAG AA contrast.
-- Dark operator theme, with a light toggle.
+The V2 comparison uses the backend's matched-battery metric (actions above 40% battery), rather than
+unadjusted gain. Click a flag to see its evidence, status and action history. Load explanation requests
+the backend's explanation on demand, with template/stub output labeled. Acknowledge or Resolve updates
+the backend and removes the flag from the open queue. The panel stays open with Reopen flag available;
+reopening returns it to OPEN and retains notes and audit history. The shell's search field remains unfinished.
 
-## Environment
-| Var | Meaning | Default |
-|---|---|---|
-| `BACKEND_URL` | the backend's base URL (no trailing `/api/v1`) | `http://localhost:8000` (image: `http://backend:8000`) |
-| `BACKEND_TIMEOUT_MS` | per read; raise it for a slow Neon cold start | `10000` |
-| `BACKEND_ADMIN_TOKEN` | `X-Admin-Token` for `/replay` and `/ops`; must equal the backend's `ADMIN_TOKEN` | unset |
+## Reversible features
 
-None is `NEXT_PUBLIC_`, so none of them reaches the browser bundle.
+Set any of these in the root `.env` to `false` and run `docker compose up -d --no-deps web`:
+
+```dotenv
+FEATURE_FLAG_DETAILS=true
+FEATURE_FLAG_ACTIONS=true
+FEATURE_FLAG_EXPLANATIONS=true
+```
+
+Defaults are `true`. Actions and explanations can be disabled independently while details remain
+available. Disabling details also disables both dependent features. Disabled features are hidden and
+their Next.js routes reject requests. Set them back to `true` and run the same command to restore them.
+The switches do not erase data or change the underlying FastAPI endpoints, and are not authentication.
+For native development set them in `web/.env.local` and restart the dev server.
+
+Reopen reverses the flag's status change; it does not delete the recorded acknowledgement, resolution,
+or note. After closing an acknowledged/resolved flag, reopen its detail at `/?flag=<flag_id>`.
+
+For native development with Node.js installed:
+
+```bash
+cd web
+npm ci
+npm run dev
+```
+
+The default backend is `http://127.0.0.1:8000/api/v1`. Set `BACKEND_URL` in `web/.env.local` to change it.
+In Docker, set `WEB_BACKEND_URL` in the root `.env` instead. Include `/api/v1` in either URL. These are
+server settings; the browser always requests its own `/api/dashboard` origin. No frontend admin secret
+or browser CORS configuration is required for these reads.
+
+## Deploy on Vercel
+
+Import the repository as a new Vercel project with these settings:
+
+- **Root Directory:** `web/`
+- **Framework Preset:** Next.js (auto-detected; default build and output settings, no `vercel.json`)
+- **Node.js:** 24.x, pinned by `engines.node` in `package.json`, matching CI
+
+`/` is prerendered as a static shell at build time, and its data loads in the browser from `/api/dashboard`. That route
+and the `/api/flags/*` routes run as Vercel Functions that proxy to FastAPI. Nothing reads `web/data/kit/*.csv` at
+runtime, so no file tracing configuration is needed.
+
+Environment variables (Project Settings → Environment Variables):
+
+| Variable | Required | Value |
+| --- | --- | --- |
+| `BACKEND_URL` | Yes | Public HTTPS URL of the FastAPI backend, including `/api/v1` (its production domain, e.g. `https://<backend>.vercel.app/api/v1`: preview URLs sit behind Deployment Protection). Server-only; never sent to the browser. |
+| `FEATURE_FLAG_DETAILS`, `FEATURE_FLAG_ACTIONS`, `FEATURE_FLAG_EXPLANATIONS` | No | Set `false` to switch a feature off (default `true`). |
+| `EXPLAIN_TIMEOUT_MS` | No | Explanation request timeout, 5000–120000 (default 50000). |
+
+Without `BACKEND_URL` the routes fall back to `http://127.0.0.1:8000/api/v1`, which does not exist on Vercel. The page
+still loads, but the dashboard shows "Cannot reach the dashboard data". Env changes only apply to new deployments, so
+redeploy after setting them. If the backend later moves to direct browser calls, it will need a `NEXT_PUBLIC_API_URL`
+(inlined at build time) and CORS for the Vercel domain. The current server proxy needs neither.

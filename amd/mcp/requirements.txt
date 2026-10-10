@@ -1,7 +1,5 @@
 # SPOT context MCP server (amd/mcp). Python >= 3.10. No torch: embeddings come from the embedding service over HTTP.
+# Runtime only (Vercel bundles this file). Tests also need: pip install pytest anyio
 mcp>=2.3,<3              # official MCP Python SDK 2.x (MCPServer, formerly FastMCP); brings httpx2, starlette, uvicorn, pydantic
 psycopg[binary]>=3.2,<4  # async Postgres driver
 psycopg-pool>=3.2,<4     # small async connection pool
-# tests
-pytest>=8
-anyio>=4.9

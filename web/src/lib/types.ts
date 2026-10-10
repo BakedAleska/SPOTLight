@@ -3,11 +3,9 @@
 //
 // Deliberately free of imports: a Client Component can take these types
 // without dragging the loader — and `node:fs` with it — into the browser
-// bundle. The data that fills them is computed in @/lib/analysis.
+// bundle. Live dashboard data is adapted by @/lib/backend.
 //
-// These mirror the `flags` columns in db/migrations/001_core.sql, so the same
-// shapes serve both sources: @/lib/dashboard fills them from the backend API,
-// and @/lib/analysis from the kit CSVs when it can't be reached.
+// Backend response fields are mapped to these presentation shapes.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type Severity = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
@@ -18,7 +16,7 @@ export interface Reason {
   rule: string;
   /** The operator-readable sentence. */
   detail: string;
-  /** Points this rule added — the score is the sum, nothing hidden. */
+  /** Backend policy weight; backend score also includes priority/confidence. */
   weight: number;
 }
 
@@ -26,7 +24,7 @@ export interface Flag {
   id: string;
   missionId: string;
   severity: Severity;
-  /** 0–100 priority. */
+  /** Backend priority score (0–100), independent of the reason weights. */
   score: number;
   title: string;
   assetName: string;

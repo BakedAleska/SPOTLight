@@ -49,7 +49,7 @@ const BAR_MAX = 24;
 export function BatteryCliff({
   bands,
   caption,
-  benchmark,
+  benchmark = null,
   delay,
 }: {
   bands: BatteryBand[];
@@ -58,7 +58,7 @@ export function BatteryCliff({
   /** Action success across every band above the cliff, drawn as the reference
       line. Null when the backend didn't report it — the chart then just drops
       the line rather than inventing a baseline. */
-  benchmark: number | null;
+  benchmark?: number | null;
   delay?: number;
 }) {
   // An empty dataset is a real state here: the console comes up before a
@@ -75,7 +75,7 @@ export function BatteryCliff({
   // The lowest band is the story. Its own label carries the threshold the
   // reference line is measured against ("≤25%" → "25%"), so the key in the
   // header can't drift from the band the backend actually bucketed on.
-  const cliffEdge = bands[0].band.replace(/^≤/, "");
+  const cliffEdge = "25%";
 
   return (
     <Panel
@@ -144,8 +144,8 @@ export function BatteryCliff({
           {/* The bars. `inset-0` is what makes the columns' height definite,
               and therefore what makes the bars have any height at all. */}
           <div className="absolute inset-0 flex items-end gap-2">
-            {bands.map((band, i) => {
-              const isCliff = i === 0;
+            {bands.map((band) => {
+              const isCliff = band.band.startsWith("≤25");
               return (
                 <div
                   key={band.band}

@@ -171,8 +171,16 @@ class ReplayStart(BaseModel):
     reset: bool = Field(False, description="Run reset-demo first (clears live events/flags).")
 
 
+class ReplayStep(BaseModel):
+    run_id: Optional[int] = Field(None, description="Only step this run (default: the running one).")
+    budget_s: Optional[float] = Field(None, ge=0.5, le=60, description="Time budget of this step "
+                                                                       "(default REPLAY_STEP_BUDGET_S, 10).")
+    max_events: int = Field(100, ge=1, le=500, description="At most this many events in this step.")
+
+
 class ReplayStatus(Loose):
     state: Literal["idle", "running", "stopping", "stopped", "finished", "error"]
+    mode: Optional[Literal["background", "stepped"]] = None
 
 
 # ── ops ─────────────────────────────────────────────────────────────────────────────────────────

@@ -56,6 +56,8 @@ class Harness:
             obj.sink = self.sink
         s.pipeline.repo = self.repo
         s.flags.repo = self.repo
+        if hasattr(s.replay, "repo"):          # REPLAY_MODE=stepped keeps its run in the (fake) DB
+            s.replay.repo = self.repo
         self.app = create_app(settings, services=s)
         # Sends the admin token like the dashboard's operator console would (audit H3); tests/test_auth.py
         # covers the missing/wrong/unset cases with its own clients.
