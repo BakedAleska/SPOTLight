@@ -9,6 +9,7 @@ import { TopBar } from "./TopBar";
    crumbs down from each page means a new route gets a correct breadcrumb by
    adding one line, and never gets a stale one. */
 const CRUMBS: Record<string, string[]> = {
+  "/missions/replay": ["SPOTlight", "Missions", "Path preview"],
   "/": ["SPOTlight", "Overview"],
 };
 

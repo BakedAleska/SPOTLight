@@ -28,7 +28,7 @@ export const nav: NavItem[] = [
     children: [
       { label: "All missions" },
       { label: "Flagged" },
-      { label: "Replay" },
+      { label: "Replay", href: "/missions/replay" },
     ],
   },
   { label: "Analytics", icon: ChartColumn, href: "/analytics" },
