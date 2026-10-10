@@ -717,6 +717,26 @@ body {
   animation: spotlight-radar-return 12s linear var(--blip-delay) infinite;
 }
 
+/* Vary symbols between sweeps, independently of each return's fade clock. */
+.spotlight-radar-dot {
+  animation: spotlight-radar-dot var(--symbol-period) steps(1, end) var(--symbol-delay) infinite;
+}
+
+.spotlight-radar-caution {
+  filter: drop-shadow(0 0 2px #cf6262);
+  animation: spotlight-radar-caution var(--symbol-period) steps(1, end) var(--symbol-delay) infinite;
+}
+
+@keyframes spotlight-radar-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@keyframes spotlight-radar-caution {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
+}
+
 /* The 90-degree trail takes three seconds to pass a return. Fade throughout
    that interval, reaching transparency at the tail rather than after it. */
 @keyframes spotlight-radar-return {

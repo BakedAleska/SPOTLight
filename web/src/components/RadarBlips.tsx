@@ -16,9 +16,17 @@ export function RadarBlips() {
         const angle = Math.atan2(y - 1042.42, x - 1008);
         const phase = ((angle - HEAD + Math.PI * 2) % (Math.PI * 2)) / (Math.PI * 2);
         return <g key={index} className="spotlight-radar-blip"
-          style={{ "--blip-delay": `${phase * PERIOD}s` } as CSSProperties}>
-          <circle cx={x} cy={y} r="62" opacity="0.3" />
-          <circle cx={x} cy={y} r="32" />
+          style={{ "--blip-delay": `${phase * PERIOD}s`, "--symbol-period": `${PERIOD * (index % 2 + 2)}s`, "--symbol-delay": `${phase * PERIOD - index * PERIOD}s` } as CSSProperties}>
+          <g className="spotlight-radar-dot">
+            <circle cx={x} cy={y} r="62" opacity="0.3" />
+            <circle cx={x} cy={y} r="32" />
+          </g>
+          <g className="spotlight-radar-caution" transform={`translate(${x} ${y})`}>
+            <path d="M 0 -48 L 44 34 Q 47 40 39 40 H -39 Q -47 40 -44 34 Z"
+              fillOpacity="0.18" stroke="#cf6262" strokeWidth="7" strokeLinejoin="round" />
+            <path d="M 0 -18 V 10" fill="none" stroke="#cf6262" strokeWidth="8" strokeLinecap="round" />
+            <circle cy="25" r="5" />
+          </g>
         </g>;
       })}
     </g>
