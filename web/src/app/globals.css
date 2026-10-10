@@ -723,7 +723,7 @@ body {
 }
 
 .spotlight-radar-caution {
-  filter: drop-shadow(0 0 2px #cf6262);
+  filter: drop-shadow(0 0 2px #ffca44);
   animation: spotlight-radar-caution var(--symbol-period) steps(1, end) var(--symbol-delay) infinite;
 }
 

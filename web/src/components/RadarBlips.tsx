@@ -21,10 +21,10 @@ export function RadarBlips() {
             <circle cx={x} cy={y} r="62" opacity="0.3" />
             <circle cx={x} cy={y} r="32" />
           </g>
-          <g className="spotlight-radar-caution" transform={`translate(${x} ${y})`}>
+          <g className="spotlight-radar-caution" fill="#ffca44" transform={`translate(${x} ${y})`}>
             <path d="M 0 -48 L 44 34 Q 47 40 39 40 H -39 Q -47 40 -44 34 Z"
-              fillOpacity="0.18" stroke="#cf6262" strokeWidth="7" strokeLinejoin="round" />
-            <path d="M 0 -18 V 10" fill="none" stroke="#cf6262" strokeWidth="8" strokeLinecap="round" />
+              fillOpacity="0.18" stroke="#ffca44" strokeWidth="7" strokeLinejoin="round" />
+            <path d="M 0 -18 V 10" fill="none" stroke="#ffca44" strokeWidth="8" strokeLinecap="round" />
             <circle cy="25" r="5" />
           </g>
         </g>;
