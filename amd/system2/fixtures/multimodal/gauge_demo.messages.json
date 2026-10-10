@@ -1,5 +1,5 @@
 {
- "prompt_version": "analyst-prompt-2026-10-10.3",
+ "prompt_version": "analyst-prompt-2026-10-10.4",
  "fixture": "gauge_demo.json",
  "request_body": {
   "model": "system2-vision",
@@ -14,7 +14,7 @@
    },
    {
     "role": "assistant",
-    "content": "{\"evidence\":[{\"claim\":\"action_type=VISUAL_INSPECTION; asset_id=HX-208; battery_pct=22; status=FAILED; failure_type=SENSOR_TIMEOUT\",\"ids\":[\"F1\"]},{\"claim\":\"asset_id=HX-208; measurement_type=VISUAL_SCORE; value=75; unit=score; quality=QUESTIONABLE\",\"ids\":[\"F2\"]}],\"answer\":\"action_type=VISUAL_INSPECTION; asset_id=HX-208; battery_pct=22; status=FAILED; failure_type=SENSOR_TIMEOUT; asset_id=HX-208; measurement_type=VISUAL_SCORE; value=75; unit=score; quality=QUESTIONABLE\",\"question\":\"What needs operator attention for this equipment event?\",\"recommended_action\":\"SCHEDULE_MAINTENANCE\",\"confidence\":\"medium\",\"insufficient_context\":false}"
+    "content": "{\"evidence\":[{\"claim\":\"action_type=VISUAL_INSPECTION; asset_id=HX-208; battery_pct=22; status=FAILED; failure_type=SENSOR_TIMEOUT\",\"ids\":[\"F1\"]},{\"claim\":\"asset_id=HX-208; measurement_type=VISUAL_SCORE; value=75; unit=score; quality=QUESTIONABLE\",\"ids\":[\"F2\"]}],\"answer\":\"The visual inspection of HX-208 failed with SENSOR_TIMEOUT and its visual score of 75 is QUESTIONABLE, so schedule maintenance.\",\"question\":\"What needs operator attention for this equipment event?\",\"recommended_action\":\"SCHEDULE_MAINTENANCE\",\"confidence\":\"medium\",\"insufficient_context\":false}"
    },
    {
     "role": "user",
@@ -22,7 +22,7 @@
    },
    {
     "role": "assistant",
-    "content": "{\"evidence\":[{\"claim\":\"action_type=NAVIGATION; asset_id=HX-201; battery_pct=75; status=FAILED; failure_type=OBSTACLE_DETECTION\",\"ids\":[\"F1\"]},{\"claim\":\"asset_id=HX-201; measurement_type=LOCALIZATION_CONFIDENCE_PCT; value=44.4; unit=pct; quality=QUESTIONABLE\",\"ids\":[\"F2\"]}],\"answer\":\"action_type=NAVIGATION; asset_id=HX-201; battery_pct=75; status=FAILED; failure_type=OBSTACLE_DETECTION; asset_id=HX-201; measurement_type=LOCALIZATION_CONFIDENCE_PCT; value=44.4; unit=pct; quality=QUESTIONABLE\",\"question\":\"What needs operator attention for this navigation event?\",\"recommended_action\":\"CLEAR_PATH\",\"confidence\":\"medium\",\"insufficient_context\":false}"
+    "content": "{\"evidence\":[{\"claim\":\"action_type=NAVIGATION; asset_id=HX-201; battery_pct=75; status=FAILED; failure_type=OBSTACLE_DETECTION\",\"ids\":[\"F1\"]},{\"claim\":\"asset_id=HX-201; measurement_type=LOCALIZATION_CONFIDENCE_PCT; value=44.4; unit=pct; quality=QUESTIONABLE\",\"ids\":[\"F2\"]}],\"answer\":\"Navigation at HX-201 failed with OBSTACLE_DETECTION and localization confidence was 44.4% (QUESTIONABLE), so clear the path.\",\"question\":\"What needs operator attention for this navigation event?\",\"recommended_action\":\"CLEAR_PATH\",\"confidence\":\"medium\",\"insufficient_context\":false}"
    },
    {
     "role": "user",
@@ -30,7 +30,7 @@
    },
    {
     "role": "assistant",
-    "content": "{\"evidence\":[{\"claim\":\"action_type=GAUGE_READING; asset_id=COMP-214; battery_pct=17; status=FAILED; failure_type=SENSOR_TIMEOUT\",\"ids\":[\"F1\"]},{\"claim\":\"asset_id=COMP-214; measurement_type=PRESSURE_PSI; value=114.2; unit=psi; quality=QUESTIONABLE\",\"ids\":[\"F2\"]}],\"answer\":\"action_type=GAUGE_READING; asset_id=COMP-214; battery_pct=17; status=FAILED; failure_type=SENSOR_TIMEOUT; asset_id=COMP-214; measurement_type=PRESSURE_PSI; value=114.2; unit=psi; quality=QUESTIONABLE\",\"question\":\"What needs operator attention for this data_quality event?\",\"recommended_action\":\"REINSPECT_NOW\",\"confidence\":\"medium\",\"insufficient_context\":false}"
+    "content": "{\"evidence\":[{\"claim\":\"action_type=GAUGE_READING; asset_id=COMP-214; battery_pct=17; status=FAILED; failure_type=SENSOR_TIMEOUT\",\"ids\":[\"F1\"]},{\"claim\":\"asset_id=COMP-214; measurement_type=PRESSURE_PSI; value=114.2; unit=psi; quality=QUESTIONABLE\",\"ids\":[\"F2\"]}],\"answer\":\"The gauge reading on COMP-214 failed with SENSOR_TIMEOUT and the logged 114.2 psi is QUESTIONABLE, so reinspect now.\",\"question\":\"What needs operator attention for this data_quality event?\",\"recommended_action\":\"REINSPECT_NOW\",\"confidence\":\"medium\",\"insufficient_context\":false}"
    },
    {
     "role": "user",

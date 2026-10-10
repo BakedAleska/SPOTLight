@@ -259,6 +259,18 @@ def test_exactly_three_grounded_training_fewshots_precede_current_packet():
     assert 'Current packet' in messages[-1]['content'] and 'Example packet' in messages[1]['content']
 
 
+def test_fewshot_answers_are_short_reviewed_sentences_not_joined_claims():
+    p = prompts()
+    pool = p.load_examples()
+    assert {ex.case_id for ex in pool} <= set(p.EXAMPLE_ANSWERS)
+    for ex in pool:
+        out = ex.output
+        assert out['answer'] == p.EXAMPLE_ANSWERS[ex.case_id]
+        assert len(out['answer']) <= p.EXAMPLE_ANSWER_CHARS < p.ANSWER_CHARS
+        assert out['answer'] != '; '.join(e['claim'] for e in out['evidence'])
+        assert check_assessment(out, ex.prepared) == ()
+
+
 def test_current_dev_case_never_appears_as_its_own_fewshot():
     p = prompts()
     pool = p.load_examples()
