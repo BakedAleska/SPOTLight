@@ -713,18 +713,16 @@ body {
 }
 
 .spotlight-radar-blip {
-  animation: spotlight-radar-detect 180ms ease-out both,
-    spotlight-radar-fade 400ms ease-out var(--blip-life) forwards;
+  opacity: 0;
+  animation: spotlight-radar-return 12s linear var(--blip-delay) infinite;
 }
 
-@keyframes spotlight-radar-detect {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes spotlight-radar-fade {
-  from { opacity: 1; }
-  to { opacity: 0; }
+/* The 90-degree trail takes three seconds to pass a return. Fade only as
+   its tail leaves, then stay dark until the next sweep reaches this point. */
+@keyframes spotlight-radar-return {
+  0% { opacity: 0; }
+  1.5%, 24% { opacity: 1; }
+  28%, 100% { opacity: 0; }
 }
 
 /* Reduced motion. Zeroing duration alone is not enough, and each extra line

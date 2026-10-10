@@ -1,92 +1,29 @@
-"use client";
+import type { CSSProperties } from "react";
 
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+// Irregular positions in the banner's exposed upper-left radar area. The
+// banner and SVG clip these together with the artwork at every viewport size.
+const RETURNS = [
+  [440, 670], [730, 440], [1130, 530], [510, 1040],
+  [850, 730], [1220, 860], [690, 1260], [1090, 1280],
+  [350, 870], [960, 360], [610, 820], [1320, 620],
+];
+const HEAD = Math.atan2(609.22, 760.05);
+const PERIOD = 12;
 
-type Blip = { id: number; x: number; y: number; lifetime: number; expires: number };
-const TRAIL_DEGREES = 90;
-const ARROW_ANGLE = Math.atan2(609.22, 760.05);
-
-/** Test the whole dot against the viewport and every clipping ancestor. */
-function visible(svg: SVGSVGElement, x: number, y: number) {
-  const matrix = svg.getScreenCTM();
-  if (!matrix) return false;
-  const point = new DOMPoint(x, y).matrixTransform(matrix);
-  const margin = 52 * Math.hypot(matrix.a, matrix.b);
-  let left = 0, top = 0, right = window.innerWidth, bottom = window.innerHeight;
-  for (let element: Element | null = svg; element; element = element.parentElement) {
-    const style = getComputedStyle(element);
-    const rect = element.getBoundingClientRect();
-    if (element === svg || /hidden|clip|auto|scroll/.test(style.overflowX)) {
-      left = Math.max(left, rect.left); right = Math.min(right, rect.right);
-    }
-    if (element === svg || /hidden|clip|auto|scroll/.test(style.overflowY)) {
-      top = Math.max(top, rect.top); bottom = Math.min(bottom, rect.bottom);
-    }
-  }
-  return point.x - margin >= left && point.x + margin <= right &&
-    point.y - margin >= top && point.y + margin <= bottom;
-}
-
-/** Decorative returns appear under the sweep and live until its tail passes. */
+/** CSS shares the sweep's clock, so returns work before hydration too. */
 export function RadarBlips() {
-  const layer = useRef<SVGGElement>(null);
-  const [blips, setBlips] = useState<Blip[]>([]);
-
-  useEffect(() => {
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    let timer: ReturnType<typeof setInterval>;
-    let id = 0;
-    function tick() {
-      const now = Date.now();
-      const svg = layer.current?.ownerSVGElement;
-      const sweep = svg?.querySelector<SVGGElement>(".spotlight-radar-sweep");
-      let fresh: Blip | null = null;
-      if (svg && sweep && !document.hidden && Math.random() < 0.45) {
-        const style = getComputedStyle(sweep);
-        const matrix = new DOMMatrixReadOnly(style.transform);
-        const angle = Math.atan2(matrix.b, matrix.a) + ARROW_ANGLE;
-        const period = parseFloat(style.animationDuration) * 1000;
-        for (let attempt = 0; attempt < 64; attempt++) {
-          // Search the visible trail, rather than only its often-clipped head.
-          const behind = Math.random() * TRAIL_DEGREES * 0.7;
-          const position = angle - behind * Math.PI / 180;
-          const lifetime = period * (TRAIL_DEGREES - behind) / 360;
-          const radius = Math.sqrt(180 ** 2 + Math.random() * (900 ** 2 - 180 ** 2));
-          const x = 1008 + Math.cos(position) * radius;
-          const y = 1042.42 + Math.sin(position) * radius;
-          if (visible(svg, x, y)) {
-            fresh = { id: ++id, x, y, lifetime, expires: now + lifetime + 400 };
-            break;
-          }
-        }
-      }
-      setBlips((current) => {
-        const remaining = current.filter((blip) => blip.expires > now);
-        return fresh ? [...remaining, fresh] : remaining.length === current.length ? current : remaining;
-      });
-    }
-    function reset() {
-      clearInterval(timer);
-      setBlips([]);
-      if (!reducedMotion.matches) timer = setInterval(tick, 400);
-    }
-    reset();
-    reducedMotion.addEventListener("change", reset);
-    return () => {
-      clearInterval(timer);
-      reducedMotion.removeEventListener("change", reset);
-    };
-  }, []);
-
   return (
-    <g ref={layer} className="text-red-500" fill="currentColor">
-      {blips.map((blip) => (
-        <g key={blip.id} className="spotlight-radar-blip"
-          style={{ "--blip-life": `${blip.lifetime}ms` } as CSSProperties}>
-          <circle cx={blip.x} cy={blip.y} r="52" opacity="0.2" />
-          <circle cx={blip.x} cy={blip.y} r="30" />
-        </g>
-      ))}
+    <g className="spotlight-radar-returns" fill="#ff3b3b">
+      {RETURNS.map(([x, y], index) => {
+        const angle = Math.atan2(y - 1042.42, x - 1008);
+        const phase = ((angle - HEAD + Math.PI * 2) % (Math.PI * 2)) / (Math.PI * 2);
+        return <g key={index} className="spotlight-radar-blip"
+          style={{ "--blip-delay": `${phase * PERIOD}s` } as CSSProperties}>
+          <circle cx={x} cy={y} r="62" opacity="0.3" />
+          <circle cx={x} cy={y} r="32" />
+          <circle cx={x} cy={y} r="12" fill="#ffd3d3" />
+        </g>;
+      })}
     </g>
   );
 }
