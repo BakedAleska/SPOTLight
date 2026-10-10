@@ -83,12 +83,20 @@ def needle_peaks(angs: np.ndarray, prof: np.ndarray, min_sep: float = 35.0):
 
 
 def dark_run(gray: np.ndarray, cx: float, cy: float, r: float, ang: float, thr: float,
-             start: float = 0.08, stop: float = 0.9) -> float:
+             start: float = 0.08, stop: float = 0.9, band: bool = False) -> float:
     """Length (fraction of r) of the contiguous dark run along a ray, starting just outside the pivot."""
     fs = np.arange(start, stop, 0.02)
-    xs = np.clip(np.round(cx + fs * r * math.sin(math.radians(ang))).astype(int), 0, gray.shape[1] - 1)
-    ys = np.clip(np.round(cy - fs * r * math.cos(math.radians(ang))).astype(int), 0, gray.shape[0] - 1)
-    dark = (255.0 - gray[ys, xs].astype(np.float32)) > thr
+    # band=True samples across the ray (the needle angle comes from a 1° grid, which at 0.7 r is ~2 px off a 3-4 px
+    # needle) and keeps the darkest pixel of each band; used for the pointer length only, so the two-ended check
+    # (tail) keeps its original single-ray behaviour
+    sn, cs = math.sin(math.radians(ang)), math.cos(math.radians(ang))
+    half = max(2.0, 0.015 * r) if band else 0.0
+    offs = np.linspace(-half, half, 5 if band else 1)
+    xs = np.clip(np.round(cx + np.outer(fs * r, [sn] * len(offs)) + np.outer(np.ones_like(fs), offs * cs)).astype(int),
+                 0, gray.shape[1] - 1)
+    ys = np.clip(np.round(cy - np.outer(fs * r, [cs] * len(offs)) + np.outer(np.ones_like(fs), offs * sn)).astype(int),
+                 0, gray.shape[0] - 1)
+    dark = (255.0 - gray[ys, xs].astype(np.float32)).max(axis=1) > thr
     n = 0
     while n < len(dark) and (dark[n] or (n + 1 < len(dark) and dark[n + 1])):   # tolerate 1-sample gaps
         n += 1
@@ -113,6 +121,17 @@ def tail(gray: np.ndarray, cx: float, cy: float, r: float, a1: float) -> Tuple[f
 
 
 TAIL_MAX = 0.25
+
+
+def _pointer_len(gray: np.ndarray, cx: float, cy: float, r: float, a1: float, angs, prof) -> float:
+    """Length (fraction of r) of the followed arm, measured with band sampling (robust to the 1° angle grid)."""
+    face = float(np.median(prof))
+    i1 = int(np.argmin(np.abs(angs - a1)))
+    return dark_run(gray, cx, cy, r, a1, face + 0.5 * (float(prof[i1]) - face), band=True)
+# The pointer reaches toward the scale ring; a dark arm shorter than this is usually the counterweight (MeasureBench
+# pressure_gauge_10/80: 0.48 r / 0.46 r arms read the counterweight). Chosen on the 118 development images: it keeps
+# every HIGH reading that was correct; not yet validated on held-out images.
+POINTER_MIN = 0.6
 
 
 def _unit(words) -> Optional[str]:
@@ -157,9 +176,17 @@ def read(frame: Frame, hints: Optional[dict] = None) -> ReaderResult:
     ratio = s2 / s1 if s1 > 0 else 1.0
     nlen, tlen, ta = tail(gray, cx, cy, r, a1)
     two_ended = tlen >= TAIL_MAX
+    pointer_len = _pointer_len(gray, cx, cy, r, a1, angs, prof)
     if two_ended and tlen / max(nlen, 1e-6) > ratio:
         a2, ratio = ta, tlen / max(nlen, 1e-6)
-    unit = _unit(words) or hints.get("unit") or "psi"
+    # No silent unit: 38 of 96 MeasureBench readings used to default to psi, 22 of them on gauges with no psi scale.
+    # A registered instrument (hints) may supply the unit; otherwise the reading cannot be trusted.
+    unit = _unit(words) or hints.get("unit")
+    if unit is None:
+        unit = "psi"                      # placeholder for the number's display only; flagged and capped below
+        unit_unknown = True
+    else:
+        unit_unknown = False
     full_scale = None
     if fit is not None:
         inl = [t for t in ticks if t not in fit.rejected]
@@ -209,8 +236,14 @@ def read(frame: Frame, hints: Optional[dict] = None) -> ReaderResult:
     if not in_sweep(a1):
         conf = min(conf, 0.3)
         flags.append("NEEDLE_OUTSIDE_SCALE")
+    if unit_unknown:
+        conf = min(conf, 0.3)
+        flags.append("UNIT_UNKNOWN")
+    if pointer_len < POINTER_MIN:       # a counterweight, not a pointer that reaches the scale
+        conf = min(conf, 0.3)
+        flags.append("SHORT_NEEDLE")
     ambiguous = ratio > AMBIGUITY_RATIO or two_ended
-    note = "needle at %.0f° reads %.1f %s" % (a1, v1, unit)
+    note = "needle at %.0f° reads %.1f %s" % (a1, v1, "(unit unknown)" if unit_unknown else unit)
     if ambiguous:
         conf = min(conf, AMBIGUOUS_CAP)
         flags.append("AMBIGUOUS_NEEDLE")
