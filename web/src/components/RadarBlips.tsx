@@ -3,9 +3,7 @@ import type { CSSProperties } from "react";
 // Irregular positions in the banner's exposed upper-left radar area. The
 // banner and SVG clip these together with the artwork at every viewport size.
 const RETURNS = [
-  [440, 670], [730, 440], [1130, 530], [510, 1040],
-  [850, 730], [1220, 860], [690, 1260], [1090, 1280],
-  [350, 870], [960, 360], [610, 820], [1320, 620],
+  [390, 710], [1020, 350], [1290, 940], [630, 1300],
 ];
 const HEAD = Math.atan2(609.22, 760.05);
 const PERIOD = 12;
@@ -21,7 +19,6 @@ export function RadarBlips() {
           style={{ "--blip-delay": `${phase * PERIOD}s` } as CSSProperties}>
           <circle cx={x} cy={y} r="62" opacity="0.3" />
           <circle cx={x} cy={y} r="32" />
-          <circle cx={x} cy={y} r="12" fill="#ffd3d3" />
         </g>;
       })}
     </g>
