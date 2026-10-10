@@ -1,0 +1,171 @@
+{
+ "media_id": "gauge_pressure_01",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "150",
+   "bbox": [
+    104,
+    35,
+    127,
+    51
+   ],
+   "conf": 0.994
+  },
+  {
+   "text": "100",
+   "bbox": [
+    77,
+    48,
+    100,
+    65
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "200",
+   "bbox": [
+    130,
+    48,
+    155,
+    65
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "D",
+   "bbox": [
+    102,
+    58,
+    111,
+    69
+   ],
+   "conf": 0.59
+  },
+  {
+   "text": "50",
+   "bbox": [
+    67,
+    76,
+    83,
+    91
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "290",
+   "bbox": [
+    143,
+    75,
+    166,
+    91
+   ],
+   "conf": 0.999
+  },
+  {
+   "text": "8",
+   "bbox": [
+    77,
+    105,
+    90,
+    121
+   ],
+   "conf": 0.968
+  },
+  {
+   "text": "300",
+   "bbox": [
+    130,
+    104,
+    156,
+    121
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "psi",
+   "bbox": [
+    103,
+    111,
+    127,
+    130
+   ],
+   "conf": 0.972
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "pressure",
+   "value": 1.0,
+   "unit": "psi",
+   "confidence": 0.3,
+   "method": "hough_ray_ransac_labels",
+   "flags": [
+    "LABEL_OUTLIER",
+    "AMBIGUOUS_NEEDLE"
+   ],
+   "bbox": null,
+   "point": [
+    77,
+    122
+   ],
+   "note": "two needle candidates: -136° -> 1 psi and 39° -> 193 psi (two-ended needle (opposite arm 0.32 r long)); do not trust this value"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "psi",
+   "value": 1.0
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 30.0
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": -136.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 0.53
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.32
+  },
+  {
+   "name": "Full Scale",
+   "units": "psi",
+   "value": 300.0
+  },
+  {
+   "name": "Scale Labels Used",
+   "units": "",
+   "value": "6 of 7"
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": "<gauge_photo-run1.annotated.jpg>",
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 1274,
+ "version": {
+  "service": "0.1.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ }
+}
