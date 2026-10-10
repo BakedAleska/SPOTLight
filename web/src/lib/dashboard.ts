@@ -1,6 +1,8 @@
 import type { BatteryBand, Flag, Stat } from "./types";
 
 export interface DashboardData {
+  source: "backend" | "kit";
+  degraded: string | null;
   features: { flagDetails: boolean; flagActions: boolean; flagExplanations: boolean };
   stats: Stat[];
   flags: Flag[];

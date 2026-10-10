@@ -36,3 +36,16 @@ test("backend failure propagates instead of substituting CSV flags", async () =>
   globalThis.fetch = async () => new Response(null, { status: 503 });
   await assert.rejects(loadDashboard(), /Backend returned 503/);
 });
+
+
+test("unavailable backend returns labeled kit data with live flag features disabled", async () => {
+  globalThis.fetch = async () => { throw new Error("Connection refused"); };
+  const { getDashboard } = await import("../src/lib/dashboard-loader");
+  const result = await getDashboard();
+  assert.equal(result.source, "kit");
+  assert.ok(result.stats.length > 0);
+  assert.ok(result.flags.length > 0);
+  assert.equal(result.flagCount, result.flags.length);
+  assert.deepEqual(result.features, { flagDetails: false, flagActions: false, flagExplanations: false });
+  assert.ok(result.degraded);
+});

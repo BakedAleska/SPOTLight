@@ -82,6 +82,8 @@ export async function loadDashboard(): Promise<DashboardData> {
     };
   });
   return {
+    source: "backend",
+    degraded: null,
     features: dashboardFeatures(),
     stats: [
       { label: "Missions", value: String(green?.detail.missions ?? 0), note: `${bands.reduce((sum, band) => sum + band.n, 0)} actions at ${locations.length} waypoints.` },

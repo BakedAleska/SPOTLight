@@ -37,7 +37,7 @@ Single source of truth. Each entry is the decision plus why, in one or two lines
 - **Vision service fails closed (2026-10-10).** `VISION_API_KEY` required (compose dev default), JPEG/PNG/WebP only, 12 MP, body cap, 2 concurrent analyses: a 107 KB PNG of 25 MP had pushed one request to ~2.5 GB RSS.
 - **Image requests get a longer deadline (2026-10-10):** System 2 25 s (`SYSTEM2_IMAGE_DEADLINE_S`, text stays 15 s), orchestrator System 2 node 28 s: image prefill needs room beyond 15 s (audit A-6), and the chain still ends inside the backend's 45 s.
 
-- **Web integration reconciled (2026-10-10):** the console polls its server-side `/api/dashboard` proxy every 10 seconds. FastAPI owns Neon access, triage, explanations and flag actions. Failed initial reads show Retry; failed refreshes retain the last successful response with a connection warning. Kit CSVs are not substituted for live flags. The battery chart retains definite-height bars and a numeric axis.
+- **Web integration reconciled (2026-10-10):** the console polls its server-side `/api/dashboard` proxy every 10 seconds. FastAPI owns Neon access, triage, explanations and flag actions. The initial dashboard is rendered on the server. Backend failure serves explicitly labeled kit data with flag actions, details and explanations disabled; polling restores live data when available. The battery chart retains definite-height bars and a numeric axis.
 - **Web deployment (2026-10-10):** compose runs the Node 24 development service in local/hybrid/neon/frontend profiles; the standalone non-root `web/Dockerfile` remains available for production. Both use `BACKEND_URL` including `/api/v1`; no database credentials reach the frontend.
 
 ## Pending

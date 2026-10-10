@@ -31,6 +31,8 @@ ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=3000 HOSTNAME=0.0.0.0 \
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
+# Labeled offline dashboard when the backend is unavailable.
+COPY --from=builder /app/data ./data
 
 RUN addgroup -g 10001 -S app && adduser -u 10001 -S app -G app
 USER app

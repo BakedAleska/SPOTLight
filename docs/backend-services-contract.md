@@ -157,8 +157,10 @@ Flag detail, explanation and action routes proxy to FastAPI, controlled by `FEAT
 `FEATURE_FLAG_EXPLANATIONS` and `FEATURE_FLAG_ACTIONS`. These switches are not authentication.
 `BACKEND_URL` includes `/api/v1` (Docker default `http://backend:8000/api/v1`, overridden by
 `WEB_BACKEND_URL`); `EXPLAIN_TIMEOUT_MS` defaults to 50000. Neither reaches the browser.
-Initial failure shows Retry; refresh failures retain the last successful response with a warning.
-CSV analysis is retained for offline analysis only. `/api/health` checks frontend liveness.
+The server renders the initial dashboard and `/api/dashboard` uses the same loader. Backend failure
+returns explicitly labeled challenge-kit data (`source: "kit"`, `degraded` message), with details,
+actions and explanations disabled so sample IDs never reach live flag routes. Successful backend
+reads return `source: "backend"`; polling can recover automatically. `/api/health` checks frontend liveness.
 
 ### Admin endpoints (ADDED 2026-10-10, audit H3)
 `/api/v1/ops/*`, `/api/v1/replay/*`, `POST /api/v1/events` and `POST /api/v1/events/batch` change or wipe state, so
