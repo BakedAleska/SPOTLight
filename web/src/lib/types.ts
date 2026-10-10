@@ -5,8 +5,9 @@
 // without dragging the loader — and `node:fs` with it — into the browser
 // bundle. The data that fills them is computed in @/lib/analysis.
 //
-// These mirror the columns in db/schema.sql (`flags`, `insights`), so the same
-// shapes survive the move from CSV to Neon.
+// These mirror the `flags` columns in db/migrations/001_core.sql, so the same
+// shapes serve both sources: @/lib/dashboard fills them from the backend API,
+// and @/lib/analysis from the kit CSVs when it can't be reached.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type Severity = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";

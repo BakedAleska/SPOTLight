@@ -1,26 +1,39 @@
+import { Suspense } from "react";
 import { BatteryCliff } from "@/components/BatteryCliff";
+import { DashboardSkeleton } from "@/components/DashboardSkeleton";
+import { DegradedNotice } from "@/components/DegradedNotice";
 import { PriorityQueue } from "@/components/PriorityQueue";
 import { StatTile } from "@/components/StatTile";
 import { WelcomeBanner } from "@/components/WelcomeBanner";
-import { batteryBands, flags, headline, stats } from "@/lib/analysis";
+import { getDashboard } from "@/lib/dashboard";
 
 /* The operator's shift-start briefing. One question: do I need to go look at
    anything? The queue answers it; everything else is supporting context.
 
-   Every number and every claim on this page is computed from the challenge
-   kit's CSVs by @/lib/analysis. This page is the only place that touches that
-   module: the panels below take plain props, so none of them knows whether
-   the numbers came from a CSV, from Neon, or from a fixture in a test. */
+   Every number on this page comes from the backend API — flags the backend
+   triaged with Laya and the policy validator, and insights it computed in SQL
+   over Neon — mapped in @/lib/dashboard. This page is the only place that
+   touches that module: the panels below take plain props, so none of them
+   knows whether the numbers came from Neon, from the kit CSVs, or from a
+   fixture in a test. */
 
 /* The load cascade lives here, not inside the panels, because it is a fact
    about this page's reading order rather than about any one card. Six panels
    at 55ms apart settle by ~780ms: long enough to read as deliberate, short
    enough that an operator opening this at shift start is never waiting on it. */
 const STAGGER = 55;
-export default function Dashboard() {
+
+/* Everything here is request-time: an operator console that cached its flags
+   would be lying about the fleet. Under `cacheComponents` an uncached read has
+   to sit inside <Suspense>, which is also exactly what we want on stage — the
+   chrome and the panel titles are prerendered and painted immediately, and the
+   numbers stream in behind them rather than holding the document. */
+async function Briefing() {
+  const { stats, flags, batteryBands, headline, degraded } = await getDashboard();
+
   return (
-    <div className="mx-auto flex max-w-[1600px] flex-col gap-4 p-4">
-      <h1 className="sr-only">SPOT operator overview</h1>
+    <div className="flex flex-col gap-4">
+      {degraded && <DegradedNotice reason={degraded} />}
 
       <WelcomeBanner hiddenFailures={headline.hiddenFailures} />
 
@@ -44,6 +57,18 @@ export default function Dashboard() {
           />
         </div>
       </div>
+    </div>
+  );
+}
+
+export default function Dashboard() {
+  return (
+    <div className="mx-auto flex max-w-[1600px] flex-col gap-4 p-4">
+      <h1 className="sr-only">SPOT operator overview</h1>
+
+      <Suspense fallback={<DashboardSkeleton />}>
+        <Briefing />
+      </Suspense>
     </div>
   );
 }

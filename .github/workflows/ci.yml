@@ -248,6 +248,8 @@ jobs:
         run: docker build -t spot-mcp:ci amd/mcp
       - name: Build system2 (context amd/system2)
         run: docker build -t spot-system2:ci amd/system2
+      - name: Build web (context web)
+        run: docker build -t spot-web:ci web
 
   docker-build:
     name: image ${{ matrix.service }} (build + healthy)

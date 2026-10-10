@@ -6,6 +6,7 @@ Companion to `docs/system2-rag-contract.md` (Neon tables, embedding API, MCP). *
 | Service | Folder | Port | Owner |
 |---|---|---|---|
 | Backend API (FastAPI) | `backend/` | 8000 | backend agent |
+| Web console (Next.js) | `web/` | 3000 | frontend agent |
 | System 1: Laya inference | `amd/system1/service/` | 8082 | System 1 service agent |
 | Embedding service | `amd/embed/` | 8081 | pgvector agent |
 | MCP server | `amd/mcp/` | 8090 | MCP agent |
@@ -105,6 +106,33 @@ Every step logs to `app.*` with one `request_id`.
 | `ORCHESTRATOR_TIMEOUT_S` | per-call cap for orchestrator calls; `/explain` also caps it at the deadline minus the reserve (45 - 3 = 42) | `42` |
 | `CORS_ORIGINS` | comma-separated browser origins allowed by CORS (the dashboard's origin; `*` is not the default) | `http://localhost:3000` |
 | `DB_POOL_MAX`, `LOG_REQUESTS` | | `10`, `1` |
+
+### Web console consumption (ADDED 2026-10-10)
+The Next.js console (`web/`, :3000) is a pure HTTP client of this API — it opens no database connection and calls no
+model service. `web/src/lib/api.ts` is the only place it speaks HTTP; `web/src/lib/dashboard.ts` maps the responses
+onto the panels' props.
+- **Reads, all open (no admin token):** `GET /insights/overview`, `GET /flags?escalated=true&status=OPEN&limit=200`,
+  `GET /missions`, `GET /assets`, `GET /locations`. Every page render is request-time (`cache: "no-store"`); nothing
+  is cached in the console.
+- **Fields it depends on**, beyond the obvious ids: `/insights/overview` cards keyed `green_but_broken`
+  (`detail.missions`, `.reported_completed`, `.completed_with_failures`), `battery_cliff` (`detail.bands[]` with
+  `grp`/`n`/`success_rate_pct`, in `BAND_ORDER`) and `v1_vs_v2_matched_battery` (`detail.headline.V1|V2`,
+  `.headline_gain_pts`, `.matched_gain_pts`, `.share_explained_by_battery_pct`); `/missions` items'
+  `status_misleading`, `start_time`, `end_time`; `flags.reasons` entries carrying a numeric `weight` (the fired
+  policy rules — the console filters out `laya_verdict` / `laya_unavailable` / `rules_verdict`). A card or field that
+  disappears degrades one tile, never the page.
+- **`flags.title`** is parsed, not just displayed: the queue row prints the asset and waypoint on their own line, so
+  it strips a trailing `" · battery N%"` and a trailing `": <asset_name> (<asset_id>) at <location_id>
+  <location_name>"` — the exact string `validator.flag_title()` builds. The match is literal; a format change means
+  no match and the full title is shown.
+- **Env:** `BACKEND_URL` (default `http://backend:8000` in the image), `BACKEND_TIMEOUT_MS` (10,000),
+  `BACKEND_ADMIN_TOKEN` (must equal this service's `ADMIN_TOKEN`; only needed once the UI drives `/replay` or
+  `/ops/reset-demo`). None is `NEXT_PUBLIC_`, so none reaches the browser bundle.
+- **CORS is not involved** on these reads: they happen in the Next.js server process, not the browser. `CORS_ORIGINS`
+  matters only for calls a Client Component makes directly.
+- **Degraded mode.** Any error — unreachable, timeout, 5xx — makes the console render `web/src/lib/analysis.ts`
+  (the kit CSVs triaged in-process) behind a banner stating the numbers are not live. The console must come up even
+  when the backend or Neon is down, so compose has it wait for `backend` to *start*, not to be healthy.
 
 ### Admin endpoints (ADDED 2026-10-10, audit H3)
 `/api/v1/ops/*`, `/api/v1/replay/*`, `POST /api/v1/events` and `POST /api/v1/events/batch` change or wipe state, so
