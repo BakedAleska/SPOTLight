@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronRight, Radar, X } from "lucide-react";
+import { ChevronRight, X } from "lucide-react";
+import { SpotlightLogo } from "../SpotlightLogo";
 import { nav, type NavItem } from "./nav";
 
 /* Shared geometry for every row, so icons line up down the whole rail whether
@@ -98,7 +99,7 @@ export function Sidebar({ onClose }: { onClose: () => void }) {
   return (
     <div className="flex h-full w-60 flex-col border-r border-line bg-chrome">
       <div className="flex h-12 shrink-0 items-center gap-2 border-b border-line px-3">
-        <Radar size={18} aria-hidden="true" className="text-accent-ink" />
+        <SpotlightLogo className="size-7 shrink-0" />
         <span className="font-semibold tracking-tight">SPOTlight</span>
         <button
           type="button"

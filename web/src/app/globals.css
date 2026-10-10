@@ -698,6 +698,16 @@ body {
   border-radius: 2px;
 }
 
+.spotlight-radar-sweep {
+  transform-box: view-box;
+  transform-origin: 0 0;
+  animation: spotlight-radar-sweep 12s linear infinite;
+}
+
+@keyframes spotlight-radar-sweep {
+  to { transform: rotate(360deg); }
+}
+
 /* Reduced motion. Zeroing duration alone is not enough, and each extra line
    here fixes a way the page would otherwise still move:
 
@@ -711,6 +721,10 @@ body {
    - scroll-behavior: smooth scrolling is motion the duration overrides never
      touch, because it isn't an animation or a transition. */
 @media (prefers-reduced-motion: reduce) {
+  .spotlight-radar-sweep {
+    animation: none !important;
+  }
+
   html {
     scroll-behavior: auto !important;
   }
