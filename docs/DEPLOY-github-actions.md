@@ -18,7 +18,7 @@ Configure each project's settings:
 
 | Project | Root Directory | Framework | Other settings |
 |---|---|---|---|
-| MCP | `amd/mcp` | Python/auto-detect | Build command unset; config pins `cle1` |
+| MCP | `amd/mcp` | FastAPI (ASGI-compatible Python builder) | Build command unset; config pins `cle1`; Other fails to recognize `asgi.py` |
 | Backend | `backend` | FastAPI | Include source files outside Root Directory enabled; build command from `vercel.json`; `cle1` |
 | Web | `web` | Next.js | Node 24.x |
 
@@ -54,7 +54,7 @@ Add these **environment variables** (IDs and domains are not credentials):
 |---|---|
 | `VERCEL_ORG_ID` | ID of the owning Vercel account/team |
 | `VERCEL_SCOPE` | Matching CLI account/team slug |
-| `VERCEL_CLI_VERSION` | An exact reviewed CLI release, such as `X.Y.Z`; aliases like `latest` are rejected |
+| `VERCEL_CLI_VERSION` | `63.1.2` (used for the verified deployments); aliases like `latest` are rejected |
 | `VERCEL_MCP_PROJECT_ID` | MCP project's `prj_...` ID |
 | `VERCEL_BACKEND_PROJECT_ID` | Backend project's `prj_...` ID |
 | `VERCEL_WEB_PROJECT_ID` | Web project's `prj_...` ID |
@@ -91,4 +91,21 @@ Embeddings ingestion, graph building and embedding smoke tests remain deferred u
 - [Vercel build and prebuilt deployment](https://vercel.com/docs/cli/deploy)
 - [Vercel CI/CD with GitHub Actions](https://vercel.com/docs/deployments/configure-a-build#using-github-actions)
 
-This workflow has been prepared locally. It has not been pushed, run or used to deploy production because repository write permission and a configured deployment token are still unavailable.
+This workflow has been prepared and validated locally with actionlint, but it has not been pushed or run because repository write permission remains unavailable. The same Vercel account has now accepted direct CLI production deployments of all three projects; those do not enable GitHub Actions automatically.
+
+## Verified project mapping
+
+Use these values for the existing projects instead of creating duplicates:
+
+| Variable | Value |
+|---|---|
+| `VERCEL_ORG_ID` | `team_ZS8AOTk4NYMOLgKpCGXpcChk` |
+| `VERCEL_SCOPE` | `spot-the-dog` |
+| `VERCEL_MCP_PROJECT_ID` | `prj_6DPppa3WnD7U0Qowx9oWINqqZVDV` |
+| `VERCEL_BACKEND_PROJECT_ID` | `prj_thNz0oFEPYIReKzBtAsM7mxlplje` |
+| `VERCEL_WEB_PROJECT_ID` | `prj_GwWaw6sfw5AAju2lLrqLCTaTjU7b` |
+| `MCP_PRODUCTION_URL` | `https://spotlight-mcp.vercel.app` |
+| `BACKEND_PRODUCTION_URL` | `https://spotlight-backend-tau.vercel.app` |
+| `WEB_PRODUCTION_URL` | `https://spotlight-web-mu.vercel.app` |
+
+Configure a fresh deployment token directly in the protected GitHub production environment after merging the workflow. No token value belongs in this table.
