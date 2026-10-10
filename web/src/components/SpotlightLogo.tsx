@@ -7,7 +7,7 @@ function RadarTrail() {
   const span = Math.PI / 2;
   const slices = 72;
   const radius = 974;
-  return <g className="spotlight-radar-trail text-accent" fill="currentColor">
+  return <g className="spotlight-radar-trail text-white" fill="currentColor">
     {Array.from({ length: slices }, (_, index) => {
       const start = head - span + index * span / slices;
       const end = start + span / slices + 0.0005;
