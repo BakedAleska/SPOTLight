@@ -712,6 +712,16 @@ body {
   animation-duration: 2.4s;
 }
 
+.spotlight-radar-blip {
+  animation: spotlight-radar-blip 1s ease-out both;
+}
+
+@keyframes spotlight-radar-blip {
+  0%, 45% { opacity: 0; }
+  12%, 60% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
 /* Reduced motion. Zeroing duration alone is not enough, and each extra line
    here fixes a way the page would otherwise still move:
 
@@ -725,6 +735,7 @@ body {
    - scroll-behavior: smooth scrolling is motion the duration overrides never
      touch, because it isn't an animation or a transition. */
 @media (prefers-reduced-motion: reduce) {
+  .spotlight-radar-blip { display: none; }
   .spotlight-radar-sweep {
     animation: none !important;
   }

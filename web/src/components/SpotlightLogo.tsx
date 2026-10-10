@@ -1,9 +1,11 @@
 import Image from "next/image";
+import { RadarBlips } from "./RadarBlips";
 
 /** The supplied artwork shares one coordinate system; the cropped mark is
  * offset back into it before rotating about the radar's actual center. */
-export function SpotlightLogo({ animated = false, className = "" }: {
+export function SpotlightLogo({ animated = false, blips = false, className = "" }: {
   animated?: boolean;
+  blips?: boolean;
   className?: string;
 }) {
   if (!animated) {
@@ -18,6 +20,7 @@ export function SpotlightLogo({ animated = false, className = "" }: {
           <image href="/spotlight-mark.svg" x="37.474" y="23.805" width="723" height="586" />
         </g>
       </g>
+      {blips && <RadarBlips />}
     </svg>
   );
 }
