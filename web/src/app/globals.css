@@ -717,12 +717,14 @@ body {
   animation: spotlight-radar-return 12s linear var(--blip-delay) infinite;
 }
 
-/* The 90-degree trail takes three seconds to pass a return. Fade only as
-   its tail leaves, then stay dark until the next sweep reaches this point. */
+/* The 90-degree trail takes three seconds to pass a return. Fade throughout
+   that interval, reaching transparency at the tail rather than after it. */
 @keyframes spotlight-radar-return {
   0% { opacity: 0; }
-  1.5%, 24% { opacity: 1; }
-  28%, 100% { opacity: 0; }
+  1.5% { opacity: 0.75; }
+  8% { opacity: 0.5; }
+  16% { opacity: 0.22; }
+  25%, 100% { opacity: 0; }
 }
 
 /* Reduced motion. Zeroing duration alone is not enough, and each extra line
