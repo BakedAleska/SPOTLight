@@ -80,11 +80,8 @@ export function BatteryCliff({
   return (
     <Panel
       title="Action success by battery level"
-      // Beside the queue the panel is stretched to its neighbour's height, and
-      // that neighbour is as tall as there are flags. Four bars over 600px of
-      // plot is not a better chart than four bars over 250px, so the panel
-      // takes the slack only up to a point and leaves the rest as whitespace.
-      className="h-full xl:max-h-[26rem]"
+      // Fill the shared grid row so the chart and attention queue align.
+      className="h-full"
       aside={
         benchmark === null ? undefined : (
           <span className="inline-flex items-center gap-1.5">
