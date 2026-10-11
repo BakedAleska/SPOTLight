@@ -47,11 +47,17 @@ async def test_graph_section_bounded_cited_ranked_and_placed():
         assert " —" in it["fact"] and "→ " in it["fact"]           # a readable triple
     # statistics first, on-point (this asset's own anomaly type), with n and rate from the edge props
     assert g[0]["fact"] == "GAUGE_OUT_OF_RANGE —common_at→ Heat Exchanger 04 (HX-204) (n=3, rate 50%)"
+    # one item per cited id: the lower-ranked 'about' fact of the same node is left out (System 2 rejects a repeated
+    # id with different content)
+    assert not any("—about→ GAUGE_OUT_OF_RANGE" in it["fact"] for it in g)
+    ids = [it["id"] for it in g]
+    assert len(ids) == len(set(ids))
     assert g[0]["id"] == "anomaly_type:GAUGE_OUT_OF_RANGE"
     assert g[0]["ev"] == "stat:anomaly_type=GAUGE_OUT_OF_RANGE,asset_id=HX-204"
     assert "fails_more_in" in g[1]["fact"] and "INDOOR_DRY" in g[1]["fact"]   # this action type x this environment
-    manual = [it for it in g if it["id"] == "manual:p30-2"]
-    assert len(manual) == 1 and manual[0]["text"].startswith("Autowalk gauge reading")
+    # the manual page the graph walk reaches is also a manual-search hit: it is cited once, by the manual section
+    assert "manual:p30-2" in [it["id"] for it in p.get("manual", [])]
+    assert not any(it["id"] == "manual:p30-2" for it in g)
     facts = [it["fact"] for it in g]
     assert len(facts) == len(set(facts))
     assert not any(a in f for f in facts for a in FK_ARROWS)        # the flag/event sections already say these
@@ -79,12 +85,28 @@ async def test_graph_token_bound_and_key_facts_survive_tight_budgets():
     small = await svc(graph_token_budget=90).get_flag_context(1)
     assert small["graph"] and est_tokens(small["graph"]) <= 90
     full = await svc(packet_token_budget=99999).get_flag_context(1)
-    tight = await svc(packet_token_budget=1100).get_flag_context(1)
+    tight = await svc(packet_token_budget=1200).get_flag_context(1)
     for key in ("flag", "event", "facts", "question"):              # never trimmed
         assert tight[key] == full[key]
+    assert len(full["graph"]) >= 5                                  # the fixture leaves a tail to trim
     assert 3 <= len(tight["graph"]) < len(full["graph"])
     assert tight["graph"] == full["graph"][:len(tight["graph"])]    # trimmed from the tail: best facts kept
     assert est_tokens(full["graph"]) <= 300
+    assert est_tokens(tight) <= 1200 and not tight.get("gaps")
+    # the cut is recorded (informational, never blocking) and the untrimmed packet has no such note
+    assert any(n.startswith("trimmed to the 1200-token packet budget:") and "graph %d->%d" % (
+        len(full["graph"]), len(tight["graph"])) in n for n in tight.get("notes", []))
+    assert not any(n.startswith("trimmed") for n in full.get("notes", []))
+
+
+async def test_budget_keeps_the_last_asset_history_and_manual_item_before_the_graph_tail():
+    """With a populated graph, the last asset_history / manual item outlives the graph tail down to 4 facts
+    (RE-03: the old order left 0 of 58 production packets with any asset history)."""
+    full = await svc(packet_token_budget=99999).get_flag_context(1)
+    assert full.get("asset_history") and full.get("manual") and len(full["graph"]) > 4
+    p = await svc(packet_token_budget=1550).get_flag_context(1)     # the old order dropped asset_history here
+    assert len(p["graph"]) == 4 < len(full["graph"]) and est_tokens(p) <= 1550
+    assert len(p["asset_history"]) == 1 and len(p["manual"]) == 1
 
 
 # ── rendering, orientation, ranking, dedup ──────────────────────────────────────────────────────
@@ -312,3 +334,18 @@ async def test_graph_sql_is_parameterized_capped_and_translates_missing_db():
                                                                                                         None, 40)
     with pytest.raises(RuntimeError, match="boom"):                  # other errors are not masked
         await PgRepo(_RecDB(RuntimeError("boom"))).match_kg_nodes_text("x", None, 5)
+
+
+def test_pack_keeps_one_fact_per_cited_node():
+    """Two stat edges of one failure_type cite the same id: only the better-ranked fact is packed (rehearsal
+    2026-10-11: 12 of 58 flag packets repeated an id and System 2 answered 422 'conflicting content for duplicate id')."""
+    nodes = {"failure_type:READING_UNRELIABLE": {"kind": "failure_type", "label": "READING_UNRELIABLE"},
+             "location:WP09": {"kind": "location", "label": "Turbine Hall South"},
+             "location:WP04": {"kind": "location", "label": "Pump Bay"}}
+    ranked = [{"src": "failure_type:READING_UNRELIABLE", "rel": "common_at", "dst": dst, "node": "failure_type:READING_UNRELIABLE",
+               "via": dst, "kind": "failure_type", "tier": 0, "on_point": True, "weight": w, "edge_weight": w,
+               "props": {"n": n, "of": of}, "evidence": None}
+              for dst, w, n, of in (("location:WP09", 0.136, 3, 22), ("location:WP04", 0.111, 2, 18))]
+    out = G.pack(ranked, nodes, lambda x: len(str(x)) // 4)
+    assert [it["id"] for it in out] == ["failure_type:READING_UNRELIABLE"]
+    assert "Turbine Hall South (WP09)" in out[0]["fact"] and "Pump Bay" not in out[0]["fact"]

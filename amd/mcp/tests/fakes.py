@@ -179,6 +179,11 @@ KG_NODES = {nid: {"node_id": nid, "kind": nid.split(":", 1)[0], "key": nid.split
     ("manual:p50-1", "Localization and fiducials", "Spot localizes with fiducials; add fiducials where it gets lost",
      "manual:p50-1"),
     ("operator_note:5", "Operator note on HX-204", "Pressure on HX-204 creeping up, scheduled maintenance", "note:5"),
+    # more distinct facts around HX-204, so a tight packet budget has a graph tail to trim (test_graph)
+    ("failure_type:READING_UNRELIABLE", "READING_UNRELIABLE", "Reading could not be trusted (glare, blur)", None),
+    ("failure_type:CAMERA_OCCLUDED", "CAMERA_OCCLUDED", "Camera view blocked during capture", None),
+    ("topic:pressure", "pressure", "Pressure gauges, pressure bands and relief valves", None),
+    ("topic:thermal", "thermal", "Thermal imaging and overheating", None),
 ] + [("action:A1%03d" % i, "GAUGE_READING on HX-204", "Routine gauge reading", None) for i in range(30)]}
 # (src, rel, dst, weight, props, evidence)
 KG_EDGES = [
@@ -212,6 +217,13 @@ KG_EDGES = [
     ("manual:p30-2", "mentions", "action_type:GAUGE_READING", 2.0, {"source": "extract"}, "manual:p30-2"),
     ("manual:p50-1", "mentions", "topic:localization", 2.0, {"source": "extract"}, "manual:p50-1"),
     ("operator_note:5", "mentions", "asset:HX-204", 1.0, {"source": "extract"}, "note:5"),
+    ("failure_type:READING_UNRELIABLE", "common_at", "asset:HX-204", 0.3, {"n": 2, "rate": 0.3, "source": "stat"},
+     "stat:failure_type=READING_UNRELIABLE,asset_id=HX-204"),
+    ("failure_type:CAMERA_OCCLUDED", "common_at", "location:WP07", 0.25, {"n": 2, "of": 8, "rate": 0.25,
+                                                                         "source": "stat"},
+     "stat:failure_type=CAMERA_OCCLUDED,location_id=WP07"),
+    ("topic:pressure", "relates_to", "topic:gauge", 1.0, {"source": "curated"}, None),
+    ("topic:thermal", "relates_to", "topic:pressure", 1.0, {"source": "curated"}, None),
 ] + [("action:A1%03d" % i, rel, dst, 1.0, {"source": "fk"}, None) for i in range(30)
      for rel, dst in (("at", "location:WP07"), ("inspects", "asset:HX-204"))]
 for _n in KG_NODES.values():

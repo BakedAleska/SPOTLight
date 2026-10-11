@@ -28,12 +28,13 @@ Create a Vercel deployment token with access to that account/team at <https://ve
 
 ## 2. Configure application secrets in Vercel
 
-Follow `DEPLOY-neon.md` and `DEPLOY-vercel.md` before the first run. The verified Neon project from this deployment is `summer-sound-57299654` (Postgres 17, AWS us-east-2); its main branch has 500 seeded events and 51 flags after the completed replay (58 flags before replay).
+Follow `DEPLOY-neon.md` and `DEPLOY-vercel.md` before the first run. The verified Neon project from this deployment is `summer-sound-57299654` (Postgres 17, AWS us-east-2). Since the 2026-10-11 cleanup, its main branch holds the seed baseline: 500 events, 58 flags, 503 embedded documents and the 574-node knowledge graph (`DEPLOY-neon.md` "What you end up with" and "Data cleanup 2026-10-11"). A full replay with reset leaves 51 flags, because the replay covers M001–M023 only.
 
 Use the generated credentials in the private, git-ignored local `.env` from deployment setup. Copy them directly into each project's **Production** environment settings:
 
-- MCP: pooled `DATABASE_URL` as `spot_mcp_user`, `MCP_AUTH_TOKEN`, `EMBED_MODEL=Qwen/Qwen3-Embedding-0.6B`, `EMBED_DIM=1024`.
-- Backend: pooled `DATABASE_URL` as `spot_app_user`, `ADMIN_TOKEN`, the same `MCP_AUTH_TOKEN`, `MCP_URL=https://<mcp-production-domain>/mcp`, `SERVERLESS=1`, `REPLAY_MODE=stepped`, `SYSTEM1_INGEST_TIMEOUT_S=10`, `DB_POOL_MAX=5`, `CORS_ORIGINS=https://<web-production-domain>`.
+- MCP: pooled `DATABASE_URL` as `spot_mcp_user`, `MCP_AUTH_TOKEN`, `EMBED_URL`, `EMBED_MODEL=Qwen/Qwen3-Embedding-0.6B`, `EMBED_DIM=1024`.
+- Backend: pooled `DATABASE_URL` as `spot_app_user`, `ADMIN_TOKEN`, the same `MCP_AUTH_TOKEN`, `MCP_URL=https://<mcp-production-domain>/mcp`, `SERVERLESS=1`, `REPLAY_MODE=stepped`, `SYSTEM1_INGEST_TIMEOUT_S=10`, `DB_POOL_MAX=5`, `CORS_ORIGINS=https://<web-production-domain>`, the same `EMBED_URL` / `EMBED_MODEL` / `EMBED_DIM` as MCP, and `GEMINI_API_KEY` (saved with no trailing newline).
+- Leave `EMBED_QUERY_PREFIX` and `LOG_REQUESTS` unset on both. `EMBED_URL` is a tunnel URL that changes on every relaunch; update it on both projects and run the workflow again (`DEPLOY-vercel.md` "Embedding URL after a tunnel relaunch").
 - Web: `BACKEND_URL=https://<backend-production-domain>/api/v1`.
 
 Leave AMD service URLs and related API keys unset until those services exist. The workflow does not create, rotate or transfer application credentials through GitHub. It pulls Vercel's production configuration for builds; the pulled files are removed after deployment and are never uploaded as workflow artifacts. Changes to Vercel environment settings require another workflow run to redeploy.
@@ -92,7 +93,7 @@ The workflow is merged into `main`. After the existing **CI** workflow succeeds 
 
 For a configuration-only redeploy, select **Actions → Deploy SPOTlight to Vercel → Run workflow → main**. Manual runs are limited to `main`; they do not automatically wait for a new CI run, so select a commit whose CI has passed.
 
-The Neon job installs Python 3.12 and `db/requirements.txt`, then runs `python db/setup.py migrate` and `python db/setup.py status` using the owner secret. It applies migrations directly to production; it does not create a test branch, seed, reset demo data, rotate passwords, or ingest embeddings. Vercel's `needs: neon-migrate` dependency skips deployment on migration failure.
+The Neon job installs Python 3.12 and `db/requirements.txt`, then runs `python db/setup.py migrate` and `python db/setup.py status` using the owner secret. It applies migrations directly to production; it does not create a test branch, seed, reset demo data, rotate passwords, or ingest embeddings. Because every migration file runs again on every deploy, a migration must be idempotent and warn rather than fail, and a dropped table needs its `CREATE` removed in the same commit (`DEPLOY-neon.md` "Rules"). Vercel's `needs: neon-migrate` dependency skips deployment on migration failure.
 
 The Vercel job installs Node 24, Python 3.12, uv 0.13.0 with a pinned official setup action, and the pinned Vercel CLI. Each project is pulled, built with production settings and deployed with `--prebuilt --prod` from the repository root. The backend build therefore has access to the shared code and kit data. Deployment stops at the first failed build or HTTP check; earlier services may already be live, so this is not an atomic release.
 
@@ -107,7 +108,7 @@ The workflow checks:
 
 The summary records the deployed commit and production origins. This does not verify browser rendering, authenticated MCP tools, or replay. Complete **all** remaining checks in `DEPLOY-vercel.md`: authenticated MCP tools/list (17 tools), missing/wrong token rejection, loading the dashboard in a browser, and stepped replay through completion. Drive replay from a trusted local shell with the generated admin token; do not reset demo data automatically on every push.
 
-Embeddings ingestion, graph building and embedding smoke tests remain deferred until an embedding endpoint is available. See `DEPLOY-status-2026-10-10.md` for database and production verification evidence.
+Embedding ingestion, the graph build and the embedding smoke tests are not part of the workflow. The owner runs them by hand, through the embedder's SSH bridge, in the order of `DEPLOY-neon.md` §6 (`migrate -> seed -> ingest -> graph_build -> status -> smoke`). After any replay or `reset-demo`, run `ingest --kinds incident` and `graph_build` again. See `DEPLOY-status-2026-10-10.md` for database and production verification evidence.
 
 ## References
 

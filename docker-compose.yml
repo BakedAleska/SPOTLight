@@ -6,8 +6,9 @@
 # Service    Port  Profiles                 What
 # ---------  ----  -----------------------  -------------------------------------------------------------------
 # db         5433  local, hybrid            Postgres 17 + pgvector, local stand-in for Neon (host port: DB_PORT)
-# db-init    -     local, hybrid, neon      one-shot: migrate -> login users -> seed -> ingest (RAG) -> graph
-#                                           (knowledge graph, contract §7) -> status
+# db-init    -     local, hybrid, neon      one-shot: migrate -> login users -> seed -> refresh: ingest (RAG) ->
+#                                           graph (knowledge graph, contract §7; --no-embed if ingest failed) ->
+#                                           status, so graph and status run even without an embedder
 #                                           (seed is non-destructive: never overwrites flags or refills a demo)
 # embed      8081  local, models            Qwen3-Embedding-0.6B, OpenAI-compatible /v1/embeddings (TORCH_VARIANT)
 # system1    8082  local, models            Laya triage model, /v1/predict (TORCH_VARIANT; fine-tune mount)
@@ -130,8 +131,10 @@ services:
       timeout: 3s
       retries: 20
 
-  # One-shot: migrate -> login users -> seed -> ingest (embeds the RAG corpus) -> graph (rebuilds kg_nodes/kg_edges,
-  # embeds only changed node summaries; DB_GRAPH_ARGS=--no-embed skips embedding) -> status. Idempotent.
+  # One-shot: migrate -> login users -> seed -> `db/job.sh refresh`: ingest (embeds the RAG corpus; EMBED_WAIT_S bounds
+  # the wait for the embedder, an unresolvable EMBED_URL host fails at once) -> graph (rebuilds kg_nodes/kg_edges,
+  # embeds only changed node summaries; DB_GRAPH_ARGS=--no-embed skips embedding, and a failed ingest adds it) ->
+  # status. graph and status run even if ingest fails; the exit code is the first failing step's. Idempotent.
   # `seed` is non-destructive (audit M5): insert-if-missing, and the demo baseline (events + flags) loads only on
   # the first seed of a database, so `up` never overwrites live/acked flags or refills a reset demo. Never add
   # --force-reseed here; run it by hand: docker compose run --rm --no-deps --entrypoint db/job.sh db-init seed --force-reseed
@@ -153,12 +156,15 @@ services:
       SPOT_APP_PASSWORD: ${SPOT_APP_PASSWORD:-spot_app_dev}
       SPOT_MCP_USER: ${SPOT_MCP_USER:-spot_mcp_user}
       SPOT_MCP_PASSWORD: ${SPOT_MCP_PASSWORD:-spot_mcp_dev}
+      DB_GRAPH_ARGS: ${DB_GRAPH_ARGS:-}              # read by db/job.sh refresh (e.g. --no-embed)
+      EMBED_WAIT_S: ${EMBED_WAIT_S:-900}             # how long ingest waits for the embedding service
+      SPOT_ROTATE_PASSWORDS: ${SPOT_ROTATE_PASSWORDS:-}   # 1 = db_login_roles.py resets existing roles' passwords
     volumes: ["./scripts/db_login_roles.py:/app/scripts/db_login_roles.py:ro"]
     entrypoint: ["sh", "-c"]
     command:
       - >-
         db/job.sh migrate && python scripts/db_login_roles.py && db/job.sh seed
-        && db/job.sh ingest ${DB_INGEST_ARGS:-} && db/job.sh graph ${DB_GRAPH_ARGS:-} && db/job.sh status
+        && db/job.sh refresh ${DB_INGEST_ARGS:-}
 
   # ── models (CPU in Docker; on the AMD box they run natively, see the hybrid profile) ─────────────
   embed:
@@ -373,6 +379,8 @@ services:
       BREAKER_COOLDOWN_S: ${BREAKER_COOLDOWN_S:-10}   # effective cooldown = max(this, that client's timeout)
       # Audit M4: /flags/{id}/context and /explain finish within this, whatever the per-call timeouts above.
       REQUEST_DEADLINE_S: ${REQUEST_DEADLINE_S:-45}
+      LOG_REQUESTS: ${LOG_REQUESTS:-writes}   # all | writes | off (app.request_log; writes skips GET polls)
+      LOG_SLOW_MS: ${LOG_SLOW_MS:-1000}       # writes mode still logs a read slower than this
       # Audit H3: /ops/*, /replay/*, POST /events* need X-Admin-Token. Unset -> those endpoints answer 503.
       ADMIN_TOKEN: ${ADMIN_TOKEN:-}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}   # the dashboard's origin(s), comma-separated

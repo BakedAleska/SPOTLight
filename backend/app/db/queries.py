@@ -239,31 +239,29 @@ class Repo:
             "WHERE event_kind = %s AND action_id = ANY(%s) ORDER BY created_at DESC", (kind, list(action_ids)))
 
     async def insert_ack(self, flag_id: int, action: str, note: Optional[str], operator: str) -> Dict[str, Any]:
+        """A blank or whitespace-only note is stored as NULL (readers treat NULL as "no note")."""
         status = {"ACKNOWLEDGE": "ACKNOWLEDGED", "RESOLVE": "RESOLVED", "ESCALATE": "OPEN"}.get(action)
         async with self.db.transaction() as cur:
-            await cur.execute("INSERT INTO acknowledgements (flag_id, action, note, operator) VALUES (%s, %s, %s, %s) "
-                              "RETURNING *", (flag_id, action, note, operator))
+            await cur.execute("INSERT INTO acknowledgements (flag_id, action, note, operator) "
+                              "VALUES (%s, %s, NULLIF(btrim(%s, E' \\t\\r\\n'), ''), %s) RETURNING *",
+                              (flag_id, action, note, operator))
             ack = await cur.fetchone()
             if status:
                 await cur.execute("UPDATE flags SET status = %s WHERE flag_id = %s", (status, flag_id))
         return dict(ack)
 
     async def upsert_assessment(self, flag_id: int, a: Dict[str, Any], state: str = "DONE") -> Dict[str, Any]:
+        """One row per flag. `source` and `fallback_reason` (migration 014) are written only when the columns exist."""
+        names = ["question", "answer", "reasoning", "recommended_action", "severity_assessment", "confidence",
+                 "model", "latency_ms", "tokens_per_sec", "error"]
+        cols = await self.db.columns("public", "assessments")
+        names += [c for c in ("source", "fallback_reason") if c in cols]
         row = await self.db.fetchone(
-            """INSERT INTO assessments (flag_id, state, question, answer, reasoning, recommended_action,
-                                        severity_assessment, confidence, model, latency_ms, tokens_per_sec, error,
-                                        completed_at)
-               VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, now())
-               ON CONFLICT (flag_id) DO UPDATE SET state = EXCLUDED.state, question = EXCLUDED.question,
-                 answer = EXCLUDED.answer, reasoning = EXCLUDED.reasoning,
-                 recommended_action = EXCLUDED.recommended_action,
-                 severity_assessment = EXCLUDED.severity_assessment, confidence = EXCLUDED.confidence,
-                 model = EXCLUDED.model, latency_ms = EXCLUDED.latency_ms, tokens_per_sec = EXCLUDED.tokens_per_sec,
-                 error = EXCLUDED.error, completed_at = now()
-               RETURNING *""",
-            (flag_id, state, a.get("question"), a.get("answer"), a.get("reasoning"), a.get("recommended_action"),
-             a.get("severity_assessment"), a.get("confidence"), a.get("model"), a.get("latency_ms"),
-             a.get("tokens_per_sec"), a.get("error")))
+            "INSERT INTO assessments (flag_id, state, %s, completed_at) VALUES (%%s, %%s, %s, now()) "
+            "ON CONFLICT (flag_id) DO UPDATE SET state = EXCLUDED.state, %s, completed_at = now() RETURNING *"
+            % (", ".join(names), ", ".join(["%s"] * len(names)),
+               ", ".join("%s = EXCLUDED.%s" % (c, c) for c in names)),
+            [flag_id, state] + [a.get(c) for c in names])
         return dict(row)
 
     async def upsert_document(self, d: Dict[str, Any], embedding: Optional[str], embed_model: Optional[str]) -> None:
@@ -288,18 +286,38 @@ class Repo:
                  LEFT JOIN locations l ON l.location_id = a.location_id WHERE a.action_id = %s""", (action_id,))
         return row if row and row.get("action") else None
 
+    # Robot time of flag row `f`: its action's timestamp, else its mission's end, else its event's ts (live flags).
+    _FLAG_TS = ("coalesce((SELECT a.timestamp FROM actions a WHERE a.action_id = f.action_id), "
+                "(SELECT m.end_time FROM missions m WHERE m.mission_id = f.mission_id), "
+                "(SELECT e.ts FROM events e WHERE e.event_id = f.event_id))")
+
     async def asset_history(self, asset_id: str, exclude_flag_id: Optional[int]) -> Dict[str, Any]:
+        """The asset's history as known when flag `exclude_flag_id` was raised: anomalies and other flags strictly
+        before that flag's robot time, without the flag's own action (its anomaly, other flags on it). Unbounded
+        when the flag or its time is unknown. Blank operator notes (spaces, tabs, newlines; as insert_ack) are
+        skipped."""
         row = await self.db.fetchone(
-            """SELECT (SELECT coalesce(json_agg(x ORDER BY x.timestamp DESC), '[]'::json) FROM (
-                         SELECT anomaly_id, action_id, mission_id, timestamp, anomaly_type, severity FROM anomalies
-                          WHERE asset_id = %s ORDER BY timestamp DESC LIMIT 5) x) AS anomalies,
-                      (SELECT coalesce(json_agg(y), '[]'::json) FROM (
-                         SELECT f.flag_id, f.title, f.severity, f.status, f.created_at,
-                                (SELECT string_agg(k.note, ' | ' ORDER BY k.created_at) FROM acknowledgements k
-                                  WHERE k.flag_id = f.flag_id AND k.note IS NOT NULL) AS notes
-                           FROM flags f WHERE f.asset_id = %s AND f.flag_id <> coalesce(%s, -1)
-                          ORDER BY f.created_at DESC LIMIT 3) y) AS prior_flags""",
-            (asset_id, asset_id, exclude_flag_id))
+            """WITH me AS (SELECT f.action_id, %s AS ts FROM flags f WHERE f.flag_id = %%s)
+               SELECT (SELECT coalesce(json_agg(x ORDER BY x.timestamp DESC NULLS LAST), '[]'::json) FROM (
+                         SELECT n.anomaly_id, n.action_id, n.mission_id, n.timestamp, n.anomaly_type, n.severity
+                           FROM anomalies n LEFT JOIN me ON true
+                          WHERE n.asset_id = %%s
+                            AND (me.action_id IS NULL OR n.action_id IS DISTINCT FROM me.action_id)
+                            AND (me.ts IS NULL OR n.timestamp < me.ts)
+                          ORDER BY n.timestamp DESC NULLS LAST LIMIT 5) x) AS anomalies,
+                      (SELECT coalesce(json_agg(y ORDER BY y.ts DESC NULLS LAST, y.created_at DESC), '[]'::json) FROM (
+                         SELECT p.flag_id, p.title, p.severity, p.status, p.created_at, p.ts,
+                                (SELECT string_agg(btrim(k.note, E' \\t\\r\\n'), ' | ' ORDER BY k.created_at)
+                                   FROM acknowledgements k WHERE k.flag_id = p.flag_id
+                                    AND nullif(btrim(k.note, E' \\t\\r\\n'), '') IS NOT NULL) AS notes
+                           FROM (SELECT f.flag_id, f.action_id, f.title, f.severity, f.status, f.created_at, %s AS ts
+                                   FROM flags f WHERE f.asset_id = %%s AND f.flag_id <> coalesce(%%s, -1)) p
+                           LEFT JOIN me ON true
+                          WHERE (me.action_id IS NULL OR p.action_id IS DISTINCT FROM me.action_id)
+                            AND (me.ts IS NULL OR p.ts < me.ts)
+                          ORDER BY p.ts DESC NULLS LAST, p.created_at DESC LIMIT 3) y) AS prior_flags"""
+            % (self._FLAG_TS, self._FLAG_TS),
+            (exclude_flag_id, asset_id, asset_id, exclude_flag_id))
         return row or {}
 
     # ════ reliability / insights ════════════════════════════════════════════════════════════════
@@ -605,7 +623,11 @@ class Repo:
                 GROUP BY 1, 2, 3, 4 ORDER BY 1, 2, 3""" % " AND ".join(where), params)
 
     async def recent_model_calls(self, limit: int) -> List[Dict[str, Any]]:
-        return await self.logs.fetch("SELECT * FROM app.model_calls ORDER BY ts DESC LIMIT %s", (limit,))
+        """Named columns only, so a column added to app.model_calls later is never exposed by accident."""
+        return await self.logs.fetch(
+            "SELECT call_id, ts, request_id, system, model, endpoint, flag_id, action_id, input_tokens, output_tokens, "
+            "latency_ms, tokens_per_sec, device, ok, error, metadata FROM app.model_calls ORDER BY ts DESC LIMIT %s",
+            (limit,))
 
     async def jobs(self, limit: int) -> List[Dict[str, Any]]:
         return await self.logs.fetch("SELECT * FROM app.job_runs ORDER BY started_at DESC LIMIT %s", (limit,))
@@ -668,13 +690,19 @@ class Repo:
             "updated_at = now() WHERE state = 'running' RETURNING %s" % self._RUN)
 
     async def reset_demo(self, clear_predictions: bool) -> Dict[str, int]:
-        """Clear the live pipeline (events, flags, assessments, acknowledgements, demo-generated documents).
-        Kit tables, raw.* and app.* (append-only) are untouched."""
+        """Clear the live pipeline (events, flags, assessments, acknowledgements, demo-generated documents and the
+        graph nodes built from them: flag, operator_note and explanation; their edges cascade). Kit tables, raw.*,
+        app.* (append-only) and live-run graph rows (props.source = 'live') are untouched."""
         counts: Dict[str, int] = {}
+        has_graph = bool(await self.db.columns("public", "kg_nodes"))
         async with self.db.transaction() as cur:
             await cur.execute("DELETE FROM documents WHERE doc_id LIKE 'note:%%' OR doc_id LIKE 'explanation:%%' "
                               "OR doc_id LIKE 'incident:flag-%%'")
             counts["documents"] = cur.rowcount
+            if has_graph:   # migration 009; stale flag:<id> nodes would outlive their flags until the next graph_build
+                await cur.execute("DELETE FROM kg_nodes WHERE kind IN ('flag', 'operator_note', 'explanation') "
+                                  "AND coalesce(props->>'source', '') <> 'live'")
+                counts["kg_nodes"] = cur.rowcount
             for t in ("acknowledgements", "assessments", "flags", "events"):
                 await cur.execute("DELETE FROM %s" % t)
                 counts[t] = cur.rowcount

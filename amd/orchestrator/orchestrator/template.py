@@ -57,7 +57,9 @@ def suggested_action(category: Optional[str], priority: Optional[str], facts: Di
 
 
 def reasons(flag: Dict[str, Any]) -> List[Dict[str, Any]]:
-    return [r for r in (flag.get("reasons") or []) if isinstance(r, dict)]
+    """Fired rules plus the verdict rows. The MCP flag view keeps verdicts (laya_verdict, rules_verdict,
+    laya_unavailable) under `flag.verdicts`; the backend's SQL packet still has them inside `reasons`."""
+    return [r for r in list(flag.get("reasons") or []) + list(flag.get("verdicts") or []) if isinstance(r, dict)]
 
 
 def validator_of(packet: Dict[str, Any]) -> Dict[str, Any]:

@@ -182,7 +182,8 @@ AS $fn$
 $fn$;
 
 -- ── Grants (guarded like 007_roles.sql: warn instead of failing) ──────────────────────────────────
--- spot_mcp_reader: SELECT on both tables + EXECUTE on the three functions. spot_app: the same (read).
+-- spot_mcp_reader: SELECT on both tables + EXECUTE on the three functions. spot_app: read/write (live runs write kg_*;
+-- the INSERT/UPDATE grants are in 013_live.sql), plus the same EXECUTE.
 -- (007's default privileges already give both roles their usual rights on new public tables; this makes the
 -- graph grants explicit and independent of which role created the tables.)
 DO $grants$

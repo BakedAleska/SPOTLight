@@ -130,6 +130,9 @@ async def test_qwen_answer_is_stored_indexed_and_graphed(lh):
     assert fin["run"]["counts"]["qwen"] == 8
     e_stop, e_res, e_an = next(x for x in stops if x[0]["stop"] == "E")
     assert e_an["qwen_source"] == "system2" and lh.repo.assessments[e_res["flag_id"]]["state"] == "DONE"
+    # System 2 sends no severity: the stored assessment defaults to the stop's, as /explain does with the flag's
+    assert e_an["capture"]["severity"]
+    assert e_an["capture"]["qwen"]["severity_assessment"] == e_an["capture"]["severity"]
     doc = e_an["capture"]["doc_id"]
     assert doc == "explanation:%s" % e_an["assessment_id"]
     kg = (await lh.client.get("/api/v1/live/kg", params={"run_id": run["run_id"]})).json()

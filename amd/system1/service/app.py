@@ -3,9 +3,12 @@
     POST /v1/predict    canonical events -> calibrated answers to their typed questions
     GET  /v1/questions  the question bank and per-kind question sets
     GET  /v1/model      checkpoint, fine-tuned flag, temperatures, training summary, device
-    GET  /health        {"ok": true, "model_loaded": true}
+    GET  /health        {"ok": true, "model_loaded": true, "device": "cuda:0", "logging": true}
 
 Contract: docs/backend-services-contract.md ("System 1 service"). Config: service/config.py (env vars).
+`logging` is true when LOGS_DATABASE_URL is set: each answered predict call is then queued for app.model_calls
+(calllog.py; best effort, a failed insert is logged and dropped). The backend logs only failed System 1 calls, so
+with it unset successes are logged nowhere and startup warns.
 """
 import logging
 import os
@@ -97,8 +100,10 @@ def create_app(settings: Optional[Settings] = None, engine=None) -> FastAPI:
                 log.info("warmup: %.2fs", eng.warmup())
         app.state.engine = eng
         app.state.calllog = CallLogger(settings.logs_database_url)
-        log.info("System 1 ready: %s on %s (model_calls logging %s)", eng.checkpoint, eng.device,
-                 "on" if app.state.calllog.enabled else "off")
+        logging_on = app.state.calllog.enabled
+        log.log(logging.INFO if logging_on else logging.WARNING,
+                "System 1 ready: %s on %s (model_calls logging %s)", eng.checkpoint, eng.device,
+                "on" if logging_on else "OFF: set LOGS_DATABASE_URL to the spot_mcp_user DSN")
         yield
         app.state.calllog.close()
 
@@ -115,8 +120,10 @@ def create_app(settings: Optional[Settings] = None, engine=None) -> FastAPI:
     @app.get("/health")
     def health(request: Request):
         eng = getattr(request.app.state, "engine", None)
+        calllog = getattr(request.app.state, "calllog", None)
         return {"ok": eng is not None, "model_loaded": eng is not None,
-                "device": eng.device if eng is not None else None}
+                "device": eng.device if eng is not None else None,
+                "logging": bool(calllog is not None and calllog.enabled)}
 
     @app.get("/v1/questions")
     def questions():

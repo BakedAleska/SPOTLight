@@ -15,6 +15,8 @@ with expected output and a troubleshooting table, is at the top of `docs/AMD-GPU
    box. It serves `localhost:18080` (llama-server), `:18081` (embed), `:18082` (Laya) and `:18083` (System 2).
 5. **Vercel deployment:** expose 18082/18081/18083 with `cloudflared tunnel --url ...`, then run
    `deploy/amd-native/laptop/show_vercel_env.sh <urls>` and set what it prints in Vercel (`deploy/amd-native/README.md`).
+   `EMBED_URL` goes on **both** the backend and the MCP project. Quick-tunnel URLs change on every relaunch, so
+   repeat this step and redeploy both after each one (`docs/DEPLOY-vercel.md` "Embedding URL after a tunnel relaunch").
    **Or a local stack:** set `.env` as in "Mode 2: `hybrid`" below, run `make up`, then check
    `curl -s localhost:8000/health | jq .system2`. `model_status: up` means the 27B is answering.
 
@@ -31,7 +33,7 @@ header table too) and this page. Ports and contracts are in `docs/backend-servic
 |---|---|---|---|---|
 | `web` | 3000 | local, hybrid, neon, frontend | `node:24`, `web/` | Next.js development dashboard. `/api/dashboard` reads backend data. Polls every 10 seconds; shows connection errors and retains the last successful update. |
 | `db` | 5433 (host: `DB_PORT`) | local, hybrid | `pgvector/pgvector:pg17` | Local stand-in for Neon. Named volume `pgdata`. |
-| `db-init` | n/a | local, hybrid, neon | `db/Dockerfile` | One-shot job: migrate, create login users, seed, ingest (embeds the RAG corpus), graph (rebuilds the Graph RAG `kg_nodes`/`kg_edges`, contract §7; embeds only changed node summaries; `DB_GRAPH_ARGS=--no-embed` skips embedding), status. Idempotent and non-destructive: `seed` only inserts missing rows and loads the demo baseline (events + flags) on a database's first seed, so `make up` never overwrites live or acknowledged flags or refills a reset demo (audit M5). |
+| `db-init` | n/a | local, hybrid, neon | `db/Dockerfile` | One-shot job (`HEALTHCHECK NONE`): migrate, create login users, seed (kit, analytics, and the demo baseline on a database's first seed), then `db/job.sh refresh`: ingest (embeds the RAG corpus; waits up to `EMBED_WAIT_S`, default 900 s, for the embedder; an `EMBED_URL` host that does not resolve fails at once), graph (rebuilds the Graph RAG `kg_nodes`/`kg_edges`, contract §7; embeds only changed node summaries; `DB_GRAPH_ARGS=--no-embed` skips embedding), status. graph and status run even when ingest fails (graph then adds `--no-embed`); the job exits with the first failing step's code. Idempotent and non-destructive: `seed` only inserts missing rows and loads the demo baseline (events + flags) on a database's first seed, so `make up` never overwrites live or acknowledged flags or refills a reset demo (audit M5). Login users that exist keep their password (`SPOT_ROTATE_PASSWORDS=1` changes it). |
 | `embed` | 8081 | local, models | `amd/embed/` | Qwen3-Embedding-0.6B. `TORCH_VARIANT` build arg. HF cache volume `hf-cache`. `EMBED_BATCH=8` (32 OOM-killed it). |
 | `system1` | 8082 | local, models | `amd/system1/service/` | Laya. `TORCH_VARIANT` build arg. Same `hf-cache` volume. Fine-tuned checkpoints are mounted at `/models/checkpoints`. |
 | `mcp` | 8090 | local, hybrid, neon | `amd/mcp/` | Logs in as `spot_mcp_user` (in `spot_mcp_reader`: read-only, plus INSERT on `app.*`). |
@@ -187,8 +189,19 @@ curl -s localhost:8000/health | jq '{system1, embed, system2}'   # system2.model
   If the AMD box's embedder differs from what was ingested before, run
   `DB_INGEST_ARGS=--force DB_GRAPH_ARGS=--force-embed make up` (the graph re-embeds by itself when `EMBED_MODEL`
   changes; `--force-embed` covers the same model id on a different backend).
-- System 1's own `app.model_calls` logging needs a DB URL that the VM can reach. Neon works for that. The local
-  `db` is not reachable from the VM, so with it the backend's client-side `system1` rows are the only ones.
+- **Embedding settings over the SSH bridge.** The bridge drops long requests, so the ingest client sends
+  `EMBED_CLIENT_BATCH=16` texts per request (the default) and retries a batch on transport errors and HTTP
+  429/502/503/504. Leave `EMBED_QUERY_PREFIX` unset everywhere. The backend, the MCP server and the smoke test then all
+  send queries with the same Qwen3 instruction (documents get no prefix) (`...\nQuery:`, joined with no separator; contract §1). Before 2026-10-11 the
+  `amd/embed` client (used for the smoke test's queries) sent no query prefix when it was unset. Before any write, ingest
+  and graph check the embedder's `/health` and exit if its model or dimension differs from `EMBED_MODEL` /
+  `EMBED_DIM`.
+- **System 1 call logging (native on the box).** Laya writes its own `app.model_calls` rows only when
+  `LOGS_DATABASE_URL` is set in `/root/spot.env`. Use the Neon pooled DSN of `spot_mcp_user`; it is never committed
+  (`deploy/amd-native/README.md` "System 1 call logging"). The backend logs only failed System 1 calls, so without
+  it no successful Laya call is recorded. Check with `curl -s localhost:18082/health`: it should say
+  `"logging": true`. The local `db` is not reachable from the VM, so with it the backend's failure rows are the only
+  ones.
 
 ## Mode 3: `neon`: Neon instead of the `db` service
 ```bash
@@ -203,8 +216,13 @@ make up
 E2E_DATABASE_URL=$DATABASE_URL backend/.venv/bin/python scripts/e2e.py
 ```
 `db-init` runs as the owner. It migrates, then `scripts/db_login_roles.py` creates `spot_app_user` and
-`spot_mcp_user` with those passwords. If Neon refuses `CREATE ROLE`, create the users in the Neon console instead,
-then re-run. Make a Neon branch before any `reset`.
+`spot_mcp_user` with those passwords. A user that already exists keeps its password unless
+`SPOT_ROTATE_PASSWORDS=1`, so `make up` never resets the deployed passwords. The same holds locally: after changing
+`SPOT_APP_PASSWORD` or `SPOT_MCP_PASSWORD` in `.env` for an existing stack, run `SPOT_ROTATE_PASSWORDS=1 make up`
+(compose passes it to `db-init`), or the backend and MCP log in with the new password while the role keeps the old one. The dev defaults (`spot_app_dev` /
+`spot_mcp_dev`) are refused on any non-local host. If Neon refuses `CREATE ROLE`, create the users in the Neon
+console instead, then re-run. Make a Neon branch before any `reset`. The production baseline, the refresh order
+after a replay or `reset-demo`, and the one allowed use of `seed --force-reseed` are in `docs/DEPLOY-neon.md` §6.
 
 ### Backend on Vercel (no Docker)
 The backend also deploys as its own Vercel project (Root Directory `backend/`); steps, env vars and checks are in
@@ -257,6 +275,8 @@ COMPOSE_PROFILES=live docker compose up live-runner          # the same in Docke
 docker compose run --rm --no-deps --entrypoint db/job.sh db-init status        # row counts
 make smoke                                                                     # 3 RAG queries + graph queries + role checks
 docker compose run --rm --no-deps --entrypoint db/job.sh db-init graph         # rebuild the knowledge graph now
+docker compose run --rm --no-deps --entrypoint db/job.sh db-init refresh --kinds incident   # after a replay or
+                                                                               # reset-demo: flag incident docs + graph
 make test-graph                                                                # graph build + functions on a throwaway DB
 make test-chat-db                                                              # chat migrations + ChatRepo on a throwaway DB
 docker compose up -d --force-recreate backend                                  # after editing .env (e.g. TRIAGE_MODE)
@@ -264,8 +284,8 @@ curl -s localhost:8000/health | jq                                             #
 ADMIN_TOKEN=$(sed -n 's/^ADMIN_TOKEN=//p' .env)
 curl -s -XPOST localhost:8000/api/v1/replay/start -H "X-Admin-Token: $ADMIN_TOKEN" \
      -H 'content-type: application/json' -d '{"speed":600,"limit":20}'
-docker compose run --rm --no-deps --entrypoint db/job.sh db-init seed --force-reseed   # DESTRUCTIVE: restore the
-                                                                               # seeded events/flags (overwrites)
+docker compose run --rm --no-deps --entrypoint db/job.sh db-init seed --force-reseed   # DESTRUCTIVE: only to restore
+                                    # the 58-flag baseline when events/flags are empty (after reset-demo); then refresh
 ```
 
 ## System 2 on 8083 (stub or live)

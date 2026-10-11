@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import asyncio
 import datetime as _dt
+import inspect
 import json
 import logging
 import re
@@ -35,6 +36,16 @@ TOOL_KINDS = G.STRUCT_KINDS + G.DOC_LINK_KINDS + ["explanation"]  # vector entry
 SEV_RANK = {"LOW": 1, "MEDIUM": 2, "HIGH": 3, "CRITICAL": 4}
 _ID_TOKEN = re.compile(r"\b(?:[A-Z]{1,6}-\d{2,4}|A\d{4}|AN\d{3}|WP\d{2}|M\d{3}|R\d{4}|E\d{5})\b")
 _NOISE_KEYS = {"synthetic", "created_at", "ingested_at", "payload", "embedding", "content_tsv"}
+# flags.reasons rows that record who decided (System 1 / the rules), not a policy rule that fired: never a
+# policy:<rule> doc or a policy_rule:<rule> node (same names as amd/orchestrator/orchestrator/template.py).
+VERDICT_RULES = ("laya_verdict", "rules_verdict", "laya_unavailable")
+MAX_FIRED_RULES = 8      # fired rules shown in the flag view (the backend's SQL fallback packet keeps 8 too)
+KG_CHECK_TTL_S = 60.0    # how long one "is kg_nodes empty?" answer is reused
+KG_EMPTY = "knowledge graph is empty (graph_build not run)"
+NO_GRAPH_FACTS = "no knowledge-graph facts linked to this flag"
+# Older laya_unavailable rows carry the raw connection error: show the backend's stable text instead
+# (backend/app/services/validator.py LAYA_UNAVAILABLE_DETAIL), never an exception string.
+LAYA_UNAVAILABLE_DETAIL = "System 1 (Laya) unavailable; rules-only verdict"
 
 
 # ── small helpers ───────────────────────────────────────────────────────────────────────────────
@@ -79,11 +90,47 @@ def _fmt(v: Optional[float]) -> str:
     return ("%.1f" % v).rstrip("0").rstrip(".")
 
 
+def _reason_rows(f: Dict[str, Any]) -> List[Dict[str, Any]]:
+    reasons = f.get("reasons") or []
+    if isinstance(reasons, str):
+        try:
+            reasons = json.loads(reasons)
+        except ValueError:
+            reasons = [{"detail": reasons}]
+    return [r for r in reasons if isinstance(r, dict)] if isinstance(reasons, list) else []
+
+
+def fired_rules(f: Dict[str, Any]) -> List[str]:
+    """The policy rules that fired for a flag, in stored order, without the verdict rows (VERDICT_RULES)."""
+    out: List[str] = []
+    for r in _reason_rows(f):
+        rule = r.get("rule")
+        if isinstance(rule, str) and rule and rule not in VERDICT_RULES and rule not in out:
+            out.append(rule)
+    return out
+
+
+def _takes_call_ids(embedder: Any) -> bool:
+    """Whether embed_queries accepts flag_id/action_id (for app.model_calls); simpler embedders (test fakes) don't."""
+    try:
+        params = inspect.signature(embedder.embed_queries).parameters
+    except (AttributeError, TypeError, ValueError):
+        return False
+    return "flag_id" in params or any(p.kind is p.VAR_KEYWORD for p in params.values())
+
+
+# Packet sections _fit_budget may shorten; a note lists each one it cut (MCP_PACKET_TOKEN_BUDGET).
+TRIMMED_SECTIONS = ("similar_incidents", "asset_history", "manual", "policy", "graph", "system1")
+TRIM_NOTE_TOKENS = 48       # room kept for that note when trimming starts
+
+
 class ContextService:
     def __init__(self, repo: Repo, embedder: Optional[Embedder], settings: Settings,
                  sink: Optional[LogSink] = None):
         self.repo, self.embedder, self.s = repo, embedder, settings
         self.sink = sink or NullLogSink()
+        self._embed_ids = embedder is not None and _takes_call_ids(embedder)
+        self._kg_empty: Optional[Tuple[float, bool]] = None   # (checked_at, empty)
 
     # ── logging wrapper (app.mcp_tool_calls) ────────────────────────────────────────────────────
     async def logged(self, tool: str, args: Dict[str, Any], fn: Callable[[], Awaitable[Dict[str, Any]]],
@@ -114,9 +161,14 @@ class ContextService:
                 log.warning("tool-call logging failed: %s", exc)
 
     # ── retrieval core ──────────────────────────────────────────────────────────────────────────
-    async def _embed(self, texts: List[str], request_id: Optional[str]) -> List[List[float]]:
+    async def _embed(self, texts: List[str], request_id: Optional[str], *, flag_id: Optional[int] = None,
+                     action_id: Optional[str] = None) -> List[List[float]]:
+        """Embed query texts. flag_id/action_id only label the embed call's app.model_calls row."""
         if self.embedder is None:
             raise EmbeddingError("no embedding service configured (EMBED_URL)")
+        ids = {k: v for k, v in (("flag_id", flag_id), ("action_id", action_id)) if v is not None}
+        if ids and self._embed_ids:
+            return await self.embedder.embed_queries(texts, request_id=request_id, **ids)
         return await self.embedder.embed_queries(texts, request_id=request_id)
 
     async def _retrieve(self, query: str, kinds: List[str], *, k: int, hybrid: bool, asset: Optional[str] = None,
@@ -188,6 +240,7 @@ class ContextService:
         location_id = D.check_id("location_id", location_id) if location_id is not None else None
         exclude: List[str] = []
         exclude_action = None
+        vec = None
         if flag_id is not None:
             flag_id = D.check_int("flag_id", flag_id, 1, 2**62)
             ctx = await self._load_flag(flag_id)
@@ -195,12 +248,14 @@ class ContextService:
             exclude, exclude_action = self._self_ids(ctx), ctx.get("action_id")
             if text:
                 q = D.check_text("text", text) + " | " + q
+            vec = (await self._embed([q], request_id, flag_id=flag_id, action_id=exclude_action))[0]
         elif text is not None:
             q = D.check_text("text", text)
         else:
             raise ValueError("give flag_id (preferred) or text describing the incident")
         found = await self._retrieve(q, ["incident"], k=k, hybrid=True, asset=asset_id, location=location_id,
-                                     exclude=exclude, exclude_action=exclude_action, request_id=request_id)
+                                     exclude=exclude, exclude_action=exclude_action, vec=vec,
+                                     request_id=request_id)
         return self._search_result(q, found, flag_id=flag_id)
 
     async def search_asset_history(self, asset_id: str, query: Optional[str] = None, k: int = 5,
@@ -256,6 +311,32 @@ class ContextService:
     def _graph_unavailable(exc: Exception) -> Dict[str, Any]:
         return {"graph_unavailable": True, "facts": [], "result_count": 0,
                 "message": "Graph unavailable: %s. Use the search_* and get_* tools instead." % exc}
+
+    async def _graph_is_empty(self) -> bool:
+        """True when kg_nodes has no rows (db/graph_build.py not run). One EXISTS check, reused for KG_CHECK_TTL_S.
+        Raises GraphUnavailable (no migration 009). A repo without the check, or a failed check, counts as not
+        empty, so the normal lookups run and report what they find."""
+        check = getattr(self.repo, "kg_has_nodes", None)
+        if check is None:
+            return False
+        now = time.monotonic()
+        if self._kg_empty is not None and now - self._kg_empty[0] < KG_CHECK_TTL_S:
+            return self._kg_empty[1]
+        try:
+            empty = not await check()
+        except GraphUnavailable:
+            raise
+        except Exception as exc:  # noqa: BLE001 - only picks the message; the real lookups still run
+            log.info("kg_nodes emptiness check failed: %s", exc)
+            return False
+        self._kg_empty = (now, empty)
+        return empty
+
+    @staticmethod
+    def _graph_empty_result(**echo) -> Dict[str, Any]:
+        return {**echo, "graph_empty": True, "facts": [], "result_count": 0, "no_relevant_results": True,
+                "message": "The %s, so it has no facts yet. Use the search_* and get_* tools instead. Do not cite "
+                           "anything from this call." % KG_EMPTY}
 
     @staticmethod
     def _node_item(n: Dict[str, Any], **extra) -> Dict[str, Any]:
@@ -324,6 +405,8 @@ class ContextService:
         hops = D.check_int("hops", hops, 1, 3)
         k = D.check_int("k", k, 1, 30)
         try:
+            if await self._graph_is_empty():
+                return self._graph_empty_result(entity=entity)
             node, how, alts, sim, note = await self._resolve_entity(entity, request_id)
             if node is None:
                 out: Dict[str, Any] = {
@@ -357,6 +440,11 @@ class ContextService:
         q = D.check_text("query", query)
         k = D.check_int("k", k, 1, 10)
         hops = D.check_int("hops", hops, 1, 3)
+        try:
+            if await self._graph_is_empty():
+                return self._graph_empty_result(query=q, entry_nodes=[], top_similarity=None)
+        except GraphUnavailable as exc:
+            return self._graph_unavailable(exc)
 
         async def by_vector() -> List[Dict[str, Any]]:  # meaning -> knowledge nodes; exact ids come from text
             vec = (await self._embed([q], request_id))[0]
@@ -569,20 +657,21 @@ class ContextService:
     # ── views ───────────────────────────────────────────────────────────────────────────────────
     def _flag_view(self, row: Dict[str, Any]) -> Dict[str, Any]:
         f = row["flag"]
-        reasons = f.get("reasons") or []
-        if isinstance(reasons, str):
-            try:
-                reasons = json.loads(reasons)
-            except ValueError:
-                reasons = [{"detail": reasons}]
+        rows = _reason_rows(f)
+        # `reasons` = the policy rules that fired (up to MAX_FIRED_RULES); `verdicts` = who decided (System 1 /
+        # the rules), kept apart so they never push a fired rule out of the view.
+        fired = [r for r in rows if r.get("rule") not in VERDICT_RULES]
+        verdicts = [r for r in rows if r.get("rule") in VERDICT_RULES]
         out = compact({
             "id": "flag:%s" % f["flag_id"], "title": f.get("title"), "severity": f.get("severity"),
             "score": f.get("score"), "status": f.get("status"), "escalated": f.get("escalated"),
             "priority": f.get("priority"), "category": f.get("category"),
             "mission_id": f.get("mission_id"), "action_id": f.get("action_id"), "asset_id": f.get("asset_id"),
             "location_id": f.get("location_id"), "created_at": f.get("created_at"),
-            "reasons": [compact({"rule": r.get("rule"), "detail": r.get("detail")}) for r in reasons[:5]
-                        if isinstance(r, dict)],
+            "reasons": [compact({"rule": r.get("rule"), "detail": r.get("detail")}) for r in fired[:MAX_FIRED_RULES]],
+            "verdicts": [compact({"rule": r.get("rule"), "detail": LAYA_UNAVAILABLE_DETAIL
+                                  if r.get("rule") == "laya_unavailable" else snippet(r.get("detail"), 160)})
+                         for r in verdicts],
         })
         acks = [compact({"id": "note:%s" % k.get("ack_id"), "action": k.get("action"),
                          "note": snippet(k.get("note"), 200), "operator": k.get("operator")})
@@ -671,8 +760,10 @@ class ContextService:
             "start_battery_pct": m.get("start_battery_pct"), "end_battery_pct": m.get("end_battery_pct"),
             "reported_status": reported, "actions_total": total, "actions_failed": failed,
             "failure_types": b.get("failure_types"), "anomalies_by_severity": sev,
+            # asset_name / asset_criticality: the orchestrator's canonical mission event (System 1) needs both.
             "worst_anomaly": compact({"id": "anomaly:%s" % b["worst_anomaly"].get("anomaly_id"),
                                       **{x: b["worst_anomaly"].get(x) for x in ("anomaly_type", "severity", "asset_id",
+                                                                                 "asset_name", "asset_criticality",
                                                                                  "action_id")}})
             if b.get("worst_anomaly") else None,
         })
@@ -705,9 +796,15 @@ class ContextService:
 
     @staticmethod
     def _self_ids(ctx: Dict[str, Any]) -> List[str]:
+        """The flag's own documents, never returned as "similar": its incident, its own event doc and the incidents
+        of its action's anomalies. Event docs are keyed by the System 1 triage event id (event:act-A0001 /
+        event:mis-M001, amd/embed/ingest.py), i.e. flags.triage_event_id, not the replay's events.event_id."""
         ids = ["incident:flag-%s" % ctx["flag_id"]]
-        if ctx["event"].get("event_id"):
-            ids.append("event:%s" % ctx["event"]["event_id"])
+        tei = ctx["flag"].get("triage_event_id") or (
+            "act-%s" % ctx["action_id"] if ctx.get("action_id") else
+            "mis-%s" % ctx["mission_id"] if ctx.get("mission_id") else None)
+        if tei:
+            ids.append("event:%s" % tei)
         for n in ((ctx.get("bundle") or {}).get("anomalies") or []):
             ids.append("incident:%s" % n.get("anomaly_id"))
         return ids
@@ -721,7 +818,7 @@ class ContextService:
         where = " ".join(x for x in (s.get("asset_type"), ctx.get("asset_id"), "at", l.get("location_name") or
                                      ctx.get("location_id"), "(%s)" % l["environment"] if l.get("environment") else "")
                          if x)
-        rules = [r.get("rule") for r in (f.get("reasons") or []) if isinstance(r, dict) and r.get("rule")]
+        rules = fired_rules(f)
         title = f.get("title") or ""
         incident = "%s on %s during %s: %s" % (what, where, a.get("action_type") or "mission", title)
         manual = ("How should a Spot operator handle %s during an Autowalk %s mission? %s"
@@ -734,12 +831,13 @@ class ContextService:
         flag_id = D.check_int("flag_id", flag_id, 1, 2**62)
         ctx = await self._load_flag(flag_id)
         f, b = ctx["flag"], ctx.get("bundle")
-        missing: List[str] = []
-        gaps: List[str] = []
+        missing: List[str] = []    # core context absent: the packet is insufficient
+        gaps: List[str] = []       # something failed (lookup/search error, retrieval skipped, over budget)
+        notes: List[str] = []      # informational, non-blocking: a search found nothing relevant, empty graph...
         is_action = bool(ctx["action_id"])
 
         # Phase A (SQL): mission, asset profile, System 1, exact policy docs.
-        rules = [r.get("rule") for r in (f.get("reasons") or []) if isinstance(r, dict) and r.get("rule")]
+        rules = fired_rules(f)     # policy rules only; the verdict rows have no policy:<rule> doc
         a = (b or {}).get("action") or {}
         coros = {
             "mission": self.repo.mission_bundle(ctx["mission_id"]) if ctx["mission_id"] else None,
@@ -768,7 +866,7 @@ class ContextService:
         rag: Dict[str, Dict[str, Any]] = {}
         try:
             names = ["incident", "manual", "policy"] + (["history"] if ctx["asset_id"] else [])
-            vecs = await self._embed([qs[n] for n in names], request_id)
+            vecs = await self._embed([qs[n] for n in names], request_id, flag_id=flag_id, action_id=ctx["action_id"])
             vec = dict(zip(names, vecs))
             excl, xa = self._self_ids(ctx), ctx["action_id"]
             jobs = {
@@ -789,7 +887,7 @@ class ContextService:
                     rag[name] = r
         except EmbeddingError as exc:
             gaps.append("retrieval skipped: %s" % exc)
-        graph_items, graph_gap = await graph_task
+        graph_items, graph_gap, graph_note = await graph_task
 
         # Assemble: key facts first, question last.
         packet: Dict[str, Any] = {"packet_version": "1", "flag": self._flag_view(ctx["row"])}
@@ -816,6 +914,8 @@ class ContextService:
             packet["graph"] = graph_items
         if graph_gap:
             gaps.append(graph_gap)
+        if graph_note:
+            notes.append(graph_note)
         for name in ("similar_incidents", "asset_history", "manual", "policy"):
             items = (rag.get(name) or {}).get("results") or []
             if name == "policy":  # exact rule docs first
@@ -824,10 +924,20 @@ class ContextService:
                 items = (exact + [i for i in items if i["id"] not in seen])[:3]
             if items:
                 packet[name] = items
-            elif name in rag or name == "policy":
-                gaps.append("no relevant %s above similarity %.2f" % (name.replace("_", " "), self.s.min_similarity))
+            elif name in rag:  # searched, nothing relevant (a failed or skipped search is already a gap)
+                # A search that ran and found nothing relevant is a note, not a gap: System 2 treats any gap as
+                # blocking (insufficient_context), and the SQL facts can still answer the question.
+                notes.append("no relevant %s above similarity %.2f" % (name.replace("_", " "), self.s.min_similarity))
+        if packet.get("graph"):
+            # One id, one content: a node another section already cites (a manual page found by both the graph
+            # walk and the manual search) keeps that section's item; System 2 rejects a repeated id with different
+            # content (422 'conflicting content for duplicate id').
+            cited = set(self._collect_ids({k: v for k, v in packet.items() if k != "graph"}))
+            packet["graph"] = [g for g in packet["graph"] if g.get("id") not in cited]
+            if not packet["graph"]:
+                del packet["graph"]
 
-        validator = (packet.get("event") or {}).get("validator") if is_action else \
+        validator =(packet.get("event") or {}).get("validator") if is_action else \
             ((packet.get("event") or {}).get("mission") or {}).get("validator")
         category = (validator or {}).get("category") or f.get("category") or ("mission" if not is_action else None)
         if category not in D.ALLOWED_ACTIONS:
@@ -841,13 +951,15 @@ class ContextService:
                     else "MONITOR"
         else:
             packet["allowed_actions"] = {a_: m for c in D.ALLOWED_ACTIONS.values() for a_, m in c.items()}
-            gaps.append("category unknown; all actions allowed")
+            notes.append("category unknown; all actions allowed")
 
         packet["insufficient_context"] = bool(missing)
         if missing:
             packet["missing"] = missing
         if gaps:
             packet["gaps"] = gaps
+        if notes:
+            packet["notes"] = notes
         packet["question"] = self._question(ctx, packet)
         packet = self._fit_budget(packet)
         packet["citation_ids"] = self._collect_ids(packet)
@@ -888,7 +1000,7 @@ class ContextService:
             w = m.get("worst_anomaly") or {}
             add("anomaly_type", w.get("anomaly_type"))
             add("asset", w.get("asset_id"))
-        for r in rules[:4]:
+        for r in [r for r in rules if r not in VERDICT_RULES][:4]:   # verdict rows are not policy_rule nodes
             add("policy_rule", r)
         extra: List[str] = []
         add("environment", loc.get("environment"), extra)
@@ -900,21 +1012,24 @@ class ContextService:
             add("anomaly", n.get("anomaly_id"), known)
         return seeds, set(seeds) | set(extra) | set(known), [x for x in extra if x not in seeds]
 
-    async def _graph_section(self, ctx: Dict[str, Any], got: Dict[str, Any],
-                             rules: List[str]) -> Tuple[List[Dict[str, Any]], Optional[str]]:
-        """The packet's `graph` section: 2-hop facts around the flag, <= graph_token_budget. Never raises."""
+    async def _graph_section(self, ctx: Dict[str, Any], got: Dict[str, Any], rules: List[str]
+                             ) -> Tuple[List[Dict[str, Any]], Optional[str], Optional[str]]:
+        """The packet's `graph` section: 2-hop facts around the flag, <= graph_token_budget. Never raises.
+        Returns (items, gap, note): a failure is a gap; an empty graph or no linked facts is only a note."""
         seeds, context, extra = self._graph_seeds(ctx, got, rules)
         if not seeds:
-            return [], None
+            return [], None, None
         try:
+            if await self._graph_is_empty():
+                return [], None, "%s: %s" % (NO_GRAPH_FACTS, KG_EMPTY)
             items = await self._graph_facts(seeds, PACKET_WALKS, context, extra=extra, drop_fk_within=context,
                                             token_budget=self.s.graph_token_budget, fill=False)
         except GraphUnavailable as exc:
-            return [], "graph unavailable (%s)" % exc
+            return [], "graph unavailable (%s)" % exc, None
         except Exception as exc:  # noqa: BLE001 - the graph is extra context; never break the packet
             log.warning("graph section failed for flag %s: %s", ctx["flag_id"], exc)
-            return [], "graph lookup failed (%s)" % type(exc).__name__
-        return items, (None if items else "no knowledge-graph facts linked to this flag")
+            return [], "graph lookup failed (%s)" % type(exc).__name__, None
+        return items, None, (None if items else NO_GRAPH_FACTS)
 
     def _s1_compact(self, preds: List[Dict[str, Any]], b: Optional[Dict[str, Any]]) -> List[Dict[str, Any]]:
         latest: Dict[Tuple[str, str], Dict[str, Any]] = {}
@@ -973,9 +1088,10 @@ class ContextService:
                 _fmt(rs["success_rate_pct"]), rs["n_success"], rs["n"], ", small sample" if rs.get("warning") else ""))
         prof = got.get("asset")
         if prof:
+            # repo.asset_profile is bounded to robot time before this flag's event, without its own action/anomaly.
             s = prof["asset"]
             by_type = prof.get("anomalies_by_type") or {}
-            line = "Asset %s (%s, criticality %s): %d anomalies on record%s." % (
+            line = "Asset %s (%s, criticality %s): %d earlier anomalies on record%s." % (
                 s.get("asset_id"), s.get("asset_type"), s.get("criticality"), int(prof.get("anomaly_count") or 0),
                 " (" + ", ".join("%s x%s" % (t, c) for t, c in sorted(by_type.items(), key=lambda kv: -int(kv[1]))[:3]) + ")"
                 if by_type else "")
@@ -985,7 +1101,7 @@ class ContextService:
             vals = [x for x in vals if x is not None]
             if len(vals) >= 2:
                 trend = "rising" if vals[-1] > vals[0] else "falling" if vals[-1] < vals[0] else "flat"
-                line += " Last %d GOOD %s readings: %s..%s, %s (latest %s)." % (
+                line += " Previous %d GOOD %s readings: %s..%s, %s (latest %s)." % (
                     len(vals), mt, _fmt(min(vals)), _fmt(max(vals)), trend, _fmt(vals[-1]))
             facts.append(line)
             for p in (prof.get("prior_flags") or [])[:2]:
@@ -1028,11 +1144,14 @@ class ContextService:
                 "the operator take?" % (ctx["flag_id"], f.get("title"), ctx["mission_id"]))
 
     def _fit_budget(self, packet: Dict[str, Any]) -> Dict[str, Any]:
-        budget = self.s.packet_token_budget
+        limit = budget = self.s.packet_token_budget
 
         def size() -> int:  # citation_ids and bookkeeping are added after trimming, so measure the final shape
             ids = self._collect_ids(packet)
             return est_tokens({**packet, "citation_ids": ids, "result_count": len(ids), "top_similarity": 0.12345})
+
+        if size() > budget:     # trimming: leave room for the note that says what was trimmed
+            budget = max(0, limit - TRIM_NOTE_TOKENS)
 
         def trim(name: str, floor: int) -> None:  # pop from the tail: every section is ordered best first
             while size() > budget and len(packet.get(name, [])) > floor:
@@ -1040,10 +1159,12 @@ class ContextService:
             if name in packet and not packet[name]:
                 packet.pop(name)
 
+        before = {n: len(packet.get(n) or []) for n in TRIMMED_SECTIONS}
         # Trim order: least decisive evidence first. flag, event, facts and the question are never trimmed.
-        # The graph section is already bounded (graph_token_budget), so RAG tails go before its tail does.
+        # RAG tails go first, but the last asset_history / manual item outlives shorter snippets and the graph tail
+        # down to 4 facts: with a populated graph, dropping them first left 0 of 58 packets with any asset history.
         for name, floor in (("manual", 1), ("asset_history", 1), ("policy", 1), ("similar_incidents", 2),
-                            ("graph", 6), ("asset_history", 0), ("manual", 0), ("similar_incidents", 1)):
+                            ("graph", 6)):
             trim(name, floor)
         for n in (180, 120):
             if size() <= budget:
@@ -1052,6 +1173,8 @@ class ContextService:
                 for it in packet.get(name, []):
                     it["text"] = snippet(it.get("text"), n)
         trim("graph", 4)
+        for name, floor in (("asset_history", 0), ("manual", 0), ("similar_incidents", 1)):
+            trim(name, floor)
         if size() > budget and isinstance(packet.get("allowed_actions"), dict):
             packet["allowed_actions"] = list(packet["allowed_actions"])
         trim("graph", 3)
@@ -1060,6 +1183,9 @@ class ContextService:
             for r in f.get("reasons") or []:
                 if r.get("detail"):
                     r["detail"] = snippet(r["detail"], 90)
+            for r in f.get("verdicts") or []:
+                if r.get("detail"):
+                    r["detail"] = snippet(r["detail"], 60)
             for k in f.get("operator_acks") or []:
                 if k.get("note"):
                     k["note"] = snippet(k["note"], 80)
@@ -1072,7 +1198,11 @@ class ContextService:
             for it in packet.get("system1") or []:
                 it.pop("meaning", None)
         if size() > budget:
-            packet.setdefault("gaps", []).append("packet is over the %d-token budget even after trimming" % budget)
+            packet.setdefault("gaps", []).append("packet is over the %d-token budget even after trimming" % limit)
+        cut = ["%s %d->%d" % (n, before[n], len(packet.get(n) or [])) for n in TRIMMED_SECTIONS
+               if len(packet.get(n) or []) < before[n]]
+        if cut:     # informational: the evidence was found, the budget left it out
+            packet.setdefault("notes", []).append("trimmed to the %d-token packet budget: %s" % (limit, ", ".join(cut)))
         return packet
 
     @staticmethod

@@ -31,8 +31,9 @@ log = logging.getLogger("spot_mcp")
 INSTRUCTIONS = """Read-only context for explaining SPOT robot inspection flags to plant operators.
 Start with get_flag_context(flag_id): it returns one packet with the flag, the event, derived facts (F1..),
 knowledge-graph facts, similar incidents, manual passages and policy rules, the allowed actions, and the question.
-Usually that is enough. Only call another tool when the packet's `gaps` say something is missing; graph_neighborhood
-and search_graph walk the knowledge graph (assets, waypoints, failure types, manual topics, failure statistics).
+Usually that is enough. Only call another tool when the packet's `gaps` say something failed or is missing
+(`notes` only record searches that found nothing); graph_neighborhood and search_graph walk the knowledge
+graph (assets, waypoints, failure types, manual topics, failure statistics).
 Cite the `id` of every item you use.
 Never invent ids or numbers. If a search says no_relevant_results, don't cite it. If insufficient_context is true,
 say what is missing instead of guessing. recommended_action must be one of allowed_actions."""
@@ -99,7 +100,7 @@ def build_server(service: ContextService) -> MCPServer:
         predictions; derived facts F1..Fn (battery risk, waypoint reliability, asset history, mission health);
         graph facts (triples like "LOCALIZATION_FAILURE —common_at→ Turbine Hall South (WP09) (n=6, rate 50%)");
         similar past incidents, asset history, Spot manual passages and policy rules (each with a similarity);
-        allowed_actions and suggested_action; citation_ids; insufficient_context + missing; gaps; the question last.
+        allowed_actions and suggested_action; citation_ids; insufficient_context + missing; gaps; notes; the question last.
         Cite items by their `id`. If insufficient_context is true, explain what is missing instead of guessing."""
         rid = _request_id(ctx)
         return await run("get_flag_context", {"flag_id": flag_id},

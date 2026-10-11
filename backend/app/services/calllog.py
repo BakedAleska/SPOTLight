@@ -3,12 +3,14 @@
 Writes are fire-and-forget background tasks, so a slow or missing logs DB never slows or breaks a request.
 `drain()` waits for pending writes (tests, shutdown, and on serverless before each response: a frozen instance
 would otherwise hold them until its next request, or lose them).
+Every error string passes `redact()` before it is stored: the tables are served by GET /ops/model-calls.
 """
 from __future__ import annotations
 
 import asyncio
 import contextvars
 import logging
+import re
 from typing import Any, Dict, Optional, Set
 
 from psycopg.types.json import Jsonb
@@ -22,6 +24,29 @@ request_id_var: contextvars.ContextVar[Optional[str]] = contextvars.ContextVar("
 
 MODEL_CALL_COLS = ("request_id", "system", "model", "endpoint", "flag_id", "action_id", "input_tokens",
                    "output_tokens", "latency_ms", "tokens_per_sec", "device", "ok", "error", "metadata")
+
+# Credentials that must never reach app.* (fix plan DP-01: 21 chat rows held the Gemini key). httpx/h11 print an
+# invalid header as its bytes repr, so "Illegal header value b'<key>\\n'" carried the whole key. The closing quote
+# is optional: an error cut short by an earlier cap (short_error's 300 characters) loses it, and the rest is redacted.
+_REDACTIONS = (
+    (re.compile(r"Illegal header value b(?:'[^']*'?|\"[^\"]*\"?)"), "Illegal header value [redacted]"),
+    (re.compile(r"(?i)\b(x-goog-api-key|authorization|api[_-]?key)([\"']?\s*[:=]\s*)(?:(?:bearer|basic|token)\s+)?"
+                r"\S+"), r"\1\2[redacted]"),
+    (re.compile(r"\bBearer\s+\S+"), "Bearer [redacted]"),
+    (re.compile(r"([?&]key=)[^&\s'\"]+"), r"\1[redacted]"),
+    (re.compile(r"AIza[0-9A-Za-z_-]{20,}"), "[redacted]"),
+    (re.compile(r"\bAQ\.[A-Za-z0-9_.-]{20,}"), "[redacted]"),
+)
+
+
+def redact(text: Any) -> Optional[str]:
+    """`text` with API keys, bearer tokens and invalid-header payloads replaced by `[redacted]` (None stays None)."""
+    if text is None:
+        return None
+    s = str(text)
+    for pattern, repl in _REDACTIONS:
+        s = pattern.sub(repl, s)
+    return s
 
 
 class LogSink:
@@ -69,7 +94,7 @@ class LogSink:
         if row["latency_ms"] is not None:
             row["latency_ms"] = int(row["latency_ms"])
         if row["error"]:
-            row["error"] = str(row["error"])[:500]
+            row["error"] = redact(row["error"])[:500]
         sql = "INSERT INTO app.model_calls (%s) VALUES (%s)" % (", ".join(MODEL_CALL_COLS),
                                                                ", ".join(["%s"] * len(MODEL_CALL_COLS)))
         self.spawn(self._insert(sql, tuple(row[c] for c in MODEL_CALL_COLS)))
@@ -80,7 +105,7 @@ class LogSink:
         self.spawn(self._insert(
             "INSERT INTO app.request_log (request_id, service, route, method, status, latency_ms, error) "
             "VALUES (%s, %s, %s, %s, %s, %s, %s)",
-            (request_id, self.service, route, method, status, latency_ms, (error or None) and error[:500])))
+            (request_id, self.service, route, method, status, latency_ms, redact(error)[:500] if error else None)))
 
     # ── app.job_runs ────────────────────────────────────────────────────────────────────────────
     async def job_start(self, job: str, metadata: Optional[Dict[str, Any]] = None) -> Optional[int]:
@@ -94,7 +119,7 @@ class LogSink:
             return
         await self._insert(
             "UPDATE app.job_runs SET finished_at = now(), status = %s, counts = %s, error = %s "
-            "WHERE run_id = %s RETURNING run_id", (status, Jsonb(counts), error, run_id))
+            "WHERE run_id = %s RETURNING run_id", (status, Jsonb(counts), redact(error) if error else None, run_id))
 
     async def job_progress(self, run_id: Optional[int], counts: Dict[str, Any]) -> None:
         if run_id is None:

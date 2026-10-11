@@ -43,8 +43,12 @@ POST /v1/predict
 ```http
 GET /v1/questions   → {"questions": QUESTIONS, "question_sets": QUESTION_SETS}
 GET /v1/model       → {"checkpoint", "fine_tuned", "temperatures", "training_summary"?, "device"}
-GET /health         → {"ok": true, "model_loaded": true}
+GET /health         → {"ok": true, "model_loaded": true, "device": "cuda:0", "logging": true}
 ```
+`logging` (ADDED 2026-10-11) is true when `LOGS_DATABASE_URL` is set, which means every answered `/v1/predict` call
+is written to `app.model_calls`. The backend logs only failed System 1 calls, so with `logging: false` successful
+Laya calls are recorded nowhere. Startup then logs a WARNING: `model_calls logging OFF: set LOGS_DATABASE_URL to
+the spot_mcp_user DSN`.
 
 | Env var | Meaning | Default |
 |---|---|---|
@@ -54,7 +58,7 @@ GET /health         → {"ok": true, "model_loaded": true}
 | `HF_TOKEN` | read token for a private checkpoint repo | unset |
 | `LAYA_DEVICE` | `auto` / `cpu` / `cuda` | `auto` |
 | `SPOT_AMP` | `1` = fp16 autocast on GPU, `0` = fp32 | `1` |
-| `LOGS_DATABASE_URL` | optional: log every call to `app.model_calls` (system=`system1`) | unset (no logging) |
+| `LOGS_DATABASE_URL` | log every call to `app.model_calls` (system=`system1`). Required on the AMD box: the Neon pooled DSN of `spot_mcp_user` (INSERT-only on `app.*`), as a line in `/root/spot.env` (`deploy/amd-native/README.md` "System 1 call logging") | unset (no logging; WARNING at startup, `/health` `logging: false`) |
 | `PORT` | | `8082` |
 
 Image: `TORCH_VARIANT` build arg (`cpu` | `rocm-gfx1151` | `rocm-gfx1201`), same as the embedding image. The build context
@@ -109,12 +113,14 @@ Every step logs to `app.*` with one `request_id`.
 | `ORCHESTRATOR_API_KEY` | sent as `X-API-Key` to the orchestrator | unset |
 | `ORCHESTRATOR_TIMEOUT_S` | per-call cap for orchestrator calls; `/explain` also caps it at the deadline minus the reserve (45 - 3 = 42) | `42` |
 | `CORS_ORIGINS` | comma-separated browser origins allowed by CORS (the dashboard's origin; `*` is not the default) | `http://localhost:3000` |
-| `DB_POOL_MAX`, `LOG_REQUESTS` | | `10`, `1` |
+| `DB_POOL_MAX` | | `10` |
+| `LOG_REQUESTS` | which requests `app.request_log` gets (see "Request log" below): `writes` = non-GET/HEAD/OPTIONS requests (except fast, successful live draft relays), any status >= 400 and requests slower than `LOG_SLOW_MS`; `all` = every request; `off` = none. The old values still work: `1` / `true` mean `writes`, and `0` / `false` / `no` mean `off` | `writes` |
+| `LOG_SLOW_MS` | in `writes` mode, a read this slow (ms) is logged too | `1000` |
 | `SERVERLESS` | `1` = no per-process assumptions (see "Serverless deployment"): pool `min_size` 0 + a connection check on checkout, pending log writes awaited before the response. Unset = on when Vercel's `VERCEL` env var is set | auto |
 | `DB_POOL_MIN` | pool connections kept open | `1` (`0` when serverless) |
 | `REPLAY_MODE` | `background` (asyncio task, Docker) or `stepped` (state in `replay_runs`, driven by `POST /replay/step`) | `background` (`stepped` when serverless) |
 | `REPLAY_STEP_BUDGET_S` | default time budget of one `POST /replay/step` | `10` |
-| `GEMINI_API_KEY` | Google AI Studio key for `/api/v1/chat` (header `x-goog-api-key` only; never logged or returned). Unset -> `/chat/models` `configured: false`, `POST .../messages` 503 `gemini_unset` | unset |
+| `GEMINI_API_KEY` | Google AI Studio key for `/api/v1/chat` (header `x-goog-api-key` only; never logged or returned). Unset -> `/chat/models` `configured: false`, `POST .../messages` 503 `gemini_unset`. Set it with no trailing newline (`printf %s "$KEY" \| vercel env add GEMINI_API_KEY production`); the backend strips it anyway (below) | unset |
 | `GEMINI_BASE_URL` | Gemini API root | `https://generativelanguage.googleapis.com/v1beta` |
 | `CHAT_MODELS` | comma-separated model ids, in picker order (unknown ids work with a derived label). Gemma (`gemma-4-31b-it`) is opt-in | `gemini-3.8-flash,gemini-3.5-flash,gemini-3.5-flash-lite` |
 | `CHAT_DEFAULT_MODEL` | default model (first of `CHAT_MODELS` if not listed there) | `gemini-3.8-flash` |
@@ -122,6 +128,27 @@ Every step logs to `app.*` with one `request_id`.
 | `CHAT_TIMEOUT_S` | whole Gemini streaming call | `120` |
 | `CHAT_RETRIEVAL_BUDGET_S` | retrieval deadline before the call (embed capped at min(`SEARCH_EMBED_TIMEOUT_S`, 60 %)) | `8` |
 | `CHAT_HISTORY_MESSAGES` | stored messages sent as plain history turns (never as evidence) | `12` |
+
+Env values are stripped of surrounding whitespace, and a blank value means "unset" (ADDED 2026-10-11). The
+exceptions are `EMBED_QUERY_PREFIX` / `EMBED_DOC_PREFIX`, which are taken verbatim (set but empty = no prefix), and
+`CHAT_TITLE_MODEL` (set but empty = auto titles only). A key pasted with `echo KEY | vercel env add` ended in a
+newline, which made it an illegal HTTP header, and httpx then wrote the key into the error text.
+
+### Request log (`app.request_log`, CHANGED 2026-10-11)
+- **What is logged.** One row per request, written by the request middleware, according to `LOG_REQUESTS`
+  (default `writes`). `writes` keeps writes (any method other than GET/HEAD/OPTIONS), errors (status >= 400) and reads
+  slower than `LOG_SLOW_MS`. It drops the dashboard's polling reads, which were 97 % of the table, a 404 that
+  matched no route (`/`, `/favicon.ico`, scanner probes), and the live runner's successful, fast draft relays
+  (`POST .../stops/{i}/draft`, one every `LIVE_DRAFT_INTERVAL_S` per streaming stop); `all` keeps those too. `/health` and the API docs (`/docs`,
+  `/openapi*`, `/redoc`) are never logged, in any mode.
+- **`error`.** Filled for every status >= 400 as `<code>: <detail>` (at most 200 characters of detail): the same
+  `error` code and `detail` the JSON error body carries (`not_found: no flag with flag_id=999`, `invalid_request:
+  [...]`, `unauthorized: ...`). An unhandled exception is logged as `internal_error: <Type>: <message>`. All error text
+  is redacted (RAG contract §6 "Row conventions"). Successful requests have `error` NULL. A >= 400 response built
+  outside the exception handlers (the chat router's own JSON errors, a CORS preflight rejection) is logged as
+  `<code>: HTTP <status>` from the status alone (`not_found: HTTP 404`); its code may differ from the body's
+  (chat's 503 `gemini_unset` is logged as `unavailable: HTTP 503`).
+- `route` is the matched route template (`/api/v1/flags/{flag_id}`), else the path.
 
 ### Serverless deployment and stepped replay (ADDED 2026-10-10; additive)
 The backend also runs as a Vercel Python function (Root Directory `backend/`, entry `backend/index.py`, config
@@ -184,8 +211,8 @@ they require the header `X-Admin-Token: <ADMIN_TOKEN>` (compared in constant tim
 `/flags/{id}/context` and `/flags/{id}/explain` each finish within `REQUEST_DEADLINE_S` (default 45 s), whatever the
 per-call timeouts (`MCP_TIMEOUT_S` applies to each of 3 JSON-RPC posts; `SYSTEM2_TIMEOUT_S` to System 2).
 - `/context`: if MCP has not answered in time, the SQL packet is returned (`source: "sql_fallback"`,
-  `fallback_reason: "deadline: ..."`, first `gaps` entry says so). Its SQL lookups get the remaining time; any not
-  finished are listed in `gaps`.
+  `fallback_reason: "deadline: ..."`; CHANGED 2026-10-11: the first `notes` entry says so, not `gaps`). Its SQL
+  lookups get the remaining time; any not finished are listed in `gaps`.
 - `/explain`: the context step gets at most 40 % of the deadline (then the SQL packet), System 2 gets the rest minus a
   small reserve; on expiry the template is returned (`source: "template"`, `fallback_reason: "deadline: ..."`).
 - If the flag row itself cannot be read in time: `504 {"error": "deadline_exceeded"}`. Never a hang.
@@ -198,6 +225,21 @@ case) a System 2 reply that is System 2's own checked template rather than a mod
 `fallback_reason`, stored `TEMPLATE` and never indexed. (`path: stub` replies are still stored `DONE`.) A `TEMPLATE` row is not final: when `SYSTEM2_URL` is set,
 the next `/explain` retries System 2 (and replaces it on success); when unset, the stored template is returned
 (`cached: true`). Template rows are never indexed as `explanation` RAG docs (RAG contract §4).
+**Provenance columns (ADDED 2026-10-11, migration 014; additive).**
+- `assessments.source` stores the `Explanation.source` the answer was returned with (`system2 | system2_template |
+  template | system1`). `assessments.fallback_reason` stores why a `TEMPLATE` row was stored instead of a System 2
+  answer, and is NULL for `DONE` rows.
+- A cached read returns the stored `source` and `fallback_reason`. Rows written before 014 have no `source`; they read
+  back as `system2` (`DONE`) or `template` (`TEMPLATE`), as before.
+- The backend writes the two columns only when `Database.columns('assessments')` has them, so the code runs before
+  and after the migration.
+- `severity_assessment` defaults to the flag's severity, because System 2's response has none. `reasoning` is built
+  from the evidence claims, or is the answer itself when there is no evidence. `latency_ms` is NULL, not 0, for a
+  template reply.
+- An operator note that is blank or whitespace-only is stored as NULL, never `''`. Only non-blank notes become
+  `note:<ack_id>` documents.
+- If embedding a note or explanation document fails, the document is still upserted with `embedding` NULL and `ts`
+  set (the ack or completion time). Full-text search finds it at once, and the next ingest fills the vector.
 
 ### Orchestrator path (ADDED 2026-10-10; additive, opt-in with `ORCHESTRATOR_URL`)
 When `ORCHESTRATOR_URL` is set, `/flags/{id}/explain` asks the orchestrator first (`docs/orchestrator-contract.md`)
@@ -217,7 +259,8 @@ is unchanged.
   `orchestrator: {"error": "<why>"}`. A 4xx from the orchestrator (e.g. a 422 image) does not open its breaker.
 - A stored `TEMPLATE` row is retried when either `SYSTEM2_URL` or `ORCHESTRATOR_URL` is set.
 - `Explanation.source` ∈ `system2 | system2_template | template | system1` (`system1` = the orchestrator's short System 1 answer for a flag
-  with no escalation signal). A cached `TEMPLATE` row reads back as `template`.
+  with no escalation signal). A cached row reads back with its stored `assessments.source` (a `TEMPLATE` row from
+  before migration 014 reads back as `template`).
 - Optional request body on `POST /flags/{id}/explain`: `{"image_b64": "<base64 or data: URL>", "image_kind":
   "thermal|gauge|spectrogram|acoustic_imager|orbit_screenshot|visual"}` (at most 12,000,000 characters; 422 if
   not base64). An image bypasses the cache (an operator photo is a new question) and is forwarded only to the
@@ -231,7 +274,7 @@ is unchanged.
 - `GET /health` `system2` adds `model_status` (`up | down | unknown | stub`, ADDED 2026-10-11) from System 2's
   `/health`; `system2.status` is `degraded` when `model_status` is `down` (System 2 answers, but only with its template).
 - `app.model_calls`: orchestrator calls are logged as `system = 'system2'` (the table's CHECK allows
-  system1/system2/embed) with `endpoint = 'orchestrator:/v1/assess'` (or `/v1/ask`) and `metadata.via =
+  system1/system2/embed/chat) with `endpoint = 'orchestrator:/v1/assess'` (or `/v1/ask`) and `metadata.via =
   'orchestrator'`, `route`, `source`, `system2_path`.
 
 ### Live simulation (ADDED 2026-10-11; additive. Plan: `docs/LIVE-SIM-PLAN.md`, runbook: `docs/LIVE-RUNBOOK.md`)
@@ -259,8 +302,8 @@ Tables: `live_runs`, `live_captures` (`db/migrations/013_live.sql`). Routes: `ba
   2. The runner calls Laya `/v1/predict` with that event (kind `action`).
   3. `POST .../stops/{i}/result {timestamp, laya}`: `laya` is `{status: "ok", answers, model, latency_ms, device,
      fine_tuned}` or `{status: "unavailable", error}` (rules-only, `laya_unavailable`). The 7-step ingest runs with
-     these answers instead of calling `SYSTEM1_URL` (`IngestPipeline.ingest(..., laya=...)`; the Laya call is logged to
-     `app.model_calls` with `metadata.via = "live_runner"`). Writes `raw.spot_event_log` (source `live`), `events`
+     these answers instead of calling `SYSTEM1_URL` (`IngestPipeline.ingest(..., laya=...)`; a failed Laya call is
+     logged to `app.model_calls` with `metadata.via = "live_runner"`, an answered one by the System 1 service). Writes `raw.spot_event_log` (source `live`), `events`
      (`mission_id` NULL: live missions are not kit missions; the live ids are in `payload.live`/`payload.mission`),
      `system1_predictions`, `flags` (red only), the capture (`phase: triaged`, verdict, Laya, rules, decision), the
      event document `event:act-LIVE-<run>-<stop>` and the live KG rows. Returns `system2_request` (the System 2
@@ -274,10 +317,15 @@ Tables: `live_runs`, `live_captures` (`db/migrations/013_live.sql`). Routes: `ba
      vision | vision_error, system2_request, system2 | system2_error, system2_ms, image_status, timings}`. A System 2
      answer on a model path is stored as `qwen_source: system2` (assessment `DONE` for a red stop, `explanation:<id>`
      document + KG node); otherwise the backend builds the checked template (`qwen_source: template`, assessment
-     `TEMPLATE`, never indexed) and says why in `qwen.fallback_reason`. Returns `embed` for the explanation.
+     `TEMPLATE`, never indexed) and says why in `qwen.fallback_reason`. Returns `embed` for the explanation. The
+     runner's System 2 call is logged to `app.model_calls` here (ADDED 2026-10-11: `system2`, endpoint `/v1/assess`,
+     `latency_ms` = `system2_ms`, ok = an answer came back, `metadata.via = "live_runner"` with `run_id`, `stop`,
+     `path`, `service_latency_ms`, `vision_ms`, `image_status`, `system2_request_id`; `flag_id` only for a red stop,
+     `action_id` `LIVE-<run>-<stop>`; ok false with `system2_error` when the call failed); a body with neither `system2` nor `system2_error` logs nothing.
   5. `POST /live/runs/{id}/embeddings {model, items[{key, text, vector}]}`: `key` is `doc:<doc_id>` or
      `node:<node_id>`; a vector is stored only if the row's stored text equals `text` and it has `EMBED_DIM` values.
-     Document-backed KG nodes take their document's vector.
+     Document-backed KG nodes take their document's vector. Each call with at least one item logs one `embed` row
+     (`metadata.via = "live_runner"`, `inputs`, `embedded`, `skipped`; ok false when the vectors had the wrong size).
   `POST /live/runs/{id}/finish {status: done|error, error}` logs `MISSION_COMPLETED` (stored, not triaged) and sets
   `counts` (`red`, `green`, `qwen`, `template`, `laya_live`, `stops`); it and `cancel` mark captures whose analysis
   never landed `qwen_source: "error"`. Errors: `404 live_not_found`, `409
@@ -288,7 +336,10 @@ Tables: `live_runs`, `live_captures` (`db/migrations/013_live.sql`). Routes: `ba
 
 ### Backend details (ADDED 2026-10-10 by the backend agent; additive)
 - **`flags.reasons`** is a list, verdicts first: `{"rule": "laya_verdict", "verdict", "confidence", "priority",
-  "category", "model", "detail"}` (or `{"rule": "laya_unavailable", "detail"}` when System 1 is down), then
+  "category", "model", "detail"}` (or, when System 1 is down, `{"rule": "laya_unavailable", "detail": "System 1
+  (Laya) unavailable; rules-only verdict"}`: a fixed text since 2026-10-11, because System 2 and the RAG documents
+  read reason details as evidence. The raw error (connection text, `busy: ...`) stays only in `app.model_calls`,
+  the ingest response's `system1.error` and, for live stops, `live_captures.laya`), then
   `{"rule": "rules_verdict", "verdict", "priority", "category", "policy_version", "agreement", "triage_mode",
   "detail": "Laya: escalate (0.83) · rules: confirmed"}`, then one `{"rule", "detail", "weight", "priority"}` per
   fired policy rule. Policy rule names are exactly `db/policy_rules.py`'s (the `policy:<rule>` RAG doc ids);
@@ -299,7 +350,9 @@ Tables: `live_runs`, `live_captures` (`db/migrations/013_live.sql`). Routes: `ba
 - `ACTION_STARTED` becomes a `pre_action` event: Laya's forecast (`will_fail`, …) is stored in
   `system1_predictions`, but it is never validated or flagged. `MISSION_STARTED` is stored, not triaged.
 - `events.payload` = the event's `details` + the joined `reading`/`anomaly` (same shape as `db/setup.py seed`)
-  + `enriched` (action/location/asset) + `triage` (the verdict summary, incl. `request_id` and `flag_id`).
+  + `enriched` (action/location/asset; action events only. Since 2026-10-11 the seed writes the same block, so
+  seeded and replayed events look alike) + `triage` (the verdict summary, incl. `request_id` and `flag_id`; seeded
+  events have none until they are replayed).
 - `raw.spot_event_log.sha256` = sha256 of the event serialized like a replay.ndjson line, so it matches the seed's
   line hashes. The streamed replay logs under `source = 'replay'` (the seed's file import is `'replay.ndjson'`).
 - `request_id`: from `X-Request-ID` or generated (`r-<12 hex>`); batch events get `<id>-<nnn>`, replay events
@@ -307,12 +360,35 @@ Tables: `live_runs`, `live_captures` (`db/migrations/013_live.sql`). Routes: `ba
   (`X-Request-ID` and `_meta.request_id`), and written to `app.model_calls`, `app.request_log`,
   `events.payload.triage.request_id` and `raw.spot_event_log.request_id` (**needs the additive column, RAG
   contract §6**; written only when it exists).
-- **System 1 load and logging (integrator, 2026-10-10, audit H2/M2).** Laya serves one request at a time. While an explicit batch call (forecast, `/system1/predict`) is in flight, ingest does not queue behind it: the event gets the rules-only verdict with `system1.status = laya_unavailable`, error `busy: ...`. A live forecast asks Laya for at most 5 actions per request; the rest get the empirical baseline. On the AMD GPU a batch takes well under a second, so this only matters on CPU. `app.model_calls` holds **one row per successful System 1 call, written by the System 1 service** (the true model latency). The backend writes `system='system1'` rows only for failed calls (`ok=false`, `metadata.caller='backend'`).
+- **SQL fallback packet (`source: "sql_fallback"`, `packet_version: "1-min"`; CHANGED 2026-10-11).** It follows the
+  MCP packet shape, so System 2 accepts it. `asset_history` is a list of citable objects (`{"id": "anomaly:AN014",
+  "anomaly_type", "severity", "mission_id"}`, `{"id": "flag:12", "detail", "severity", "status", "note"}`), bounded
+  to robot time before this flag's event. `allowed_actions` is the flag category's set (the same table as MCP
+  `ALLOWED_ACTIONS`; the `mission` set for mission flags). `suggested_action` is picked by the validator's rule
+  (`services/system2.suggested_action`) from the same facts MCP uses, and `citation_ids` is collected as MCP does.
+  `laya_unavailable` reasons carry the fixed detail even on rows stored before it existed. `gaps` / `notes` follow RAG contract §5. Before this change System 2
+  answered 422 `asset_history must be a list` for most action flags, and `insufficient_context` for the rest.
+- **`POST /ops/reset-demo`** (and `POST /replay/start {"reset": true}`, which calls it) deletes, in one transaction,
+  events, flags, assessments, acknowledgements, the demo documents (`incident:flag-*`, `note:*`, `explanation:*`) and
+  the graph's non-live `flag` / `operator_note` / `explanation` nodes (edges cascade; ADDED 2026-10-11), plus
+  `system1_predictions` when `clear_predictions` is true. Live events and flags go too (`live_captures.flag_id`
+  becomes NULL), and so do live explanation documents (`explanation:live-*` matches `explanation:*`). Kit tables,
+  `raw.*`, `app.*`, chats, `live_runs` / `live_captures`, live event documents (`event:act-LIVE-*`) and the live-run
+  graph rows (`props.source = 'live'`) are kept. Both paths log the deleted counts as an `app.job_runs` row (job
+  `reset-demo`). Afterwards the queue is empty until a replay or a baseline restore; then run
+  `amd/embed/ingest.py --kinds incident` and `db/graph_build.py` (`docs/DEPLOY-neon.md` "Refresh order").
+- **Search filters.** `GET /search?asset_id=` (empty) means no filter, the same as leaving the parameter out
+  (also `location_id`, `mission_id`).
+- **System 1 load and logging (integrator, 2026-10-10, audit H2/M2).** Laya serves one request at a time. While an explicit batch call (forecast, `/system1/predict`) is in flight, ingest does not queue behind it: the event gets the rules-only verdict with `system1.status = laya_unavailable`, error `busy: ...`. A live forecast asks Laya for at most 5 actions per request; the rest get the empirical baseline. On the AMD GPU a batch takes well under a second, so this only matters on CPU. `app.model_calls` holds **one row per successful System 1 call, written by the System 1 service** (the true model latency). The backend writes `system='system1'` rows only for failed calls (`ok=false`, `metadata.caller='backend'`). The live runner calls Laya itself, and the backend logs only the runner Laya results with `status: unavailable` (`metadata.via='live_runner'`, ok false); the System 1 service logs the calls it answers (2026-10-11, RBM-07: before, the backend also logged ok rows, which duplicated the service's rows once the box had `LOGS_DATABASE_URL`). So System 1 success rows exist only while the AMD box sets `LOGS_DATABASE_URL` (`deploy/amd-native/README.md` "System 1 call logging").
 - **Authoritative System 2 HTTP contract (2026-10-10.backend.1; current version `2026-10-10.backend.2` adds the
   optional multimodal inputs in "System 2 multimodal inputs" below, everything here still holds):** `POST /v1/assess` requires
   `flag_id` (strict positive integer; booleans rejected), `flag` (object), and `context` (object).
   Optional fields are `request_id` (string/null), `event` (object/null), and `reasons` (list of strings/null entries).
   Additive input keys are ignored; DB rows need no legacy timestamp/kind/mission_health fields.
+  Client behaviour (CHANGED 2026-10-11): an HTTP 4xx other than 408/429 still falls back to the template and is
+  logged as a failure, but it does not open the System 2 breaker (it is about the request, not the service).
+  `/v1/debrief` has its own breaker, so a System 2 build without that route never blocks `/v1/assess`;
+  `POST /ops/reset-demo` resets both.
   Consumed context fields: `question` string, `allowed_actions` code-to-description object or code list,
   `suggested_action` allowed code, `citation_ids` string list, `missing`/`gaps` string lists,
   `insufficient_context` boolean; evidence sections `facts`, `similar_incidents`, `asset_history`, `manual`,
@@ -322,6 +398,11 @@ Tables: `live_runs`, `live_captures` (`db/migrations/013_live.sql`). Routes: `ba
   Malformed consumed values, unknown actions and conflicting duplicate IDs return 422. Valid absent/unusable
   evidence, orphan citations, missing actions, nonempty missing/gaps or explicit insufficiency return 200 with
   empty evidence, low confidence, MANUAL_REVIEW and path insufficient_context, before generation.
+  **`gaps` blocks, `notes` does not (ADDED 2026-10-11).** `notes` (a string list) is informational and not
+  consumed: like any unknown key it is ignored, so a note never makes a packet insufficient. Packet builders put
+  retrieval misses (`no relevant ... above similarity`, no graph facts, unknown category) and the SQL-fallback
+  notice (MCP unavailable or too slow) in `notes`. Only real lookup failures go in `gaps`
+  (`docs/system2-rag-contract.md` §5).
   The flat response is `evidence[{claim,ids}]`, `answer`, `question`, `recommended_action`, `confidence`
   (high/medium/low), `insufficient_context`, integer `flag_id`, `model`, nonnegative `latency_ms`,
   nullable `tokens_per_sec`, and `path`. Every output object rejects extras. Response metadata (ADDED

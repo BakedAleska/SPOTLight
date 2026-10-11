@@ -2,7 +2,8 @@
 """Neon / local Postgres setup for SpotTheDOT.
 
   python db/setup.py migrate [--hnsw] [--recreate-documents]   apply db/migrations/*.sql (idempotent)
-  python db/setup.py seed [--no-events] [--force-reseed]       load the kit into public.* and raw.*, seed flags
+  python db/setup.py seed [--no-events] [--force-reseed]       load the kit into public.* and raw.*, seed flags,
+                                                               fill mission_kpis/risk_scores/insights
                                                                (non-destructive; see seed() for --force-reseed)
   python db/setup.py reset --yes [--include-logs]              drop public.* (and raw/app with --include-logs), re-migrate
   python db/setup.py status                                    row counts
@@ -205,10 +206,52 @@ def _replay_lines():
         return [ln.rstrip(b"\r\n") for ln in f if ln.strip()]
 
 
+# The `enriched` block the runtime ingest path adds to every action event (backend/app/services/reference.py
+# Reference.normalize): same keys and value types, so seeded baseline events look like replayed ones.
+ENRICHED_ACTION_KEYS = ("sequence", "action_type", "location_id", "asset_id", "battery_pct", "status", "failure_type",
+                        "duration_sec")
+ENRICHED_LOCATION_KEYS = ("location_name", "zone_type", "environment")
+ENRICHED_ASSET_KEYS = ("asset_name", "asset_type", "criticality")
+
+
+def _event_action(kit_action, started, details) -> dict:
+    """Reference.action: the kit row, overlaid with the action's ACTION_STARTED details, overlaid with `details`."""
+    merged = dict(kit_action) if kit_action else {"action_id": details.get("action_id")}
+    for src in (started or {}, details or {}):
+        for k in ("mission_id", "location_id", "asset_id", "action_type", "status", "sequence", "duration_sec",
+                  "configuration_version"):
+            if src.get(k) not in (None, ""):
+                merged[k] = src[k]
+        if src.get("battery_pct") not in (None, ""):
+            merged["battery_pct"] = _n(src["battery_pct"], int)
+        if "failure_type" in src:
+            merged["failure_type"] = src["failure_type"] or None
+    merged.setdefault("failure_type", None)
+    merged.setdefault("duration_sec", None)
+    return merged
+
+
+def _enriched(a: dict, locations: dict, assets: dict) -> dict:
+    out = {"action": {k: a.get(k) for k in ENRICHED_ACTION_KEYS}}
+    loc, asset = locations.get(a.get("location_id") or ""), assets.get(a.get("asset_id") or "")
+    if loc:
+        out["location"] = {k: loc.get(k) for k in ENRICHED_LOCATION_KEYS}
+    if asset:
+        out["asset"] = {k: asset.get(k) for k in ENRICHED_ASSET_KEYS}
+    return out
+
+
 def seed_events(conn, counts: dict) -> None:
+    """events from replay.ndjson, payload = details + joined reading/anomaly + `enriched` (action events only, as at
+    ingest; mission events get none). Deterministic. Writes only through _upsert on `conn`: no commit, so it runs
+    inside the caller's open transaction."""
+    from triage.kit import load_kit
+    kit = load_kit(kit_dir=KIT_DIR)          # the same typed records the backend's Reference uses
+    kit_actions = {a["action_id"]: a for a in kit.actions}
     actions = {r["action_id"]: r for r in _rows("actions.csv")}
     readings = {r["action_id"]: r for r in _rows("readings.csv")}
     anomalies = {r["action_id"]: r for r in _rows("anomalies.csv")}
+    started = {}                             # action_id -> ACTION_STARTED details (Reference._started)
     rows = []
     for ln in _replay_lines():
         e = json.loads(ln)
@@ -216,6 +259,8 @@ def seed_events(conn, counts: dict) -> None:
         aid = d.get("action_id")
         a = actions.get(aid) if aid else None
         payload = dict(d)
+        if e["event_type"] == "ACTION_STARTED" and aid:
+            started[aid] = {**d, "mission_id": e["mission_id"], "action_id": aid}
         if e["event_type"] in ("ACTION_COMPLETED", "ACTION_FAILED") and aid:
             if aid in readings:
                 r = readings[aid]
@@ -225,6 +270,9 @@ def seed_events(conn, counts: dict) -> None:
                 an = anomalies[aid]
                 payload["anomaly"] = {"anomaly_id": an["anomaly_id"], "anomaly_type": an["anomaly_type"],
                                       "severity": an["severity"], "description": an["description"]}
+        if aid:
+            payload["enriched"] = _enriched(_event_action(kit_actions.get(aid), started.get(aid), d),
+                                            kit.locations, kit.assets)
         batt = d.get("battery_pct", d.get("end_battery_pct"))
         if batt is None and a:
             batt = _n(a["battery_pct"], int)
@@ -286,6 +334,23 @@ def seed_flags(conn, counts: dict) -> None:
     counts["priority_counts"] = dict(sorted(by_prio.items()))
 
 
+# Kit sample images (04_ASSETS/sample_inspection_images): the action type each one shows (amd/vision/scripts/run_kit.py
+# SAMPLES) and plain-word hints. The file stem is not a reliable "<inspection>_<subject>" split (pipe_gallery_01,
+# valve_detail_01). Pipe Gallery is waypoint WP05 (locations.csv).
+MEDIA_HINTS = {
+    "acoustic_valve_01": {"action_type": "ACOUSTIC_INSPECTION", "inspection_hint": "acoustic", "subject_hint": "valve"},
+    "gauge_pressure_01": {"action_type": "GAUGE_READING", "inspection_hint": "gauge", "subject_hint": "pressure gauge"},
+    "pipe_gallery_01": {"action_type": "VISUAL_INSPECTION", "inspection_hint": "visual", "subject_hint": "pipe gallery",
+                        "location_hint": "WP05"},
+    "thermal_pump_bearing_01": {"action_type": "THERMAL_INSPECTION", "inspection_hint": "thermal",
+                                "subject_hint": "pump bearing"},
+    "valve_detail_01": {"action_type": "VISUAL_INSPECTION", "inspection_hint": "visual",
+                        "subject_hint": "valve detail"},
+    "visual_pump_motor_01": {"action_type": "VISUAL_INSPECTION", "inspection_hint": "visual",
+                             "subject_hint": "pump motor"},
+}
+
+
 def seed_raw(logs, counts: dict) -> None:
     """raw.*: kit files and rows verbatim, replay lines verbatim, sample inspection media. Append-only, idempotent."""
     files = rows = 0
@@ -324,17 +389,130 @@ def seed_raw(logs, counts: dict) -> None:
     media = []
     for p in sorted(MEDIA_DIR.glob("*.jpg")) + sorted(MEDIA_DIR.glob("*.png")):
         data = p.read_bytes()
-        inspection, _, subject = p.stem.partition("_")
+        hints = MEDIA_HINTS.get(p.stem, {"subject_hint": p.stem.replace("_", " ")})
+        # action_id, mission_id and captured_at stay NULL: synthetic images, reused across many stops, no EXIF date.
         media.append(("sample:" + p.stem, None, None, "image/jpeg" if p.suffix == ".jpg" else "image/png",
                       _rel(p), _sha256(data), len(data), None, json.dumps({
-                          "synthetic": True, "source": "NextEra kit 04_ASSETS/sample_inspection_images",
-                          "inspection_hint": inspection, "subject_hint": subject.replace("_", " "),
+                          "synthetic": True, "source": "NextEra kit 04_ASSETS/sample_inspection_images", **hints,
                           "note": "synthetic example imagery; not linked to a kit action"})))
     with logs.transaction(), logs.cursor() as cur:
         cur.executemany("INSERT INTO raw.inspection_media (media_id, action_id, mission_id, media_type, uri, sha256, "
                         "bytes, captured_at, metadata) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) "
                         "ON CONFLICT (media_id) DO NOTHING", media)
     counts["raw_media"] = len(media)
+
+
+# ── analytics (derived from the kit; idempotent) ────────────────────────────────────────────────
+# Battery bands: backend queries.BATTERY_BAND_SQL and MCP domain.BATTERY_BANDS.
+_BAND_SQL = ("CASE WHEN a.battery_pct <= 25 THEN '<=25' WHEN a.battery_pct <= 40 THEN '26-40' "
+             "WHEN a.battery_pct <= 60 THEN '41-60' WHEN a.battery_pct <= 80 THEN '61-80' ELSE '81+' END")
+
+# true_health = action success rate in %, 1 decimal: the number backend analytics.mission_view() and MCP
+# _mission_view() compute when mission_kpis is empty (only true_health_source changes, to 'mission_kpis').
+MISSION_KPIS_SQL = """
+INSERT INTO mission_kpis AS k (mission_id, reported_status, true_health, failed_actions, total_actions, high_anomalies,
+                               battery_drop, synced_at)
+SELECT m.mission_id, m.mission_status,
+       round(100.0 * (a.total - a.failed) / a.total, 1)::real,
+       a.failed, a.total, coalesce(n.serious, 0),
+       m.start_battery_pct - m.end_battery_pct, now()
+  FROM missions m
+  JOIN (SELECT mission_id, count(*)::int AS total, count(*) FILTER (WHERE status = 'FAILED')::int AS failed
+          FROM actions GROUP BY 1) a ON a.mission_id = m.mission_id
+  LEFT JOIN (SELECT mission_id, count(*) FILTER (WHERE severity IN ('HIGH', 'CRITICAL'))::int AS serious
+               FROM anomalies GROUP BY 1) n ON n.mission_id = m.mission_id
+ON CONFLICT (mission_id) DO UPDATE SET reported_status = EXCLUDED.reported_status, true_health = EXCLUDED.true_health,
+  failed_actions = EXCLUDED.failed_actions, total_actions = EXCLUDED.total_actions,
+  high_anomalies = EXCLUDED.high_anomalies, battery_drop = EXCLUDED.battery_drop, synced_at = now()
+WHERE (k.reported_status, k.true_health, k.failed_actions, k.total_actions, k.high_anomalies, k.battery_drop)
+      IS DISTINCT FROM (EXCLUDED.reported_status, EXCLUDED.true_health, EXCLUDED.failed_actions, EXCLUDED.total_actions,
+                        EXCLUDED.high_anomalies, EXCLUDED.battery_drop)"""
+
+# P(action fails | waypoint, action type, battery band, config) over the kit actions.
+RISK_SCORES_SQL = """
+INSERT INTO risk_scores AS r (location_id, action_type, battery_band, configuration_version, risk, n_observed)
+SELECT a.location_id, a.action_type, %s, a.configuration_version,
+       (count(*) FILTER (WHERE a.status = 'FAILED'))::real / count(*), count(*)::int
+  FROM actions a
+ WHERE a.status IN ('SUCCESS', 'FAILED') AND a.location_id IS NOT NULL AND a.action_type IS NOT NULL
+   AND a.configuration_version IS NOT NULL AND a.battery_pct IS NOT NULL
+ GROUP BY 1, 2, 3, 4
+ON CONFLICT (location_id, action_type, battery_band, configuration_version) DO UPDATE
+  SET risk = EXCLUDED.risk, n_observed = EXCLUDED.n_observed
+WHERE (r.risk, r.n_observed) IS DISTINCT FROM (EXCLUDED.risk, EXCLUDED.n_observed)""" % _BAND_SQL
+RISK_SCORES_STALE_SQL = """
+DELETE FROM risk_scores r WHERE NOT EXISTS (
+  SELECT 1 FROM actions a WHERE a.location_id = r.location_id AND a.action_type = r.action_type
+     AND a.configuration_version = r.configuration_version AND a.status IN ('SUCCESS', 'FAILED')
+     AND a.battery_pct IS NOT NULL AND r.battery_band = %s)""" % _BAND_SQL
+
+# Kit 02_DATA/validation_results.json metrics -> (label, SQL that recomputes the value from the kit tables).
+KIT_METRICS = {
+    "baseline_mission_completion_pct": (
+        "Mission completion rate, BASELINE missions",
+        "SELECT round(100.0 * count(*) FILTER (WHERE mission_status = 'COMPLETED') / nullif(count(*), 0), 1) "
+        "FROM missions WHERE scenario = 'BASELINE'"),
+    "baseline_action_success_pct": (
+        "Action success rate, BASELINE missions",
+        "SELECT round(100.0 * count(*) FILTER (WHERE status = 'SUCCESS') / nullif(count(*), 0), 1) "
+        "FROM actions WHERE scenario = 'BASELINE'"),
+    "improved_mission_completion_pct": (
+        "Mission completion rate, IMPROVED missions",
+        "SELECT round(100.0 * count(*) FILTER (WHERE mission_status = 'COMPLETED') / nullif(count(*), 0), 1) "
+        "FROM missions WHERE scenario = 'IMPROVED'"),
+    "improved_action_success_pct": (
+        "Action success rate, IMPROVED missions",
+        "SELECT round(100.0 * count(*) FILTER (WHERE status = 'SUCCESS') / nullif(count(*), 0), 1) "
+        "FROM actions WHERE scenario = 'IMPROVED'"),
+    "wp05_navigation_failure_pct": (
+        "Navigation failure rate at WP05 (Pipe Gallery)",
+        "SELECT round(100.0 * count(*) FILTER (WHERE status = 'FAILED') / nullif(count(*), 0), 1) "
+        "FROM actions WHERE location_id = 'WP05' AND action_type = 'NAVIGATION'"),
+}
+INSIGHTS_SQL = """
+INSERT INTO insights AS i (key, label, value, detail, source, synced_at) VALUES (%s, %s, %s, %s::jsonb, %s, now())
+ON CONFLICT (key) DO UPDATE SET label = EXCLUDED.label, value = EXCLUDED.value, detail = EXCLUDED.detail,
+  source = EXCLUDED.source, synced_at = now()
+WHERE (i.label, i.value, i.detail, i.source) IS DISTINCT FROM (EXCLUDED.label, EXCLUDED.value, EXCLUDED.detail,
+                                                               EXCLUDED.source)"""
+INSIGHTS_SOURCE = "kit:validation_results.json"
+
+
+def seed_analytics(conn, counts: dict) -> None:
+    """mission_kpis, risk_scores and insights, derived from the kit tables (run after seed_core). Not gated by the
+    demo baseline: deterministic and idempotent (DO UPDATE ... WHERE IS DISTINCT FROM), so a re-run changes 0 rows
+    unless the kit changed. counts get the rows inserted or updated. No commit: runs in the caller's transaction."""
+    with conn.cursor() as cur:
+        cur.execute(MISSION_KPIS_SQL)
+        counts["mission_kpis"] = max(cur.rowcount, 0)
+        cur.execute(RISK_SCORES_SQL)
+        counts["risk_scores"] = max(cur.rowcount, 0)
+        cur.execute(RISK_SCORES_STALE_SQL)
+        counts["risk_scores_removed"] = max(cur.rowcount, 0)
+    path = KIT_DIR / "validation_results.json"
+    if not path.exists():
+        print("seed_analytics: %s not found; insights left as they are" % _rel(path))
+        counts["insights"] = 0
+        return
+    vr = json.loads(path.read_text(encoding="utf-8"))
+    metrics = vr.get("metrics") or {}
+    rows = []
+    for key, (label, sql) in KIT_METRICS.items():
+        if metrics.get(key) is None:
+            print("seed_analytics: WARNING %s has no metric %r; skipped" % (path.name, key))
+            continue
+        value = float(metrics[key])
+        got = conn.execute(sql).fetchone()[0]
+        sql_value = None if got is None else float(got)
+        if sql_value is None or round(sql_value, 1) != round(value, 1):
+            print("seed_analytics: WARNING insights %s: %s says %s but the kit tables give %s"
+                  % (key, path.name, value, sql_value))
+        rows.append((key, label, value, json.dumps({
+            "unit": "%", "validation_status": vr.get("validation_status"), "generated_at": vr.get("generated_at"),
+            "sql_value": sql_value}), INSIGHTS_SOURCE))
+    with conn.cursor() as cur:
+        cur.executemany(INSIGHTS_SQL, rows)
+        counts["insights"] = max(cur.rowcount, 0) if rows else 0
 
 
 def demo_baseline_seeded() -> bool:
@@ -360,6 +538,8 @@ def seed(args) -> None:
       - the demo baseline (events from replay.ndjson + the seeded flags) is loaded only the first time this
         database is seeded, and then also insert-if-missing: live flags, acknowledged flags and a reset demo
         are left as they are.
+    The analytics tables (mission_kpis, risk_scores, insights) are derived from the kit and refreshed on every run;
+    a re-run changes 0 rows unless the kit changed.
     --force-reseed is the explicit destructive path (old behaviour): upsert the kit, events and flags over existing
     rows (flag status/acks kept, reasons/score/escalated overwritten) even if the baseline was loaded before.
     db-init never passes it."""
@@ -371,6 +551,7 @@ def seed(args) -> None:
         main = connect(autocommit=True)
         with main.transaction():
             seed_core(main, run.counts)
+            seed_analytics(main, run.counts)          # derived from the kit: not gated by the demo baseline
             if baseline:
                 if not args.no_events:
                     seed_events(main, run.counts)
@@ -407,7 +588,8 @@ def reset(args) -> None:
 def status(args) -> None:
     main = connect(autocommit=True)
     for t in ["locations", "assets", "missions", "actions", "readings", "anomalies", "events", "flags",
-              "assessments", "acknowledgements", "system1_predictions", "documents"]:
+              "assessments", "acknowledgements", "system1_predictions", "mission_kpis", "risk_scores", "insights",
+              "replay_runs", "live_runs", "live_captures", "documents"]:
         if spotdb.has_table(main, "public." + t):
             print("%-22s %6d" % (t, main.execute("SELECT count(*) FROM %s" % t).fetchone()[0]))
     if spotdb.has_table(main, "public.documents"):

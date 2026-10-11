@@ -76,7 +76,7 @@ async def test_context_falls_back_to_sql_packet(h, mock, how):
     body = r.json()
     assert r.status_code == 200 and body["source"] == "sql_fallback"
     assert body["event"]["asset"]["id"].startswith("asset:") and body["facts"] and body["question"]
-    assert "MCP unavailable" in body["gaps"][0]
+    assert "MCP unavailable" in body["notes"][0] and "gaps" not in body
 
 
 async def test_context_404_for_missing_flag(h):
@@ -196,7 +196,7 @@ async def test_context_deadline_returns_sql_packet(make_harness, mock):
     body = r.json()
     assert r.status_code == 200 and elapsed < 2.0, elapsed
     assert body["source"] == "sql_fallback" and body["fallback_reason"].startswith("deadline:")
-    assert body["gaps"][0].startswith("deadline:") and body["event"]["asset"]["id"].startswith("asset:")
+    assert body["notes"][0].startswith("deadline:") and body["event"]["asset"]["id"].startswith("asset:")
 
 
 async def test_explain_deadline_returns_template(make_harness, mock):
@@ -263,7 +263,8 @@ async def test_ack_survives_embed_down(h, mock):
     mock.post(EMBED + "/v1/embeddings").mock(side_effect=httpx.ConnectError("refused"))
     body = (await h.client.post("/api/v1/flags/%d/ack" % fid, json={"note": "looked at it"})).json()
     assert body["rag_indexed"] is False and "embedding service unavailable" in body["rag_error"]
-    assert h.repo.acks and not h.repo.documents and body["flag_status"] == "ACKNOWLEDGED"
+    assert h.repo.acks and body["flag_status"] == "ACKNOWLEDGED"
+    assert h.repo.documents[body["doc_id"]]["embedding"] is None    # stored without a vector (full-text only)
 
 
 # ── /search ─────────────────────────────────────────────────────────────────────────────────────
