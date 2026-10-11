@@ -119,7 +119,7 @@ function QueueRow({
             </Link>
           )}
           <Link href={`/assistant?ask=${encodeURIComponent(askAbout(flag))}`} className={OPTION}>
-            <Sparkles size={14} aria-hidden="true" /> Ask the assistant
+            <Sparkles size={14} aria-hidden="true" /> Ask SPOTbot
           </Link>
         </nav>
       )}

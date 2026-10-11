@@ -13,7 +13,7 @@ const CRUMBS: Record<string, string[]> = {
   "/missions/replay": ["SPOTlight", "Missions", "Path preview"],
   "/": ["SPOTlight", "Overview"],
   "/assets": ["SPOTlight", "Assets", "Inspection imagery"],
-  "/assistant": ["SPOTlight", "AI Assistance"],
+  "/assistant": ["SPOTlight", "SPOTbot"],
 };
 
 /** The conversation id in /assistant/<id>, or null on any other route. */
@@ -25,7 +25,7 @@ function crumbsFor(pathname: string, chatTitle: string | null): string[] {
   if (CRUMBS[pathname]) return CRUMBS[pathname];
   // A chat shows its title, never its uuid. The chat page publishes the
   // title once it has loaded; until then (or if it never does) it's "Chat".
-  if (chatIdFrom(pathname)) return ["SPOTlight", "AI Assistance", chatTitle ?? "Chat"];
+  if (chatIdFrom(pathname)) return ["SPOTlight", "SPOTbot", chatTitle ?? "Chat"];
   // Fall back to the path itself, title-cased, so an unmapped route still
   // orients the user instead of showing nothing.
   return [

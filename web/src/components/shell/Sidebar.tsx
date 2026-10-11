@@ -94,8 +94,8 @@ function Section({ item, pathname }: { item: NavItem; pathname: string }) {
   );
 }
 
-/** A link is active on its own path and anywhere below it, so "AI
-    Assistance" stays lit on /assistant/<id>. "/" only matches itself. */
+/** A link is active on its own path and anywhere below it, so "SPOTbot"
+    stays lit on /assistant/<id>. "/" only matches itself. */
 export function isActive(href: string | undefined, pathname: string | null) {
   if (!href || pathname === null) return false;
   return pathname === href || (href !== "/" && pathname.startsWith(`${href}/`));

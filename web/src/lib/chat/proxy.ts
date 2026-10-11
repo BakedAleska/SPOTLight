@@ -39,7 +39,7 @@ export function guard(request: Request, { write = false } = {}): Response | null
   // would freeze the feature switch (and a backend response) into the build;
   // a request-property read marks it request-time.
   const origin = request.headers.get("origin");
-  if (!assistantFeatures().aiAssistant) return chatError(404, "disabled", "AI Assistance is disabled.");
+  if (!assistantFeatures().aiAssistant) return chatError(404, "disabled", "SPOTbot is disabled.");
   if (!write) return null;
   let sameOrigin = false;
   try { sameOrigin = !!origin && new URL(origin).host === request.headers.get("host"); }

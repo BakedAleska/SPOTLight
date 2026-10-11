@@ -107,7 +107,7 @@ export function describeError(code: ChatErrorCode, detail?: string | null, model
     case "connection_lost":
       return { title: "The connection dropped", hint: "The answer stopped before it finished. Retry to ask again." };
     case "disabled":
-      return { title: "AI Assistance is disabled", hint: "Set FEATURE_AI_ASSISTANT=true to turn it on." };
+      return { title: "SPOTbot is disabled", hint: "Set FEATURE_AI_ASSISTANT=true to turn it on." };
     case "upstream_error":
       return { title: `${name} did not answer`, hint: "It timed out or returned an error. Retry in a moment." };
     default:
