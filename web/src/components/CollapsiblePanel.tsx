@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { ChevronDown } from "lucide-react";
 
 /* Panel's collapsible variant: the same chrome, plus a chevron that folds the
@@ -88,8 +89,22 @@ export function CollapsiblePanel({
     fade.current = null;
     if (!el || from === null) return;
     const to = el.getBoundingClientRect().height;
-    running.current = el.animate([{ height: `${from}px` }, { height: `${to}px` }], { duration: DURATION, easing: EASE });
-    body.current?.animate(
+    // Pin the start state inline as well. Firefox can paint one frame before a
+    // new animation takes effect, and without the pin that frame shows the
+    // panel at full height — the rows below jump down and back, and the whole
+    // page blinks. The animation overrides the pin while it runs.
+    const content = body.current;
+    el.style.height = `${from}px`;
+    if (content) content.style.opacity = "0";
+    const unpin = () => {
+      el.style.height = "";
+      if (content) content.style.opacity = "";
+    };
+    const anim = el.animate([{ height: `${from}px` }, { height: `${to}px` }], { duration: DURATION, easing: EASE });
+    running.current = anim;
+    anim.onfinish = unpin;
+    anim.oncancel = unpin;
+    content?.animate(
       [{ opacity: 0, transform: "translateY(-6px)" }, { opacity: 1, transform: "none" }],
       { duration: DURATION, easing: EASE, delay: 60, fill: "backwards" },
     );
@@ -113,11 +128,15 @@ export function CollapsiblePanel({
       const anim = el.animate([{ height: `${from}px` }, { height: `${to}px` }], { duration: DURATION, easing: EASE, fill: "forwards" });
       running.current = anim;
       anim.onfinish = () => {
-        setCollapsed(true);
-        setFolding(false);
-        // Hand the height back to CSS on the next frame, once the folded
-        // layout is committed — cancelling now would flash the full height.
-        requestAnimationFrame(() => anim.cancel());
+        // Commit the folded layout synchronously, then hand the height back
+        // to CSS in the same task. Cancelling on a later frame raced React's
+        // commit: when the cancel won (it does in Firefox), the panel painted
+        // one frame at full height and the whole page blinked.
+        flushSync(() => {
+          setCollapsed(true);
+          setFolding(false);
+        });
+        anim.cancel();
       };
       return;
     }
