@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 
 /* Panel's collapsible variant: the same chrome, plus a chevron that folds the
@@ -15,8 +15,9 @@ import { ChevronDown } from "lucide-react";
    panel stays full-width while folded.
 
    The body stays mounted while folded — clipped, hidden and inert, at the
-   height it had — so a chart inside keeps its size and state and unfolds as
-   it was. Unmounting it made every unfold redraw the chart from empty.
+   height it had — so a chart inside never sees a resize. Unfolding re-mounts
+   its contents (a fresh key) so a chart plays its entrance again as the panel
+   opens, the same as it did on page load.
 
    The choice is remembered per panel in localStorage — a convenience only,
    so a blocked or empty store just means every panel starts open. */
@@ -59,6 +60,8 @@ export function CollapsiblePanel({
   const [frozen, setFrozen] = useState<number | null>(null);
   /** Height to unfold from, set by the click and consumed after the commit. */
   const expandFrom = useRef<number | null>(null);
+  /** Bumped on every unfold; keys the body's contents so their entrance replays. */
+  const [opened, setOpened] = useState(0);
 
   useEffect(() => {
     try {
@@ -122,6 +125,7 @@ export function CollapsiblePanel({
     remember(false);
     setFolding(false);
     setFrozen(null);
+    setOpened((n) => n + 1);
     if (!reducedMotion()) expandFrom.current = from;
     setCollapsed(false);
   };
@@ -161,7 +165,7 @@ export function CollapsiblePanel({
         style={collapsed ? { height: frozen ?? undefined, flex: "none" } : undefined}
         className={`flex min-h-0 flex-1 flex-col ${collapsed ? "invisible" : ""} ${bodyClassName}`}
       >
-        {children}
+        <Fragment key={opened}>{children}</Fragment>
       </div>
     </section>
   );
