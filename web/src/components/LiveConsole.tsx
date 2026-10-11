@@ -2,14 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  Activity, ArrowLeft, BatteryMedium, Brain, Camera, CheckCircle2, CircleDashed, Cpu, Database, Eye, History, Network, Play,
+  Activity, ArrowLeft, Brain, Camera, CheckCircle2, ChevronDown, CircleDashed, Cpu, Database, Eye, History, Network, Play,
   Radio, ShieldAlert, ShieldCheck, Square, TriangleAlert,
 } from "lucide-react";
 import { Panel } from "./Panel";
 import { LoadingDots } from "./LoadingDots";
 import { QwenDraftView } from "./QwenDraft";
 import { ModelExplanation } from "./ModelOutput";
-import { RouteAhead } from "./RouteAhead";
+import { MapLegend, RouteAhead } from "./RouteAhead";
 import { LiveAnalytics } from "./LiveAnalytics";
 import { anchors } from "@/lib/waypoints";
 import { legsPath, routeLegs } from "@/lib/route-geometry";
@@ -43,7 +43,7 @@ export function LiveConsole({ initialRoutes }: { initialRoutes: LiveRoute[] }) {
   const [runs, setRuns] = useState<LiveRun[]>([]);
   const [runId, setRunId] = useState<number | null>(null);
   const [detail, setDetail] = useState<LiveRunDetail | null>(null);
-  const [connection, setConnection] = useState("Connecting…");
+  const [connection, setConnection] = useState<"connecting" | "online" | "offline">("connecting");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [follow, setFollow] = useState(true);   // follow the active run until the operator picks another one
@@ -65,10 +65,10 @@ export function LiveConsole({ initialRoutes }: { initialRoutes: LiveRoute[] }) {
         const d = await getJson<{ items: LiveRun[] }>("/api/live/runs");
         if (stop) return;
         setRuns(d.items);
-        setConnection("Connected · polling every 2 s");
+        setConnection("online");
         const act = d.items.find(active);
         setRunId(prev => (follow && act ? act.run_id : prev ?? d.items[0]?.run_id ?? null));
-      } catch { if (!stop) setConnection("Backend unreachable · retrying every 2 s"); }
+      } catch { if (!stop) setConnection("offline"); }
     }
     void poll();
     const t = setInterval(poll, POLL_MS);
@@ -153,7 +153,7 @@ export function LiveConsole({ initialRoutes }: { initialRoutes: LiveRoute[] }) {
   const controls = <div className="flex flex-col gap-2">
     <label className="flex flex-col gap-1 text-xs text-muted">Route
       <select className={`${control} w-full justify-start`} value={routeId} onChange={e => setRouteId(e.target.value)} disabled={!!liveRun || mockRunning}>
-        <option value={MOCK_ROUTE_ID}>Mission 1 · mock patrol (no robot needed)</option>
+        <option value={MOCK_ROUTE_ID}>Mission 1 · mock (no robot)</option>
         {routes.map(r => <option key={r.route_id} value={r.route_id}>{r.route_id} · {r.name} ({r.planned_red} alerts planned)</option>)}
       </select>
     </label>
@@ -163,45 +163,49 @@ export function LiveConsole({ initialRoutes }: { initialRoutes: LiveRoute[] }) {
     </div>
     {notice && <p className="rounded border border-line bg-surface-2 px-3 py-2 text-xs text-ink" role="status">{notice}</p>}
   </div>;
-  const sources = <div className="flex flex-col gap-2 text-xs text-muted">
-    <p className="font-semibold text-ink">What is live</p>
-    <ul className="flex flex-col gap-1.5">
-      {mock || isMock ? <>
-        <Chip icon={<Database size={13} />} tag="KIT">Robot log: Mission 1&apos;s kit rows, in order</Chip>
-        <Chip icon={<Camera size={13} />} tag="SIMULATED">Photos: kit samples by action type</Chip>
-        <Chip icon={<Cpu size={13} />} tag="STORED">Triage: the flags the confidence model and rules raised</Chip>
-        <Chip icon={<Brain size={13} />} tag="STORED">SPOTbot: its stored explanations</Chip>
+  // One line by default (what is real, and whether the backend answers); the per-source breakdown opens on demand.
+  const mockView = !!mock || isMock;
+  const sources = <details className="group text-xs text-muted">
+    <summary className="flex cursor-pointer list-none items-center gap-2 [&::-webkit-details-marker]:hidden">
+      <span className="font-semibold text-ink">{mockView ? "Mock replay" : "Live data"}</span>
+      <span className="truncate">{mockView ? "no robot or model called" : "triage + SPOTbot on AMD"}</span>
+      <span className="ml-auto flex shrink-0 items-center gap-1.5 text-faint" role="status" title={connection === "offline" ? "Backend unreachable; retrying every 2 s" : undefined}>
+        <span className={`size-1.5 rounded-full ${connection === "online" ? "bg-ok" : connection === "offline" ? "bg-bad" : "bg-muted"}`} />
+        {connection === "online" ? "Online" : connection === "offline" ? "Offline" : "Connecting"}
+      </span>
+      <ChevronDown size={14} className="shrink-0 transition-transform group-open:rotate-180" />
+    </summary>
+    <ul className="mt-3 flex flex-col gap-1.5">
+      {mockView ? <>
+        <Chip icon={<Database size={13} />} tag="KIT">Robot log: Mission 1 rows, in order</Chip>
+        <Chip icon={<Camera size={13} />} tag="SIMULATED">Photos: a kit sample per action type</Chip>
+        <Chip icon={<Cpu size={13} />} tag="STORED">Triage: the seeded flags</Chip>
+        <Chip icon={<Brain size={13} />} tag="STORED">SPOTbot: stored explanations</Chip>
       </> : <>
-        <Chip icon={<Database size={13} />} tag="SIMULATED">Robot log: the kit row for each action, re-sent now</Chip>
-        <Chip icon={<Camera size={13} />} tag="SIMULATED">Photos: simulated captures (kit samples)</Chip>
-        <Chip icon={<Cpu size={13} />} tag="LIVE">Confidence model + rules triage</Chip>
-        <Chip icon={<Brain size={13} />} tag="LIVE">SPOTbot on AMD</Chip>
+        <Chip icon={<Database size={13} />} tag="SIMULATED">Robot log: each stop&apos;s kit row, re-sent now</Chip>
+        <Chip icon={<Camera size={13} />} tag="SIMULATED">Photos: a kit sample per action type</Chip>
+        <Chip icon={<Cpu size={13} />} tag="LIVE">Triage: confidence model + rules</Chip>
+        <Chip icon={<Brain size={13} />} tag="LIVE">SPOTbot: Qwen on AMD</Chip>
         <Chip icon={<Network size={13} />} tag="LIVE">Neon rows, embeddings, knowledge graph</Chip>
       </>}
     </ul>
-    {(mock || isMock) && <p className="leading-snug">
-      <strong className="text-ink">Mock patrol.</strong> Mission 1 from the challenge kit, replayed stop by stop in your browser: each stop is the kit&apos;s real
-      robot log, the stops that need attention are the ones the triage flagged, and their explanations are SPOTbot&apos;s stored answers. No robot, runner or model is called.
-    </p>}
-    <p role="status" className="text-faint">{connection}</p>
-  </div>;
+  </details>;
 
   return <div className="mx-auto flex max-w-[1600px] flex-col gap-4 p-4">
     <header>
       <p className="mb-1 text-xs text-muted">LIVE OPERATIONS</p>
       <h1 className="flex items-center gap-2 text-2xl font-semibold text-ink"><Radio size={24} />SPOT live patrol</h1>
-      <p className="mt-1 text-sm text-muted">Every stop is triaged by the confidence model and the rules, photographed and explained by SPOTbot while you watch.</p>
     </header>
     <div className="panel-columns grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
       <div className="panel-stack flex min-w-0 flex-col gap-4 xl:contents">
         <Panel title="Facility map" className="min-w-0 xl:col-start-1 xl:row-start-1" aside={run ? `${run.run_id === 0 ? "MOCK" : `RUN #${run.run_id}`} · ${run.route_id} · ${run.status.toUpperCase()}` : "NO RUN YET"}>
           <LiveMap route={route} captures={captures} run={run} />
-          <p className="mt-3 text-xs text-muted">Dashed: route to the next stop · Solid: visited route · <span className="text-bad">!</span>: needs attention · <span className="text-ok">✓</span>: all good. Verdicts come from the live triage (confidence model ‖ rules), never from the photo.</p>
+          <MapLegend marks={[{ glyph: "!", tone: "bad", label: "Needs attention" }, { glyph: "✓", tone: "ok", label: "All good" }]} />
         </Panel>
         {/* Right under the map, so each stop's card rolls in where the eye already is. */}
-        <Panel title="Inspection feed" className="min-w-0 xl:col-start-1 xl:row-start-2" aside={`${captures.length} of ${route?.stops.length ?? 8} stops · newest first`} bodyClassName="p-4">
+        <Panel title="Inspection feed" className="min-w-0 xl:col-start-1 xl:row-start-2" aside={`${captures.length}/${route?.stops.length ?? 8} · newest first`} bodyClassName="p-4">
           {captures.length === 0
-            ? <p className="text-sm text-muted">{run && active(run) ? run.status === "pending" ? "Waiting for the robot runner to claim the run…" : "SPOT is heading to stop A…" : "Start a route to watch SPOT inspect the facility."}</p>
+            ? <p className="text-sm text-muted">{run && active(run) ? run.status === "pending" ? "Waiting for the robot runner…" : "Heading to stop A…" : "Not started."}</p>
             : <ol className="flex flex-col gap-3">{[...captures].reverse().map(c => <li key={c.capture_id}><CaptureCard c={c} stop={route?.stops[c.stop_index]} /></li>)}</ol>}
           {/* The stops still to come, so the feed stretched beside the Run column shows the route rather than blank space. */}
           {route && captures.length < route.stops.length && <StopsAhead stops={route.stops.slice(captures.length)} />}
@@ -294,28 +298,26 @@ function StopsAhead({ stops }: { stops: LiveStop[] }) {
 function RunPanel({ className, run, route, captures, controls, sources }: {
   className?: string; run: LiveRun | null; route: LiveRoute | null; captures: LiveCapture[]; controls: React.ReactNode; sources: React.ReactNode;
 }) {
-  const red = captures.filter(c => c.verdict === "red").length;
-  const green = captures.filter(c => c.verdict === "green").length;
+  const mockRun = run?.run_id === 0;
   const qwen = captures.filter(c => c.qwen_source === "system2").length;
   const template = captures.filter(c => c.qwen_source === "template").length;
-  const latest = captures.at(-1);
   return <Panel title="Run" className={className} aside={run ? run.status.toUpperCase() : "IDLE"} bodyClassName="divide-y divide-line [&>*]:p-4">
     {controls}
-    {!run ? <p className="text-sm text-muted">No run yet. Pick a route and start it to watch SPOT patrol.</p> : <div className="flex flex-col gap-3 text-sm">
-      <p className="font-semibold text-ink">{run.run_id === 0 ? "Mock patrol" : `#${run.run_id}`} · {route?.name}</p>
-      <p className="text-xs text-muted">{route?.description}</p>
+    {run && <div className="flex flex-col gap-3 text-sm">
+      <div>
+        <p className="font-semibold text-ink">{mockRun ? "Mission 1 (mock)" : `#${run.run_id} · ${route?.name}`}</p>
+        {!mockRun && route?.description && <p className="mt-1 text-xs text-muted">{route.description}</p>}
+      </div>
       <div className="flex gap-1" aria-label="Stops">{(route?.stops ?? []).map((s, i) => {
         const c = captures.find(c => c.stop_index === i);
         return <span key={s.stop} title={`${s.stop} · ${s.location_id}`} className={`grid h-7 flex-1 place-items-center rounded text-[11px] font-semibold ${c?.verdict === "red" ? "bg-bad text-white" : c?.verdict === "green" ? "bg-ok text-white" : c ? "bg-accent text-on-accent" : "bg-surface-2 text-muted"}`}>{s.stop}</span>;
       })}</div>
-      <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
-        <dt className="text-muted">Needs attention</dt><dd className="font-semibold text-bad">{red}</dd>
-        <dt className="text-muted">All good</dt><dd className="font-semibold text-ok">{green}</dd>
+      {/* Verdict counts and battery are in Live analytics; only what a real run adds is listed here. */}
+      {!mockRun && <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
         <dt className="text-muted">SPOTbot answers</dt><dd className="text-ink">{qwen}</dd>
         <dt className="text-muted">Template fallbacks</dt><dd className="text-ink">{template}</dd>
-        <dt className="text-muted">Battery</dt><dd className="flex items-center gap-1 text-ink"><BatteryMedium size={13} />{latest ? `${latest.battery_pct}%` : "—"}</dd>
         <dt className="text-muted">Runner</dt><dd className="truncate text-ink">{run.runner ?? (run.status === "pending" ? "waiting…" : "—")}</dd>
-      </dl>
+      </dl>}
       {run.error && <p className="text-xs text-bad">{run.error}</p>}
     </div>}
     {sources}
@@ -353,13 +355,12 @@ function CaptureCard({ c, stop }: { c: LiveCapture; stop?: LiveStop }) {
         <div className="relative overflow-hidden rounded border border-line bg-black">
           {/* eslint-disable-next-line @next/next/no-img-element -- data: URLs for the vision overlay */}
           {img && <img src={img} alt={`Simulated capture for stop ${c.stop} (${human(c.action_type)})`} className="aspect-[4/3] w-full object-cover" />}
-          <span className="absolute left-1.5 top-1.5 rounded bg-black/75 px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-white">SIMULATED CAPTURE</span>
+          <span className="absolute left-1.5 top-1.5 rounded bg-black/75 px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-white" title={c.photo?.note ?? "Kit sample image picked by action type."}>SIMULATED</span>
         </div>
-        <figcaption className="text-[11px] text-muted">{c.photo?.note ?? "Kit sample image picked by action type."}</figcaption>
         {c.vision?.annotated_image_b64 && <button className="text-left text-[11px] text-accent-ink underline" onClick={() => setAnnotated(a => !a)}>{annotated ? "Show original" : "Show vision overlay"}</button>}
       </figure>
       <div className="flex min-w-0 flex-col gap-3 text-sm">
-        <Section icon={<Activity size={14} />} title="Robot log (kit row, re-sent live)">
+        <Section icon={<Activity size={14} />} title="Robot log">
           <p className="text-ink">{human(c.action_type)} · <span className={c.status === "FAILED" ? "font-semibold text-bad" : ""}>{c.status}{c.failure_type ? ` (${human(c.failure_type)})` : ""}</span> · battery {c.battery_pct}%</p>
           {c.reading && <p className="text-muted">Reading {human(c.reading.measurement_type)} <strong className="text-ink">{c.reading.value} {c.reading.unit}</strong> · quality {c.reading.quality}</p>}
           {c.anomaly && <p className="text-bad">Anomaly {human(c.anomaly.anomaly_type)} · {c.anomaly.severity}</p>}
@@ -369,31 +370,31 @@ function CaptureCard({ c, stop }: { c: LiveCapture; stop?: LiveStop }) {
           {!laya ? <p className="text-muted">Waiting…</p> : laya.status === "ok" ? <>
             <p className="text-ink">Escalate: <strong>{laya.verdict?.escalate ? "yes" : "no"}</strong> · {confidenceLabel(laya.verdict?.p_escalate) ?? (laya.verdict?.escalate === false ? "not escalated" : "Confidence —")}{(laya.answers?.priority?.answer ?? c.priority) ? ` · priority ${laya.answers?.priority?.answer ?? c.priority}` : ""}{laya.answers?.priority?.confidence != null ? ` (${pct(laya.answers.priority.confidence)})` : ""}</p>
             <p className="text-[11px] text-muted">{displayModel(laya.model)}{laya.device ? ` on ${laya.device}` : ""}{laya.latency_ms != null ? ` · ${ms(laya.latency_ms)}` : ""}</p>
-          </> : <p className="text-warn" title={laya.error}>Confidence model unavailable: the rules decided alone.</p>}
+          </> : <p className="text-warn" title={laya.error}>Model down · rules decided</p>}
         </Section>
-        <Section icon={<ShieldAlert size={14} />} title={`Rules (${c.decision?.mode ?? "parallel"} with the confidence model)`}>
+        <Section icon={<ShieldAlert size={14} />} title="Rules">
           {c.rules?.fired?.length ? <ul className="flex flex-wrap gap-1">{c.rules.fired.map(r => <li key={r} className="rounded bg-surface-2 px-1.5 py-0.5 font-mono text-[11px] text-ink">{r}</li>)}</ul>
             : <p className="text-muted">{c.rules ? `No rule fired${c.rules.priority ? ` (${c.rules.priority})` : ""}.` : "Waiting…"}</p>}
         </Section>
-        <Section icon={<Eye size={14} />} title="Vision on the photo (demo pairing)">
-          {mock ? <p className="text-muted">Not run in the mock patrol: the photo is a kit sample.</p> : !c.vision ? <p className="text-muted">{c.verdict ? "Reading the photo…" : "—"}</p> : c.vision.error ? <p className="text-warn">{c.vision.error}</p> : <>
+        {!mock && <Section icon={<Eye size={14} />} title="Vision">
+          {!c.vision ? <p className="text-muted">{c.verdict ? "Reading the photo…" : "—"}</p> : c.vision.error ? <p className="text-warn">{c.vision.error}</p> : <>
             {(c.vision.rows ?? []).length ? <ul className="text-ink">{c.vision.rows!.map(r => <li key={r.id}><span className="font-mono text-[11px] text-muted">{r.id}</span> {human(r.quantity ?? r.kind)} {r.value ?? "—"} {r.unit ?? ""} · {r.trust} trust ({pct(r.confidence)})</li>)}</ul> : <p className="text-muted">No numeric reading on this image.</p>}
-            <p className="text-[11px] text-muted">Never compared with this asset&apos;s log: the photo is a simulated capture. {ms(c.vision.latency_ms)}</p>
+            <p className="text-[11px] text-muted" title="The photo is simulated, so it is never compared with this asset's log.">Not compared with the log · {ms(c.vision.latency_ms)}</p>
           </>}
-        </Section>
+        </Section>}
       </div>
       <div className="flex min-w-0 flex-col gap-3 text-sm">
         <Section icon={<Brain size={14} />} title="SPOTbot explanation">
           {c.qwen_source === "pending" && draft ? <QwenDraftView draft={draft} label="SPOTbot writing · unverified draft" catchUpMs={450} compact />
-            : mock && !c.qwen && c.verdict && c.qwen_source !== "pending" ? <p className="text-muted">Not escalated: no explanation needed for this stop.</p>
-            : c.qwen_source === "pending" || (!c.qwen && c.verdict && c.qwen_source !== "error") ? <p className="flex items-center gap-2 text-accent-ink">SPOTbot analysing <LoadingDots color="currentColor" /></p>
-            : !c.qwen ? <p className="text-muted">{c.qwen_source === "error" ? "The run ended before SPOTbot's answer was stored." : "—"}</p>
-            : draft ? <p className="text-muted">SPOTbot did not finish; its unverified draft was discarded.</p> : <>
+            : mock && !c.qwen && c.verdict && c.qwen_source !== "pending" ? <p className="text-muted">Not escalated.</p>
+            : c.qwen_source === "pending" || (!c.qwen && c.verdict && c.qwen_source !== "error") ? <p className="flex items-center gap-2 text-accent-ink">Analysing <LoadingDots color="currentColor" /></p>
+            : !c.qwen ? <p className="text-muted">{c.qwen_source === "error" ? "Run ended before an answer was stored." : "—"}</p>
+            : draft ? <p className="text-muted">Unfinished; draft discarded.</p> : <>
               {c.qwen.source === "template" && <p className="rounded bg-warn/10 px-2 py-1 text-xs font-semibold text-warn">TEMPLATE · SPOTbot did not answer ({c.qwen.fallback_reason?.slice(0, 120)})</p>}
               {c.qwen.question && <p className="text-xs text-muted">Q: {c.qwen.question}</p>}
               <ModelExplanation answer={c.qwen.answer} evidence={c.qwen.evidence} reasoning={c.qwen.reasoning}
                 recommendedAction={c.qwen.recommended_action} compact limit={4} />
-              <p className="text-[11px] text-muted">{c.qwen.source === "system2" ? `SPOTbot${c.qwen.latency_ms != null ? ` · ${ms(c.qwen.latency_ms)}` : ""}${c.qwen.tokens_per_sec ? ` · ${c.qwen.tokens_per_sec.toFixed(1)} tok/s` : ""}${c.qwen.confidence_label ? ` · confidence ${c.qwen.confidence_label}` : ""}${c.qwen.image ? ` · image ${c.qwen.image}` : ""}` : "template (checked rules text, not a model answer)"}</p>
+              <p className="text-[11px] text-muted">{c.qwen.source === "system2" ? `SPOTbot${c.qwen.latency_ms != null ? ` · ${ms(c.qwen.latency_ms)}` : ""}${c.qwen.tokens_per_sec ? ` · ${c.qwen.tokens_per_sec.toFixed(1)} tok/s` : ""}${c.qwen.confidence_label ? ` · confidence ${c.qwen.confidence_label}` : ""}${c.qwen.image ? ` · image ${c.qwen.image}` : ""}` : "Template"}</p>
             </>}
         </Section>
         {red && <div className="flex flex-wrap items-center gap-3 rounded border border-bad bg-bad/10 p-3">

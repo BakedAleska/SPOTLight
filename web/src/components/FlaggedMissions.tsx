@@ -58,9 +58,7 @@ export function FlaggedMissions() {
   return (
     <div className="mx-auto max-w-6xl space-y-4 p-4">
       <h1 className="text-2xl font-semibold">Flagged missions</h1>
-      <p className="text-sm text-muted">
-        Missions with a failed action or a detected anomaly, worst first. Each card shows why it was flagged.
-      </p>
+      <p className="text-sm text-muted">Failed actions or anomalies, worst first.</p>
 
       <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {summary.map((s) => (

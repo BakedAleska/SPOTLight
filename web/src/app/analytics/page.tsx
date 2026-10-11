@@ -23,7 +23,7 @@ export default function Analytics() {
           <h1 className="text-2xl font-semibold text-ink">Analytics</h1>
           <p className="nums text-xs text-muted">Challenge kit · {data.coverage}</p>
         </div>
-        <p className="text-xs text-muted">Click any bar, slice, point or cell to see the actions, missions, anomalies or readings behind it.</p>
+        <p className="text-xs text-muted">Click any chart to see the records behind it.</p>
       </header>
       <Suspense fallback={null}><FleetSuccess /></Suspense>
       <AnalyticsCharts data={data} />

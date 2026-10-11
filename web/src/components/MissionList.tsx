@@ -13,7 +13,7 @@ export function MissionList({ query = "" }: { query?: string }) {
   return (
     <div className="mx-auto max-w-6xl space-y-4 p-4">
       <h1 className="text-2xl font-semibold">All missions</h1>
-      <p className="text-sm text-muted">Challenge kit records · {missions.length} missions. Open a mission to replay its route and inspect failures, or ask the AI about it.</p>
+      <p className="text-sm text-muted">{missions.length} missions from the challenge kit</p>
       <div className="grid gap-3 sm:grid-cols-2">
         {missions.map(m => (
           <article key={m.mission_id} className="relative rounded border border-line bg-surface p-4 transition-colors hover:border-accent has-[a:focus-visible]:border-accent">

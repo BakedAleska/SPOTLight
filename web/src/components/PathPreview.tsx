@@ -1,11 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Pause, Play, RotateCcw, Route, TriangleAlert, ScanLine, CheckCircle2, ArrowRight, AudioLines, ArrowUp, ArrowDown, Timer, BatteryMedium } from "lucide-react";
 import { Panel } from "./Panel";
 import { LoadingDots } from "./LoadingDots";
-import { RouteAhead } from "./RouteAhead";
+import { MapLegend, RouteAhead } from "./RouteAhead";
 import { AskAiLink } from "./AskAiLink";
 import type { PathMission, PathPoint } from "@/lib/path-types";
 
@@ -25,7 +24,7 @@ export function PathPreview({ points, missions, initialMissionId }: { points: Pa
   return <div className="mx-auto flex max-w-[1600px] flex-col gap-4 p-4">
     {/* Same columns as the map and side panels below, so the Mission picker lines up with them. */}
     <header className="grid items-end gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-      <div><p className="mb-1 text-xs text-muted">MISSION CONTROL</p><h1 className="flex items-center gap-2 text-2xl font-semibold text-ink"><Route size={24} />SPOT path preview</h1><p className="mt-1 text-sm text-muted">Replay a recorded challenge-kit mission. For a running robot, open <Link href="/live" className="text-accent-ink hover:underline">Live patrol</Link>.</p></div>
+      <div><p className="mb-1 text-xs text-muted">MISSION CONTROL</p><h1 className="flex items-center gap-2 text-2xl font-semibold text-ink"><Route size={24} />SPOT path preview</h1></div>
       <div className="flex flex-col gap-2">
         <label className="flex flex-col gap-1 text-xs text-muted">Mission<select className={`${control} w-full`} value={missionId} onChange={e => setMissionId(e.target.value)}>{missions.map(m => <option key={m.id} value={m.id}>{m.id} · {m.name}</option>)}</select></label>
         {missionId && <AskAiLink missionId={missionId} label={`Ask SPOTbot about ${missionId}`} className="min-h-11 px-4" />}
@@ -129,7 +128,7 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
             <text y="65" textAnchor="middle" fill="white" stroke="black" strokeWidth="3" paintOrder="stroke" fontSize="15" fontWeight="bold">SPOT</text>
           </g>}
         </svg>
-        <p className="mt-3 text-xs text-muted">Dashed: route to the next stop · Solid: visited route · !: error. Travel follows the hallways and stairs between stops; activity durations are compressed from the logs.</p>
+        <MapLegend marks={[{ glyph: "!", tone: "bad", label: "Error" }]} />
         <div className="mt-4 flex flex-col gap-3 border-t border-line pt-4">
           <label className="text-xs text-muted">Replay position · event {index + 1} of {mission.events.length}<input className="mt-2 w-full accent-accent-ink" type="range" min="0" max={duration} value={elapsed} onChange={e => setElapsed(Number(e.target.value))} /></label>
           <div className="flex flex-wrap items-center gap-2"><button className={control} onClick={() => {
