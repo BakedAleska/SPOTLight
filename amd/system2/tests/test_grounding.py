@@ -249,6 +249,41 @@ def test_cited_namespaced_ids_in_text_are_references(claim, ids, code):
     assert [e.code for e in errs if e.field == 'evidence'] == ([code] if code else [])
 
 
+@pytest.mark.parametrize('claim, ids, code', [
+    ('M001 reported COMPLETED.', ['mission:M001'], None),              # short form of a cited namespaced ID
+    ('HX-208 shows priority P2.', ['asset:HX-208', 'flag:14'], None),
+    ('Flag 14 is P2; flag #14 too.', ['flag:14'], None),                 # numeric ID: namespace word + number
+    ('M002 reported COMPLETED.', ['mission:M001'], 'ungrounded_identifier'),
+    ('HX-201 shows a defect.', ['asset:HX-208'], 'ungrounded_entity'),
+    ('Flag 15 is open.', ['flag:14'], 'ungrounded_number'),
+    ('Priority 14.', ['flag:14'], 'ungrounded_number'),                  # a bare number is never an ID
+])
+def test_cited_ids_ground_their_short_form(claim, ids, code):
+    p = packet([{'id': 'mission:M001', 'fact': 'reported_status=COMPLETED'},
+                {'id': 'asset:HX-208', 'fact': 'criticality=MEDIUM'}, {'id': 'flag:14', 'fact': 'priority=P2'}])
+    assert [e.code for e in check(cand(p, [(claim, ids)]), p)] == ([code] if code else [])
+
+
+@pytest.mark.parametrize('flag, ctx_flag', [
+    ({'asset_id': 'HX-208', 'location_id': 'WP03', 'mission_id': 'M001', 'action_id': 'A0009'}, None),   # backend
+    ({}, {'id': 'flag:7', 'asset_id': 'HX-208', 'location_id': 'WP03', 'mission_id': 'M001'}),         # orchestrator
+])
+def test_flag_subject_needs_no_citation(flag, ctx_flag):
+    context = {'question': 'What is wrong with HX-208?', 'facts': [{'id': 'F1', 'fact': 'battery_pct=22'}],
+               'allowed_actions': ACTIONS, 'suggested_action': 'MONITOR'}
+    if ctx_flag:
+        context['flag'] = ctx_flag
+    p = normalize_packet(BackendAssessRequest(flag_id=7, flag=flag, context=context))
+    assert p.subject == ('HX-208', 'WP03', 'M001')
+    ok = 'Heat Exchanger 08 (HX-208) at WP03 Cooling Loop in M001 had 22% battery (flag 7).'
+    assert check(cand(p, [(ok, ['F1'])], answer=ok), p) == ()
+    for claim, code in (('HX-201 had 22% battery.', 'ungrounded_entity'),     # another asset still needs a row
+                        ('HX-208 had 23% battery.', 'ungrounded_number'),      # numbers are never subject
+                        ('A0009 had 22% battery.', 'ungrounded_identifier'),   # the action is cited as action:<id>
+                        ('Flag 8 had 22% battery.', 'ungrounded_number')):
+        assert [e.code for e in check(cand(p, [(claim, ['F1'])]), p)] == [code]
+
+
 @pytest.mark.parametrize('fact, claim, code', [
     ('battery_pct=17', 'Battery was 17%.', None),
     ('battery_pct=17', 'Battery was 17 percent.', None),

@@ -169,7 +169,7 @@ def test_both_runners_score_identical_six_cases_over_http(server, tmp_path):
     assert ident['dataset']['content_hash'] == raw_dataset()['manifest']['content_hash']
     assert ident['dataset']['file_sha256'] == hashlib.sha256(DATA.read_bytes()).hexdigest()
     assert ident['dataset']['selected_case_ids'] == CASE_IDS and ident['dataset']['case_count'] == 6
-    assert ident['config']['model'] == 'qwen-fake' and ident['config']['max_tokens'] == 350
+    assert ident['config']['model'] == 'qwen-fake' and ident['config']['max_tokens'] == 512
     assert ident['prompt']['prompt_version'] == PROMPT_VERSION and ident['prompt']['prompt_sha256s']
     assert isinstance(ident['identity_hash'], str) and len(ident['identity_hash']) == 64
     assert m['scope']['split'] == 'train' and m['scope']['headline_eligible'] is False
@@ -220,7 +220,7 @@ def test_both_runners_score_identical_six_cases_over_http(server, tmp_path):
     assert len(http.requests) == 5
     for req in http.requests:
         assert req['path'] == '/v1/chat/completions'
-        assert req['body']['temperature'] == 0 and req['body']['max_tokens'] == 350
+        assert req['body']['temperature'] == 0 and req['body']['max_tokens'] == 512
 
 
 def test_template_runner_is_offline_and_reproducible(tmp_path):

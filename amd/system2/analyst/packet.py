@@ -51,6 +51,8 @@ class PreparedPacket:
     ocr: tuple[str, ...] = ()
     image: Optional[ImageInput] = None
     vision_ids: tuple[str, ...] = ()
+    # the flag's own asset, waypoint and mission IDs: what the question is about, so naming them needs no citation
+    subject: tuple[str, ...] = ()
 
     @property
     def multimodal(self) -> bool:
@@ -380,7 +382,18 @@ def normalize_packet(body: BackendAssessRequest) -> PreparedPacket:
             suggested = next((a for a in DISAGREE_PREFERRED if a in actions), None)
     return PreparedPacket(body.flag_id, question, content, tuple(dict.fromkeys(actions + ["MANUAL_REVIEW"])),
                           suggested, guard or p.get("insufficient_context", False) or not content or no_actions,
-                          ocr, image, vision_ids)
+                          ocr, image, vision_ids, _subject(body.flag, p.get("flag")))
+
+
+SUBJECT_KEYS = ("asset_id", "location_id", "mission_id")
+
+
+def _subject(*flags) -> tuple[str, ...]:
+    """The flag's asset, waypoint and mission IDs from the request's flag row, else the packet's flag object
+    (the orchestrator sends the packet's). The action ID is left out: it is cited as action:<id>."""
+    ids = [f[k].strip() for f in flags if isinstance(f, dict)
+           for k in SUBJECT_KEYS if isinstance(f.get(k), str) and f[k].strip()]
+    return tuple(dict.fromkeys(ids))
 
 
 def stub_assessment(p: PreparedPacket) -> BackendAssessResponse:
