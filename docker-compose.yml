@@ -14,6 +14,7 @@
 # mcp        8090  local, hybrid, neon      MCP context server for System 2 (streamable HTTP /mcp)
 # backend    8000  local, hybrid, neon      FastAPI dashboard API (/api/v1, /docs). ADMIN_TOKEN (header
 #                                           X-Admin-Token) guards /ops, /replay, POST /events; CORS_ORIGINS only
+#                                           /api/v1/chat: AI Assistance (Gemini via GEMINI_API_KEY, SSE answers)
 # web        3000  local, hybrid, neon, frontend  Next.js dashboard; reads backend via /api/dashboard
 # system2    8083  local, hybrid, neon, system2  Authenticated System 2 /v1/assess (contract 2026-10-10.backend.2):
 #                                           packet-grounded stub (model=stub) by default; live checked pipeline when
@@ -88,6 +89,7 @@ services:
       FEATURE_FLAG_DETAILS: ${FEATURE_FLAG_DETAILS:-true}
       FEATURE_FLAG_ACTIONS: ${FEATURE_FLAG_ACTIONS:-true}
       FEATURE_FLAG_EXPLANATIONS: ${FEATURE_FLAG_EXPLANATIONS:-true}
+      FEATURE_AI_ASSISTANT: ${FEATURE_AI_ASSISTANT:-true}   # false -> /assistant shows a disabled notice
       EXPLAIN_TIMEOUT_MS: ${WEB_EXPLAIN_TIMEOUT_MS:-50000}   # wait for /explain; raise with a slow local System 2 model
     ports: ["${BIND_ADDR:-127.0.0.1}:3000:3000"]
     volumes:
@@ -365,6 +367,16 @@ services:
       # Audit H3: /ops/*, /replay/*, POST /events* need X-Admin-Token. Unset -> those endpoints answer 503.
       ADMIN_TOKEN: ${ADMIN_TOKEN:-}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}   # the dashboard's origin(s), comma-separated
+      # AI Assistance chat (docs/chat-contract.md §7). The key lives only in the root .env (gitignored) and only
+      # this service gets it; empty -> /chat/models says configured=false and sending answers 503 gemini_unset.
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_BASE_URL: ${GEMINI_BASE_URL:-https://generativelanguage.googleapis.com/v1beta}
+      CHAT_MODELS: ${CHAT_MODELS:-gemini-3.8-flash,gemini-3.5-flash,gemini-3.5-flash-lite}   # gemma-4-31b-it is opt-in
+      CHAT_DEFAULT_MODEL: ${CHAT_DEFAULT_MODEL:-gemini-3.8-flash}
+      CHAT_TITLE_MODEL: ${CHAT_TITLE_MODEL:-gemini-3.1-flash-lite}   # `none` = auto titles only (no title call)
+      CHAT_TIMEOUT_S: ${CHAT_TIMEOUT_S:-120}                 # whole Gemini call (thinking mode can be slow)
+      CHAT_RETRIEVAL_BUDGET_S: ${CHAT_RETRIEVAL_BUDGET_S:-8} # retrieval deadline before the call
+      CHAT_HISTORY_MESSAGES: ${CHAT_HISTORY_MESSAGES:-12}    # stored messages sent as history
     ports: ["${BIND_ADDR:-127.0.0.1}:8000:8000"]
 
 volumes:

@@ -48,6 +48,20 @@ For native development set them in `web/.env.local` and restart the dev server.
 Reopen reverses the flag's status change; it does not delete the recorded acknowledgement, resolution,
 or note. After closing an acknowledged/resolved flag, reopen its detail at `/?flag=<flag_id>`.
 
+## AI Assistance (`/assistant`)
+
+A ChatGPT-style chat over the mission data (contract: `docs/chat-contract.md`). The browser only calls
+`/api/chat/**`; those routes proxy to FastAPI's `/api/v1/chat` with `BACKEND_URL`, and the messages
+route pipes the backend's SSE stream through unbuffered (Stop aborts it upstream). Chats, titles and
+history live in Postgres; the last model, mode and history-panel state are remembered in localStorage.
+
+- `FEATURE_AI_ASSISTANT=false` turns it off: every `/api/chat` route answers 404 and the page shows a notice.
+- No Gemini key on the backend shows "Gemini API key not configured"; history still loads.
+- The chat UI lives in `src/app/assistant/layout.tsx`, and the live answer in a module-level store
+  (`src/lib/chat/store.ts`), so a new chat's URL can change to `/assistant/<id>` mid-answer without
+  dropping the stream.
+- Tests: `npm run test:chat` (SSE parser, citation chips, history groups, grounding badge, proxy routes).
+
 For native development with Node.js installed:
 
 ```bash

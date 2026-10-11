@@ -39,6 +39,7 @@ Single source of truth. Each entry is the decision plus why, in one or two lines
 
 - **Web integration reconciled (2026-10-10):** the console polls its server-side `/api/dashboard` proxy every 10 seconds. FastAPI owns Neon access, triage, explanations and flag actions. The initial dashboard is rendered on the server. Backend failure serves explicitly labeled kit data with flag actions, details and explanations disabled; polling restores live data when available. The battery chart retains definite-height bars and a numeric axis.
 - **Web deployment (2026-10-10):** compose runs the Node 24 development service in local/hybrid/neon/frontend profiles; the standalone non-root `web/Dockerfile` remains available for production. Both use `BACKEND_URL` including `/api/v1`; no database credentials reach the frontend.
+- **AI Assistance chat on Gemini (2026-10-10, user decision; replaces the "AI review" nav tab, `/review` stays reachable by URL).** A ChatGPT-style chat backed by the Gemini API key, with chats stored in Postgres and grounded in `documents` + the knowledge graph + SQL. Each answer gets a deterministic citation and number check. The free tier allows 5 requests/min/model, so the backend retrieves everything before **one** Gemini call per turn (no tool loop), and a 429 is shown to the operator, never silently swapped. Chats are never retrieved as evidence. Contract: `docs/chat-contract.md`. Also enters the MLH Gemini API prize.
 
 ## Pending
 - Roles.

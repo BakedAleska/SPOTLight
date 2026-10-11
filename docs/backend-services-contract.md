@@ -64,7 +64,8 @@ is the repo root, so the image can COPY `amd/system1/triage/`. Laya is pinned to
 The route tree agreed with the user (versioned under `/api/v1`):
 `events` (POST ingest, batch, GET feed) · `replay` (start/stop/status, + step in stepped mode) · `flags` (list, get, context, explain, ack) ·
 `missions` (list, get, timeline, debrief) · `system1` (predict proxy, forecast) · `assets` · `locations` ·
-`insights` (overview, reliability) · `search` (RAG) · `ops` (model-call stats, jobs, reset-demo) · `/health`.
+`insights` (overview, reliability) · `search` (RAG) · `ops` (model-call stats, jobs, reset-demo) · `ask` (orchestrator proxy) ·
+`chat` (AI Assistance: conversations CRUD, models, suggestions, SSE messages; `docs/chat-contract.md`) · `/health`.
 
 Ingest pipeline for `POST /api/v1/events`:
 1. Append verbatim to `raw.spot_event_log`.
@@ -113,6 +114,14 @@ Every step logs to `app.*` with one `request_id`.
 | `DB_POOL_MIN` | pool connections kept open | `1` (`0` when serverless) |
 | `REPLAY_MODE` | `background` (asyncio task, Docker) or `stepped` (state in `replay_runs`, driven by `POST /replay/step`) | `background` (`stepped` when serverless) |
 | `REPLAY_STEP_BUDGET_S` | default time budget of one `POST /replay/step` | `10` |
+| `GEMINI_API_KEY` | Google AI Studio key for `/api/v1/chat` (header `x-goog-api-key` only; never logged or returned). Unset -> `/chat/models` `configured: false`, `POST .../messages` 503 `gemini_unset` | unset |
+| `GEMINI_BASE_URL` | Gemini API root | `https://generativelanguage.googleapis.com/v1beta` |
+| `CHAT_MODELS` | comma-separated model ids, in picker order (unknown ids work with a derived label). Gemma (`gemma-4-31b-it`) is opt-in | `gemini-3.8-flash,gemini-3.5-flash,gemini-3.5-flash-lite` |
+| `CHAT_DEFAULT_MODEL` | default model (first of `CHAT_MODELS` if not listed there) | `gemini-3.8-flash` |
+| `CHAT_TITLE_MODEL` | one `generateContent` call (6 s, `thinkingLevel: minimal`, 40 output tokens) for a 3-6 word title after the first answer; empty/`none` = auto titles only | `gemini-3.1-flash-lite` |
+| `CHAT_TIMEOUT_S` | whole Gemini streaming call | `120` |
+| `CHAT_RETRIEVAL_BUDGET_S` | retrieval deadline before the call (embed capped at min(`SEARCH_EMBED_TIMEOUT_S`, 60 %)) | `8` |
+| `CHAT_HISTORY_MESSAGES` | stored messages sent as plain history turns (never as evidence) | `12` |
 
 ### Serverless deployment and stepped replay (ADDED 2026-10-10; additive)
 The backend also runs as a Vercel Python function (Root Directory `backend/`, entry `backend/index.py`, config

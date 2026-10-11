@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronRight, X } from "lucide-react";
@@ -93,9 +94,39 @@ function Section({ item, pathname }: { item: NavItem; pathname: string }) {
   );
 }
 
-export function Sidebar({ onClose, onNavigate }: { onClose: () => void; onNavigate: () => void }) {
-  const pathname = usePathname();
+/** A link is active on its own path and anywhere below it, so "AI
+    Assistance" stays lit on /assistant/<id>. "/" only matches itself. */
+export function isActive(href: string | undefined, pathname: string | null) {
+  if (!href || pathname === null) return false;
+  return pathname === href || (href !== "/" && pathname.startsWith(`${href}/`));
+}
 
+function NavItems({ pathname }: { pathname: string | null }) {
+  return (
+    <ul className="space-y-0.5">
+      {nav.map((item) => (
+        <li key={item.label}>
+          {item.children ? (
+            <Section item={item} pathname={pathname ?? ""} />
+          ) : (
+            <Row item={item} active={isActive(item.href, pathname)} />
+          )}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/* usePathname() is the only dynamic read in the rail. Under Cache
+   Components it suspends while a route with an unknown dynamic param (like
+   /assistant/[conversationId]) is prerendered, so it sits in its own leaf
+   behind Suspense: the shell prerenders the same links, just without the
+   active marker, and the marker appears at request time. */
+function ActiveNavItems() {
+  return <NavItems pathname={usePathname()} />;
+}
+
+export function Sidebar({ onClose, onNavigate }: { onClose: () => void; onNavigate: () => void }) {
   return (
     <div className="flex h-full w-60 flex-col border-r border-line bg-chrome">
       <div className="flex h-12 shrink-0 items-center gap-2 border-b border-line px-3">
@@ -112,17 +143,9 @@ export function Sidebar({ onClose, onNavigate }: { onClose: () => void; onNaviga
       </div>
 
       <nav onClick={(event) => { if ((event.target as HTMLElement).closest("a")) onNavigate(); }} aria-label="Primary" className="flex-1 overflow-y-auto p-2">
-        <ul className="space-y-0.5">
-          {nav.map((item) => (
-            <li key={item.label}>
-              {item.children ? (
-                <Section item={item} pathname={pathname} />
-              ) : (
-                <Row item={item} active={pathname === item.href} />
-              )}
-            </li>
-          ))}
-        </ul>
+        <Suspense fallback={<NavItems pathname={null} />}>
+          <ActiveNavItems />
+        </Suspense>
       </nav>
     </div>
   );

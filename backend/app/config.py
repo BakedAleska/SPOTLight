@@ -17,6 +17,8 @@ _BUNDLED_ROOT = _BACKEND_DIR / "_shared"
 TRIAGE_DIR_DEFAULT = Path("amd") / "system1"              # folder holding the `triage` package
 KIT_DIR_DEFAULT = Path("amd") / "system1" / "data" / "kit"
 
+# chat.2: Gemma is opt-in (add it to CHAT_MODELS): on 2026-10-10 it took 37 s to the first byte and then a 503.
+DEFAULT_CHAT_MODELS = ["gemini-3.8-flash", "gemini-3.5-flash", "gemini-3.5-flash-lite"]
 DEFAULT_QUERY_PREFIX = ("Instruct: Given an operator question about a SPOT robot inspection, retrieve relevant "
                         "inspection events, anomaly notes, operator notes, and Spot manual passages\nQuery:")
 
@@ -100,6 +102,16 @@ class Settings:
     request_deadline_s: float = 45.0       # overall deadline for /flags/{id}/context and /explain (audit M4)
     log_requests: bool = True
     service_name: str = "backend"
+    # AI Assistance chat (docs/chat-contract.md §7). The key is never printed: repr=False keeps it out of any
+    # log line that formats the settings object.
+    gemini_api_key: Optional[str] = field(default=None, repr=False)
+    gemini_base_url: str = "https://generativelanguage.googleapis.com/v1beta"
+    chat_models: List[str] = field(default_factory=lambda: list(DEFAULT_CHAT_MODELS))
+    chat_default_model: str = "gemini-3.8-flash"
+    chat_title_model: Optional[str] = "gemini-3.1-flash-lite"   # None -> auto titles only
+    chat_timeout_s: float = 120.0
+    chat_retrieval_budget_s: float = 8.0
+    chat_history_messages: int = 12
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -156,4 +168,23 @@ class Settings:
             admin_token=_env("ADMIN_TOKEN"),
             request_deadline_s=float(_env("REQUEST_DEADLINE_S", "45") or 45),
             log_requests=(_env("LOG_REQUESTS", "1") or "1") not in ("0", "false", "no"),
+            gemini_api_key=_env("GEMINI_API_KEY"),
+            gemini_base_url=(_env("GEMINI_BASE_URL", cls.gemini_base_url) or "").rstrip("/"),
+            chat_models=[m.strip() for m in (_env("CHAT_MODELS") or ",".join(DEFAULT_CHAT_MODELS)).split(",")
+                         if m.strip()],
+            chat_default_model=_env("CHAT_DEFAULT_MODEL", cls.chat_default_model) or cls.chat_default_model,
+            chat_title_model=_title_model(),
+            chat_timeout_s=float(_env("CHAT_TIMEOUT_S", "120") or 120),
+            chat_retrieval_budget_s=float(_env("CHAT_RETRIEVAL_BUDGET_S", "8") or 8),
+            chat_history_messages=int(_env("CHAT_HISTORY_MESSAGES", "12") or 12),
         )
+
+
+def _title_model() -> Optional[str]:
+    """CHAT_TITLE_MODEL: unset -> the default; empty, `none` or `off` -> auto titles only. (Compose's `${VAR:-x}`
+    turns an empty value back into the default, so `none` is the way to switch titles off there.)"""
+    v = os.environ.get("CHAT_TITLE_MODEL")
+    if v is None:
+        return Settings.chat_title_model
+    v = v.strip()
+    return None if v.lower() in ("", "none", "off", "false", "0") else v

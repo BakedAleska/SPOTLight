@@ -37,6 +37,9 @@ Binding contracts: `docs/backend-services-contract.md` (routes, pipeline, env) a
 | `GET /api/v1/ops/model-calls` | p50/p95/mean latency and tokens/s per system/model from `app.model_calls`, plus System 1 routing |
 | `GET /api/v1/ops/jobs` | `app.job_runs` + replay status |
 | `POST /api/v1/ops/reset-demo` | `{"confirm": true}`: clears events, flags, assessments, acks and demo docs (kit tables and raw/app logs stay) |
+| `GET /api/v1/chat/models`, `/chat/suggestions` | AI Assistance model picker (`CHAT_MODELS`, `configured` = key set) and 4 starter prompts from live facts (no LLM) |
+| `GET/POST /api/v1/chat/conversations`, `GET/PATCH/DELETE /chat/conversations/{id}` | Stored chats (search `q`, pin, rename = `title_source: user`); malformed ids are 404 |
+| `POST /api/v1/chat/conversations/{id}/messages` | SSE answer (`meta`, `sources`, `thinking`, `delta`, `done`, `title` / `error`): retrieval (documents + graph + SQL digests, `CHAT_RETRIEVAL_BUDGET_S`) then ONE Gemini call; `[id]` citations checked by a deterministic grounding pass; `regenerate`, `edit_message_id`; 409 while a turn runs; disconnect = Stop (partial answer stored `stopped`). `docs/chat-contract.md` |
 
 ## Run
 Local (Python 3.12):
@@ -88,6 +91,10 @@ Try it: `curl -X POST localhost:8000/api/v1/replay/start -H "X-Admin-Token: $ADM
 | `DB_POOL_MIN` | pool connections kept open | `1` (`0` when serverless) |
 | `SERVERLESS` | no per-process assumptions: pool `min_size` 0 + connection check on checkout, log writes finished before each response | auto: on when `VERCEL` is set |
 | `REPLAY_MODE`, `REPLAY_STEP_BUDGET_S` | `background` (asyncio task) or `stepped` (`replay_runs` + `/replay/step`); default step budget | `background` (`stepped` when serverless), `10` |
+| `GEMINI_API_KEY` | AI Assistance (Google AI Studio). Header `x-goog-api-key` only, never logged; unset → chat answers 503 `gemini_unset` | unset |
+| `GEMINI_BASE_URL`, `CHAT_MODELS`, `CHAT_DEFAULT_MODEL` | Gemini root; picker models in order (append `gemma-4-31b-it` to opt in); default model | Google v1beta, `gemini-3.8-flash,gemini-3.5-flash,gemini-3.5-flash-lite`, `gemini-3.8-flash` |
+| `CHAT_TITLE_MODEL` | title call after the first answer (`none` = auto titles only) | `gemini-3.1-flash-lite` |
+| `CHAT_TIMEOUT_S`, `CHAT_RETRIEVAL_BUDGET_S`, `CHAT_HISTORY_MESSAGES` | Gemini call cap; retrieval deadline; history turns | `120`, `8`, `12` |
 
 ## Deploy on Vercel
 The backend is its own Vercel project (Hobby, Python on Fluid compute), next to `web/` and `amd/mcp/`. Docker Compose
@@ -172,6 +179,7 @@ Ingest (`POST /events`, and every replay event): (1) raw → `raw.spot_event_log
 | MCP | `/context` returns a SQL-built packet (`source: sql_fallback`): flag, event, reading trust, Laya's answers, waypoint and battery reliability, asset history |
 | System 2 (unset or down) | `/explain` returns a templated Orbit-style explanation from the flag's reasons (`source: template`); `/debrief` is templated |
 | Embedding service | `/search` switches to Postgres full-text on `content_tsv` (`mode: fulltext`); acks are stored without the RAG note |
+| Gemini (chat) | no retries and no model swap (free tier: 5 req/min/model): the stream ends with an `error` event (`rate_limited` + `retry_after_s`, `model_unavailable` (also a 503 / in-stream `UNAVAILABLE`), `gemini_auth`, `blocked`, `upstream_error`) and an assistant message with `status: error` and that `error_code` is stored; embed down or a slow/failed query → chat retrieval continues and lists the step in `retrieval.gaps` (logged at WARNING) |
 | Database | ingest still returns the verdict (`persisted: false`); reads return 503 `database_unavailable`; a 5 s cooldown makes repeated calls fail fast |
 
 Failed services trip a circuit breaker whose cooldown is max(`BREAKER_COOLDOWN_S`, that service's timeout), so a hung

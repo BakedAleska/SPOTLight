@@ -9,9 +9,11 @@ import httpx
 from fastapi import Request
 
 from .config import Settings
+from .db.chat import ChatRepo
 from .db.pool import Database
 from .db.queries import Repo
 from .services.calllog import LogSink, request_id_var
+from .services.chat import ChatService
 from .services.embed import EmbedClient
 from .services.flags import FlagService
 from .services.http import Breaker
@@ -41,6 +43,8 @@ class Services:
     pipeline: IngestPipeline
     replay: Union[ReplayManager, SteppedReplay]   # REPLAY_MODE background | stepped
     flags: FlagService
+    chat_repo: Optional[ChatRepo] = None     # AI Assistance chat storage + retrieval (docs/chat-contract.md §1)
+    chat: Optional[ChatService] = None       # chat turns: retrieval -> one Gemini call -> SSE
 
     async def open(self) -> None:
         await self.db.open()
@@ -94,8 +98,10 @@ def build_services(settings: Settings, *, repo: Optional[Repo] = None,
         replay = ReplayManager(pipeline, sink, ref.replay_path, settings.replay_speed, settings.replay_max_gap_s)
     flags = FlagService(repo, mcp, system2, embed, sink, deadline_s=settings.request_deadline_s,
                         orchestrator=orchestrator)
+    chat_repo = ChatRepo(db)
+    chat = ChatService(settings, chat_repo, embed, http, sink)
     return Services(settings, db, logs_db, repo, sink, http, ref, system1, embed, mcp, system2, orchestrator,
-                    pipeline, replay, flags)
+                    pipeline, replay, flags, chat_repo=chat_repo, chat=chat)
 
 
 def get_services(request: Request) -> Services:
