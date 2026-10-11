@@ -9,7 +9,9 @@ import { TopBar } from "./TopBar";
    crumbs down from each page means a new route gets a correct breadcrumb by
    adding one line, and never gets a stale one. */
 const CRUMBS: Record<string, string[]> = {
+  "/missions/replay": ["SPOTlight", "Missions", "Path preview"],
   "/": ["SPOTlight", "Overview"],
+  "/assets": ["SPOTlight", "Assets", "Inspection imagery"],
 };
 
 function crumbsFor(pathname: string): string[] {
@@ -62,7 +64,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           drawer ? "flex" : "hidden"
         } ${docked ? "lg:flex" : "lg:hidden"}`}
       >
-        <Sidebar onClose={closeRail} />
+        <Sidebar onClose={closeRail} onNavigate={() => setDrawer(false)} />
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">

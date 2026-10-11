@@ -1,0 +1,731 @@
+{
+ "_": "Real POST /v1/vision responses for the six kit sample images. Generated, not hand-written: amd/vision/scripts/run_kit.py --no-orbit (vision contract 2026-10-10.vision.2) over SPOTDATA/SPOT_KnightHacks_Challenge_Kit Part One/04_ASSETS/sample_inspection_images on 2026-10-10. annotated_image_b64 is dropped (the JPEGs are committed under public/kit/inspection/annotated/) and latency_ms with it (it measured a laptop CPU, not the service). Regenerate with the same command; do not edit values by hand.",
+ "contract": "2026-10-10.vision.2",
+ "generated_on": "2026-10-10",
+ "responses": {
+  "thermal_pump_bearing_01": {
+   "media_id": "thermal_pump_bearing_01",
+   "kind": "thermal",
+   "router": {
+    "label": "thermal",
+    "method": "action_type",
+    "confidence": 1.0
+   },
+   "ocr": [
+    {
+     "text": "℃",
+     "bbox": [
+      209,
+      9,
+      228,
+      25
+     ],
+     "conf": 0.933
+    },
+    {
+     "text": "100",
+     "bbox": [
+      209,
+      26,
+      234,
+      41
+     ],
+     "conf": 1.0
+    },
+    {
+     "text": "75",
+     "bbox": [
+      210,
+      59,
+      228,
+      75
+     ],
+     "conf": 1.0
+    },
+    {
+     "text": "SO",
+     "bbox": [
+      209,
+      92,
+      228,
+      107
+     ],
+     "conf": 0.564
+    },
+    {
+     "text": "25",
+     "bbox": [
+      208,
+      126,
+      228,
+      142
+     ],
+     "conf": 1.0
+    }
+   ],
+   "readings": [
+    {
+     "id": "V1",
+     "quantity": "max_temperature",
+     "value": 100.0,
+     "unit": "°C",
+     "confidence": 0.8,
+     "method": "colorbar_lut",
+     "flags": [
+      "CLIPPED"
+     ],
+     "bbox": [
+      141,
+      60,
+      156,
+      76
+     ],
+     "point": [
+      149,
+      66
+     ],
+     "note": "hottest spot reaches the 100 °C top of the scale; true value may be higher"
+    },
+    {
+     "id": "V2",
+     "quantity": "p95_temperature",
+     "value": 81.5,
+     "unit": "°C",
+     "confidence": 0.9,
+     "method": "colorbar_lut",
+     "flags": []
+    },
+    {
+     "id": "V3",
+     "quantity": "median_temperature",
+     "value": 41.6,
+     "unit": "°C",
+     "confidence": 0.9,
+     "method": "colorbar_lut",
+     "flags": []
+    },
+    {
+     "id": "V4",
+     "quantity": "reference_temperature",
+     "value": 41.0,
+     "unit": "°C",
+     "confidence": 0.75,
+     "method": "scene_median_outside_hotspot",
+     "flags": [],
+     "note": "median of the scene outside the hotspot"
+    },
+    {
+     "id": "V5",
+     "quantity": "delta_t",
+     "value": 59.0,
+     "unit": "°C",
+     "confidence": 0.75,
+     "method": "hotspot_minus_reference",
+     "flags": [
+      "CLIPPED"
+     ],
+     "note": "hotspot 59.0 °C over the reference 41.0 °C"
+    }
+   ],
+   "key_results": [
+    {
+     "name": "Max Temperature",
+     "units": "°C",
+     "value": 100.0
+    },
+    {
+     "name": "Reference Temperature",
+     "units": "°C",
+     "value": 41.0
+    },
+    {
+     "name": "Delta T",
+     "units": "°C",
+     "value": 59.0
+    },
+    {
+     "name": "Scale",
+     "units": "°C",
+     "value": "25.5–101"
+    },
+    {
+     "name": "Clipped",
+     "units": "",
+     "value": "yes"
+    }
+   ],
+   "comparison": null,
+   "alert": {
+    "title": "Thermal hotspot ≥100.0 °C (ΔT 59 °C over reference)",
+    "severity": 4,
+    "source": "vision.thermal"
+   },
+   "flags": [],
+   "annotated_mime": "image/jpeg",
+   "version": {
+    "service": "0.1.0",
+    "contract": "2026-10-10.vision.2",
+    "rapidocr": "3.10.0",
+    "onnxruntime": "1.31.0",
+    "opencv": "5.0.0.93"
+   },
+   "width": 245,
+   "height": 166,
+   "annotated_width": 480,
+   "annotated_height": 325
+  },
+  "gauge_pressure_01": {
+   "media_id": "gauge_pressure_01",
+   "kind": "gauge",
+   "router": {
+    "label": "gauge",
+    "method": "action_type",
+    "confidence": 1.0
+   },
+   "ocr": [
+    {
+     "text": "150",
+     "bbox": [
+      104,
+      35,
+      127,
+      51
+     ],
+     "conf": 0.994
+    },
+    {
+     "text": "100",
+     "bbox": [
+      77,
+      48,
+      100,
+      65
+     ],
+     "conf": 1.0
+    },
+    {
+     "text": "200",
+     "bbox": [
+      130,
+      48,
+      155,
+      65
+     ],
+     "conf": 1.0
+    },
+    {
+     "text": "D",
+     "bbox": [
+      102,
+      58,
+      111,
+      69
+     ],
+     "conf": 0.59
+    },
+    {
+     "text": "50",
+     "bbox": [
+      67,
+      76,
+      83,
+      91
+     ],
+     "conf": 1.0
+    },
+    {
+     "text": "290",
+     "bbox": [
+      143,
+      75,
+      166,
+      91
+     ],
+     "conf": 0.999
+    },
+    {
+     "text": "8",
+     "bbox": [
+      77,
+      105,
+      90,
+      121
+     ],
+     "conf": 0.965
+    },
+    {
+     "text": "300",
+     "bbox": [
+      130,
+      104,
+      156,
+      121
+     ],
+     "conf": 1.0
+    },
+    {
+     "text": "psi",
+     "bbox": [
+      103,
+      111,
+      127,
+      130
+     ],
+     "conf": 0.969
+    }
+   ],
+   "readings": [
+    {
+     "id": "V1",
+     "quantity": "pressure",
+     "value": 1.0,
+     "unit": "psi",
+     "confidence": 0.3,
+     "method": "hough_ray_ransac_labels",
+     "flags": [
+      "LABEL_OUTLIER",
+      "AMBIGUOUS_NEEDLE"
+     ],
+     "point": [
+      77,
+      122
+     ],
+     "note": "two needle candidates: -136° -> 1 psi and 39° -> 193 psi (two-ended needle (opposite arm 0.32 r long)); do not trust this value"
+    }
+   ],
+   "key_results": [
+    {
+     "name": "Reading",
+     "units": "psi",
+     "value": 1.0
+    },
+    {
+     "name": "Reading Confidence",
+     "units": "%",
+     "value": 30
+    },
+    {
+     "name": "Needle Angle",
+     "units": "deg",
+     "value": -136.0
+    },
+    {
+     "name": "Needle Peak Ratio",
+     "units": "",
+     "value": 0.53
+    },
+    {
+     "name": "Opposite Arm Length",
+     "units": "r",
+     "value": 0.32
+    },
+    {
+     "name": "Full Scale",
+     "units": "psi",
+     "value": 300.0
+    },
+    {
+     "name": "Scale Labels Used",
+     "units": "",
+     "value": "6 of 7"
+    }
+   ],
+   "comparison": null,
+   "alert": null,
+   "flags": [],
+   "annotated_mime": "image/jpeg",
+   "version": {
+    "service": "0.1.0",
+    "contract": "2026-10-10.vision.2",
+    "rapidocr": "3.10.0",
+    "onnxruntime": "1.31.0",
+    "opencv": "5.0.0.93"
+   },
+   "width": 232,
+   "height": 166,
+   "annotated_width": 480,
+   "annotated_height": 343
+  },
+  "acoustic_valve_01": {
+   "media_id": "acoustic_valve_01",
+   "kind": "spectrogram",
+   "router": {
+    "label": "spectrogram",
+    "method": "action_type",
+    "confidence": 1.0
+   },
+   "ocr": [
+    {
+     "text": "20",
+     "bbox": [
+      24,
+      4,
+      42,
+      19
+     ],
+     "conf": 1.0
+    },
+    {
+     "text": "(r H",
+     "bbox": [
+      2,
+      26,
+      20,
+      125
+     ],
+     "conf": 0.512
+    },
+    {
+     "text": "15",
+     "bbox": [
+      25,
+      32,
+      42,
+      47
+     ],
+     "conf": 1.0
+    },
+    {
+     "text": "10",
+     "bbox": [
+      25,
+      60,
+      42,
+      76
+     ],
+     "conf": 1.0
+    },
+    {
+     "text": "5",
+     "bbox": [
+      31,
+      89,
+      42,
+      103
+     ],
+     "conf": 1.0
+    },
+    {
+     "text": "0",
+     "bbox": [
+      33,
+      119,
+      41,
+      129
+     ],
+     "conf": 0.998
+    },
+    {
+     "text": "0",
+     "bbox": [
+      42,
+      129,
+      53,
+      143
+     ],
+     "conf": 1.0
+    },
+    {
+     "text": "2",
+     "bbox": [
+      78,
+      130,
+      90,
+      143
+     ],
+     "conf": 1.0
+    },
+    {
+     "text": "4",
+     "bbox": [
+      115,
+      130,
+      129,
+      143
+     ],
+     "conf": 1.0
+    },
+    {
+     "text": "6",
+     "bbox": [
+      149,
+      130,
+      163,
+      143
+     ],
+     "conf": 1.0
+    },
+    {
+     "text": "8",
+     "bbox": [
+      189,
+      130,
+      202,
+      143
+     ],
+     "conf": 1.0
+    },
+    {
+     "text": "10",
+     "bbox": [
+      223,
+      130,
+      240,
+      143
+     ],
+     "conf": 1.0
+    },
+    {
+     "text": "Time (s)",
+     "bbox": [
+      114,
+      145,
+      164,
+      162
+     ],
+     "conf": 0.961
+    }
+   ],
+   "readings": [
+    {
+     "id": "V1",
+     "quantity": "peak_frequency",
+     "value": 1.78,
+     "unit": "kHz",
+     "confidence": 0.8,
+     "method": "jet_lut_row_mean",
+     "flags": [
+      "RELATIVE_ONLY"
+     ],
+     "point": [
+      140,
+      114
+     ],
+     "note": "strongest band centred near 1.8 kHz (relative level, no absolute dB)"
+    },
+    {
+     "id": "V2",
+     "quantity": "band_energy_0_2khz",
+     "value": 0.634,
+     "unit": "relative",
+     "confidence": 0.8,
+     "method": "jet_lut_band_mean",
+     "flags": [
+      "RELATIVE_ONLY"
+     ]
+    },
+    {
+     "id": "V3",
+     "quantity": "band_energy_2_5khz",
+     "value": 0.466,
+     "unit": "relative",
+     "confidence": 0.8,
+     "method": "jet_lut_band_mean",
+     "flags": [
+      "RELATIVE_ONLY"
+     ]
+    },
+    {
+     "id": "V4",
+     "quantity": "band_energy_5_10khz",
+     "value": 0.142,
+     "unit": "relative",
+     "confidence": 0.8,
+     "method": "jet_lut_band_mean",
+     "flags": [
+      "RELATIVE_ONLY"
+     ]
+    },
+    {
+     "id": "V5",
+     "quantity": "band_energy_10_20khz",
+     "value": 0.023,
+     "unit": "relative",
+     "confidence": 0.8,
+     "method": "jet_lut_band_mean",
+     "flags": [
+      "RELATIVE_ONLY"
+     ]
+    },
+    {
+     "id": "V6",
+     "quantity": "high_frequency_ratio",
+     "value": 0.268,
+     "unit": "ratio",
+     "confidence": 0.8,
+     "method": "jet_lut",
+     "flags": [
+      "RELATIVE_ONLY"
+     ],
+     "note": "share of level above 5 kHz"
+    },
+    {
+     "id": "V7",
+     "quantity": "burst_count",
+     "value": 6.0,
+     "unit": "count",
+     "confidence": 0.8,
+     "method": "hf_energy_peaks",
+     "flags": [
+      "RELATIVE_ONLY"
+     ],
+     "note": "broadband bursts at 2.13, 3.34, 3.82, 6.04, 7.99, 9.15 s"
+    }
+   ],
+   "key_results": [
+    {
+     "name": "Peak Frequency",
+     "units": "kHz",
+     "value": 1.78
+    },
+    {
+     "name": "Band 0-2 kHz",
+     "units": "relative",
+     "value": 0.634
+    },
+    {
+     "name": "Band 2-5 kHz",
+     "units": "relative",
+     "value": 0.466
+    },
+    {
+     "name": "Band 5-10 kHz",
+     "units": "relative",
+     "value": 0.142
+    },
+    {
+     "name": "Band 10-20 kHz",
+     "units": "relative",
+     "value": 0.023
+    },
+    {
+     "name": "High Frequency Ratio",
+     "units": "",
+     "value": 0.268
+    },
+    {
+     "name": "Burst Times",
+     "units": "s",
+     "value": "2.13, 3.34, 3.82, 6.04, 7.99, 9.15"
+    },
+    {
+     "name": "Frequency Range",
+     "units": "kHz",
+     "value": "0.4–19.5"
+    },
+    {
+     "name": "absolute_db_available",
+     "units": "",
+     "value": "false"
+    },
+    {
+     "name": "Burst Interval",
+     "units": "s",
+     "value": 1.21
+    }
+   ],
+   "comparison": null,
+   "alert": null,
+   "flags": [],
+   "annotated_mime": "image/jpeg",
+   "version": {
+    "service": "0.1.0",
+    "contract": "2026-10-10.vision.2",
+    "rapidocr": "3.10.0",
+    "onnxruntime": "1.31.0",
+    "opencv": "5.0.0.93"
+   },
+   "width": 250,
+   "height": 166,
+   "annotated_width": 480,
+   "annotated_height": 319
+  },
+  "visual_pump_motor_01": {
+   "media_id": "visual_pump_motor_01",
+   "kind": "visual",
+   "router": {
+    "label": "visual",
+    "method": "action_type",
+    "confidence": 1.0
+   },
+   "ocr": [],
+   "readings": [],
+   "key_results": [],
+   "comparison": null,
+   "alert": null,
+   "flags": [
+    "NO_TEXT"
+   ],
+   "annotated_mime": "image/jpeg",
+   "version": {
+    "service": "0.1.0",
+    "contract": "2026-10-10.vision.2",
+    "rapidocr": "3.10.0",
+    "onnxruntime": "1.31.0",
+    "opencv": "5.0.0.93"
+   },
+   "width": 243,
+   "height": 166,
+   "annotated_width": 480,
+   "annotated_height": 328
+  },
+  "valve_detail_01": {
+   "media_id": "valve_detail_01",
+   "kind": "visual",
+   "router": {
+    "label": "visual",
+    "method": "action_type",
+    "confidence": 1.0
+   },
+   "ocr": [],
+   "readings": [],
+   "key_results": [],
+   "comparison": null,
+   "alert": null,
+   "flags": [
+    "NO_TEXT"
+   ],
+   "annotated_mime": "image/jpeg",
+   "version": {
+    "service": "0.1.0",
+    "contract": "2026-10-10.vision.2",
+    "rapidocr": "3.10.0",
+    "onnxruntime": "1.31.0",
+    "opencv": "5.0.0.93"
+   },
+   "width": 236,
+   "height": 166,
+   "annotated_width": 480,
+   "annotated_height": 338
+  },
+  "pipe_gallery_01": {
+   "media_id": "pipe_gallery_01",
+   "kind": "visual",
+   "router": {
+    "label": "visual",
+    "method": "action_type",
+    "confidence": 1.0
+   },
+   "ocr": [],
+   "readings": [],
+   "key_results": [],
+   "comparison": null,
+   "alert": null,
+   "flags": [
+    "NO_TEXT"
+   ],
+   "annotated_mime": "image/jpeg",
+   "version": {
+    "service": "0.1.0",
+    "contract": "2026-10-10.vision.2",
+    "rapidocr": "3.10.0",
+    "onnxruntime": "1.31.0",
+    "opencv": "5.0.0.93"
+   },
+   "width": 262,
+   "height": 166,
+   "annotated_width": 480,
+   "annotated_height": 304
+  }
+ }
+}

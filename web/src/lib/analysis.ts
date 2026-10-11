@@ -15,6 +15,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { getKit, type Action, type Kit } from "./kit";
+import { summarizeActionSuccess } from "./action-success";
 import type { BatteryBand, Flag, Reason, Severity, Stat } from "./types";
 
 export type { BatteryBand, Flag, Reason, Severity, Stat } from "./types";
@@ -130,8 +131,8 @@ function rate(total: number, failed: number): Rate {
 
 const BAND_SPECS: { band: string; max: number }[] = [
   { band: "≤25%", max: CLIFF_CEILING },
-  { band: "26-40%", max: 40 },
-  { band: "41-60%", max: 60 },
+  { band: "26–40%", max: 40 },
+  { band: "41–60%", max: 60 },
   { band: "61%+", max: Infinity },
 ];
 
@@ -144,8 +145,8 @@ interface Derived {
   hiddenFailureMissions: Set<string>;
   completedMissions: number;
   batteryBands: BatteryBand[];
-  /** Success rate inside and above the cliff band, for the caption. */
-  cliff: { successRate: number; sampleSize: number; bestRate: number };
+  /** Success rate inside the cliff band, and across every band above it. */
+  cliff: { successRate: number; sampleSize: number; aboveRate: number };
   byConfig: Map<string, Rate>;
   /** Mean start→end battery drain per configuration version. */
   drainByConfig: Map<string, number>;
@@ -183,6 +184,16 @@ function derive(kit: Kit): Derived {
     const { total, success } = bandTotals.get(band)!;
     return { band, successRate: pct(success, total), sampleSize: total };
   });
+
+  // The comparison is "above the cliff", aggregated over every band over the
+  // ceiling — the same number the backend computes. It used to be the best
+  // single *band*, described in the copy as "on a full charge", which was
+  // usually 41-60% and not a full charge at all (audit P-11).
+  const above = BAND_SPECS.slice(1).map(({ band }) => bandTotals.get(band)!);
+  const aboveRate = pct(
+    above.reduce((sum, b) => sum + b.success, 0),
+    above.reduce((sum, b) => sum + b.total, 0),
+  );
 
   // V1 vs V2, on action success and on battery drain.
   const byConfig = new Map<string, Rate>();
@@ -229,7 +240,7 @@ function derive(kit: Kit): Derived {
     cliff: {
       successRate: batteryBands[0].successRate,
       sampleSize: batteryBands[0].sampleSize,
-      bestRate: Math.max(...batteryBands.map((b) => b.successRate)),
+      aboveRate,
     },
     byConfig,
     drainByConfig,
@@ -408,8 +419,13 @@ function triage(action: Action, kit: Kit, facts: Derived): Flag | null {
 const kit = getKit();
 const facts = derive(kit);
 
-/** Success rate by battery band — the cliff chart. */
-export const batteryBands = facts.batteryBands;
+/** Success rate by action type — the dashboard's fleet-wide chart. */
+export const actionSuccess = summarizeActionSuccess(
+  [...new Set(kit.actions.map((a) => a.action_type))].map((type) => {
+    const rows = kit.actions.filter((a) => a.action_type === type);
+    return { type, total: rows.length, success: rows.filter((a) => a.status === "SUCCESS").length };
+  }),
+);
 
 /**
  * The priority queue. Worst first — severity leads, score breaks ties.
@@ -452,7 +468,7 @@ export const stats: Stat[] = [
     label: "Success below 25% battery",
     value: String(facts.cliff.successRate),
     unit: "%",
-    note: `Across ${facts.cliff.sampleSize} actions, against ${facts.cliff.bestRate}% on a full charge — a ${facts.cliff.bestRate - facts.cliff.successRate}-point cliff.`,
+    note: `Across ${facts.cliff.sampleSize} actions, against ${facts.cliff.aboveRate}% above ${CLIFF_CEILING}% — a ${facts.cliff.aboveRate - facts.cliff.successRate}-point cliff.`,
   },
   {
     label: "V2 vs V1",
@@ -486,11 +502,6 @@ export const provenance = {
 export const headline = {
   /** The banner's thesis: mission status is not a safe thing to trust. */
   hiddenFailures: { count: hiddenCount, ofCompleted: facts.completedMissions },
-  /** The battery chart's caption. */
-  batteryCliff:
-    `Success falls to ${facts.cliff.successRate}% below ${CLIFF_CEILING}% battery, from ` +
-    `${facts.cliff.bestRate}% on a full charge — a hard cue to send SPOT back to dock ` +
-    `before it gets there.`,
   /** How much of the queue the mission status field would never have shown. */
   queuedInHiddenMissions: flags.filter((flag) =>
     facts.hiddenFailureMissions.has(flag.missionId),

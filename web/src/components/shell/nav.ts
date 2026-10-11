@@ -26,21 +26,13 @@ export const nav: NavItem[] = [
     label: "Missions",
     icon: Route,
     children: [
-      { label: "All missions" },
-      { label: "Flagged" },
-      { label: "Replay" },
+      { label: "All missions", href: "/missions" },
+      { label: "Flagged", href: "/missions/flagged" },
+      { label: "Replay", href: "/missions/replay" },
     ],
   },
-  {
-    label: "Analytics",
-    icon: ChartColumn,
-    children: [
-      { label: "Battery cliff" },
-      { label: "V1 vs V2" },
-      { label: "Failure patterns" },
-    ],
-  },
-  { label: "Assets", icon: Boxes },
-  { label: "AI review", icon: Sparkles },
-  { label: "Settings", icon: Settings },
+  { label: "Analytics", icon: ChartColumn, href: "/analytics" },
+  { label: "Assets", icon: Boxes, href: "/assets" },
+  { label: "AI review", icon: Sparkles, href: "/review" },
+  { label: "Settings", icon: Settings, href: "/settings" },
 ];

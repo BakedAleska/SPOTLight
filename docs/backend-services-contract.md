@@ -5,7 +5,6 @@ Companion to `docs/system2-rag-contract.md` (Neon tables, embedding API, MCP). *
 ## Services and ports (one container each; see CLAUDE.md "Engineering rules")
 | Service | Folder | Port | Owner |
 |---|---|---|---|
-| Web dashboard (Next.js dev server; calls the backend via `BACKEND_URL`) | `web/` | 3000 | frontend |
 | Backend API (FastAPI) | `backend/` | 8000 | backend agent |
 | System 1: Laya inference | `amd/system1/service/` | 8082 | System 1 service agent |
 | Embedding service | `amd/embed/` | 8081 | pgvector agent |
@@ -147,6 +146,21 @@ frozen between requests, so no state that must survive may live only in process 
   `ops/model-calls` `routing.since_start` counters, `/health`'s `replay` (the last status this instance saw) and the
   ACTION_STARTED detail cache for actions the kit lacks. Each instance learns them on its own; none is needed for
   the stored data to be correct.
+
+### Web console consumption (updated 2026-10-10)
+The Next.js console (`web/`, :3000) opens no database connection and calls no model service.
+The browser polls `/api/dashboard` every 10 seconds; `web/src/lib/backend.ts` makes server-side,
+uncached reads of `/insights/overview`, `/flags?status=OPEN&limit=500`, `/assets`, `/locations`,
+and `/insights/reliability?group_by=action_type` (the success-by-inspection-type chart). Backend flag order and scores are preserved.
+Overview cards supply mission counts, hidden failures, battery success and matched-battery V2 gain.
+Flag detail, explanation and action routes proxy to FastAPI, controlled by `FEATURE_FLAG_DETAILS`,
+`FEATURE_FLAG_EXPLANATIONS` and `FEATURE_FLAG_ACTIONS`. These switches are not authentication.
+`BACKEND_URL` includes `/api/v1` (Docker default `http://backend:8000/api/v1`, overridden by
+`WEB_BACKEND_URL`); `EXPLAIN_TIMEOUT_MS` defaults to 50000. Neither reaches the browser.
+The server renders the initial dashboard and `/api/dashboard` uses the same loader. Backend failure
+returns explicitly labeled challenge-kit data (`source: "kit"`, `degraded` message), with details,
+actions and explanations disabled so sample IDs never reach live flag routes. Successful backend
+reads return `source: "backend"`; polling can recover automatically. `/api/health` checks frontend liveness.
 
 ### Admin endpoints (ADDED 2026-10-10, audit H3)
 `/api/v1/ops/*`, `/api/v1/replay/*`, `POST /api/v1/events` and `POST /api/v1/events/batch` change or wipe state, so

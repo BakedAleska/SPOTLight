@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Check, ChevronDown, RotateCcw } from "lucide-react";
 
 /* The classes that carry a load animation. Listed explicitly rather than
    matched on a prefix so a future `.animate-*` utility can't get swept up. */
-const ANIMATED = ".anim-rise, .anim-float, .anim-type, .anim-caret";
+const ANIMATED = ".anim-rise, .anim-float, .anim-type, .anim-caret, .anim-grow";
 
 /**
  * Restart every load animation on the page.
@@ -42,50 +43,74 @@ function replayAnimations() {
    The named ramps are fixed moods and look the same in either theme — but
    "fixed" is only the palette. The two lamp bodies keep moving under every
    preset; pinning stops the colour changing, not the card. */
-const HEROES = ["auto", "dawn", "noon", "dusk", "midnight"] as const;
+const HEROES = [
+  "auto",
+  "midnight",
+  "dawn",
+  "noon",
+  "ember",
+  "aurora",
+  "storm",
+  "glacier",
+  "solar",
+] as const;
 type Hero = (typeof HEROES)[number];
 
 const LABEL: Record<Hero, string> = {
   auto: "Auto",
+  midnight: "Midnight",
   dawn: "Dawn",
   noon: "Noon",
-  dusk: "Dusk",
-  midnight: "Midnight",
+  ember: "Ember",
+  aurora: "Aurora",
+  storm: "Storm",
+  glacier: "Glacier",
+  solar: "Solar",
 };
 
 /* The menu rows get a word about the ramp rather than a swatch each. A swatch
    would have to read --c-hero-*, and those resolve to whatever is *currently*
-   applied — so five swatches would all paint the same gradient.
+   applied — so every swatch would paint the same gradient.
    Picking crossfades the banner behind the open menu anyway, which is a far
    better preview than a 12px chip could be. */
 const HINT: Record<Hero, string> = {
   auto: "Tours all eight moods",
+  midnight: "Near-black into indigo",
   dawn: "Violet into amber",
   noon: "Bright blue into gold",
-  dusk: "The dark-mode default",
-  midnight: "Near-monochrome navy",
+  ember: "Wine into red-orange",
+  aurora: "Deep teal into green",
+  storm: "Near-black into magenta",
+  glacier: "Deep blue into steel",
+  solar: "Burnt red into gold",
 };
 
-/* Transparent fill, visible edge. There is no fill at all now: these sit on
-   artwork, and a ghost control should let it through, so the border carries
-   the whole job of making them read as buttons.
+/* Transparent fill, faint edge. These sit on artwork, so the controls are
+   ghosts: no fill, a soft border and slightly dimmed ink that firm up on
+   hover and focus.
 
-   That is also why the border alpha is not up for negotiation. white/60 is
-   the solved minimum for a 3:1 boundary, and the binding case is the
-   *lightest* ramp rather than the darkest: over noon's warm end (#d9a520
-   under its 0.42 scrim) it measures 3.24:1, with almost nothing spare.
-   Softening it to white/40 drops the control to roughly 2.2:1 and leaves it
-   identified by its label alone. The fill was the part that could go. */
+   The trade-off is deliberate: white/35 sits below a 3:1 boundary over the
+   lightest ramps (noon's warm end), so at rest the controls are identified
+   mostly by their label and icon. Hover and focus bring the edge back to
+   white/70, which clears it. */
 const CHIP =
-  "inline-flex h-7 cursor-pointer items-center gap-1.5 rounded border border-white/60 text-white transition-colors hover:bg-black/25 focus-visible:bg-black/25";
+  "inline-flex h-7 cursor-pointer items-center gap-1.5 rounded border border-white/35 text-white/90 transition-colors hover:border-white/70 hover:bg-black/15 hover:text-white focus-visible:border-white/70 focus-visible:bg-black/15 focus-visible:text-white";
 
 export function BannerControls() {
   const [hero, setHero] = useState<Hero>("auto");
   const [open, setOpen] = useState(false);
+  // Where the menu sits, measured off the trigger at the moment it opens.
+  const [anchor, setAnchor] = useState<DOMRect | null>(null);
 
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLUListElement>(null);
   const optionRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  function openMenu() {
+    if (triggerRef.current) setAnchor(triggerRef.current.getBoundingClientRect());
+    setOpen(true);
+  }
 
   function choose(next: Hero) {
     setHero(next);
@@ -105,10 +130,26 @@ export function BannerControls() {
   useEffect(() => {
     if (!open) return;
     function onPointerDown(event: PointerEvent) {
-      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
+      const target = event.target as Node;
+      if (!rootRef.current?.contains(target) && !menuRef.current?.contains(target)) setOpen(false);
+    }
+    // The menu is fixed to where the trigger was, so if the page moves under
+    // it, it closes rather than floating detached. Scrolls inside the menu
+    // itself are its own and don't count.
+    function onScroll(event: Event) {
+      if (!menuRef.current?.contains(event.target as Node)) setOpen(false);
+    }
+    function onResize() {
+      setOpen(false);
     }
     document.addEventListener("pointerdown", onPointerDown);
-    return () => document.removeEventListener("pointerdown", onPointerDown);
+    window.addEventListener("scroll", onScroll, true);
+    window.addEventListener("resize", onResize);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      window.removeEventListener("scroll", onScroll, true);
+      window.removeEventListener("resize", onResize);
+    };
   }, [open]);
 
   // Opening moves focus onto the current choice, which is where a keyboard
@@ -148,11 +189,11 @@ export function BannerControls() {
         <button
           ref={triggerRef}
           type="button"
-          onClick={() => setOpen((isOpen) => !isOpen)}
+          onClick={() => (open ? setOpen(false) : openMenu())}
           onKeyDown={(event) => {
             if (event.key === "ArrowDown") {
               event.preventDefault();
-              setOpen(true);
+              openMenu();
             }
           }}
           aria-haspopup="listbox"
@@ -161,7 +202,7 @@ export function BannerControls() {
           // The visible name is inside the accessible name, so the two agree
           // for anyone driving this by voice.
           aria-label={`Banner gradient: ${LABEL[hero]}`}
-          className={`${CHIP} px-2`}
+          className={`${CHIP} w-38 px-2`}
         >
           {/* The swatch reads the same colour properties the banner does, so it
               always shows the live ramp with nothing to keep in sync — in Auto
@@ -172,7 +213,7 @@ export function BannerControls() {
             aria-hidden="true"
             className="hero-swatch size-3 shrink-0 rounded-full border border-white/25"
           />
-          <span className="text-[11px] font-medium">{LABEL[hero]}</span>
+          <span className="flex-1 text-left text-[11px] font-medium">{LABEL[hero]}</span>
           <ChevronDown
             size={12}
             aria-hidden="true"
@@ -180,8 +221,12 @@ export function BannerControls() {
           />
         </button>
 
-        {open && (
+        {/* Portalled to <body> with fixed positioning: the banner clips its
+            overflow (the artwork bleeds past its corners), and nine rows are
+            taller than the banner, so a menu inside it gets cut off. */}
+        {open && anchor && createPortal(
           <ul
+            ref={menuRef}
             id="hero-listbox"
             role="listbox"
             aria-label="Banner gradient"
@@ -189,8 +234,16 @@ export function BannerControls() {
             /* The trigger is a ghost because it sits on artwork. A menu is a
                surface you read, so it gets the console's real panel tokens —
                opaque background, standard border and shadow — rather than
-               more glass. */
-            className="panel-shadow absolute top-full right-0 z-20 mt-1.5 w-44 overflow-hidden rounded border border-line bg-surface py-1"
+               more glass. It spans exactly the trigger's width (the trigger is
+               sized for the longest hint), so both edges line up. It scrolls
+               if the viewport is too short for all nine rows. */
+            className="panel-shadow fixed z-50 overflow-y-auto overscroll-contain rounded border border-line bg-surface py-1"
+            style={{
+              top: anchor.bottom + 6,
+              left: anchor.left,
+              width: anchor.width,
+              maxHeight: `calc(100dvh - ${anchor.bottom + 6 + 12}px)`,
+            }}
           >
             {HEROES.map((option, i) => {
               const selected = option === hero;
@@ -205,7 +258,7 @@ export function BannerControls() {
                     aria-selected={selected}
                     // Focus is managed by the listbox, so the options stay out
                     // of the page's tab order: Tab leaves the menu, it does
-                    // not walk through five more stops inside it.
+                    // not walk through eight more stops inside it.
                     tabIndex={-1}
                     onClick={() => choose(option)}
                     className="flex w-full cursor-pointer items-center gap-2 px-2 py-1.5 text-left transition-colors hover:bg-surface-2 focus-visible:bg-surface-2"
@@ -231,7 +284,8 @@ export function BannerControls() {
                 </li>
               );
             })}
-          </ul>
+          </ul>,
+          document.body,
         )}
       </div>
 

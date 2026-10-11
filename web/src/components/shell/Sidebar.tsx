@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronRight, Radar, X } from "lucide-react";
+import { ChevronRight, X } from "lucide-react";
+import { SpotlightLogo } from "../SpotlightLogo";
 import { nav, type NavItem } from "./nav";
 
 /* Shared geometry for every row, so icons line up down the whole rail whether
@@ -53,7 +54,7 @@ function Row({ item, active }: { item: NavItem; active: boolean }) {
 function Section({ item, pathname }: { item: NavItem; pathname: string }) {
   const Icon = item.icon;
   return (
-    <details className="group">
+    <details className="group" open={item.children?.some(child => child.href === pathname)}>
       <summary
         className={`${ROW} cursor-pointer list-none text-muted hover:bg-surface-2 hover:text-ink [&::-webkit-details-marker]:hidden`}
       >
@@ -92,13 +93,13 @@ function Section({ item, pathname }: { item: NavItem; pathname: string }) {
   );
 }
 
-export function Sidebar({ onClose }: { onClose: () => void }) {
+export function Sidebar({ onClose, onNavigate }: { onClose: () => void; onNavigate: () => void }) {
   const pathname = usePathname();
 
   return (
     <div className="flex h-full w-60 flex-col border-r border-line bg-chrome">
       <div className="flex h-12 shrink-0 items-center gap-2 border-b border-line px-3">
-        <Radar size={18} aria-hidden="true" className="text-accent-ink" />
+        <SpotlightLogo small className="size-7 shrink-0" />
         <span className="font-semibold tracking-tight">SPOTlight</span>
         <button
           type="button"
@@ -110,7 +111,7 @@ export function Sidebar({ onClose }: { onClose: () => void }) {
         </button>
       </div>
 
-      <nav aria-label="Primary" className="flex-1 overflow-y-auto p-2">
+      <nav onClick={(event) => { if ((event.target as HTMLElement).closest("a")) onNavigate(); }} aria-label="Primary" className="flex-1 overflow-y-auto p-2">
         <ul className="space-y-0.5">
           {nav.map((item) => (
             <li key={item.label}>

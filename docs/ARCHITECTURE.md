@@ -31,7 +31,7 @@ Other profiles: `local` runs everything in Docker on CPU (for testing: Laya take
 
 | Service | Port | What it does | Model | Code |
 |---|---|---|---|---|
-| **web** | 3000 | Operator console. Today: one Overview page (hidden-failures headline, stat tiles, priority queue, battery cliff). | none | `web/` |
+| **web** | 3000 | Operator console. Today: one Overview page (hidden-failures headline, stat tiles, priority queue, battery cliff), read from the backend over HTTP (`BACKEND_URL`) — no database client of its own. Falls back to the kit CSVs with a visible banner when the backend is unreachable. | none | `web/` |
 | **backend** | 8000 | Dashboard API under `/api/v1`: event ingest, replay, flags, explain, ack, missions, insights, forecast, search, ask, ops. | none | `backend/` |
 | **db** + **db-init** | 5433 | Postgres 17 + pgvector, or Neon. `db-init` migrates, creates login roles, seeds the kit and embeds the RAG corpus. | none | `db/` |
 | **system1** | 8082 | Laya triage: `POST /v1/predict` answers typed questions per event with calibrated probabilities. | Laya (`convaiinnovations/laya`, ModernBERT-large) | `amd/system1/` |
@@ -105,8 +105,7 @@ Other profiles: `local` runs everything in Docker on CPU (for testing: Laya take
 | **Best AI** | Gates first, model second: rules ‖ Laya decide what gets AI attention, and System 2 explains with checked citations ("LLM proposes, gates decide", `winners-lablab-ai`). |
 
 ## 8. Known gaps (as of 2026-10-10)
-- **The web app isn't wired to the backend.** `web/` reads `web/data/kit/*.csv` directly and runs its own TypeScript triage (`web/src/lib/analysis.ts`). Only the Overview page exists; the other nav items are placeholders. Next step: point it at `backend :8000` (CORS is already set for `http://localhost:3000`).
-- **`web/db/schema.sql` is legacy.** It's an old drop-and-recreate schema, and nothing runs it. The real schema is `db/migrations/`.
+- **The web app shows only the Overview page.** It now reads the backend (`/insights/overview`, `/flags`, `/missions`, `/assets`, `/locations`; `web/src/lib/dashboard.ts`), but the other nav items are still placeholders and nothing in the UI calls `/flags/{id}/explain`, `/ack` or `/replay/start` yet — the explain-and-act half of the core loop is API-only. `web/src/lib/analysis.ts` survives as the offline fallback (CSV triage in-process), shown behind a banner that says the numbers aren't live.
 - **No System 2 `/v1/debrief`.** The backend's `GET /missions/{id}/debrief` calls it, but `amd/system2` has no such route, so the debrief always comes from a template.
 - **Laya fine-tune:** the best run so far is full FT run2 (0.805 real, 0.846 counterfactual, vs LoRA's 0.733 / 0.602). The LoRA sweep (`scripts/sweep_lora.sh`) has no results in the repo yet. Checkpoints live on the AMD box, not in git.
 - **Graph RAG** (`kg_nodes` / `kg_edges`) is decided but not built: it's in no migration.
