@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import useSWR, { useSWRConfig } from "swr";
 import { KeyRound, MessageSquareOff, PanelLeftOpen, RotateCw, SquarePen, TriangleAlert } from "lucide-react";
 import { ChatHttpError, chatFetcher, describeError } from "@/lib/chat/api";
@@ -103,6 +103,22 @@ export function ChatApp() {
   const [text, setText] = useState("");
   const [sources, setSources] = useState<(SourcesView & { thread: string | null }) | null>(null);
   const composerRef = useRef<ComposerHandle>(null);
+
+  // /assistant?ask=… (from a flag in the Overview queue) starts a new chat with
+  // the question written but not sent, so the operator can edit it first. The
+  // parameter is dropped once read, so a reload doesn't write it in again.
+  const ask = useSearchParams().get("ask");
+  const [askTaken, setAskTaken] = useState<string | null>(null);
+  if (ask !== askTaken) {
+    setAskTaken(ask);
+    if (ask) setText(ask);
+  }
+  useEffect(() => {
+    if (!ask) return;
+    clearDraft();
+    router.replace("/assistant", { scroll: false });
+    composerRef.current?.focus();
+  }, [ask, router]);
 
   // The URL caught up with a chat started from /assistant: the draft pointer
   // has done its job, and /assistant should mean "new chat" again.
