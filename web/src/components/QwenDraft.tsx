@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { PenLine } from "lucide-react";
 import { draftLength, revealDraft, type QwenDraft } from "@/lib/qwen-draft";
+import { EvidenceClaim, RecommendedAction } from "./ModelOutput";
 
 /* Qwen's unverified draft, typed out as it arrives (contract "Streaming Qwen
    drafts"). Snapshots land in jumps (SSE every ~100 ms on the flag detail, a
@@ -11,7 +12,8 @@ import { draftLength, revealDraft, type QwenDraft } from "@/lib/qwen-draft";
    model call changes. Reduced motion shows each snapshot as it lands.
 
    Fields render in generation order (claims, answer, action) so text only
-   ever grows at the bottom. The region is aria-busy and not a live region:
+   ever grows at the bottom; claims use the checked answer's layout
+   (ModelOutput.tsx), so the swap to the checked answer does not reflow. The region is aria-busy and not a live region:
    screen readers hear the finished answer, not every token. */
 
 const MIN_CHARS_PER_S = 45;
@@ -65,10 +67,9 @@ function Caret() {
   return <span aria-hidden="true" className="qwen-caret" />;
 }
 
-export function QwenDraftView({ draft, label, formatAction = (action) => action, catchUpMs, compact = false, finished = false }: {
+export function QwenDraftView({ draft, label, catchUpMs, compact = false, finished = false }: {
   draft: QwenDraft;
   label: string;
-  formatAction?: (action: string) => string;
   catchUpMs?: number;
   /** /live card sizing: smaller claim text. */
   compact?: boolean;
@@ -86,15 +87,17 @@ export function QwenDraftView({ draft, label, formatAction = (action) => action,
         {draft.tokens != null && <span className="font-normal normal-case text-muted">· {draft.tokens} tokens</span>}
         {draft.confidence && <span className="font-normal normal-case text-muted">· confidence {draft.confidence}</span>}
       </p>
-      {shown.evidence.length > 0 && <ul className={`list-disc space-y-0.5 pl-4 text-muted ${compact ? "text-xs" : "text-sm"}`}>
-        {shown.evidence.map((row, index) => <li key={index}>
-          {row.claim}
-          {row.complete && row.ids.length > 0 && <span className="font-mono text-[11px] break-all"> [{row.ids.join(", ")}]</span>}
-          {caret?.part === "evidence" && caret.index === index && <Caret />}
+      {shown.evidence.length > 0 && <ul className="space-y-1.5">
+        {shown.evidence.map((row, index) => <li key={index} className="rounded border border-line bg-surface px-2.5 py-1.5">
+          <EvidenceClaim claim={row.claim} ids={row.complete ? row.ids : []} partial={!row.complete} compact={compact}
+            trailing={caret?.part === "evidence" && caret.index === index ? <Caret /> : null} />
         </li>)}
       </ul>}
       {shown.answer && <p className="text-ink">{shown.answer}{caret?.part === "answer" && <Caret />}</p>}
-      {shown.recommendedAction && <p className="text-ink">Recommended: <strong>{formatAction(shown.recommendedAction)}</strong>{caret?.part === "action" && <Caret />}</p>}
+      {/* The action code is labelled once it is complete; while typing it shows as written. */}
+      {shown.recommendedAction && (caret?.part === "action"
+        ? <p className="text-ink">Recommended: <strong>{shown.recommendedAction}</strong><Caret /></p>
+        : <RecommendedAction code={shown.recommendedAction} compact={compact} />)}
       {!caret && !finished && <p className="text-muted"><Caret /></p>}
     </div>
   );

@@ -23,6 +23,8 @@ export interface FlagExplanation {
   answer: string | null;
   reasoning: string | null;
   recommended_action: string | null;
+  /** Qwen's claims with the rows each cites (fresh answers only; stored rows keep the flattened `reasoning`). */
+  evidence?: { claim: string; ids: string[] }[] | null;
   // system2_template: System 2 fell back to its checked template; system1: not escalated, triage summary only
   source: "system2" | "system2_template" | "template" | "system1";
   model?: string | null;
