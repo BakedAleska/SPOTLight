@@ -44,6 +44,42 @@ export interface Conversation {
   created_at: string;
   updated_at: string;
   message_count: number;
+  /** chat.3: the mission this chat is about (canonical id, "M007"), or null. */
+  mission_id: string | null;
+  mission: MissionRef | null;
+}
+
+/** chat.3: the short mission label carried on a conversation. */
+export interface MissionRef {
+  mission_id: string;
+  mission_name: string;
+  mission_status: string;
+}
+
+/** chat.3: one row of GET /chat/missions (ChatRepo.list_missions). */
+export interface MissionSummary {
+  mission_id: string;
+  mission_name: string;
+  scenario: string | null;
+  configuration_version: string | null;
+  start_time: string | null;
+  duration_min: number | null;
+  start_battery_pct: number | null;
+  end_battery_pct: number | null;
+  mission_status: string;
+  actions: number;
+  failed: number;
+  anomalies: number;
+  serious_anomalies: number;
+  open_flags: number;
+  /** Reported COMPLETED with at least one failed action. */
+  hidden_failure: boolean;
+  /** Conversations about this mission with at least one message. */
+  chats: number;
+}
+
+export interface MissionList {
+  items: MissionSummary[];
 }
 
 export interface ConversationSummary extends Conversation {
@@ -81,6 +117,8 @@ export interface RetrievalMeta {
   counts?: { rag: number; graph: number; sql: number };
   /** chat.2: every degraded retrieval step, as a short string. */
   gaps?: string[];
+  /** chat.3: the mission a mission chat retrieved for; absent or null otherwise. */
+  mission_id?: string | null;
 }
 
 export interface ModelInfo {
@@ -127,6 +165,7 @@ export type ChatErrorCode =
   | "conversation_busy"
   | "invalid_request"
   | "gemini_unset"
+  | "unknown_mission"
   // Raised by the web layer itself.
   | "disabled"
   | "backend_unreachable"

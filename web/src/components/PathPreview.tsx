@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Pause, Play, RotateCcw, Radio, Route, TriangleAlert, ScanLine, CheckCircle2, ArrowRight, AudioLines, ArrowUp, ArrowDown, Timer, BatteryMedium } from "lucide-react";
 import { Panel } from "./Panel";
 import { LoadingDots } from "./LoadingDots";
+import { AskAiLink } from "./AskAiLink";
 import type { PathEvent, PathFeed, PathMission, PathPoint } from "@/lib/path-types";
 
 import { buildPlayback, playbackAt, eventLabel } from "@/lib/path-playback";
@@ -15,7 +16,10 @@ export function PathPreview({ points, missions, initialMissionId }: { points: Pa
   return <div className="mx-auto flex max-w-[1600px] flex-col gap-4 p-4">
     <header className="flex flex-wrap items-center justify-between gap-4">
       <div><p className="mb-1 text-xs text-muted">MISSION CONTROL</p><h1 className="flex items-center gap-2 text-2xl font-semibold text-ink"><Route size={24} />SPOT path preview</h1><p className="mt-1 text-sm text-muted">Follow the route. Catch the failure where it happens.</p></div>
-      <label className="flex flex-col gap-1 text-xs text-muted">Mission<select className={control} value={missionId} onChange={e => setMissionId(e.target.value)}>{missions.map(m => <option key={m.id} value={m.id}>{m.id} · {m.name}</option>)}</select></label>
+      <div className="flex flex-wrap items-end gap-3">
+        <label className="flex flex-col gap-1 text-xs text-muted">Mission<select className={control} value={missionId} onChange={e => setMissionId(e.target.value)}>{missions.map(m => <option key={m.id} value={m.id}>{m.id} · {m.name}</option>)}</select></label>
+        {missionId && <AskAiLink missionId={missionId} label={`Ask AI about ${missionId}`} className="min-h-11 px-4" />}
+      </div>
     </header>
     {missions.find(m => m.id === missionId) && <MissionPath key={missionId} mission={missions.find(m => m.id === missionId)!} points={points} />}
   </div>;

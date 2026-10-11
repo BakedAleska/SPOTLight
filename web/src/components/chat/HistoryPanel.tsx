@@ -7,6 +7,7 @@ import { Ellipsis, LoaderCircle, PanelLeftClose, Pencil, Pin, PinOff, Search, Sq
 import { chatFetcher, deleteConversation, updateConversation } from "@/lib/chat/api";
 import { groupConversations } from "@/lib/chat/history";
 import type { ConversationList, ConversationSummary } from "@/lib/chat/types";
+import { MissionBadge } from "./MissionFocus";
 import { moveMenuFocus, usePopover } from "./usePopover";
 
 export const HISTORY_KEY = "/api/chat/conversations";
@@ -299,9 +300,10 @@ export function HistoryPanel({ activeId, streamingIds, onNewChat, onCollapse, on
                               </>
                             )}
                             <span className="truncate">{conversation.title}</span>
+                            {conversation.mission_id && <MissionBadge missionId={conversation.mission_id} />}
                             {streamingIds.has(id) && (
                               <>
-                                <span aria-hidden="true" className="ml-auto size-2 shrink-0 animate-pulse rounded-full bg-accent" />
+                                <span aria-hidden="true" className={`${conversation.mission_id ? "" : "ml-auto "}size-2 shrink-0 animate-pulse rounded-full bg-accent`} />
                                 <span className="sr-only"> (answering)</span>
                               </>
                             )}

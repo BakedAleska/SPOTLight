@@ -29,7 +29,7 @@ from ..http import short_error
 from .catalog import MODE_INFO, MODES, catalog, family, show_thoughts
 from .gemini import GeminiClient, GeminiError
 from .grounding import check
-from .prompt import auto_title, build_body, clean_title, title_body, user_turn
+from .prompt import auto_title, build_body, clean_title, mission_line, title_body, user_turn
 from .retrieval import Prior, Retrieval, RetrievalFailed, Retriever, prior_answer
 
 log = logging.getLogger("backend.chat")
@@ -78,6 +78,7 @@ class Turn:
     request_id: Optional[str]
     wants_title: bool
     prior: Optional[Prior] = None          # the previous answer: its entities and cited sources carry over
+    mission_id: Optional[str] = None       # chat.3: the conversation's mission (None = an ordinary chat)
     t0: float = field(default_factory=time.perf_counter)
 
     @property
@@ -126,9 +127,24 @@ class ChatService:
         if model is not None and model not in self.models:
             raise ChatError(422, "invalid_request", "unknown model %r (allowed: %s)" % (model, ", ".join(self.models)))
 
-    # ── suggestions (no LLM) ────────────────────────────────────────────────────────────────────
-    async def suggestions(self) -> List[Dict[str, str]]:
-        """Four starter prompts built from live facts with real ids; generic ones fill any gap (or a DB error)."""
+    # ── missions (chat.3, §9) ───────────────────────────────────────────────────────────────────
+    async def resolve_mission(self, mission_id: Any) -> Dict[str, Any]:
+        """The mission's digest (`entity_digests(mission_ids=[id])["missions"][0]`), whose `mission_id` is the
+        canonical id. Ids match case-insensitively and may carry a `mission:` prefix. Unknown -> 422
+        unknown_mission. A database error propagates (503)."""
+        raw = " ".join(str(mission_id or "").split())
+        key = raw.split(":", 1)[1].strip() if ":" in raw else raw
+        rows = (await self.repo.entity_digests(mission_ids=[key.upper()]) if key else {}) or {}
+        found = next(iter(rows.get("missions") or []), None)
+        if found is None:
+            raise ChatError(422, "unknown_mission", "no mission with id %r" % raw[:40])
+        return found
+
+    async def suggestions(self, mission_id: Optional[str] = None) -> List[Dict[str, str]]:
+        """Four starter prompts. Without a mission: built from live fleet facts with real ids; generic ones fill any
+        gap (or a DB error). With one (chat.3): built from that mission's digest (unknown id -> 422)."""
+        if mission_id:
+            return mission_suggestions(await self.resolve_mission(mission_id))
         try:
             f = await self.repo.suggestion_facts() or {}
         except Exception as exc:  # noqa: BLE001 - the empty state must render even with the DB down
@@ -258,7 +274,7 @@ class ChatService:
                         history=history, previous=previous, request_id=request_id,
                         wants_title=bool(self.settings.chat_title_model) and first
                         and conv.get("title_source") in ("default", "auto"),
-                        prior=prior_answer(history))
+                        prior=prior_answer(history), mission_id=conv.get("mission_id") or None)
         except ConversationNotFound:
             self._release(cid)
             raise ChatError(404, "not_found", "no conversation with id %s" % conversation_id) from None
@@ -309,13 +325,14 @@ class ChatService:
                           "model": turn.model, "mode": turn.mode, "user_message": message_out(turn.user_message)})
             try:
                 st.retrieval = await self.retriever.retrieve(turn.question, turn.previous, turn.request_id,
-                                                             prior=turn.prior)
+                                                             prior=turn.prior, mission_id=turn.mission_id)
             except RetrievalFailed as exc:
                 await self._fail(turn, st, emit, "retrieval_failed", exc.detail)
                 return
             r = st.retrieval
             emit("sources", {"sources": r.sources, "retrieval": r.meta()})
-            body = build_body(turn.model, turn.mode, turn.history, user_turn(r.block, turn.question),
+            body = build_body(turn.model, turn.mode, turn.history,
+                              user_turn(r.block, turn.question, self._mission_line(turn, r)),
                               self.settings.chat_history_messages)
             show = show_thoughts(turn.mode)
 
@@ -371,6 +388,14 @@ class ChatService:
                                "message": None})
         finally:
             q.put_nowait(None)
+
+    @staticmethod
+    def _mission_line(turn: Turn, r: Retrieval) -> Optional[str]:
+        if not turn.mission_id:
+            return None
+        name = (r.mission or {}).get("mission_name") or ((turn.conversation or {}).get("mission") or {}).get(
+            "mission_name")
+        return mission_line(turn.mission_id, name)
 
     # ── storing ─────────────────────────────────────────────────────────────────────────────────
     async def _finalize(self, turn: Turn, st: TurnState, status: str, error: Optional[str] = None,
@@ -457,3 +482,88 @@ class ChatService:
         except Exception as exc:  # noqa: BLE001 - keep the auto title silently
             log.warning("storing the model title failed: %s", short_error(exc))
             return None
+
+
+# ── mission suggestions (chat.3, §9; no LLM) ─────────────────────────────────────────────────────────────
+SEVERITY_RANK = {"CRITICAL": 0, "HIGH": 1, "MEDIUM": 2, "LOW": 3, "INFO": 4}
+
+
+def _pct(v: Any) -> str:
+    try:
+        f = float(v)
+    except (TypeError, ValueError):
+        return str(v)
+    return str(int(f)) if f == int(f) else ("%.1f" % f)
+
+
+def worst_failure(d: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """The failed action to ask about first: one on the asset with the most serious anomaly of the mission, then the
+    earliest (the one that started the chain)."""
+    fails = list(d.get("failures") or [])
+    if not fails:
+        return None
+    sev: Dict[str, int] = {}
+    for a in d.get("anomalies") or []:
+        if a.get("asset_id"):
+            r = SEVERITY_RANK.get(str(a.get("severity") or "").upper(), 5)
+            sev[a["asset_id"]] = min(sev.get(a["asset_id"], 9), r)
+    return min(fails, key=lambda f: (sev.get(f.get("asset_id") or "", 9), f.get("sequence") or 0,
+                                     str(f.get("action_id") or "")))
+
+
+def mission_suggestions(d: Dict[str, Any]) -> List[Dict[str, str]]:
+    """Four prompts from a mission digest: its hidden or reported failures, the worst failed action, its anomalies,
+    and battery start -> end. Every prompt names the mission id, so it also reads well outside the mission chat."""
+    mid = d.get("mission_id")
+    status = str(d.get("mission_status") or "").upper()
+    failed, actions = d.get("failed") or 0, d.get("actions") or 0
+    out: List[Dict[str, str]] = []
+    # 1. failures: hidden (reported COMPLETED) or reported
+    if status == "COMPLETED" and failed:
+        out.append({"title": "Hidden failures on %s" % mid,
+                    "prompt": "%s reported COMPLETED, but %s of its %s actions failed. What went wrong, and why "
+                              "wasn't it reported?" % (mid, failed, actions)})
+    elif status == "FAILED":
+        out.append({"title": "Why did %s fail?" % mid,
+                    "prompt": "%s reported FAILED with %s of %s actions failed. What went wrong, and in what "
+                              "order?" % (mid, failed, actions)})
+    else:
+        out.append({"title": "Was %s clean?" % mid,
+                    "prompt": "%s reported %s with no failed actions. Was anything unusual on this mission?"
+                              % (mid, status or "no status")})
+    # 2. the worst failed action
+    w = worst_failure(d)
+    if w is not None:
+        where = ", ".join(x for x in (w.get("action_type"), w.get("asset_id") and "on %s" % w["asset_id"],
+                                      w.get("location_id") and "at %s" % w["location_id"]) if x)
+        out.append({"title": "Explain action %s" % w.get("action_id"),
+                    "prompt": "Why did action %s (%s) on %s fail with %s? What should we check before the next run?"
+                              % (w.get("action_id"), where or "no details", mid,
+                                 w.get("failure_type") or "an unknown failure type")})
+    else:
+        out.append({"title": "Walk through %s" % mid,
+                    "prompt": "Walk me through %s step by step: what did it inspect, and where?" % mid})
+    # 3. anomalies (the digest lists them most serious first)
+    an = list(d.get("anomalies") or [])
+    if an:
+        a = an[0]
+        out.append({"title": "Anomalies on %s" % mid,
+                    "prompt": "%s recorded %d anomal%s; the most serious is a %s-severity %s on %s (%s). What do "
+                              "they mean for those assets?" % (mid, len(an), "y" if len(an) == 1 else "ies",
+                                                              a.get("severity") or "unknown",
+                                                              a.get("anomaly_type") or "anomaly",
+                                                              a.get("asset_id") or "an asset", a.get("anomaly_id"))})
+    else:
+        out.append({"title": "Anomalies on %s" % mid,
+                    "prompt": "Did %s find any anomalies? Which assets did it inspect?" % mid})
+    # 4. battery start -> end
+    sb, eb = d.get("start_battery_pct"), d.get("end_battery_pct")
+    if sb is not None and eb is not None:
+        out.append({"title": "Battery on %s" % mid,
+                    "prompt": "%s went from %s%% to %s%% battery. Did battery level play a part in its failures?"
+                              % (mid, _pct(sb), _pct(eb))})
+    else:
+        out.append({"title": "%s vs the fleet" % mid,
+                    "prompt": "How does %s compare with other missions on configuration %s?"
+                              % (mid, d.get("configuration_version") or "the same configuration")})
+    return out[:4]
