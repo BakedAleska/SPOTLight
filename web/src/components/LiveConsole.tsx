@@ -176,7 +176,7 @@ function LiveMap({ route, captures, run }: { route: LiveRoute | null; captures: 
   const working = latest && latest.phase === "arrived";
   return <svg viewBox="0 0 1095 595" className="w-full rounded border border-line bg-surface-2" role="img" aria-label={`Facility map: ${captures.length} stops inspected${latest ? `, SPOT at ${latest.location_id}` : ""}`}>
     <defs><filter id="live-spot-shadow" x="-25%" y="-25%" width="150%" height="150%"><feDropShadow dx="0" dy="1" stdDeviation="1.5" floodColor="black" floodOpacity="0.9" /></filter></defs>
-    <image href="/kit/fictional_floor_plan.png" width="1095" height="595" />
+    <image href="/spot-blueprint.svg" width="1095" height="595" />
     <polyline points={stops.map(s => pt(s.location_id).join(",")).join(" ")} fill="none" stroke="white" strokeWidth="3" strokeDasharray="8 8" opacity="0.7" />
     <polyline points={captures.map(c => pt(c.location_id).join(",")).join(" ")} fill="none" stroke="var(--c-accent-ink)" strokeWidth="5" strokeLinejoin="round" />
     {stops.map((s, i) => {

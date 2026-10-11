@@ -75,7 +75,7 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
         <div className="mb-4 flex flex-wrap gap-6 text-sm text-muted"><span>Position <strong className="text-ink">{current?.id ?? "Awaiting waypoint"}</strong></span><span>Battery <strong className="text-ink">{battery == null ? "—" : `${battery}%`}</strong></span><span>Errors <strong className="text-bad">{errors.length}</strong></span></div>
         <svg viewBox="0 0 1095 595" className="w-full rounded border border-line bg-surface-2" role="group" aria-label="Facility map with mission route, waypoint buttons and SPOT position">
           <defs><filter id="spot-marker-contrast" x="-25%" y="-25%" width="150%" height="150%"><feComponentTransfer><feFuncA type="linear" slope="2" /></feComponentTransfer><feDropShadow dx="0" dy="1" stdDeviation="1.5" floodColor="black" floodOpacity="0.9" /></filter></defs>
-          <image href="/kit/fictional_floor_plan.png" width="1095" height="595" />
+          <image href="/spot-blueprint.svg" width="1095" height="595" />
           <polyline points={path(planned)} fill="none" stroke="white" strokeWidth="3" strokeDasharray="8 8" opacity="0.65" />
           <polyline points={path(visited)} fill="none" stroke="var(--c-accent-ink)" strokeWidth="5" strokeLinejoin="round" />
           {frame?.moving && <line x1={frame.from?.x} y1={frame.from?.y} x2={frame.x} y2={frame.y} stroke="var(--c-accent-ink)" strokeWidth="5" strokeDasharray={changingFloor ? "8 6" : undefined} />}
