@@ -1,2 +1,5 @@
-import { ThemeToggle } from "@/components/ThemeToggle";
-export default function Page() { return <div className="mx-auto max-w-3xl space-y-4 p-4"><h1 className="text-2xl font-semibold">Settings</h1><section className="rounded border border-line bg-surface p-4"><h2 className="font-medium">Appearance</h2><div className="mt-3 flex items-center gap-3"><ThemeToggle /><p className="text-sm text-muted">Cycle system, light, and dark themes. Your choice is saved on this device.</p></div></section><section className="rounded border border-line bg-surface p-4"><h2 className="font-medium">Data connection</h2><p className="mt-2 text-sm text-muted">The overview refreshes itself every 2.5 seconds. The server controls backend configuration.</p></section></div>; }
+import { SettingsForm } from "@/components/SettingsForm";
+
+export default function Page() {
+  return <SettingsForm />;
+}
