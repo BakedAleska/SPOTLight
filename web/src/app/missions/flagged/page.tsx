@@ -1,2 +1,2 @@
-import { MissionList } from "@/components/MissionList";
-export default function Page() { return <MissionList flagged />; }
+import { FlaggedMissions } from "@/components/FlaggedMissions";
+export default function Page() { return <FlaggedMissions />; }
