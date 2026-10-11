@@ -12,6 +12,9 @@
    first, the snapshot always kept.
 6. (`chat.2`) Carry-over: the sources the previous answer cited (<= 6, stored title + snippet) join after the fresh
    ones and are dropped first; an id retrieved again keeps its fresh text.
+7. (`chat.3`, §9) Mission chats: the mission's digest is pinned first and never dropped for the budget; a
+   mission-filtered document search (k 6) runs alongside the global one and ranks ahead of it (merged by id);
+   `mission:<id>` is always a graph seed. A conversation with no mission retrieves exactly as before.
 Everything is bounded by CHAT_RETRIEVAL_BUDGET_S: a step that has not finished is skipped. Every degraded step adds a
 short string to `gaps` (sent in the `sources` event) and logs a WARNING. Only when documents, graph AND snapshot all
 fail is the turn a `retrieval_failed` error.
@@ -37,6 +40,7 @@ DOC_CHARS, DIGEST_CHARS, NODE_CHARS, STAT_CHARS = 1_200, 2_000, 450, 1_200
 SNIPPET_CHARS = 280
 SNAPSHOT_TTL_S = 60.0
 SEED_COUNT = 4
+MISSION_DOCS_K = 6       # chat.3: the mission-filtered document search
 PRIOR_ENTITY_CAP = 5     # ids taken from the previous answer (its text, then its cited sources' refs)
 CARRY_MAX = 6            # sources the previous answer cited, carried into this turn
 # match_graph_nodes returns raw cosine similarity for vector-only hits, with no threshold: below this they are
@@ -59,7 +63,8 @@ ORIGIN_RANK = {"sql": 0, "rag": 1, "graph": 2}
 STEP_LABELS = {"snapshot": "fleet stats", "digests": "entity digests", "docs": "document search",
                "graph": "graph match", "docs2": "follow-up document search", "graph2": "follow-up graph match",
                "nb": "graph neighbourhood", "nb_hub": "graph neighbourhood (hubs)",
-               "digests2": "entity digests (graph)"}
+               "digests2": "entity digests (graph)", "mission": "mission digest",
+               "mission_docs": "mission document search"}
 
 
 class RetrievalFailed(Exception):
@@ -78,10 +83,12 @@ class Retrieval:
     latency_ms: int
     counts: Dict[str, int]
     gaps: List[str] = field(default_factory=list)
+    mission_id: Optional[str] = None       # chat.3: the conversation's mission (None for an ordinary chat)
+    mission: Optional[Dict[str, Any]] = None   # its digest, when it was retrieved
 
     def meta(self) -> Dict[str, Any]:
         return {"mode": self.mode, "graph_seeds": self.graph_seeds, "latency_ms": self.latency_ms,
-                "counts": self.counts, "gaps": list(self.gaps)}
+                "counts": self.counts, "gaps": list(self.gaps), "mission_id": self.mission_id}
 
 
 @dataclass
@@ -371,13 +378,16 @@ class Retriever:
         return results, failed
 
     async def retrieve(self, question: str, previous: Optional[str] = None, request_id: Optional[str] = None,
-                       budget_s: Optional[float] = None, prior: Optional[Prior] = None) -> Retrieval:
-        """`previous` = the previous user message; `prior` = the previous assistant answer (entities + carry-over)."""
+                       budget_s: Optional[float] = None, prior: Optional[Prior] = None,
+                       mission_id: Optional[str] = None) -> Retrieval:
+        """`previous` = the previous user message; `prior` = the previous assistant answer (entities + carry-over);
+        `mission_id` = the conversation's mission (chat.3, §9), or None for an ordinary chat."""
         t0 = time.perf_counter()
         loop = asyncio.get_running_loop()
         budget = budget_s or self.budget_s
         deadline = loop.time() + budget
         gaps: List[str] = []
+        mid = str(mission_id).strip().upper() if mission_id else None
         named_ents = extract_entities(question, previous)
         # Ids only the previous answer names: their digests rank with the fresh results (interleaved, just ahead of
         # the i-th document) rather than with the question's own ids, so a list-style answer can't crowd out the
@@ -385,8 +395,12 @@ class Retriever:
         prior_only = [(k, v) for k, v in prior_entity_list(prior) if v not in named_ents[k]]
         prior_rank = {kv: i for i, kv in enumerate(prior_only)}
         ents = merge_entities(named_ents, group_entities(prior_only))
+        if mid:      # the pinned digest has its own query (below), so it can't be crowded out of the <= 5 per kind
+            ents["missions"] = [m for m in ents["missions"] if m != mid]
 
         tasks: Dict[str, asyncio.Task] = {"snapshot": asyncio.ensure_future(self.snapshot())}
+        if mid:
+            tasks["mission"] = asyncio.ensure_future(self.repo.entity_digests(mission_ids=[mid]))
         if any(ents.values()):
             tasks["digests"] = asyncio.ensure_future(self.repo.entity_digests(
                 mission_ids=ents["missions"], asset_ids=ents["assets"], location_ids=ents["locations"],
@@ -405,6 +419,9 @@ class Retriever:
         if why:
             gaps.append(why)
         tasks["docs"] = asyncio.ensure_future(self.repo.search_documents(question, vec, k=8))
+        if mid:
+            tasks["mission_docs"] = asyncio.ensure_future(self.repo.search_documents(
+                question, vec, k=MISSION_DOCS_K, mission_id=mid))
         tasks["graph"] = asyncio.ensure_future(self.repo.match_graph_nodes(question, vec, k=6))
         res, failed = await self._settle(tasks, deadline - loop.time())
         gaps += ["%s %s" % (STEP_LABELS.get(k, k), v) for k, v in failed.items()]
@@ -416,6 +433,8 @@ class Retriever:
         graph = [r for r in res.get("graph") or [] if _useful_node(r)]
         docs2 = (res.get("docs2") or ([], "fulltext"))[0]
         graph2 = [r for r in res.get("graph2") or [] if _useful_node(r)]
+        mission_docs = (res.get("mission_docs") or ([], mode))[0]
+        mission = next(iter((res.get("mission") or {}).get("missions") or []), None)
 
         # Graph entry nodes of entity kinds add digests; the top entry nodes seed the neighbourhood walk.
         extra = {"missions": [], "assets": [], "locations": [], "flags": []}
@@ -426,10 +445,17 @@ class Retriever:
                 val = int(ident) if key == "flags" and ident.isdigit() else ident
                 if key == "flags" and not isinstance(val, int):
                     continue
+                if key == "missions" and val == mid:        # already fetched as the pinned digest
+                    continue
                 if val not in ents[key] and val not in extra[key]:
                     extra[key].append(val)
         seeds = _ordered_unique(entity_node_ids(ents) + [r["node_id"] for r in graph] +
-                                [r["node_id"] for r in graph2])[:SEED_COUNT]
+                                [r["node_id"] for r in graph2])
+        if mid:      # chat.3: the mission node is always a seed, on top of the usual entry nodes
+            mnode = "mission:%s" % mid
+            seeds = [mnode] + [x for x in seeds if x != mnode][:SEED_COUNT]
+        else:
+            seeds = seeds[:SEED_COUNT]
         tasks2: Dict[str, asyncio.Task] = {}
         hubs = [s for s in seeds if s.partition(":")[0] in HUB_KINDS]
         others = [s for s in seeds if s not in hubs]
@@ -454,6 +480,13 @@ class Retriever:
                             key=lambda r: (r.get("hop") or 9, -(r.get("weight") or 0.0)))
 
         b = _Builder()
+        pinned: List[str] = []
+        if mission is not None:
+            msrc, mtext = digest_source("missions", mission)
+            b.add(msrc, mtext, rank=(-1,))
+            pinned.append(msrc["id"])
+        for i, r in enumerate(mission_docs):       # ahead of every global result; a doc found twice merges here
+            b.add(*doc_source(r), rank=(0.5, i))
         named = res.get("digests") or {}
         for kind in ("missions", "assets", "locations", "flags"):
             for d in named.get(kind) or []:
@@ -461,7 +494,7 @@ class Retriever:
                 b.add(*digest_source(kind, d), rank=(0, b.next()) if i is None else (1, i, -1))
         found = res2.get("digests2") or {}
         later = [(kind, d) for kind in ("missions", "assets", "locations", "flags") for d in found.get(kind) or []]
-        doc_ids = {r.get("doc_id") for r in docs}
+        doc_ids = {r.get("doc_id") for r in docs} | {r.get("doc_id") for r in mission_docs}
         for i in range(max(len(docs), len(graph), len(later))):
             if i < len(docs):
                 b.add(*doc_source(docs[i]), rank=(1, i, 0))
@@ -477,13 +510,14 @@ class Retriever:
             b.add(*node_source(r, doc_ids), rank=(3, i))
         stats = stat_sources(res["snapshot"]) if "snapshot" in res else []
         carry = [carry_source(s) for s in (prior.cited if prior else [])]
-        sources, texts, block = b.finish(stats, self.max_chars, carry=carry)
+        sources, texts, block = b.finish(stats, self.max_chars, carry=carry, pinned=pinned)
         counts = {"rag": 0, "graph": 0, "sql": 0}
         for s in sources:
             counts[s["origin"]] = counts.get(s["origin"], 0) + 1
         _warn_gaps(gaps, request_id)
         return Retrieval(sources=sources, texts=texts, block=block, mode=mode, graph_seeds=seeds,
-                         latency_ms=int((time.perf_counter() - t0) * 1000), counts=counts, gaps=gaps)
+                         latency_ms=int((time.perf_counter() - t0) * 1000), counts=counts, gaps=gaps,
+                         mission_id=mid, mission=mission)
 
 
 def _short(text: Any, n: int = 160) -> str:
@@ -569,14 +603,22 @@ class _Builder:
         cur["rank"] = min(cur["rank"], rank)
 
     def finish(self, stats: List[Tuple[Dict[str, Any], str]], max_chars: int,
-               carry: Optional[List[Tuple[Dict[str, Any], str]]] = None):
-        """Budget order: the snapshot always stays, then fresh sources best rank first, then carry-over (dropped
-        first). Block order: fresh, carry-over, snapshot. A carried id that is also kept fresh keeps the fresh text."""
+               carry: Optional[List[Tuple[Dict[str, Any], str]]] = None, pinned: Optional[List[str]] = None):
+        """Budget order: pinned sources (chat.3: the mission digest) and the snapshot always stay, then fresh sources
+        best rank first, then carry-over (dropped first). Block order: pinned, fresh, carry-over, snapshot. A carried
+        id that is also kept fresh keeps the fresh text."""
         stat_ids = {s["id"] for s, _ in stats}
-        ranked = sorted((v for k, v in self.items.items() if k not in stat_ids), key=lambda v: v["rank"])
+        pin_ids = [p for p in (pinned or []) if p in self.items and p not in stat_ids]
+        ranked = sorted((v for k, v in self.items.items() if k not in stat_ids and k not in pin_ids),
+                        key=lambda v: v["rank"])
         stat_blocks = [(s, t, render_source(s, t)) for s, t in stats]
         used = len(sources_block([])) + sum(len(r) + 1 for _, _, r in stat_blocks)
         kept: List[Tuple[Dict[str, Any], str, str]] = []
+        for p in pin_ids:                          # never dropped, whatever the budget
+            v = self.items[p]
+            r = render_source(v["src"], v["text"])
+            kept.append((v["src"], v["text"], r))
+            used += len(r) + 1
         for v in ranked:
             r = render_source(v["src"], v["text"])
             if used + len(r) + 1 <= max_chars:

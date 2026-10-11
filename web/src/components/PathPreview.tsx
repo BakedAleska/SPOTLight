@@ -6,6 +6,7 @@ import { Pause, Play, RotateCcw, Route, TriangleAlert, ScanLine, CheckCircle2, A
 import { Panel } from "./Panel";
 import { LoadingDots } from "./LoadingDots";
 import { RouteAhead } from "./RouteAhead";
+import { AskAiLink } from "./AskAiLink";
 import type { PathMission, PathPoint } from "@/lib/path-types";
 
 import { buildPlayback, playbackAt, eventLabel } from "@/lib/path-playback";
@@ -25,7 +26,10 @@ export function PathPreview({ points, missions, initialMissionId }: { points: Pa
     {/* Same columns as the map and side panels below, so the Mission picker lines up with them. */}
     <header className="grid items-end gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
       <div><p className="mb-1 text-xs text-muted">MISSION CONTROL</p><h1 className="flex items-center gap-2 text-2xl font-semibold text-ink"><Route size={24} />SPOT path preview</h1><p className="mt-1 text-sm text-muted">Replay a recorded challenge-kit mission. For a running robot, open <Link href="/live" className="text-accent-ink hover:underline">Live patrol</Link>.</p></div>
-      <label className="flex flex-col gap-1 text-xs text-muted">Mission<select className={`${control} w-full`} value={missionId} onChange={e => setMissionId(e.target.value)}>{missions.map(m => <option key={m.id} value={m.id}>{m.id} · {m.name}</option>)}</select></label>
+      <div className="flex flex-col gap-2">
+        <label className="flex flex-col gap-1 text-xs text-muted">Mission<select className={`${control} w-full`} value={missionId} onChange={e => setMissionId(e.target.value)}>{missions.map(m => <option key={m.id} value={m.id}>{m.id} · {m.name}</option>)}</select></label>
+        {missionId && <AskAiLink missionId={missionId} label={`Ask AI about ${missionId}`} className="min-h-11 px-4" />}
+      </div>
     </header>
     {missions.find(m => m.id === missionId) && <MissionPath key={`${missionId}:${visit}`} mission={missions.find(m => m.id === missionId)!} points={points} />}
   </div>;

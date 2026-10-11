@@ -13,7 +13,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 
 from ..deps import Services, current_request_id, get_services
 from ..schemas.chat import (Conversation, ConversationCreateIn, ConversationDetail, ConversationPage,
-                            ConversationPatchIn, MessageIn, ModelsOut, SuggestionsOut)
+                            ConversationPatchIn, MessageIn, MissionsOut, ModelsOut, SuggestionsOut)
 from ..schemas.common import ErrorResponse
 from ..services.chat import ChatError
 from ..services.chat.service import norm_uuid
@@ -42,33 +42,58 @@ async def models(svc: Services = Depends(get_services)) -> dict:
     return svc.chat.models_payload()
 
 
-@router.get("/suggestions", response_model=SuggestionsOut)
-async def suggestions(svc: Services = Depends(get_services)) -> dict:
+@router.get("/suggestions", response_model=SuggestionsOut, responses=ERRORS)
+async def suggestions(mission_id: Optional[str] = Query(None, max_length=40, description=(
+                          "chat.3: prompts about this mission (from its digest): its hidden or reported failures, "
+                          "the worst failed action, its anomalies, battery start to end. Unknown id: 422 "
+                          "unknown_mission.")),
+                      svc: Services = Depends(get_services)):
     """Four starter prompts built from live facts (real mission, asset, waypoint and flag ids). No LLM call."""
-    return {"suggestions": await svc.chat.suggestions()}
+    try:
+        return {"suggestions": await svc.chat.suggestions((mission_id or "").strip() or None)}
+    except ChatError as exc:
+        return _err(exc.status, exc.code, exc.detail)
+
+
+@router.get("/missions", response_model=MissionsOut)
+async def missions(q: Optional[str] = Query(None, max_length=100, description="Matches the mission id or name, "
+                                                                              "case-insensitive."),
+                   limit: int = Query(100, ge=1, le=500), svc: Services = Depends(get_services)) -> dict:
+    """chat.3: the mission picker. One row per mission, by id: reported status, failed actions, anomalies, open
+    flags, `hidden_failure` (reported COMPLETED with a failed action) and `chats` (conversations about it)."""
+    return {"items": await svc.chat.repo.list_missions(q=(q or "").strip() or None, limit=limit)}
 
 
 @router.get("/conversations", response_model=ConversationPage)
 async def list_conversations(q: Optional[str] = Query(None, max_length=200, description="Matches the title or any "
                                                                                        "message, case-insensitive."),
                              limit: int = Query(50, ge=1, le=200), offset: int = Query(0, ge=0),
+                             mission_id: Optional[str] = Query(None, max_length=40, description=(
+                                 "chat.3: only the chats about this mission (case-insensitive).")),
                              svc: Services = Depends(get_services)) -> dict:
     """The history panel: pinned first, then most recently updated."""
-    items, total = await svc.chat.repo.list_conversations(q=(q or "").strip() or None, limit=limit, offset=offset)
+    extra = {"mission_id": mission_id.strip()} if (mission_id or "").strip() else {}   # the old call, unless given
+    items, total = await svc.chat.repo.list_conversations(q=(q or "").strip() or None, limit=limit, offset=offset,
+                                                          **extra)
     return {"items": items, "total": total}
 
 
 @router.post("/conversations", status_code=201, response_model=Conversation, responses=ERRORS)
 async def create_conversation(body: Optional[ConversationCreateIn] = None, svc: Services = Depends(get_services)):
-    """A new, empty chat. Defaults: title "New chat", CHAT_DEFAULT_MODEL, fast mode."""
+    """A new, empty chat. Defaults: title "New chat", CHAT_DEFAULT_MODEL, fast mode. `mission_id` (chat.3) makes it
+    a chat about that mission for good (PATCH can't change it): matched case-insensitively, stored canonical."""
     body = body or ConversationCreateIn()
     model = body.model or svc.chat.default_model
+    mission_id = None
     try:
         svc.chat.check_model(model)
+        if (body.mission_id or "").strip():
+            mission_id = (await svc.chat.resolve_mission(body.mission_id))["mission_id"]
     except ChatError as exc:
         return _err(exc.status, exc.code, exc.detail)
     title = " ".join((body.title or "").split())
-    conv = await svc.chat.repo.create_conversation(title=title or "New chat", model=model, mode=body.mode or "fast")
+    conv = await svc.chat.repo.create_conversation(title=title or "New chat", model=model, mode=body.mode or "fast",
+                                                   mission_id=mission_id)
     if title:   # an operator-given title is never replaced by an auto or model title
         conv = await svc.chat.repo.update_conversation(conv["conversation_id"], title_source="user") or conv
     return conv
@@ -85,7 +110,8 @@ async def get_conversation(conversation_id: str, svc: Services = Depends(get_ser
 
 @router.patch("/conversations/{conversation_id}", response_model=Conversation, responses=ERRORS)
 async def patch_conversation(conversation_id: str, body: ConversationPatchIn, svc: Services = Depends(get_services)):
-    """Rename (sets title_source=user, so a model title never replaces it), pin/unpin, or change model/mode."""
+    """Rename (sets title_source=user, so a model title never replaces it), pin/unpin, or change model/mode.
+    The mission (chat.3) can't be changed: a `mission_id` in the body is ignored."""
     if not norm_uuid(conversation_id):
         return _not_found(conversation_id)
     try:

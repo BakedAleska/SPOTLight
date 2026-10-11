@@ -60,7 +60,15 @@ history live in Postgres; the last model, mode and history-panel state are remem
 - The chat UI lives in `src/app/assistant/layout.tsx`, and the live answer in a module-level store
   (`src/lib/chat/store.ts`), so a new chat's URL can change to `/assistant/<id>` mid-answer without
   dropping the stream.
-- Tests: `npm run test:chat` (SSE parser, citation chips, history groups, grounding badge, proxy routes).
+- **Mission chats** (contract §9). "Ask AI" on the All missions and Flagged cards, and "Ask AI about <id>"
+  on the replay page, open `/assistant?mission=<id>`. That page shows the mission's context card (status,
+  failed actions, anomalies, open flags, hidden-failure warning) and its own suggestions, and the first
+  send creates the conversation with `mission_id`. "Focus on a mission" in the composer is a searchable
+  picker over `/api/chat/missions`. Inside a mission chat, the header chip links to the replay, and history
+  rows carry a mission badge. An unknown id shows a notice and falls back to a normal new chat. The helpers
+  are in `src/lib/chat/mission.ts` and the UI is in `src/components/chat/MissionFocus.tsx`.
+- Tests: `npm run test:chat` (SSE parser, citation chips, history groups, grounding badge, proxy routes,
+  mission chats).
 
 For native development with Node.js installed:
 

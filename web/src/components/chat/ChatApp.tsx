@@ -6,6 +6,7 @@ import useSWR, { useSWRConfig } from "swr";
 import { KeyRound, MessageSquareOff, PanelLeftOpen, RotateCw, SquarePen, TriangleAlert } from "lucide-react";
 import { ChatHttpError, chatFetcher, describeError } from "@/lib/chat/api";
 import { modelLabel } from "@/lib/chat/grounding";
+import { normalizeMissionId, withMissionParam } from "@/lib/chat/mission";
 import { PREF_HISTORY, PREF_MODE, PREF_MODEL, setPref, usePref } from "@/lib/chat/prefs";
 import {
   DRAFT,
@@ -25,14 +26,17 @@ import {
   type ChatState,
 } from "@/lib/chat/store";
 import { publishChatTitle } from "@/lib/chat/title-store";
-import type { ChatMode, ModelCatalog } from "@/lib/chat/types";
+import type { ChatMode, MissionList, MissionRef, ModelCatalog } from "@/lib/chat/types";
 import { Composer, Disclaimer, type ComposerHandle } from "./Composer";
-import { EmptyState } from "./EmptyState";
+import { EmptyState, type MissionFocusState } from "./EmptyState";
+import { MissionChip, MissionPicker } from "./MissionFocus";
 import { HISTORY_KEY, HistoryPanel } from "./HistoryPanel";
 import { ModelPicker } from "./ModelPicker";
 import { SourcesPanel, type SourcesView } from "./SourcesPanel";
 import { ThreadView } from "./ThreadView";
 import "./chat.css";
+
+export const MISSIONS_KEY = "/api/chat/missions";
 
 const ICON_BUTTON =
   "grid size-9 shrink-0 cursor-pointer place-items-center rounded-lg text-muted transition-colors hover:bg-surface-2 hover:text-ink";
@@ -69,6 +73,7 @@ function DisabledNotice() {
 export function ChatApp() {
   const pathname = usePathname();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { mutate } = useSWRConfig();
   const pathId = conversationIdFrom(pathname);
   const draftId = useChatState(selectDraft);
@@ -98,6 +103,23 @@ export function ChatApp() {
   const pickedHere = openId && picked?.thread === openId ? picked.model : null;
   const chatModel = openId ? thread?.conversation?.model : null;
   const model = known(pickedHere) ? pickedHere : known(chatModel) ? chatModel : preferred;
+
+  // chat.3: /assistant?mission=<id> is a new chat about that mission. The
+  // mission list feeds the context card, the picker and the header chip.
+  const missionsQuery = useSWR<MissionList>(disabled ? null : MISSIONS_KEY, chatFetcher, { revalidateOnFocus: false, shouldRetryOnError: false });
+  const missions = missionsQuery.data?.items;
+  const rawMission = pathId ? null : searchParams.get("mission");
+  const focus = useMemo<MissionFocusState>(() => {
+    if (rawMission === null || rawMission.trim() === "") return { kind: "none" };
+    const id = normalizeMissionId(rawMission);
+    if (!id) return { kind: "unknown", raw: rawMission };
+    if (missions) {
+      const mission = missions.find((m) => m.mission_id.toUpperCase() === id);
+      return mission ? { kind: "found", mission } : { kind: "unknown", raw: rawMission };
+    }
+    return missionsQuery.error ? { kind: "unverified", missionId: id } : { kind: "loading", missionId: id };
+  }, [rawMission, missions, missionsQuery.error]);
+  const focusId = focus.kind === "found" ? focus.mission.mission_id : focus.kind === "loading" || focus.kind === "unverified" ? focus.missionId : null;
 
   const [drawer, setDrawer] = useState(false);
   const [text, setText] = useState("");
@@ -134,7 +156,8 @@ export function ChatApp() {
 
   // History list stays in step with turns finishing and titles arriving.
   useEffect(
-    () => onConversationsChanged(() => void mutate((key) => typeof key === "string" && key.startsWith(HISTORY_KEY))),
+    // The missions' "N chats" counts move with the history.
+    () => onConversationsChanged(() => void mutate((key) => typeof key === "string" && (key.startsWith(HISTORY_KEY) || key === MISSIONS_KEY))),
     [mutate],
   );
 
@@ -152,12 +175,17 @@ export function ChatApp() {
     if (fromComposer) setText("");
     const started = activeId && activeId !== DRAFT
       ? sendMessage(activeId, content, model, mode)
-      : startConversation(content, model, mode, onCreated);
+      : startConversation(content, model, mode, onCreated, focusId);
     // A turn that couldn't go ahead (Stop while it waited) hands its text
     // back, unless the operator has started typing something else.
     void started.then((ok) => { if (!ok && fromComposer) setText((current) => current || content); });
     composerRef.current?.focus();
-  }, [text, model, mode, catalog, activeId, onCreated]);
+  }, [text, model, mode, catalog, activeId, onCreated, focusId]);
+
+  const setMissionFocus = useCallback((missionId: string | null) => {
+    router.replace(withMissionParam(searchParams.toString(), missionId), { scroll: false });
+    composerRef.current?.focus();
+  }, [router, searchParams]);
 
   const newChat = useCallback(() => {
     clearDraft();
@@ -201,6 +229,16 @@ export function ChatApp() {
         mode={mode}
         onModeChange={chooseMode}
         thinkingHint={thinkingHint}
+        tools={!thread && !pathId ? (
+          <MissionPicker
+            missions={missions}
+            loading={missionsQuery.isLoading}
+            error={!!missionsQuery.error}
+            value={focusId}
+            onSelect={(id) => setMissionFocus(id)}
+            onClear={() => setMissionFocus(null)}
+          />
+        ) : undefined}
       />
       <Disclaimer />
     </>
@@ -215,6 +253,12 @@ export function ChatApp() {
     : "";
 
   const showSources = sources && sources.thread === activeId ? sources : null;
+  // The open chat's mission: from the conversation, or (while a new mission
+  // chat is still being created) from the draft and the mission list.
+  const draftMission = thread?.missionId ? missions?.find((m) => m.mission_id === thread.missionId) : undefined;
+  const chatMission: MissionRef | null = thread?.conversation?.mission
+    ?? (thread?.conversation?.mission_id ? { mission_id: thread.conversation.mission_id, mission_name: "", mission_status: "" } : null)
+    ?? (thread?.missionId ? { mission_id: thread.missionId, mission_name: draftMission?.mission_name ?? "", mission_status: draftMission?.mission_status ?? "" } : null);
   const lastMessage = thread?.messages[thread.messages.length - 1];
 
   return (
@@ -266,6 +310,7 @@ export function ChatApp() {
             </>
           )}
           <ModelPicker models={models} value={model} onChange={chooseModel} disabled={!catalog} />
+          {thread && chatMission && <MissionChip mission={chatMission} />}
           <button type="button" onClick={newChat} aria-label="New chat" className={`${ICON_BUTTON} ml-auto md:hidden`}>
             <SquarePen size={16} aria-hidden="true" />
           </button>
@@ -298,7 +343,7 @@ export function ChatApp() {
           // new-chat greeting here.
           <ThreadSkeleton />
         ) : !thread ? (
-          <EmptyState composer={composer} onPick={(prompt) => send(prompt)} disabled={composerBlocked} />
+          <EmptyState composer={composer} onPick={(prompt) => send(prompt)} disabled={composerBlocked} focus={focus} onClearMission={() => setMissionFocus(null)} />
         ) : thread.load === "missing" ? (
           <div className="m-auto max-w-sm p-6 text-center">
             <h1 className="text-lg font-semibold text-ink">This chat doesn’t exist</h1>

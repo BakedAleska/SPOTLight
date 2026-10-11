@@ -1,4 +1,5 @@
-"""AI Assistance chat (docs/chat-contract.md §1): 011_chat.sql, 012_chat_logs.sql and backend/app/db/chat.py.
+"""AI Assistance chat (docs/chat-contract.md §1, §9): 011_chat.sql, 012_chat_logs.sql, 013_chat_mission.sql and
+backend/app/db/chat.py.
 
 Integration tests on a throwaway database spot_chattest_<hex> in the compose Postgres (DB_PORT, default 5433; or
 CHAT_TEST_ADMIN_URL): `setup.py migrate` twice, `seed`, the stack's RAG `documents` (with vectors) copied in from
@@ -41,7 +42,10 @@ ADMIN_URL = os.environ.get("CHAT_TEST_ADMIN_URL") or "postgresql://postgres:%s@l
 SOURCE_URL = os.environ.get("CHAT_TEST_SOURCE_URL") or ADMIN_URL.rsplit("/", 1)[0] + "/spot"
 
 CONV_KEYS = {"conversation_id", "title", "title_source", "model", "mode", "pinned", "created_at", "updated_at",
-             "message_count"}
+             "message_count", "mission_id", "mission"}                                   # chat.3: mission
+MISSION_SUMMARY_KEYS = {"mission_id", "mission_name", "scenario", "configuration_version", "start_time",
+                        "duration_min", "start_battery_pct", "end_battery_pct", "mission_status", "actions", "failed",
+                        "anomalies", "serious_anomalies", "open_flags", "hidden_failure", "chats"}
 SUMMARY_KEYS = CONV_KEYS | {"last_message_preview"}
 MSG_KEYS = {"message_id", "conversation_id", "seq", "role", "content", "thinking", "thinking_ms", "model", "mode",
             "status", "sources", "citations", "grounding", "usage", "latency_ms", "error", "error_code", "request_id",
@@ -177,11 +181,16 @@ def _is_uuid(s):
 def test_migrations_apply_twice(db):
     for out in db["migrate_out"]:
         assert "applied 011_chat.sql" in out and "applied 012_chat_logs.sql" in out
+        assert "applied 013_chat_mission.sql" in out
     url = db["url"]
     idx = {r[0] for r in _q(url, "SELECT indexname FROM pg_indexes WHERE tablename IN "
                                  "('chat_conversations', 'chat_messages')")}
     assert {"chat_conversations_sidebar", "chat_conversations_title_trgm", "chat_messages_content_trgm",
-            "chat_messages_conversation_id_seq_key"} <= idx
+            "chat_messages_conversation_id_seq_key", "chat_conversations_mission"} <= idx
+    # 013: one FK to missions, ON DELETE SET NULL ('n')
+    assert _q(url, "SELECT conname, confrelid::regclass::text, confdeltype FROM pg_constraint "
+                   "WHERE conrelid = 'chat_conversations'::regclass AND contype = 'f'") == [
+        ("chat_conversations_mission_id_fkey", "missions", "n")]
     # 011: exactly one CHECK on app.model_calls.system, allowing 'chat'
     checks = _q(url, "SELECT c.conname FROM pg_constraint c JOIN pg_attribute a ON a.attrelid = c.conrelid "
                      "AND a.attnum = ANY (c.conkey) WHERE c.conrelid = 'app.model_calls'::regclass "
@@ -210,6 +219,27 @@ def test_011_adds_error_code_to_an_older_table(db):
     assert _q(url, "SELECT content, error_code FROM chat_messages WHERE conversation_id = "
                    "'00000000-0000-4000-8000-0000000000e1'") == [("old row", None)]
     _q(url, "DELETE FROM chat_conversations WHERE conversation_id = '00000000-0000-4000-8000-0000000000e1'")
+
+
+def test_013_on_an_older_table_keeps_data_and_detaches_orphans(db):
+    """chat.3: 013 re-run on a table from before it (no column, no FK, no index) adds all three; a column that
+    already exists without the FK gets the FK, and a dangling mission id is set NULL rather than failing."""
+    url = db["url"]
+    cid = "00000000-0000-4000-8000-0000000000e3"
+    _q(url, "ALTER TABLE chat_conversations DROP COLUMN mission_id")          # drops the FK and the index too
+    _q(url, "INSERT INTO chat_conversations (conversation_id, title, model) VALUES ('%s', 'pre chat.3', 'm')" % cid)
+    sql = (MIGRATIONS / "013_chat_mission.sql").read_text()
+    _q(url, sql)
+    _q(url, sql)
+    assert _q(url, "SELECT title, mission_id FROM chat_conversations WHERE conversation_id = %s::uuid", cid) == [
+        ("pre chat.3", None)]
+    _q(url, "ALTER TABLE chat_conversations DROP CONSTRAINT chat_conversations_mission_id_fkey")
+    _q(url, "UPDATE chat_conversations SET mission_id = 'M_GONE' WHERE conversation_id = %s::uuid", cid)
+    _q(url, sql)
+    assert _q(url, "SELECT mission_id FROM chat_conversations WHERE conversation_id = %s::uuid", cid) == [(None,)]
+    assert _q(url, "SELECT count(*) FROM pg_constraint WHERE conname = 'chat_conversations_mission_id_fkey'")[0][0] == 1
+    assert _q(url, "SELECT count(*) FROM pg_indexes WHERE indexname = 'chat_conversations_mission'")[0][0] == 1
+    _q(url, "DELETE FROM chat_conversations WHERE conversation_id = %s::uuid", cid)
 
 
 def test_012_replaces_a_differently_named_check(db):
@@ -628,3 +658,110 @@ def test_retrieval_is_fast(db):
     times = run(db["app_url"], t)
     print("\nretrieval timings (ms): " + ", ".join("%s %.1f" % kv for kv in times.items()))
     assert all(ms < 500 for ms in times.values()), times
+
+
+# ── mission chats (chat.3, §9) ──────────────────────────────────────────────────────────────────────
+def test_mission_conversations(db):
+    url = db["url"]
+    mid = _q(url, "SELECT mission_id FROM missions ORDER BY mission_id LIMIT 1")[0][0]
+    name, status = _q(url, "SELECT mission_name, mission_status FROM missions WHERE mission_id = %s", mid)[0]
+    _q(url, "INSERT INTO missions (mission_id, mission_name, mission_status) VALUES ('MZ01', 'Throwaway', 'FAILED')")
+
+    async def t(r):
+        c = await r.create_conversation(title="about a mission", model="m", mode="fast", mission_id=mid.lower())
+        assert set(c) == CONV_KEYS and c["mission_id"] == mid                    # stored canonical
+        assert c["mission"] == {"mission_id": mid, "mission_name": name, "mission_status": status}
+        cid = c["conversation_id"]
+        assert (await r.get_conversation(cid))["mission"] == c["mission"]
+        u = await r.update_conversation(cid, title="renamed", pinned=True)       # no way to change the mission
+        assert u["mission_id"] == mid and u["mission"] == c["mission"]
+        plain = await r.create_conversation(title="plain", model="m", mode="fast")
+        assert plain["mission_id"] is None and plain["mission"] is None
+        gone = await r.create_conversation(title="gone", model="m", mode="fast", mission_id="MZ01")
+        with pytest.raises(psycopg.errors.ForeignKeyViolation):
+            await r.create_conversation(title="x", model="m", mode="fast", mission_id="M999")
+
+        for x in (c, plain, gone):
+            await r.add_message(x["conversation_id"], {"role": "user", "content": "mission question"})
+        items, total = await r.list_conversations(q="mission question")
+        assert total == 3 and all(set(i) == SUMMARY_KEYS for i in items)
+        for given in (mid, mid.lower(), "mission:" + mid):
+            items, total = await r.list_conversations(mission_id=given)
+            assert total == 1 and [i["conversation_id"] for i in items] == [cid]
+            assert items[0]["mission"]["mission_name"] == name
+        assert await r.list_conversations(mission_id="M999") == ([], 0)
+        assert (await r.list_conversations(mission_id=mid, limit=1, offset=5)) == ([], 1)   # fallback count filtered
+        return cid, plain["conversation_id"], gone["conversation_id"]
+    cid, plain, gone = run(db["app_url"], t)
+
+    _q(url, "DELETE FROM missions WHERE mission_id = 'MZ01'")                    # ON DELETE SET NULL
+    async def after(r):
+        g = await r.get_conversation(gone)
+        assert g is not None and g["mission_id"] is None and g["mission"] is None
+        for x in (cid, plain, gone):
+            assert await r.delete_conversation(x)
+    run(db["app_url"], after)
+
+
+def test_search_documents_mission_filter(db):
+    url = db["url"]
+    mid = _q(url, "SELECT mission_id FROM missions ORDER BY mission_id DESC LIMIT 1")[0][0]
+    vec = _vec(lambda i: math.sin(i * 0.53 + 0.2), db["dim"])
+    _q(url, "INSERT INTO documents (doc_id, kind, title, content, mission_id, embedding, embed_model) VALUES "
+            "('note:chattest-mission', 'operator_note', 'Mission note', 'Quasar flux capacitor drift on this "
+            "mission too.', %s, %s::vector, 'synthetic')", mid, vec)
+    try:
+        async def t(r):
+            rows, mode = await r.search_documents("quasar flux capacitor", None, mission_id=mid.lower())
+            assert mode == "fulltext" and [x["doc_id"] for x in rows] == ["note:chattest-mission"]
+            rows, _ = await r.search_documents("quasar flux capacitor", None)
+            assert {"note:chattest-mission", "note:chattest-vec"} <= {x["doc_id"] for x in rows}  # unfiltered
+            rows, _ = await r.search_documents("zzqx-not-a-lexeme-ylophoni", None, mission_id=mid)  # ILIKE pass
+            assert rows == []
+            rows, mode = await r.search_documents("quasar", vec, k=6, mission_id=mid)
+            assert mode == "hybrid" and rows and rows[0]["doc_id"] == "note:chattest-mission"
+            assert all(x["mission_id"] == mid for x in rows) and len(rows) <= 6
+            assert all(set(x) == DOC_KEYS for x in rows)
+            if db["docs"]:                                                    # real kit events carry mission ids
+                rows, _ = await r.search_documents("failed action battery", None, k=6, mission_id="M007")
+                assert all(x["mission_id"] == "M007" for x in rows)
+        run(db["app_url"], t)
+    finally:
+        _q(url, "DELETE FROM documents WHERE doc_id = 'note:chattest-mission'")
+
+
+def test_list_missions(db):
+    url = db["url"]
+
+    async def t(r):
+        rows = await r.list_missions()
+        snap = await r.fleet_snapshot()
+        c = await r.create_conversation(title="count me", model="m", mode="fast", mission_id=rows[0]["mission_id"])
+        empty = await r.create_conversation(title="not me", model="m", mode="fast", mission_id=rows[0]["mission_id"])
+        await r.add_message(c["conversation_id"], {"role": "user", "content": "hi"})
+        after = await r.list_missions(q=rows[0]["mission_id"].lower())
+        dig = await r.entity_digests(mission_ids=[rows[0]["mission_id"]])
+        filtered = await r.list_missions(q=(rows[0]["mission_name"] or "")[:5].upper())
+        for x in (c, empty):
+            await r.delete_conversation(x["conversation_id"])
+        return rows, snap, after, dig, filtered, await r.list_missions(limit=2), await r.list_missions(q="%_zz")
+    rows, snap, after, dig, filtered, two, none = run(db["app_url"], t)
+    _no_decimals(rows)
+    assert len(rows) == snap["missions"] and all(set(x) == MISSION_SUMMARY_KEYS for x in rows)
+    assert [x["mission_id"] for x in rows] == sorted(x["mission_id"] for x in rows)
+    assert sum(x["hidden_failure"] for x in rows) == snap["completed_with_failures"]
+    assert sum(x["failed"] for x in rows) == snap["failed_actions"] and sum(x["actions"] for x in rows) == snap["actions"]
+    assert sum(x["anomalies"] for x in rows) == snap["anomalies"]
+    assert sum(x["serious_anomalies"] for x in rows) == snap["serious_anomalies"]
+    assert sum(x["open_flags"] for x in rows) <= snap["open_flags"]     # flags without a mission aren't counted
+    assert all(x["chats"] == 0 for x in rows)
+    assert [x["chats"] for x in after if x["mission_id"] == rows[0]["mission_id"]] == [1]   # empty chat not counted
+    d = dig["missions"][0]
+    assert {k: after[0][k] for k in ("mission_id", "actions", "failed", "mission_status")} == \
+        {k: d[k] for k in ("mission_id", "actions", "failed", "mission_status")}
+    assert after[0]["hidden_failure"] == (d["mission_status"] == "COMPLETED" and d["failed"] > 0)
+    assert rows[0]["mission_id"] in [x["mission_id"] for x in filtered]
+    assert len(two) == 2 and none == []
+    with psycopg.connect(db["mcp_url"], autocommit=True) as c:                # 013 grants nothing new
+        with pytest.raises(psycopg.errors.InsufficientPrivilege):
+            c.execute("SELECT mission_id FROM chat_conversations")

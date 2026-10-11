@@ -38,7 +38,8 @@ export async function chatFetch<T>(url: string, init: RequestInit = {}, timeout 
 /** SWR fetcher. */
 export const chatFetcher = <T>(url: string) => chatFetch<T>(url);
 
-export function createConversation(body: { model: string; mode: string }) {
+/** chat.3: `mission_id` makes it a mission chat; omitted for a normal one. */
+export function createConversation(body: { model: string; mode: string; mission_id?: string }) {
   return chatFetch<Conversation>("/api/chat/conversations", { method: "POST", body: JSON.stringify(body) });
 }
 
@@ -99,6 +100,8 @@ export function describeError(code: ChatErrorCode, detail?: string | null, model
       return { title: "This chat is still answering", hint: "The previous answer has not finished, possibly in another tab. Wait a moment, then retry." };
     case "not_found":
       return { title: "This chat no longer exists", hint: "It may have been deleted. Start a new chat." };
+    case "unknown_mission":
+      return { title: "That mission doesn’t exist", hint: "Pick another mission, or clear the focus to ask about the whole fleet." };
     case "invalid_request":
       return { title: "The request was rejected", hint: detail || "Check the message and model, then retry." };
     case "backend_unreachable":

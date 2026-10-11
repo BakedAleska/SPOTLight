@@ -55,6 +55,10 @@ export interface Thread {
   loadError: string | null;
   stream: LiveStream | null;
   error: TurnError | null;
+  /** chat.3: the mission a new chat is being created for. Kept on the DRAFT
+      thread so a retry creates the conversation with the same mission; a
+      created chat reads its mission from `conversation`. */
+  missionId: string | null;
 }
 
 export interface ChatState {
@@ -142,7 +146,7 @@ export function useChatState<T>(selector: (state: ChatState) => T): T {
 }
 
 function emptyThread(id: string): Thread {
-  return { id, conversation: null, messages: [], load: "idle", loadError: null, stream: null, error: null };
+  return { id, conversation: null, messages: [], load: "idle", loadError: null, stream: null, error: null, missionId: null };
 }
 
 function patchThread(id: string, patch: Partial<Thread> | ((thread: Thread) => Partial<Thread>), soon = false) {
@@ -594,9 +598,10 @@ export function retrievalFor(messageId: string): RetrievalMeta | null {
  * to its real id, `onCreated` changes the URL, and the answer streams into
  * the same store entry whatever the router does to the page.
  */
-export async function startConversation(content: string, model: string, mode: ChatMode, onCreated: (id: string) => void): Promise<boolean> {
+export async function startConversation(content: string, model: string, mode: ChatMode, onCreated: (id: string) => void, missionId: string | null = null): Promise<boolean> {
   const draft: Thread = {
     ...emptyThread(DRAFT),
+    missionId,
     messages: [optimisticUser(DRAFT, content, [])],
     stream: newStream(model, mode),
     load: "ready",
@@ -605,7 +610,7 @@ export async function startConversation(content: string, model: string, mode: Ch
   emit();
   let conversation: Conversation;
   try {
-    conversation = await createConversation({ model, mode });
+    conversation = await createConversation(missionId ? { model, mode, mission_id: missionId } : { model, mode });
   } catch (error) {
     const code = error instanceof ChatHttpError ? error.code : "backend_unreachable";
     patchThread(DRAFT, { stream: null, error: {
@@ -623,7 +628,7 @@ export async function startConversation(content: string, model: string, mode: Ch
   // no frame where the new thread renders empty. The history isn't refreshed
   // here: an empty chat isn't listed (chat.2); `meta` refreshes it once the
   // first message is stored.
-  threads[id] = { ...emptyThread(id), conversation, load: "ready", messages: pending?.messages ?? [], stream: pending?.stream ?? null };
+  threads[id] = { ...emptyThread(id), conversation, missionId: conversation.mission_id ?? missionId, load: "ready", messages: pending?.messages ?? [], stream: pending?.stream ?? null };
   state = { threads, draftId: id };
   emit();
   onCreated(id);
@@ -633,8 +638,9 @@ export async function startConversation(content: string, model: string, mode: Ch
 /** Retry for a draft whose conversation couldn't be created, optionally
     on another model ("Try with …"). */
 export function retryDraft(onCreated: (id: string) => void, model?: string) {
-  const retry = state.threads[DRAFT]?.error?.retry;
-  if (retry) void startConversation(retry.content, model ?? retry.model, retry.mode, onCreated);
+  const draft = state.threads[DRAFT];
+  const retry = draft?.error?.retry;
+  if (retry) void startConversation(retry.content, model ?? retry.model, retry.mode, onCreated, draft.missionId);
 }
 
 /** "New chat": forget the draft so /assistant shows the empty state. */

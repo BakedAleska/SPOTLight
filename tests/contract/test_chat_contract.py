@@ -232,14 +232,14 @@ def parse(text: str) -> List[Tuple[str, Any]]:
 MESSAGE = {"message_id", "conversation_id", "seq", "role", "content", "thinking", "thinking_ms", "model", "mode",
            "status", "sources", "citations", "grounding", "usage", "latency_ms", "error", "error_code", "created_at"}
 CONVERSATION = {"conversation_id", "title", "title_source", "model", "mode", "pinned", "created_at", "updated_at",
-                "message_count"}
+                "message_count", "mission_id", "mission"}                       # chat.3: mission_id, mission
 SOURCE = {"id", "n", "origin", "kind", "title", "snippet", "score", "refs"}
 SOURCE_OPTIONAL = {"path"}
 REFS = {"mission_id", "asset_id", "location_id", "action_id", "flag_id"}
 GROUNDING = {"grounded", "cited_ids", "unknown_ids", "unverified_numbers", "source_count", "retrieval_mode",
              "graph_seeds"}
 USAGE = {"prompt_tokens", "output_tokens", "thoughts_tokens"}
-RETRIEVAL = {"mode", "graph_seeds", "latency_ms", "counts", "gaps"}
+RETRIEVAL = {"mode", "graph_seeds", "latency_ms", "counts", "gaps", "mission_id"}   # chat.3: mission_id
 ERROR_CODES = {"rate_limited", "model_unavailable", "gemini_auth", "blocked", "upstream_error", "retrieval_failed",
                "internal_error"}
 EVENT_KEYS = {"meta": {"conversation_id", "request_id", "model", "mode", "user_message"},
