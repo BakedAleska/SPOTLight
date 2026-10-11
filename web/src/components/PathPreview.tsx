@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Pause, Play, RotateCcw, Radio, Route, TriangleAlert, ScanLine, CheckCircle2, ArrowRight, AudioLines, ArrowUp, ArrowDown } from "lucide-react";
 import { Panel } from "./Panel";
+import { LoadingDots } from "./LoadingDots";
 import type { PathEvent, PathFeed, PathMission, PathPoint } from "@/lib/path-types";
 
 import { buildPlayback, playbackAt, eventLabel } from "@/lib/path-playback";
@@ -111,9 +112,7 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
             </g>;
           })}
           {current && marker && <g aria-label={`SPOT at ${current.id}`} transform={`translate(${marker.x} ${marker.y})`}>
-            {((active && !frame?.moving && last?.type === "ACTION_STARTED") || (mode === "live" && last?.type === "ACTION_STARTED")) && <g className="spot-working-spinner" aria-label="SPOT working">
-              {[0, 1, 2, 3, 4].map(i => <g key={i} className="spot-merging-dot" style={{ "--dot-index": i } as React.CSSProperties}><circle cx="0" cy="-48" r={i === 0 ? 5 : 3.5} fill="white" opacity={1 - i * 0.1} /></g>)}
-            </g>}
+            {((active && !frame?.moving && last?.type === "ACTION_STARTED") || (mode === "live" && last?.type === "ACTION_STARTED")) && <foreignObject x="-15" y="-29" width="30" height="12" transform="scale(3)" aria-label="SPOT working"><div className="spot-working-dots flex h-full items-center justify-center"><LoadingDots color="white" /></div></foreignObject>}
             {changingFloor && <g aria-label={`Changing floor: ${floorLabel}`} className={active ? "spot-floor-arrow" : undefined} style={{ "--floor-direction": floorUp ? "-1" : "1" } as React.CSSProperties}>
               <path d={floorUp ? "M 0 -45 V -73 M -12 -61 L 0 -73 L 12 -61" : "M 0 -73 V -45 M -12 -57 L 0 -45 L 12 -57"} fill="none" stroke="white" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
             </g>}

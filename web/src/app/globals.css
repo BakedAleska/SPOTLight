@@ -799,22 +799,17 @@ body {
   .spot-activity-ring, .spot-activity-icon { animation: none; }
 }
 
-/* Windows-style dots: the leader orbits and pauses at the top, and each follower makes the same eased trip a beat
-   later, landing on it. The pause (55%-100%) outlasts the last follower's delay, so all dots meet before the leader goes again. */
-.spot-working-spinner {
-  filter: drop-shadow(0 1px 2px black);
+/* Vercel LoadingDots (see components/LoadingDots.tsx). */
+.loading-dots { display: inline-flex; align-items: center; }
+.loading-dots span {
+  animation: loading-dots-blink 1.4s infinite both;
+  width: 5px; height: 5px; border-radius: 50%; display: inline-block; margin: 0 1px;
 }
-.spot-merging-dot {
-  transform-box: view-box;
-  transform-origin: 0 0;
-  animation: spot-dots-orbit 2.4s infinite both;
-  animation-delay: calc(var(--dot-index) * 0.18s);
-}
-@keyframes spot-dots-orbit {
-  0% { transform: rotate(0deg); animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1); }
-  55%, 100% { transform: rotate(360deg); }
-}
-@media (prefers-reduced-motion: reduce) { .spot-merging-dot { animation: none; } }
+.loading-dots span:nth-of-type(2) { animation-delay: 0.2s; }
+.loading-dots span:nth-of-type(3) { animation-delay: 0.4s; }
+@keyframes loading-dots-blink { 0% { opacity: 0.2; } 20% { opacity: 1; } 100% { opacity: 0.2; } }
+@media (prefers-reduced-motion: reduce) { .loading-dots span { animation: none; } }
+.spot-working-dots { filter: drop-shadow(0 1px 2px black); }
 
 .spot-floor-arrow { animation: spot-floor-step 1s ease-in-out infinite; filter: drop-shadow(0 1px 2px black); }
 @keyframes spot-floor-step { 50% { transform: translateY(calc(var(--floor-direction) * 8px)); opacity: 0.6; } }
