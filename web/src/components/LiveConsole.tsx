@@ -39,6 +39,7 @@ export function LiveConsole({ initialRoutes }: { initialRoutes: LiveRoute[] }) {
   // Mission 1 replayed in the browser is the default: Start route plays it with no robot runner (lib/mock-playback.ts).
   const [routeId, setRouteId] = useState(MOCK_ROUTE_ID);
   const [mock, setMock] = useState<MockState | null>(null);
+  const [mockPlan, setMockPlan] = useState<MockPatrol | null>(null);   // fetched up front so the idle feed can list its stops
   const [runs, setRuns] = useState<LiveRun[]>([]);
   const [runId, setRunId] = useState<number | null>(null);
   const [detail, setDetail] = useState<LiveRunDetail | null>(null);
@@ -51,6 +52,10 @@ export function LiveConsole({ initialRoutes }: { initialRoutes: LiveRoute[] }) {
     if (routes.length) return;
     getJson<{ routes: LiveRoute[] }>("/api/live/routes").then(d => setRoutes(d.routes)).catch(() => undefined);
   }, [routes.length]);
+
+  useEffect(() => {
+    getJson<MockPatrol>("/api/live/mock?mission=M001").then(setMockPlan).catch(() => undefined);
+  }, []);
 
   // runs list: every 2 s; follows the newest active run
   useEffect(() => {
@@ -99,7 +104,8 @@ export function LiveConsole({ initialRoutes }: { initialRoutes: LiveRoute[] }) {
   // A mock patrol, while on screen, replaces the backend run in every view; picking an earlier run clears it.
   const mockShown = useMemo(() => (mock ? { run: mockRun(mock), captures: mockCaptures(mock) } : null), [mock]);
   const run = mockShown ? mockShown.run : detail?.run.run_id === runId ? detail.run : selected ?? null;
-  const route = mock ? mock.plan.route : (detail?.run.run_id === runId ? detail.route : null) ?? routes.find(r => r.route_id === (run?.route_id ?? routeId)) ?? null;
+  const route = mock ? mock.plan.route : (detail?.run.run_id === runId ? detail.route : null) ?? routes.find(r => r.route_id === (run?.route_id ?? routeId))
+    ?? (!run && routeId === MOCK_ROUTE_ID ? mockPlan?.route : null) ?? null;
   const backendCaptures = useMemo(() => (detail?.run.run_id === runId ? detail.captures : []), [detail, runId]);
   const captures = mockShown ? mockShown.captures : backendCaptures;
   const liveRun = runs.find(active) ?? null;
@@ -118,7 +124,7 @@ export function LiveConsole({ initialRoutes }: { initialRoutes: LiveRoute[] }) {
     setBusy(true); setMessage(null);
     try {
       if (routeId === MOCK_ROUTE_ID) {
-        const plan = await getJson<MockPatrol>("/api/live/mock?mission=M001");
+        const plan = mockPlan ?? await getJson<MockPatrol>("/api/live/mock?mission=M001");
         setFollow(false);
         setMock(startMock(plan, new Date().toISOString()));
         return;
@@ -130,7 +136,7 @@ export function LiveConsole({ initialRoutes }: { initialRoutes: LiveRoute[] }) {
       setMessage(`Run #${d.run.run_id} queued: waiting for the robot runner to pick it up…`);
     } catch (e) { setMessage((e as Error).message); }
     finally { setBusy(false); }
-  }, [routeId]);
+  }, [routeId, mockPlan]);
 
   const cancel = useCallback(async () => {
     if (mock?.status === "running") { setMock(cancelMock(mock)); return; }
@@ -187,7 +193,7 @@ export function LiveConsole({ initialRoutes }: { initialRoutes: LiveRoute[] }) {
       <p className="mt-1 text-sm text-muted">Every stop is triaged by the confidence model and the rules, photographed and explained by SPOTbot while you watch.</p>
     </header>
     <div className="panel-columns grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
-      <div className="flex min-w-0 flex-col gap-4">
+      <div className="panel-stack flex min-w-0 flex-col gap-4">
         <Panel title="Facility map" aside={run ? `${run.run_id === 0 ? "MOCK" : `RUN #${run.run_id}`} · ${run.route_id} · ${run.status.toUpperCase()}` : "NO RUN YET"}>
           <LiveMap route={route} captures={captures} run={run} />
           <p className="mt-3 text-xs text-muted">Dashed: the route · <span className="text-bad">●</span> red ping: needs attention · <span className="text-ok">●</span> green ping: all good. Pings come from the live triage (confidence model ‖ rules), never from the photo.</p>
@@ -197,6 +203,8 @@ export function LiveConsole({ initialRoutes }: { initialRoutes: LiveRoute[] }) {
           {captures.length === 0
             ? <p className="text-sm text-muted">{run && active(run) ? run.status === "pending" ? "Waiting for the robot runner to claim the run…" : "SPOT is heading to stop A…" : "Start a route to watch SPOT inspect the facility."}</p>
             : <ol className="flex flex-col gap-3">{[...captures].reverse().map(c => <li key={c.capture_id}><CaptureCard c={c} stop={route?.stops[c.stop_index]} /></li>)}</ol>}
+          {/* The stops still to come, so the feed stretched beside the Run column shows the route rather than blank space. */}
+          {route && captures.length < route.stops.length && <StopsAhead stops={route.stops.slice(captures.length)} />}
         </Panel>
       </div>
       {/* Stacked (under xl), this column goes first and side by side, so
@@ -257,6 +265,19 @@ function LiveMap({ route, captures, run }: { route: LiveRoute | null; captures: 
       <text y="-62" textAnchor="middle" fill="white" stroke="black" strokeWidth="3" paintOrder="stroke" fontSize="14" fontWeight="bold">{run && active(run) ? "SPOT" : "SPOT · parked"}</text>
     </g>}
   </svg>;
+}
+
+function StopsAhead({ stops }: { stops: LiveStop[] }) {
+  return <div className="mt-4 flex flex-col gap-2">
+    <p className="text-[11px] font-semibold tracking-wide text-muted uppercase">Still ahead</p>
+    <ol className="grid gap-2 sm:grid-cols-2">{stops.map(s => <li key={s.stop} className="flex items-center gap-3 rounded border border-line bg-surface-2 px-3 py-2 text-xs">
+      <span className="grid size-7 shrink-0 place-items-center rounded bg-surface font-mono text-[11px] font-semibold text-muted">{s.stop}</span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-ink">{s.location_name ?? s.location_id}</span>
+        <span className="block truncate text-muted">{s.asset_name ?? s.asset_id} · {s.action_type.replaceAll("_", " ").toLowerCase()}</span>
+      </span>
+    </li>)}</ol>
+  </div>;
 }
 
 function RunPanel({ run, route, captures, controls, sources }: {
