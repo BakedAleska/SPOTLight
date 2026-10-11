@@ -243,7 +243,8 @@ The judges' demo: an operator starts one of five routes on the web console's `/l
 presenter laptop walks it, calling the AMD box through SSH tunnels and posting results to the backend (Vercel or
 local). The runner holds only `BACKEND_URL` + `ADMIN_TOKEN` (+ the box services' keys); the web needs
 `BACKEND_ADMIN_TOKEN` for the Start/Cancel buttons. Runbook (tunnels, smoke check, Laya dry run, restarts):
-`docs/LIVE-RUNBOOK.md`. Contract: `docs/backend-services-contract.md` "Live simulation".
+`docs/LIVE-RUNBOOK.md`. Contract: `docs/backend-services-contract.md` "Live simulation". Streaming Qwen's drafts
+(hops, measured latencies, deploy and verify): `docs/STREAMING.md`.
 ```bash
 python scripts/live_runner.py --tunnel spot-amd --check      # one real request to every box service
 python scripts/live_runner.py --tunnel spot-amd --dry-run    # Laya on all 40 stops vs the plan (no writes)

@@ -870,3 +870,20 @@ body {
 .live-spot { transition: transform 1.6s ease-in-out; }
 .live-card-in { animation: float-in 0.45s ease-out both; }
 @media (prefers-reduced-motion: reduce) { .live-ping { animation: none; } .live-spot { transition: none; } .live-card-in { animation: none; } }
+
+/* Qwen draft caret (components/QwenDraft.tsx): a thin bar blinking after the
+   text Qwen is still writing. It is removed when the checked answer replaces
+   the draft, so it never blinks on a settled card. Reduced motion: steady. */
+.qwen-caret {
+  display: inline-block;
+  width: 2px;
+  height: 0.95em;
+  margin-left: 0.15em;
+  vertical-align: -0.12em;
+  border-radius: 1px;
+  background: var(--c-accent-ink);
+  opacity: 0.75;
+  animation: qwen-caret-blink 1s steps(2, jump-none) infinite;
+}
+@keyframes qwen-caret-blink { 0% { opacity: 0.75; } 100% { opacity: 0.1; } }
+@media (prefers-reduced-motion: reduce) { .qwen-caret { animation: none; } }

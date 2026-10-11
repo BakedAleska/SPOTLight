@@ -3,6 +3,9 @@ import { dashboardFeatures } from "@/lib/features";
 import { flagFailure, validFlagId } from "@/lib/flag-route";
 import { explainTimeoutMs, type FlagExplanation } from "@/lib/flag-detail";
 
+// The backend's /explain may take its whole 45 s deadline; a non-Fluid Vercel function stops at 10 s by default.
+export const maxDuration = 60;
+
 export async function GET(_request: Request, context: RouteContext<"/api/flags/[id]/explanation">) {
   if (!dashboardFeatures().flagExplanations) return Response.json({ error: "Explanations are disabled." }, { status: 404 });
   const { id } = await context.params;

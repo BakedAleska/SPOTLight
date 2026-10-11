@@ -45,6 +45,13 @@ class StopAnalysis(BaseModel):
     timings: Optional[Dict[str, Any]] = None
 
 
+class StopDraft(BaseModel):
+    call: int = Field(..., ge=1, description="1-based model call inside the assessment (retry / text-only resend).")
+    fields: Dict[str, Any] = Field(..., description="{evidence: [{claim, ids}], answer, recommended_action, "
+                                                    "confidence}, a full snapshot; at most 16 KB serialized.")
+    tokens: Optional[int] = Field(None, ge=0, description="Content chunks received so far in this call.")
+
+
 class EmbedItem(BaseModel):
     key: str = Field(..., max_length=200)
     text: str
@@ -135,6 +142,17 @@ async def stop_result(run_id: int, stop_index: int, body: StopResult, svc: Servi
     """ACTION_COMPLETED/FAILED through the 7-step ingest with the runner's Laya answers (rules run here, parallel
     mode) -> red/green, flag, event document, live KG rows. Returns the System 2 request and texts to embed."""
     return await svc.live.stop_result(run_id, stop_index, body.timestamp, body.laya, _rid())
+
+
+@router.post("/runs/{run_id}/stops/{stop_index}/draft", dependencies=admin)
+async def stop_draft(run_id: int, stop_index: int, body: StopDraft, svc: Services = Depends(get_services)) -> dict:
+    """Qwen's newest unchecked draft while System 2 streams (contract "Streaming Qwen drafts"). While the capture's
+    `qwen_source` is `pending` it becomes `capture.qwen = {draft: true, call, tokens, answer, evidence,
+    recommended_action, confidence, reasoning, drafted_at}` (every key; null/[] when not started; phase
+    `analysing`) -> `{updated: true}`; after /analysis stored the checked result nothing changes ->
+    `{updated: false}`. 409: the run is not running (cancelled, finished) or the stop is not triaged yet; 404: no
+    such run or stop; fields over 16 KB: 413."""
+    return await svc.live.stop_draft(run_id, stop_index, body.call, body.fields, body.tokens)
 
 
 @router.post("/runs/{run_id}/stops/{stop_index}/analysis", dependencies=admin)

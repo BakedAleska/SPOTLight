@@ -9,6 +9,11 @@ before any generation. to_response() maps an AssessmentRun to the flat BackendAs
 evaluation._public does, so the numbers the backend logs to app.model_calls (model, latency_ms, tokens_per_sec)
 are the same fields the eval measured.
 
+Streaming drafts: assess_image(..., on_draft=cb) runs the same pipeline inside generator.drafts(cb) when the
+generator has it (LlamaGenerator, also through RecordingGenerator), so cb(call, tokens, text) sees the model's text
+while it streams. Nothing else changes: the checked result, cache, recorder and probe are those of a plain call, and
+cache hits and insufficient packets never call the model, so they produce no drafts.
+
 Cache (SRV-02): one JSON file per key (flag_id, packet_hash, model, prompt_ver). packet_hash is
 evaluation.packet_hash, the same hash the eval harness gates on, so a changed fact regenerates; prompt_ver folds in
 the system prompt + few-shot pool hash, so a prompt change regenerates. File names are the sha256 of the canonical
@@ -24,6 +29,7 @@ message here ever contains the X-API-Key. This module does not print.
 """
 from __future__ import annotations
 
+from contextlib import nullcontext
 from dataclasses import replace
 from datetime import datetime, timezone
 import hashlib
@@ -302,8 +308,17 @@ class LiveAssessor:
         return {'flag_id': prepared.flag_id, 'packet_hash': packet_hash(prepared), 'model': model,
                 'prompt_ver': self.prompt_ver}
 
-    def assess_image(self, body, refresh: bool = False) -> Tuple[BackendAssessResponse, str, bool, Optional[str]]:
-        """(response, 'hit'|'miss'|'off', stored, image status or None when the request had no image)."""
+    @property
+    def streams_drafts(self) -> bool:
+        """True when on_draft can receive the model's text while it streams (the generator has drafts())."""
+        return callable(getattr(self.generator, 'drafts', None))
+
+    def assess_image(self, body, refresh: bool = False, on_draft: Optional[Callable[[int, int, str], None]] = None
+                     ) -> Tuple[BackendAssessResponse, str, bool, Optional[str]]:
+        """(response, 'hit'|'miss'|'off', stored, image status or None when the request had no image).
+
+        on_draft(call, tokens, text), when given and the generator streams, receives the accumulated completion text
+        after each streamed chunk (display only; the result is checked exactly as without it)."""
         body = body if isinstance(body, BackendAssessRequest) else BackendAssessRequest.model_validate(body)
         prepared = normalize_packet(body)
         has_image = prepared.image is not None
@@ -321,8 +336,10 @@ class LiveAssessor:
         if self.probe is not None:
             self.probe.begin()
         answered = False
+        drafts = getattr(self.generator, 'drafts', None) if on_draft is not None else None
         try:
-            run = run_pipeline(body, self.generator, config)
+            with drafts(on_draft) if callable(drafts) else nullcontext():
+                run = run_pipeline(body, self.generator, config)
             answered = any(a.status in ANSWERED for a in run.attempts)
         finally:
             if self.probe is not None:

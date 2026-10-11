@@ -266,6 +266,9 @@ Tables: `live_runs`, `live_captures` (`db/migrations/013_live.sql`). Routes: `ba
      event document `event:act-LIVE-<run>-<stop>` and the live KG rows. Returns `system2_request` (the System 2
      `/v1/assess` body: a packet in the MCP `get_flag_context` shape, `packet_version: "1-live"`; `flag_id` is the
      flag for a red stop, the `capture_id` for a green one, which has no flag), the photo, and `embed`: texts to embed.
+     The packet carries no `gaps`: System 2 treats any gap as insufficient context and answers its template without
+     calling the model, so the live provenance note ("kit row ... re-sent now; the photo is a simulated capture") is
+     the last ordinary, cited fact `F<n>`.
   4. The runner (in the background while SPOT walks on) sends the photo to vision, adds the `V#` rows and OCR to
      `context` and calls System 2 with `image_b64`; then `POST .../stops/{i}/analysis {photo{path, sha256, bytes},
      vision | vision_error, system2_request, system2 | system2_error, system2_ms, image_status, timings}`. A System 2
@@ -276,7 +279,8 @@ Tables: `live_runs`, `live_captures` (`db/migrations/013_live.sql`). Routes: `ba
      `node:<node_id>`; a vector is stored only if the row's stored text equals `text` and it has `EMBED_DIM` values.
      Document-backed KG nodes take their document's vector.
   `POST /live/runs/{id}/finish {status: done|error, error}` logs `MISSION_COMPLETED` (stored, not triaged) and sets
-  `counts` (`red`, `green`, `qwen`, `template`, `laya_live`, `stops`). Errors: `404 live_not_found`, `409
+  `counts` (`red`, `green`, `qwen`, `template`, `laya_live`, `stops`); it and `cancel` mark captures whose analysis
+  never landed `qwen_source: "error"`. Errors: `404 live_not_found`, `409
   live_conflict` (e.g. a stop on a run that is not running, so a cancelled run stops the runner).
 - **Ingest additions** (all additive): `details.source_action_id` makes an unknown action id inherit that kit row;
   `details.reading` / `details.anomaly` (kit rows) are used instead of looking them up by action id; `details.mission`
@@ -421,3 +425,86 @@ Research basis: `research/tech-spot-vision-cv-2026-10-10.md` §3 and §7 (code m
   auth error, never an image rejection: no text-only resend.
 - **Cache:** `packet_hash` also covers the kept OCR lines and the image's sha256 (only when present, so old hashes
   are unchanged); image requests key on the vision model; text-only answers to image requests are not cached.
+
+### Streaming Qwen drafts (ADDED 2026-10-11; additive: every existing endpoint is unchanged)
+Goal: the boxes Qwen fills (flag detail "Load explanation", the `/live` "Qwen explanation (System 2)" card) show the
+model's text while it is generated, instead of staying empty for the 8-30 s a 27B answer takes. **A draft is never an
+answer.** It is the model's partial JSON before any check; the checked result (`final` / `done` / `/analysis`) always
+replaces it, and only that result is stored, cached, indexed, counted or embedded. A rejected draft simply gives way to
+the checked template.
+
+**Draft fields** (one shape at every hop): `fields = {evidence: [{claim, ids}], answer, recommended_action,
+confidence}`, parsed from the incomplete JSON text generated so far, in GEN-01 order (evidence first, then answer,
+question, recommended_action, confidence). Only keys whose value has started are present; the last string may stop
+mid-word; `ids` holds only complete strings; every evidence item is always `{claim, ids}` (`claim: ""` / `ids: []`
+until started); `question` and `insufficient_context` are never sent (they repeat the packet). Every draft is a **full
+snapshot** (replace, never append), so a lost draft costs nothing and a retry simply starts a new snapshot. The first
+draft of a call is sent at once and may be `fields: {}` (nothing readable yet); a later snapshot equal to the last one
+sent is skipped. `call` (1-based) counts model calls inside one assessment: it increases on the pipeline's retry
+and on an image request's text-only resend; a client shows the newest `call` only. `reasoning` (backend and live only)
+is the evidence claims joined like `normalize_assessment` (`"<claim> [<ids>]"`, space-separated).
+
+**System 2 `POST /v1/assess/stream`** (same body, `X-API-Key` and validation as `/v1/assess`). A 401 or 422 is a plain
+JSON error before the stream starts, and so is `503 {"detail": ...}` when 8 streams (`STREAM_MAX_CONCURRENT`, one
+worker thread each) are already running in the process; the caller retries or uses `/v1/assess`. Otherwise `200 text/event-stream` (`Cache-Control: no-cache, no-transform`,
+`X-Accel-Buffering: no`), events `event: <name>` + `data: <one-line JSON>`:
+- `start` `{flag_id, request_id, model, mode: "live" | "stub"}`, sent at once.
+- `draft` `{call, tokens, fields}`: at most one per 100 ms per call while llama-server streams (`tokens` = content
+  chunks received so far in this call).
+- `final` `{response, cache: "hit" | "miss" | "off" | null, image: "used" | "text_only" | "not_used" | null}`, always the
+  last event on success. `response` is exactly the body `/v1/assess` would return for the same request (same checks,
+  cache, deadlines and recorder); `cache`/`image` are the values of its `X-System2-Cache` / `X-System2-Image` headers.
+- `error` `{detail}`: an unexpected failure after the stream started; the last event.
+- `: keep-alive` comment after 10 s without an event.
+Stub mode, cache hits and `insufficient_context` packets send `start` then `final` (no drafts). Live generation asks
+llama-server for `stream: true` + `stream_options.include_usage` with otherwise the same body; the streamed content is
+concatenated and judged exactly like a non-streamed completion (`finish_reason`, usage, `timings` come from the
+stream's chunks). If llama-server (or a proxy) ignores `stream: true` and answers a plain completion (a 2xx whose
+Content-Type is not `text/event-stream`), it is read as one under the plain size cap, with no drafts. A client
+disconnect does not cancel the assessment: it finishes and is cached as usual.
+
+**Backend `POST /api/v1/flags/{flag_id}/explain/stream?refresh=false`** (no body; open like `/explain`). Flag-not-found
+`404`, an unreachable database `503` and `504 deadline_exceeded` (the flag row not read in time) are JSON before the
+stream. Otherwise `200 text/event-stream` (same headers), events:
+`start` `{flag_id, request_id}` · `stage` `{stage: "cached" | "context" | "system2" | "storing"}` (0..n) · `draft`
+`{call, fields, reasoning}` (0..n, relayed from System 2) · `done` `{explanation}` · or `error` `{error, detail}`; a
+`: keep-alive` comment every 15 s. `done.explanation` is exactly the JSON `POST /flags/{id}/explain` returns for the
+same call (same cache rules, `REQUEST_DEADLINE_S`, fallbacks, storage and indexing). Cached rows and the orchestrator
+path (`ORCHESTRATOR_URL` set) send no drafts. If System 2 answers the stream with 404/405 (an older build), the backend
+uses `/v1/assess` inside the same deadline, without drafts, and remembers it for 5 minutes per instance
+(`NO_STREAM_TTL_S`; no breaker trip, no `model_calls` row). A `503` (System 2's stream slots are busy) also uses
+`/v1/assess`, for that call only. A `200 application/json` reply on `/v1/assess/stream` is
+accepted as the final response (no drafts). System 2's `error` event, a stream without `final`, a transport error or
+another status count as a System 2 failure (breaker, template) exactly like `/v1/assess`; there is no second call. A
+stream cancelled by the client or the deadline logs an `ok=false, error="cancelled"` `model_calls` row and does not
+touch the breaker. `/ops/model-calls` stats count `/v1/assess/stream` calls under `/v1/assess` (rows keep the real
+endpoint).
+
+**Live runner -> backend `POST /api/v1/live/runs/{run_id}/stops/{stop_index}/draft`** (admin, `X-Admin-Token`), body
+`{call, fields, tokens?}`. While the run is `running` and the capture's `qwen_source` is `pending` it sets
+`capture.qwen = {draft: true, call, tokens, answer, evidence, recommended_action, confidence, reasoning, drafted_at}`
+(every key, `null` / `[]` when not started) and `phase = "analysing"`, and returns `{updated: true}`; after
+`/analysis` has stored the result it changes nothing and returns `{updated: false}`. Errors: `404 live_not_found` (no
+such run or stop), `409 live_conflict` (the run is not `running`, e.g. cancelled or finished, or the stop is not
+triaged yet), `413 live_too_large` (`fields` over 16 KB serialized), `422` (bad body). No schema change (the draft
+lives in the existing `qwen` jsonb until `/analysis` overwrites it). `GET /live/runs/{id}` and `/live/captures` return
+it as is, with `qwen_source: "pending"`. When the run ends (`finish` or `cancel`), captures still `pending` (their
+`/analysis` never landed) become `qwen_source: "error"`, `phase: "error"`; a leftover draft stays in `qwen` and the
+console labels it discarded.
+
+**Live runner** (`scripts/live_runner.py`): calls `/v1/assess/stream` (env `SYSTEM2_STREAM`, default `1`, set in
+compose from the host variable `LIVE_SYSTEM2_STREAM`; `0` = plain `/v1/assess`; a 404/405 or a busy 503 also falls
+back to `/v1/assess` in the time left) and posts the newest draft at most every `LIVE_DRAFT_INTERVAL_S` (default `0.5`) from a
+separate thread, so posting never slows reading. `SYSTEM2_TIMEOUT_S` bounds the whole call, stream included. A `200`
+JSON reply on the stream endpoint is taken as the final response; an `error` event is a System 2 error (template,
+no fallback call). Draft posts are best effort: a failure is logged once and never fails the stop, a 4xx stops drafts
+for that stop, and a snapshot over 16 KB is skipped. The `/analysis` call is unchanged and still carries the final
+response; no draft is posted after it.
+
+**Web.** `GET /api/flags/[id]/explanation/stream` pipes the backend stream through unbuffered (behind
+`FEATURE_FLAG_EXPLANATIONS`, browser abort cancels upstream). Flag detail renders drafts under "Qwen is writing ·
+unverified draft" and swaps in the `done` explanation with its usual label; any stream failure falls back to
+`GET /api/flags/[id]/explanation`. `EXPLAIN_TIMEOUT_MS` bounds only the wait for the backend's response headers, and
+both explanation routes set `maxDuration = 60`. `/live` shows `capture.qwen` drafts in the Qwen box with the same label
+while `qwen_source` is `pending`, and polls the selected run every 750 ms while the run is pending/running and any of
+its captures is pending (2 s otherwise). Runbook and measured latencies: `docs/STREAMING.md`.

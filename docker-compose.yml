@@ -36,7 +36,8 @@
 # live-runner -    live                     Live simulation runner (scripts/live_runner.py): claims runs queued on
 #                                           /live, walks the 8 stops, calls Laya/vision/System 2/embed on the AMD
 #                                           box through host SSH tunnels and posts results to BACKEND_URL with
-#                                           ADMIN_TOKEN. No port, no DB credentials. docs/LIVE-RUNBOOK.md.
+#                                           ADMIN_TOKEN (Qwen drafts streamed to /draft: LIVE_SYSTEM2_STREAM,
+#                                           LIVE_DRAFT_INTERVAL_S). No port, no DB credentials. docs/LIVE-RUNBOOK.md.
 #
 # Profiles:
 #   local   everything in Docker on CPU (testing; Laya ~3-8 s per event, embedding ~2.3 s per query)
@@ -405,6 +406,8 @@ services:
       VISION_API_KEY: *vision-key
       LIVE_TRAVEL_S: ${LIVE_TRAVEL_S:-5}     # walking time between stops
       LIVE_WORK_S: ${LIVE_WORK_S:-3}         # inspection time at a stop
+      SYSTEM2_STREAM: ${LIVE_SYSTEM2_STREAM:-1}              # 1: /v1/assess/stream, Qwen drafts on /live; 0: /v1/assess
+      LIVE_DRAFT_INTERVAL_S: ${LIVE_DRAFT_INTERVAL_S:-0.5}   # at most one draft post to the backend per interval
       RUNNER_NAME: ${RUNNER_NAME:-presenter-laptop}
     # Non-root runtime (uid 10003) and the heartbeat healthcheck are in the image.
 

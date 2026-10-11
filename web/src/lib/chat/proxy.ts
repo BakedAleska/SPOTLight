@@ -5,6 +5,7 @@
    the UI can branch on `error` codes like conversation_busy or gemini_unset. */
 
 import { assistantFeatures } from "@/lib/features";
+import { pipeEventStream } from "@/lib/sse-proxy";
 import { normalizeMissionId } from "./mission";
 
 const NO_STORE = { "Cache-Control": "no-store" };
@@ -108,44 +109,14 @@ export async function proxyJson(path: string, init: { method?: string; body?: st
 }
 
 /**
- * The streaming route. The backend's SSE body is handed to the Response
- * as-is — no reading, no TransformStream — so each event leaves as soon as it
- * arrives. `no-transform` stops Next's gzip from buffering it, and
- * X-Accel-Buffering does the same for an nginx in front. The browser's abort
- * (Stop) reaches the backend two ways: request.signal aborts the upstream
- * fetch, and a cancelled response body cancels upstream.body.
+ * The streaming route: the backend's SSE body is piped through unbuffered
+ * (lib/sse-proxy.ts). The browser's abort (Stop) reaches the backend through
+ * request.signal and through the cancelled response body; pre-stream JSON
+ * errors (404/409/422/503) are mirrored with their status.
  */
-export async function proxyStream(path: string, body: string, signal: AbortSignal): Promise<Response> {
-  let upstream: Response;
-  try {
-    upstream = await fetch(chatBackendUrl(path), {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
-      body,
-      cache: "no-store",
-      signal,
-    });
-  } catch (error) {
-    if (signal.aborted) return new Response(null, { status: 499 });
-    return unreachable(error);
-  }
-  const type = upstream.headers.get("content-type") ?? "";
-  if (!upstream.ok || !type.includes("text/event-stream") || !upstream.body) {
-    // Pre-stream errors (404/409/422/503) are JSON; mirror them.
-    const text = await upstream.text().catch(() => "");
-    try {
-      JSON.parse(text);
-      return new Response(text, { status: upstream.ok ? 502 : upstream.status, headers: { "Content-Type": "application/json", ...NO_STORE } });
-    } catch {
-      return chatError(upstream.ok ? 502 : upstream.status, "upstream_error", "The backend could not start an answer.");
-    }
-  }
-  return new Response(upstream.body, {
-    status: 200,
-    headers: {
-      "Content-Type": "text/event-stream; charset=utf-8",
-      "Cache-Control": "no-cache, no-transform",
-      "X-Accel-Buffering": "no",
-    },
-  });
+export function proxyStream(path: string, body: string, signal: AbortSignal): Promise<Response> {
+  return pipeEventStream(chatBackendUrl(path), { method: "POST", body, signal }, (failure) =>
+    failure.kind === "unreachable"
+      ? unreachable(failure.error)
+      : chatError(failure.status, "upstream_error", "The backend could not start an answer."));
 }

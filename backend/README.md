@@ -22,6 +22,7 @@ Binding contracts: `docs/backend-services-contract.md` (routes, pipeline, env) a
 | `GET /api/v1/flags/{id}` | Flag + event + acks + assessment + Laya's stored answers |
 | `GET /api/v1/flags/{id}/context` | System 2's context packet (MCP `get_flag_context`, else a SQL-built packet) |
 | `POST/GET /api/v1/flags/{id}/explain` | Orbit-style question/answer/reasoning/recommended action (System 2, else a template); cached in `assessments` (System 2 answers are final; a template is stored as `state=TEMPLATE` and System 2 is retried when configured), `?refresh=true` regenerates. Bounded by `REQUEST_DEADLINE_S` |
+| `POST /api/v1/flags/{id}/explain/stream` | The same explanation as SSE, with Qwen's unchecked drafts while it writes (see "Streaming Qwen drafts" below) |
 | `POST /api/v1/flags/{id}/ack` | ACKNOWLEDGE / RESOLVE / ESCALATE / NOTE; a note is embedded as RAG doc `note:<ack_id>` |
 | `GET /api/v1/missions` | Missions with reported status vs True Mission Health (`status_misleading`, `?misleading_only=true`) |
 | `GET /api/v1/missions/{id}` | Mission, every action (reading, anomaly, flags), and its flags |
@@ -172,6 +173,25 @@ Ingest (`POST /events`, and every replay event): (1) raw → `raw.spot_event_log
 (5) `system1_predictions`, (6) validator (`policy.py`) per `TRIAGE_MODE`, with both verdicts in `flags.reasons`,
 (7) upsert `flags` when escalated. One `request_id` ties the event's rows in `raw.spot_event_log`,
 `app.model_calls`, `app.request_log` and `events.payload.triage` together.
+
+## Streaming Qwen drafts
+Contract: `docs/backend-services-contract.md` "Streaming Qwen drafts". A draft is Qwen's partial JSON before any
+check: it is shown, never stored, cached, indexed or counted; the checked result always replaces it.
+- `POST /flags/{id}/explain/stream?refresh=false` (SSE): `start` · `stage` (cached / context / system2 / storing) ·
+  `draft` {call, fields, reasoning} relayed from System 2's `/v1/assess/stream` · `done` {explanation} or
+  `error` {error, detail}; `: keep-alive` every 15 s. It runs the same code as `/explain` (`FlagService._explain` with
+  an `emit` hook), so `done.explanation` is exactly what `/explain` returns. 404 / 503 / 504 are JSON before the
+  stream. An older System 2 (404/405 on the stream) is asked `/v1/assess` within the same deadline (remembered for
+  5 min); a busy 503 or a 200 JSON reply also works, without drafts. A cancelled stream logs `error="cancelled"`
+  without touching the breaker.
+  Cached rows and the orchestrator path send no drafts. On a client disconnect the explanation is abandoned unless it
+  is already being stored. On serverless the stream drains the log sink (2 s) before it ends.
+- `POST /live/runs/{id}/stops/{i}/draft` (admin): `{call, fields, tokens?}`, fields at most 16 KB (413
+  `live_too_large`). One conditional UPDATE: while `qwen_source = 'pending'` it sets `capture.qwen = {draft: true,
+  ...}` and `phase = analysing` (`{updated: true}`), afterwards it changes nothing (`{updated: false}`); 404, and 409
+  when the run is not running or the stop not triaged. Only strings and `evidence[{claim, ids}]` are kept. `finish`
+  and `cancel` turn captures still `pending` into `qwen_source = 'error'`. Live packets carry no `gaps` (System 2
+  would skip the model); the provenance note is an ordinary fact. Runbook: `docs/STREAMING.md`.
 
 ## Resilience (the demo never 500s)
 | Down | Behavior |

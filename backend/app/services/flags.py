@@ -10,22 +10,41 @@ Fallbacks (the demo path never 500s):
   SYSTEM2_URL is set, and they are never indexed as `explanation` RAG docs.
 - ORCHESTRATOR_URL set (docs/backend-services-contract.md "Orchestrator path"): /explain asks the LangGraph
   orchestrator first; when it is down or had no context packet, the path above runs unchanged. Unset: no change.
+- /explain/stream (contract "Streaming Qwen drafts") runs the very same code (`_explain`) with an `emit` hook: it
+  reports stages, relays System 2's drafts (via /v1/assess/stream; a 404/405 falls back to /v1/assess inside the
+  same deadline) and ends with `done` = exactly what /explain returns. Drafts are never stored, cached or indexed.
 """
 from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, AsyncIterator, Callable, Dict, List, Optional, Tuple
 
+import anyio
 import psycopg
 
 from ..db.pool import DatabaseUnavailable
 from .embed import vec_literal
 from .http import ServiceUnavailable, short_error
-from .system2 import normalize_assessment, template_explanation
+from .system2 import (StreamNotSupported, evidence_reasoning, normalize_assessment, sanitize_draft_fields,
+                      template_explanation)
 from .triage import T_policy as P
 
 log = logging.getLogger("backend.flags")
+
+Emit = Callable[[str, Dict[str, Any]], None]
+KEEPALIVE = ("keep-alive", None)     # yielded by explain_stream after STREAM_KEEPALIVE_S of silence: an SSE comment
+STREAM_KEEPALIVE_S = 15.0
+
+
+def draft_event(d: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """System 2's `draft` {call, tokens, fields} -> the backend's `draft` {call, fields, reasoning}."""
+    if not isinstance(d, dict):
+        return None
+    fields = sanitize_draft_fields(d.get("fields"))
+    call = d.get("call")
+    return {"call": call if isinstance(call, int) and not isinstance(call, bool) and call >= 1 else 1,
+            "fields": fields, "reasoning": evidence_reasoning(fields.get("evidence"))}
 
 
 class FlagNotFound(LookupError):
@@ -93,6 +112,7 @@ class FlagService:
         self.sink = sink
         self.deadline_s = deadline_s
         self.orchestrator = orchestrator
+        self.keepalive_s = STREAM_KEEPALIVE_S
 
     @property
     def orchestrated(self) -> bool:
@@ -254,6 +274,70 @@ class FlagService:
                       image: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         deadline = _Deadline(self.deadline_s)
         row = await self.load(flag_id, deadline)
+        return await self._explain(row, flag_id, request_id, refresh, image, deadline)
+
+    async def explain_stream(self, flag_id: int, request_id: Optional[str],
+                             refresh: bool = False) -> AsyncIterator[Tuple[str, Any]]:
+        """The flag row is read here, before any event (FlagNotFound / RequestDeadlineExceeded / database errors
+        raise as for /explain, so the router answers them as JSON). Returns the event iterator: `start`, `stage`
+        (0..n), `draft` (0..n), then `done` {explanation} (exactly explain()'s result for the same call) or
+        `error` {error, detail}; KEEPALIVE after `keepalive_s` without an event."""
+        deadline = _Deadline(self.deadline_s)
+        row = await self.load(flag_id, deadline)
+        return self._explain_events(row, flag_id, request_id, refresh, deadline)
+
+    async def _explain_events(self, row: Dict[str, Any], flag_id: int, request_id: Optional[str], refresh: bool,
+                              deadline: _Deadline) -> AsyncIterator[Tuple[str, Any]]:
+        q: asyncio.Queue = asyncio.Queue()
+        storing = asyncio.Event()
+
+        def emit(event: str, data: Dict[str, Any]) -> None:
+            if event == "stage" and data.get("stage") == "storing":
+                storing.set()
+            q.put_nowait((event, data))
+
+        async def produce() -> None:
+            try:
+                out = await self._explain(row, flag_id, request_id, refresh, None, deadline, emit)
+                q.put_nowait(("done", {"explanation": out}))
+            except asyncio.CancelledError:
+                raise
+            except Exception as exc:  # noqa: BLE001 - the stream must end with an `error` event, never a broken body
+                log.exception("explain stream for flag %s failed", flag_id)
+                q.put_nowait(("error", {"error": "internal_error", "detail": short_error(exc)}))
+            finally:
+                q.put_nowait(None)
+
+        yield "start", {"flag_id": flag_id, "request_id": request_id}
+        task = asyncio.ensure_future(produce())
+        try:
+            while True:
+                try:
+                    item = await asyncio.wait_for(q.get(), self.keepalive_s)
+                except asyncio.TimeoutError:
+                    yield KEEPALIVE
+                    continue
+                if item is None:
+                    break
+                yield item
+        finally:
+            if not task.done():
+                # The client went away. Before storing: stop (System 2 still finishes and caches its answer, so a
+                # retry is fast). While storing: let the write finish, so the row is never half-done.
+                with anyio.CancelScope(shield=True):
+                    if not storing.is_set():
+                        task.cancel()
+                    try:
+                        await task
+                    except BaseException:  # noqa: BLE001 - CancelledError, or whatever the producer was raising
+                        pass
+
+    async def _explain(self, row: Dict[str, Any], flag_id: int, request_id: Optional[str], refresh: bool,
+                       image: Optional[Dict[str, Any]], deadline: _Deadline,
+                       emit: Optional[Emit] = None) -> Dict[str, Any]:
+        """The one /explain code path. `emit` (streaming only) gets `stage` and `draft` events; without it System 2
+        is called with plain /v1/assess, exactly as before."""
+        stage: Emit = emit or (lambda event, data: None)
         warning = None
         if image and not self.orchestrated:
             warning, image = "image ignored: ORCHESTRATOR_URL is not set", None
@@ -265,6 +349,7 @@ class FlagService:
             is_template = cached.get("state") == STATE_TEMPLATE or cached.get("model") in ("template", None)
             retry = self.system2.configured or self.orchestrated
             if cached.get("state") in (STATE_SYSTEM2, STATE_TEMPLATE) and not (is_template and retry):
+                stage("stage", {"stage": "cached"})
                 out = {**cached, "source": "template" if is_template else "system2", "cached": True}
                 if warning:
                     out["warning"] = warning
@@ -273,21 +358,24 @@ class FlagService:
         reserve = deadline.reserve()
         orchestrator_error = None
         if self.orchestrated:
+            stage("stage", {"stage": "system2"})        # the orchestrator's graph ends in System 2; no drafts
             result, orchestrator_error = await self._via_orchestrator(f, flag_id, request_id, refresh, image,
                                                                       deadline, reserve)
             if result is not None:
+                stage("stage", {"stage": "storing"})
                 return await self._store(result, f, flag_id, request_id, deadline, warning)
+        stage("stage", {"stage": "context"})
         ctx_budget = min(deadline.remaining(reserve), EXPLAIN_CONTEXT_SHARE * deadline.total)
         context = await self._context(row, flag_id, request_id, deadline, ctx_budget)
         result: Dict[str, Any]
+        stage("stage", {"stage": "system2"})
         s2_budget = deadline.remaining(reserve)
         try:
             body = {"flag_id": flag_id, "request_id": request_id, "flag": f, "event": row.get("event"),
                     "reasons": [r.get("detail") for r in (f.get("reasons") or []) if isinstance(r, dict)],
                     "context": context}
-            out = await asyncio.wait_for(
-                self.system2.assess(body, request_id=request_id, flag_id=flag_id, action_id=f.get("action_id")),
-                s2_budget)
+            out = await asyncio.wait_for(self._assess(body, request_id, flag_id, f.get("action_id"), emit),
+                                         s2_budget)
             result = normalize_assessment(out)
             if not result.get("answer"):
                 raise ServiceUnavailable("system2", "response had no answer")
@@ -306,7 +394,26 @@ class FlagService:
         result["context_source"] = context.get("source")
         if orchestrator_error:
             result["orchestrator"] = {"error": orchestrator_error}
+        stage("stage", {"stage": "storing"})
         return await self._store(result, f, flag_id, request_id, deadline, warning)
+
+    async def _assess(self, body: Dict[str, Any], request_id: Optional[str], flag_id: int,
+                      action_id: Optional[str], emit: Optional[Emit]) -> Dict[str, Any]:
+        """System 2's answer: /v1/assess, or (streaming) /v1/assess/stream relaying its drafts, falling back to
+        /v1/assess when System 2 is an older build without the stream. The caller's deadline covers both calls."""
+        if emit is None:
+            return await self.system2.assess(body, request_id=request_id, flag_id=flag_id, action_id=action_id)
+
+        def on_draft(d: Dict[str, Any]) -> None:
+            ev = draft_event(d)
+            if ev is not None:
+                emit("draft", ev)
+        try:
+            out, _meta = await self.system2.assess_stream(body, request_id=request_id, flag_id=flag_id,
+                                                          action_id=action_id, on_draft=on_draft)
+            return out
+        except StreamNotSupported:
+            return await self.system2.assess(body, request_id=request_id, flag_id=flag_id, action_id=action_id)
 
     async def _via_orchestrator(self, f: Dict[str, Any], flag_id: int, request_id: Optional[str], refresh: bool,
                                 image: Optional[Dict[str, Any]], deadline: _Deadline,
