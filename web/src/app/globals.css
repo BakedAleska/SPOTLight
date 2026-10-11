@@ -799,18 +799,20 @@ body {
   .spot-activity-ring, .spot-activity-icon { animation: none; }
 }
 
-/* Each follower starts later, orbits faster, and joins the leader at the top. */
+/* Windows-style dots: the leader orbits and pauses at the top, and each follower makes the same eased trip a beat
+   later, landing on it. The pause (55%-100%) outlasts the last follower's delay, so all dots meet before the leader goes again. */
 .spot-working-spinner {
   filter: drop-shadow(0 1px 2px black);
 }
 .spot-merging-dot {
   transform-box: view-box;
   transform-origin: 0 0;
-  animation: spot-dots-orbit 2.2s var(--dot-motion) infinite both;
+  animation: spot-dots-orbit 2.4s infinite both;
+  animation-delay: calc(var(--dot-index) * 0.18s);
 }
 @keyframes spot-dots-orbit {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  0% { transform: rotate(0deg); animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1); }
+  55%, 100% { transform: rotate(360deg); }
 }
 @media (prefers-reduced-motion: reduce) { .spot-merging-dot { animation: none; } }
 
