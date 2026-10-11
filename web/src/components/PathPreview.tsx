@@ -8,6 +8,7 @@ import { LoadingDots } from "./LoadingDots";
 import type { PathMission, PathPoint } from "@/lib/path-types";
 
 import { buildPlayback, playbackAt, eventLabel } from "@/lib/path-playback";
+import { legsPath } from "@/lib/route-geometry";
 
 const issueColor: Record<string, string> = { CRITICAL: "var(--c-bad)", HIGH: "var(--c-warn)", MEDIUM: "var(--c-info)", LOW: "var(--c-faint)" };
 const control = "flex min-h-11 items-center justify-center gap-2 rounded border border-line bg-surface px-3 text-sm text-ink hover:bg-surface-2 disabled:opacity-40";
@@ -54,7 +55,6 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
   const timelineOpen = started && events.length > 0;
   // Completion records can omit location; retain the action's last known waypoint.
   const located = events.map(e => ({ ...e, locationId: e.locationId ?? events.find(start => start.actionId && start.actionId === e.actionId && start.locationId)?.locationId }));
-  const visited = located.flatMap(e => { const p = points.find(p => p.id === e.locationId); return p ? [p] : []; }).filter((p, i, list) => i === 0 || list[i - 1].id !== p.id);
   const current = frame?.moving ? frame.from : frame?.to;
   const changingFloor = !!frame?.moving && frame.from?.floor !== frame.to?.floor;
   const floorUp = (frame?.to?.floor ?? 0) > (frame?.from?.floor ?? 0);
@@ -66,9 +66,11 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
   const selected = points.find(p => p.id === selectedId) ?? current;
   const battery = events.filter(e => e.battery != null).at(-1)?.battery;
   const last = events.at(-1);
-  const planned = mission.events.filter(e => e.type === "ACTION_STARTED").flatMap(e => { const p = points.find(p => p.id === e.locationId); return p ? [p] : []; });
+  const planned = useMemo(() => legsPath(segments.flatMap(s => s.leg ? [s.leg] : [])), [segments]);
+  // Walked so far: every finished leg, plus the one underway cut at SPOT's position.
+  const underway = frame?.leg && elapsed < frame.end ? frame.leg : undefined;
+  const walked = legsPath([...segments.filter(s => s.leg && s.end <= elapsed).map(s => s.leg!), ...(underway ? [underway] : [])], underway ? frame?.progress : 1);
   useEffect(() => { const list = timeline.current; if (list) list.scrollTo({ left: list.scrollWidth, behavior: "smooth" }); }, [events.length]);
-  const path = (list: PathPoint[]) => list.map(p => `${p.x},${p.y}`).join(" ");
   return <>
     <div className="panel-columns grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
       <Panel title="Facility route" aside="RECORDED REPLAY">
@@ -76,9 +78,8 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
         <svg viewBox="0 0 1095 595" className="w-full rounded border border-line bg-surface-2" role="group" aria-label="Facility map with mission route, waypoint buttons and SPOT position">
           <defs><filter id="spot-marker-contrast" x="-25%" y="-25%" width="150%" height="150%"><feComponentTransfer><feFuncA type="linear" slope="2" /></feComponentTransfer><feDropShadow dx="0" dy="1" stdDeviation="1.5" floodColor="black" floodOpacity="0.9" /></filter></defs>
           <image href="/spot-blueprint.svg" width="1095" height="595" />
-          <polyline points={path(planned)} fill="none" stroke="white" strokeWidth="3" strokeDasharray="8 8" opacity="0.65" />
-          <polyline points={path(visited)} fill="none" stroke="var(--c-accent-ink)" strokeWidth="5" strokeLinejoin="round" />
-          {frame?.moving && <line x1={frame.from?.x} y1={frame.from?.y} x2={frame.x} y2={frame.y} stroke="var(--c-accent-ink)" strokeWidth="5" strokeDasharray={changingFloor ? "8 6" : undefined} />}
+          <path d={planned} fill="none" stroke="white" strokeWidth="3" strokeDasharray="8 8" opacity="0.65" />
+          <path d={walked} fill="none" stroke="var(--c-accent-ink)" strokeWidth="5" strokeLinejoin="round" strokeLinecap="round" />
           {points.map(p => {
             const fault = errors.some(e => e.locationId === p.id);
             return <g key={p.id} role="button" tabIndex={0} aria-label={`${p.id}: ${p.name}${fault ? ", error detected" : ""}`} onClick={() => setSelectedId(p.id)} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSelectedId(p.id); } }} className="cursor-pointer">
@@ -100,7 +101,7 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
             <text y="65" textAnchor="middle" fill="white" stroke="black" strokeWidth="3" paintOrder="stroke" fontSize="15" fontWeight="bold">SPOT</text>
           </g>}
         </svg>
-        <p className="mt-3 text-xs text-muted">Dashed: planned route · Solid: visited route · !: error. Travel is interpolated between stops; activity durations are compressed from the logs.</p>
+        <p className="mt-3 text-xs text-muted">Dashed: planned route · Solid: visited route · !: error. Travel follows the hallways and stairs between stops; activity durations are compressed from the logs.</p>
         <div className="mt-4 flex flex-col gap-3 border-t border-line pt-4">
           <label className="text-xs text-muted">Replay position · event {index + 1} of {mission.events.length}<input className="mt-2 w-full accent-accent-ink" type="range" min="0" max={duration} value={elapsed} onChange={e => setElapsed(Number(e.target.value))} /></label>
           <div className="flex flex-wrap items-center gap-2"><button className={control} onClick={() => {

@@ -8,6 +8,7 @@ import {
 import { Panel } from "./Panel";
 import { LoadingDots } from "./LoadingDots";
 import { anchors } from "@/lib/waypoints";
+import { legsPath, routeLegs } from "@/lib/route-geometry";
 import type { LiveCapture, LiveKg, LiveRoute, LiveRun, LiveRunDetail, LiveStop } from "@/lib/live";
 
 const control = "flex min-h-11 items-center justify-center gap-2 rounded border border-line bg-surface px-3 text-sm text-ink hover:bg-surface-2 disabled:opacity-40";
@@ -174,11 +175,14 @@ function LiveMap({ route, captures, run }: { route: LiveRoute | null; captures: 
   const latest = captures.at(-1);
   const pos = latest ? pt(latest.location_id) : stops[0] ? pt(stops[0].location_id) : null;
   const working = latest && latest.phase === "arrived";
+  const legs = useMemo(() => routeLegs((route?.stops ?? []).map(s => s.location_id)), [route]);
+  // Travel k leads to stop k + 1, so every travel before the latest captured stop has been walked.
+  const walked = latest ? legsPath(legs.filter(l => l.travel < latest.stop_index)) : "";
   return <svg viewBox="0 0 1095 595" className="w-full rounded border border-line bg-surface-2" role="img" aria-label={`Facility map: ${captures.length} stops inspected${latest ? `, SPOT at ${latest.location_id}` : ""}`}>
     <defs><filter id="live-spot-shadow" x="-25%" y="-25%" width="150%" height="150%"><feDropShadow dx="0" dy="1" stdDeviation="1.5" floodColor="black" floodOpacity="0.9" /></filter></defs>
     <image href="/spot-blueprint.svg" width="1095" height="595" />
-    <polyline points={stops.map(s => pt(s.location_id).join(",")).join(" ")} fill="none" stroke="white" strokeWidth="3" strokeDasharray="8 8" opacity="0.7" />
-    <polyline points={captures.map(c => pt(c.location_id).join(",")).join(" ")} fill="none" stroke="var(--c-accent-ink)" strokeWidth="5" strokeLinejoin="round" />
+    <path d={legsPath(legs)} fill="none" stroke="white" strokeWidth="3" strokeDasharray="8 8" opacity="0.7" />
+    <path d={walked} fill="none" stroke="var(--c-accent-ink)" strokeWidth="5" strokeLinejoin="round" strokeLinecap="round" />
     {stops.map((s, i) => {
       const [x, y] = pt(s.location_id);
       const c = captures.find(c => c.stop_index === i);
