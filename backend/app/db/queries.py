@@ -504,6 +504,18 @@ class Repo:
                 ORDER BY CASE s.criticality WHEN 'CRITICAL' THEN 1 WHEN 'HIGH' THEN 2 WHEN 'MEDIUM' THEN 3 ELSE 4 END,
                          s.asset_id""")
 
+    async def list_media(self) -> List[Dict[str, Any]]:
+        """Inspection media with stored bytes (the Assets page gallery), newest capture first; no blobs."""
+        return await self.logs.fetch(
+            """SELECT media_id, action_id, mission_id, media_type, bytes, captured_at, metadata
+                 FROM raw.inspection_media WHERE content IS NOT NULL
+                ORDER BY metadata->>'inspection_type', captured_at DESC NULLS LAST, media_id""")
+
+    async def media_content(self, media_id: str) -> Optional[Dict[str, Any]]:
+        return await self.logs.fetchone(
+            "SELECT media_type, content FROM raw.inspection_media WHERE media_id = %s AND content IS NOT NULL",
+            (media_id,))
+
     async def asset_detail(self, asset_id: str) -> Optional[Dict[str, Any]]:
         row = await self.db.fetchone(
             """SELECT row_to_json(s) AS asset, row_to_json(l) AS location,
