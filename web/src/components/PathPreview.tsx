@@ -74,6 +74,10 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
     return () => { stopped = true; controller.abort(); clearInterval(timer); };
   }, [mode, mission.id]);
   const timeline = useRef<HTMLOListElement>(null);
+  // The replay timeline stays empty until Play is first pressed, so the panel
+  // opens on the mission's first event rather than starting out pre-filled.
+  // Restarting (elapsed back to 0, paused) empties it again.
+  const started = mode === "live" || playing || elapsed > 0;
   const events = mode === "replay" ? mission.events.slice(0, index + 1) : liveEvents;
   // Completion records can omit location; retain the action's last known waypoint.
   const located = events.map(e => ({ ...e, locationId: e.locationId ?? events.find(start => start.actionId && start.actionId === e.actionId && start.locationId)?.locationId }));
@@ -149,8 +153,12 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
         <Panel title="Errors along the path" className="max-h-80 xl:max-h-none" bodyClassName="relative overflow-y-auto p-4 xl:min-h-40 xl:overflow-hidden xl:p-0" aside={String(errors.length)}>{/* On desktop the list is lifted out of flow so it adds no height of its own: the panel fills whatever the map leaves in the column and scrolls inside that. */}<div className="flex flex-col gap-3 xl:absolute xl:inset-0 xl:overflow-y-auto xl:p-4" aria-live="polite">{errors.length === 0 ? <p className="text-sm text-muted">No errors observed at this point in the mission.</p> : errors.map(e => <button key={e.id} className="rounded border border-line bg-surface-2 p-3 text-left hover:border-bad" onClick={() => setSelectedId(e.locationId ?? null)}><p className="flex items-center gap-2 text-sm font-medium text-bad"><TriangleAlert size={16} />{e.locationId ?? "Unlocated"} · {e.severity ?? "FAILED"}</p><p className="mt-2 text-sm text-ink">{e.error?.replaceAll("_", " ")}</p><p className="mt-2 font-mono text-xs text-muted">{e.timestamp.split("T")[1]} · {e.actionId}</p></button>)}</div></Panel>
       </div>
     </div>
-    <Panel title="Mission timeline" aside={`${events.length} event${events.length === 1 ? "" : "s"}`}>
-      <ol ref={timeline} className="flex snap-x gap-2.5 overflow-x-auto pb-2">{events.map((e, i) => { const latest = i === events.length - 1; const place = e.locationId ? `${e.locationId}${e.assetName ? ` · ${e.assetName}` : ""}` : `Mission ${e.missionId}`; return <li key={e.id} className="aspect-square w-36 shrink-0 snap-end">
+    <Panel title="Mission timeline" aside={started ? `${events.length} event${events.length === 1 ? "" : "s"}` : "Not started"}>
+      {/* 0fr → 1fr on a one-row grid is the height animation: the row grows
+          from nothing to the tiles' natural height without measuring them. */}
+      <div className={`grid transition-[grid-template-rows] duration-500 ease-(--ease-settle) ${started && events.length ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
+      <div className="min-h-0 overflow-hidden">
+      <ol ref={timeline} className="flex snap-x gap-2.5 overflow-x-auto pb-2">{(started ? events : []).map((e, i) => { const latest = i === events.length - 1; const place = e.locationId ? `${e.locationId}${e.assetName ? ` · ${e.assetName}` : ""}` : `Mission ${e.missionId}`; return <li key={e.id} className="aspect-square w-36 shrink-0 snap-end">
         {/* A fixed-size tile with a fixed skeleton — header, title, place, footer —
             so a sparse event and a busy one read as the same shape. */}
         <button onClick={() => setSelectedId(e.locationId ?? null)} title={`${eventLabel(e)} · ${place}`} className={`flex h-full w-full flex-col rounded border p-2.5 text-left transition-colors hover:bg-surface-2 ${latest ? "border-accent-ink bg-surface-2" : e.error ? "border-bad/40" : "border-line"}`}>
@@ -169,7 +177,10 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
             </span>
           </span>
         </button>
-      </li>; })}</ol>{!events.length && <p className="text-sm text-muted">Waiting for mission events.</p>}
+      </li>; })}</ol>
+      </div>
+      </div>
+      {!started ? <p className="text-xs text-muted">Press play to start the mission timeline.</p> : !events.length && <p className="text-xs text-muted">Waiting for mission events.</p>}
     </Panel>
   </>;
 }
