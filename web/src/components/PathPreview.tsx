@@ -112,7 +112,7 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
             </g>;
           })}
           {current && marker && <g aria-label={`SPOT at ${current.id}`} transform={`translate(${marker.x} ${marker.y})`}>
-            {((active && !frame?.moving && last?.type === "ACTION_STARTED") || (mode === "live" && last?.type === "ACTION_STARTED")) && <foreignObject x="-15" y="-29" width="30" height="12" transform="scale(3)" aria-label="SPOT working"><div className="spot-working-dots flex h-full items-center justify-center"><LoadingDots color="white" /></div></foreignObject>}
+            {((active && !frame?.moving && last?.type === "ACTION_STARTED") || (mode === "live" && last?.type === "ACTION_STARTED")) && <foreignObject x="-15" y="-31" width="30" height="12" transform="scale(2)" aria-label="SPOT working"><div className="spot-working-dots flex h-full items-center justify-center"><LoadingDots color="white" /></div></foreignObject>}
             {changingFloor && <g aria-label={`Changing floor: ${floorLabel}`} className={active ? "spot-floor-arrow" : undefined} style={{ "--floor-direction": floorUp ? "-1" : "1" } as React.CSSProperties}>
               <path d={floorUp ? "M 0 -45 V -73 M -12 -61 L 0 -73 L 12 -61" : "M 0 -73 V -45 M -12 -57 L 0 -45 L 12 -57"} fill="none" stroke="white" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
             </g>}
