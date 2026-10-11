@@ -25,6 +25,8 @@ class ServiceHealth(Loose):
     url: Optional[str] = None
     error: Optional[str] = None
     breaker: Optional[str] = Field(None, description="`open` while the backend is skipping a failing service.")
+    model_status: Optional[Literal["up", "down", "unknown", "stub"]] = Field(
+        None, description="System 2 only: does the model behind it answer? `down` makes `status` `degraded`.")
 
 
 class Health(BaseModel):

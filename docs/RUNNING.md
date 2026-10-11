@@ -1,5 +1,25 @@
 # Running the stack
 
+## Connect to the AMD GPU box (do this first for real models)
+The GPU models (Qwen3.8-27B for System 2, Laya, the embedder) run on the AMD box. The full step-by-step guide,
+with expected output and a troubleshooting table, is at the top of `docs/AMD-GPU.md`. Short version:
+1. **SSH access:** add your public key in the AMD console and relaunch. Put the console's `ssh root@<ip> -p <port>`
+   into `~/.ssh/config` as `Host spot-amd` (`User root`, `IdentityFile ~/.ssh/spot_amd_ed25519`). The IP and port
+   change on every relaunch.
+2. **Test it:** `ssh spot-amd 'hostname; /opt/venv/bin/amd-smi static --asic | grep MARKET_NAME'` should print
+   `AMD Radeon Pro W7900D`.
+3. **Is it set up?** `ssh spot-amd '/root/venv-gpu/bin/supervisorctl -c /root/supervisord.conf status'` shows
+   `llm`, `embed` and `system1` RUNNING. If not (a relaunch wipes `/root`), run
+   `SPOT_REF=main deploy/amd-native/laptop/bootstrap.sh` and then `deploy/amd-native/laptop/push_laya.sh`.
+4. **Tunnel:** `deploy/amd-native/laptop/tunnel.sh`, kept running in its own terminal. `ssh -L` is refused by the
+   box. It serves `localhost:18080` (llama-server), `:18081` (embed) and `:18082` (Laya).
+5. **Stack:** set `.env` as in "Mode 2: `hybrid`" below, run `make up`, then check
+   `curl -s localhost:8000/health | jq .system2`. `model_status: up` means the 27B is answering.
+
+Without the box, `COMPOSE_PROFILES=local` runs everything on CPU. System 2 is then its packet-grounded stub
+(`model: stub`) unless `SYSTEM2_LLAMA_URL` points at some llama-server.
+
+## Services
 There is ONE `docker-compose.yml`, at the repo root, for the whole project. Modes are profiles inside it; there
 are no per-service or per-environment compose files. Every new or changed container must update that file (its
 header table too) and this page. Ports and contracts are in `docs/backend-services-contract.md` and
@@ -109,23 +129,30 @@ make down      # or `make wipe` to drop the database volume too
   `docker compose up -d system1`. Check with `curl localhost:8082/v1/model`: it should show `fine_tuned: true`.
 
 ## Mode 2: `hybrid`: models native on the AMD GPU box
-The current SSH-reachable box (Radeon Pro W7900D, gfx1100, 48 GB; `ssh spot-amd`): specs, proxy, the Hugging Face
-block and the model-copy workaround are in `docs/AMD-GPU.md`.
-The AMD Radeon Cloud Jupyter VMs have no root and can't run Docker. Run `system1` and `embed` there natively (see
-`amd/system1/service/README.md` "Native venv" and `amd/embed/README.md` "Run on the AMD VM"). Run `db`, `db-init`,
-`mcp` and `backend` here in Docker.
+The current SSH-reachable box (Radeon Pro W7900D, gfx1100, 48 GB; `ssh spot-amd`): specs, proxy and quirks are in
+`docs/AMD-GPU.md`. It is a locked-down pod: no Docker and no Kubernetes, so `llm` (llama-server, Qwen3.8-27B Q8_0 +
+mmproj), `embed` and `system1` (Laya) run natively under supervisord on loopback (`docs/AMD-K8S-PLAN.md` Path B).
+Everything else runs here in Docker. The scripts are in `deploy/amd-native/` (its README has the details):
 ```bash
-# 1. On the AMD VM: python -m service (port 8082) and python amd/embed/server.py (port 8081)
-# 2. Here, tunnel both ports:
-ssh -N -L 18082:localhost:8082 -L 18081:localhost:8081 <amd-vm> &
-# 3. In .env:
+# 0. ~/.ssh/config: Host spot-amd with the console's current IP/port (it changes on every relaunch)
+# 1. Set up the box (first run ~30 min: 27B download + llama.cpp build; re-runs skip finished steps):
+SPOT_REF=main deploy/amd-native/laptop/bootstrap.sh       # the ref must be pushed to GitHub
+# 2. Fine-tuned Laya (else base Laya serves). Reads the compose hf-cache volume; ~10 min upload:
+deploy/amd-native/laptop/push_laya.sh
+# 3. Tunnel, in its own terminal (the box's sshd refuses ssh -L, so this is an exec bridge on the same ports):
+deploy/amd-native/laptop/tunnel.sh                        # 18080 llama-server, 18081 embed, 18082 Laya
+# 4. In .env:
 COMPOSE_PROFILES=hybrid
 SYSTEM1_URL=http://host.docker.internal:18082
 EMBED_URL=http://host.docker.internal:18081
-SYSTEM1_TIMEOUT_S=5  SYSTEM1_INGEST_TIMEOUT_S=5  MCP_TIMEOUT_S=15  SEARCH_EMBED_TIMEOUT_S=4   # GPU: contract defaults
-LLAMA_URL=http://host.docker.internal:18080   # llama-server tunnel (ssh -L 18080:127.0.0.1:8080); gateway runs in Docker
-# 4.
+LLAMA_URL=http://host.docker.internal:18080   # the gateway's llama-server upstream
+SYSTEM2_LLAMA_URL=http://gateway:4000  SYSTEM2_MODEL=qwen3.5-9b-q4km   # live System 2 via the gateway alias
+ORCHESTRATOR_URL=http://orchestrator:8085
+# The 27B answers 350 tokens in ~16 s plus ~1 s of tunnel per new connection: widen the timeout chain
+# (SYSTEM2_DEADLINE_S, GATEWAY_SYSTEM2_TIMEOUT_S, ORCH_*, REQUEST_DEADLINE_S, WEB_EXPLAIN_TIMEOUT_MS; see below).
+# 5.
 make up && make e2e
+curl -s localhost:8000/health | jq '{system1, embed, system2}'   # system2.model_status: up = the 27B answers
 ```
 - `db-init` ingests through the tunnelled embedder. The corpus and the queries must use the same embedding backend.
   If the AMD box's embedder differs from what was ingested before, run
@@ -227,10 +254,14 @@ pipeline: at most two llama-server attempts inside a 15 s deadline, then the che
 | `SYSTEM2_VISION_MODEL` | model for requests that carry `image_b64` (gateway alias `system2-vision`) | compose: `system2-vision`; native: `SYSTEM2_MODEL` |
 | `SYSTEM2_DEADLINE_S` | generation deadline for text requests (the 15 s p95 target); raise only for a slow local model; must be in (0, 120] | `15` |
 | `SYSTEM2_IMAGE_DEADLINE_S` | generation deadline for requests with `image_b64` (text keeps 15 s); must be in (0, 120] | `25` |
+| `SYSTEM2_MODEL_PROBE_S` | how often live System 2 checks that its model answers (1-token completion; `/health` `model_status`); in [5, 3600] | `30` |
+| `SYSTEM2_MODEL_PROBE_TIMEOUT_S` | timeout of that check; in (0, 120] | `15` |
 | `SYSTEM2_LLAMA_API_KEY` | sent as `Authorization: Bearer` (the gateway's `LITELLM_MASTER_KEY`); a llama-server without `--api-key` ignores it | compose: `LITELLM_MASTER_KEY`; native: unset |
 
 An incomplete live config (URL without model, non-http URL, few-shots or kit unavailable) exits 2 before binding.
-Live `/health` reports `"mode": "live"` and `"model"`.
+Live `/health` reports `"mode": "live"`, `"model"` and `"model_status"` (`up | down | unknown`): is the model server
+actually answering? The backend's `/health` shows it as `system2.model_status` and marks `system2` `degraded` when
+it is `down` (every explanation is then the template). Quick check: `curl -s localhost:8000/health | jq .system2`.
 
 Native on the AMD box (no Docker there):
 

@@ -35,5 +35,10 @@ Single source of truth. Each entry is the decision plus why, in one or two lines
 - **Vision service fails closed (2026-10-10).** `VISION_API_KEY` required (compose dev default), JPEG/PNG/WebP only, 12 MP, body cap, 2 concurrent analyses: a 107 KB PNG of 25 MP had pushed one request to ~2.5 GB RSS.
 - **Image requests get a longer deadline (2026-10-10):** System 2 25 s (`SYSTEM2_IMAGE_DEADLINE_S`, text stays 15 s), orchestrator System 2 node 28 s: image prefill needs room beyond 15 s (audit A-6), and the chain still ends inside the backend's 45 s.
 
+- **Deployment (2026-10-10):** the frontend, the backend and the MCP server run on Vercel. The database is Neon. The GPU models run on the AMD box: Qwen3.8-27B (llama-server), Laya and the embedding model. Embeddings stay on AMD because Vercel Hobby functions get 2 GB of RAM and 1 vCPU, too small for Qwen3-Embedding-0.6B on PyTorch.
+- **AMD box = supervised native processes, no Kubernetes (2026-10-11, user decision).** The pod can't run k3s (no CAP_SYS_ADMIN, seccomp filtered, read-only cgroups, no /dev/kmsg; `docs/AMD-K8S-PLAN.md` §3 gate fails), so llm, embed and Laya run under supervisord, loopback only. Its sshd refuses TCP and socket forwarding, so the laptop reaches them by running a stdio bridge over one multiplexed SSH connection (user-approved).
+- **System 2 reports whether its model answers (2026-10-11, user decision).** Live `/health` adds `model_status` from a background 1-token probe every 30 s (never blocks /health; skipped while an assessment runs), and the backend marks `system2` `degraded` when it is `down`: before, a dead llama-server still showed `up`, and every explanation silently became the template. Setup and tunnel scripts: `deploy/amd-native/`.
+
 ## Pending
 - Roles.
+- Public access to the AMD services for Vercel (relay VM or tunnel agent; `docs/AMD-K8S-PLAN.md` §5-6).

@@ -32,7 +32,9 @@ import logging
 import os
 from pathlib import Path
 import tempfile
-from typing import Mapping, Optional, Tuple
+import threading
+import time
+from typing import Callable, Mapping, Optional, Tuple
 
 from pydantic import ValidationError
 
@@ -41,7 +43,7 @@ from .evaluation import endpoint, packet_hash
 from .grounding import EntityCatalog, GENERATION_FIELDS, check_assessment, default_catalog
 from .packet import PreparedPacket, normalize_packet
 from .paths import repo_root
-from .pipeline import AssessmentRun, PipelineConfig, run_pipeline
+from .pipeline import AssessmentRun, GenerationError, PipelineConfig, run_pipeline
 from .prompts import PROMPT_VERSION, prompt_identity
 
 DEADLINE_S = 15.0   # live-explain p95 target (PROJECT constraint); shared by both attempts
@@ -53,6 +55,9 @@ LLAMA_KEY_ENV = 'SYSTEM2_LLAMA_API_KEY'   # Bearer key for a gateway in front of
 VISION_MODEL_ENV = 'SYSTEM2_VISION_MODEL'   # model for requests with an image; default SYSTEM2_MODEL (backend.2)
 IMAGE_USED, IMAGE_TEXT_ONLY, IMAGE_NOT_USED = 'used', 'text_only', 'not_used'   # X-System2-Image values
 KEY_FIELDS = ('flag_id', 'packet_hash', 'model', 'prompt_ver')
+PROBE_ENV, PROBE_TIMEOUT_ENV = 'SYSTEM2_MODEL_PROBE_S', 'SYSTEM2_MODEL_PROBE_TIMEOUT_S'
+PROBE_S, PROBE_TIMEOUT_S = 30.0, 15.0   # /health model_status: check every 30 s, give up on one check after 15 s
+ANSWERED = frozenset({'accepted', 'rejected', 'parse_error', 'truncated', 'oversized'})   # the model replied
 LOG = logging.getLogger('system2.live')
 
 
@@ -142,14 +147,85 @@ class ExplanationCache:
             return False
 
 
+# ── model probe (GET /health model_status) ───────────────────────────────────────────────────
+
+def probe_error(exc: BaseException) -> str:
+    """A short, secret-free reason: the error kind (plus the HTTP status), never a URL, host, port or key."""
+    status = getattr(exc, 'status', None)
+    if isinstance(status, int):
+        return 'http %d' % status
+    return exc.kind if isinstance(exc, GenerationError) else type(exc).__name__
+
+
+class ModelProbe:
+    """Background check that the model behind System 2 answers, so /health can say so without waiting on it.
+
+    A daemon thread calls probe_fn(timeout_s) every interval_s. A check is skipped while an assessment runs (one
+    llama-server slot: the probe would queue behind it and time out), and an assessment the model answered counts
+    as a successful check (mark_up)."""
+
+    def __init__(self, probe_fn: Callable[[float], None], interval_s: float = PROBE_S,
+                 timeout_s: float = PROBE_TIMEOUT_S, clock: Callable[[], float] = time.monotonic):
+        self._probe, self.interval_s, self.timeout_s, self._clock = probe_fn, interval_s, timeout_s, clock
+        self._lock, self._stop, self._thread = threading.Lock(), threading.Event(), None
+        self._status, self._checked, self._ms, self._error, self._busy = 'unknown', None, None, None, 0
+
+    def start(self) -> None:
+        if self._thread is None:
+            self._thread = threading.Thread(target=self._loop, name='system2-model-probe', daemon=True)
+            self._thread.start()
+
+    def stop(self) -> None:
+        self._stop.set()
+
+    def _loop(self) -> None:
+        while not self._stop.is_set():
+            self.run_once()
+            self._stop.wait(self.interval_s)
+
+    def run_once(self) -> bool:
+        """One check; False when skipped because an assessment is running."""
+        with self._lock:
+            if self._busy:
+                return False
+        t0, error = self._clock(), None
+        try:
+            self._probe(self.timeout_s)
+        except Exception as exc:   # any failure means "not answering"; the reason is reduced to a short kind
+            error = probe_error(exc)
+        with self._lock:
+            self._status, self._error = ('down', error) if error else ('up', None)
+            self._ms, self._checked = int((self._clock() - t0) * 1000), self._clock()
+        return True
+
+    def begin(self) -> None:
+        with self._lock:
+            self._busy += 1
+
+    def end(self, answered: bool) -> None:
+        with self._lock:
+            self._busy -= 1
+            if answered:
+                self._status, self._error, self._checked = 'up', None, self._clock()
+
+    def snapshot(self) -> dict:
+        with self._lock:
+            ago = None if self._checked is None else int(self._clock() - self._checked)
+            out = {'model_status': self._status, 'model_checked_s_ago': ago, 'model_probe_ms': self._ms}
+            if self._status == 'down':
+                out['model_error'] = self._error
+            return out
+
+
 # ── assessor ─────────────────────────────────────────────────────────────────────────────────
 
 class LiveAssessor:
     """assess(body) -> (response, cache_status) through run_pipeline with `generator` (e.g. LlamaGenerator)."""
 
     def __init__(self, generator, model: str, config: Optional[PipelineConfig] = None,
-                 cache: Optional[ExplanationCache] = None, image_deadline_s: float = IMAGE_DEADLINE_S):
-        self.generator, self.model, self.cache = generator, model, cache
+                 cache: Optional[ExplanationCache] = None, image_deadline_s: float = IMAGE_DEADLINE_S,
+                 probe: Optional[ModelProbe] = None):
+        self.generator, self.model, self.cache, self.probe = generator, model, cache, probe
         self.vision_model = getattr(generator, 'vision_model', None) or model
         self.config = config if config is not None else PipelineConfig(deadline_s=DEADLINE_S, catalog=default_catalog())
         self.image_config = replace(self.config, deadline_s=float(image_deadline_s))   # only requests with an image
@@ -157,6 +233,10 @@ class LiveAssessor:
 
     def __repr__(self):  # never shows a key: LlamaGenerator's repr is endpoint + model only
         return 'LiveAssessor(%r, model=%r)' % (self.generator, self.model)
+
+    def model_health(self) -> dict:
+        """The /health model_* keys ({} without a probe)."""
+        return self.probe.snapshot() if self.probe is not None else {}
 
     def key_fields(self, prepared: PreparedPacket) -> dict:
         model = self.vision_model if prepared.image is not None else self.model
@@ -173,7 +253,15 @@ class LiveAssessor:
             cached = self.cache.get(key, prepared, self.config.catalog)
             if cached is not None:   # image requests only ever store answers that saw the image
                 return cached, 'hit', True, IMAGE_USED if has_image else None
-        run = run_pipeline(body, self.generator, self.image_config if has_image else self.config)
+        if self.probe is not None:
+            self.probe.begin()
+        answered = False
+        try:
+            run = run_pipeline(body, self.generator, self.image_config if has_image else self.config)
+            answered = any(a.status in ANSWERED for a in run.attempts)
+        finally:
+            if self.probe is not None:
+                self.probe.end(answered)
         response = to_response(run, prepared.flag_id)
         image = None
         if has_image:
@@ -197,14 +285,18 @@ class LiveAssessor:
         return response, status
 
 
-def _seconds_env(environ: Mapping[str, str], name: str, default: float) -> float:
+def _seconds_env(environ: Mapping[str, str], name: str, default: float, high: float = 120.0,
+                 low: Optional[float] = None) -> float:
+    """Seconds from env: in (0, high], or [low, high] when low is given."""
     raw = (environ.get(name) or '').strip()
     try:
         value = float(raw) if raw else default
     except ValueError:
         value = -1.0
-    if not 0 < value <= 120:
-        raise RuntimeError('%s must be a number of seconds in (0, 120], got %r' % (name, raw))
+    if low is None and not 0 < value <= high:
+        raise RuntimeError('%s must be a number of seconds in (0, %g], got %r' % (name, high, raw))
+    if low is not None and not low <= value <= high:
+        raise RuntimeError('%s must be a number of seconds in [%g, %g], got %r' % (name, low, high, raw))
     return value
 
 
@@ -217,6 +309,8 @@ def assessor_from_env(environ: Mapping[str, str] = os.environ) -> Optional[LiveA
     vision_model = (environ.get(VISION_MODEL_ENV) or '').strip() or None
     deadline = _seconds_env(environ, DEADLINE_ENV, DEADLINE_S)
     image_deadline = _seconds_env(environ, IMAGE_DEADLINE_ENV, IMAGE_DEADLINE_S)
+    probe_s = _seconds_env(environ, PROBE_ENV, PROBE_S, high=3600.0, low=5.0)
+    probe_timeout = _seconds_env(environ, PROBE_TIMEOUT_ENV, PROBE_TIMEOUT_S)
     if not model:
         raise RuntimeError('%s is set but %s is empty; set the served model name (e.g. qwen3.5-9b-q4km)'
                            % (URL_ENV, MODEL_ENV))
@@ -228,7 +322,8 @@ def assessor_from_env(environ: Mapping[str, str] = os.environ) -> Optional[LiveA
                                    timeout_s=deadline, image_timeout_s=image_deadline)
         return LiveAssessor(generator, model, cache=ExplanationCache(cache_dir) if cache_dir is not None else None,
                             config=PipelineConfig(deadline_s=deadline, catalog=default_catalog()),
-                            image_deadline_s=image_deadline)
+                            image_deadline_s=image_deadline,
+                            probe=ModelProbe(generator.probe, interval_s=probe_s, timeout_s=probe_timeout))
     except (ValueError, OSError) as exc:
         raise RuntimeError('live System 2 config unusable (%s %s): %s'
                            % (URL_ENV, endpoint(url), str(exc).splitlines()[0] if str(exc) else type(exc).__name__)

@@ -221,9 +221,23 @@ class System2Client:
             return {"status": "unset"}
         try:
             r = await self.http.get(self.base_url + "/health", timeout=2.0)
-            return {"status": "up" if r.status_code == 200 else "degraded", "http": r.status_code}
         except httpx.HTTPError as exc:
             return {"status": "down", "error": short_error(exc)}
+        out = {"status": "up" if r.status_code == 200 else "degraded", "http": r.status_code}
+        try:
+            body = r.json()
+        except ValueError:
+            body = None
+        if isinstance(body, dict):
+            # live System 2 probes its model server (contract: "Model probe"); stub mode has no model behind it
+            status = body.get("model_status") if body.get("mode") == "live" else "stub"
+            if status in ("up", "down", "unknown", "stub"):
+                out["model_status"] = status
+            if status == "down":
+                out["status"] = "degraded"   # System 2 answers, but every explanation is its template
+                if isinstance(body.get("model_error"), str):
+                    out["error"] = "model: " + body["model_error"][:80]
+        return out
 
 
 def normalize_assessment(out: Dict[str, Any]) -> Dict[str, Any]:

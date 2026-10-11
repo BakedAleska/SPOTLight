@@ -4,6 +4,7 @@ Stub by default. create_app(assessor=...) switches /v1/assess to live mode: any 
 (BackendAssessResponse, cache_status) and .model (analyst.live.LiveAssessor) is called after the X-API-Key middleware
 and normalize_packet, and the cache status goes out as X-System2-Cache. This module never imports the generator.
 """
+from contextlib import asynccontextmanager
 import hmac
 import json
 import os
@@ -98,8 +99,19 @@ def create_app(api_key: Optional[str] = None, fixtures_dir: Path = FIXTURES, ass
 
     # No /docs, /redoc or /openapi.json: the committed schema/*.json files are the published contract, and the
     # interactive docs would otherwise hand the contract and a request form to anyone who can reach the port.
+    probe = getattr(assessor, "probe", None)
+
+    @asynccontextmanager
+    async def lifespan(_app):
+        # live mode: the model probe thread feeds /health model_status (docs/backend-services-contract.md)
+        if probe is not None:
+            probe.start()
+        yield
+        if probe is not None:
+            probe.stop()
+
     app = FastAPI(title="SPOTlight System 2 Analyst (stub)", version=BACKEND_CONTRACT_VERSION,
-                  docs_url=None, redoc_url=None, openapi_url=None)
+                  docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
 
     @app.middleware("http")
     async def key_first(request: Request, call_next):
@@ -113,7 +125,10 @@ def create_app(api_key: Optional[str] = None, fixtures_dir: Path = FIXTURES, ass
     def health() -> dict:
         if assessor is None:
             return {"status": "ok", "mode": "stub", "contract_version": BACKEND_CONTRACT_VERSION}
-        return {"status": "ok", "mode": "live", "contract_version": BACKEND_CONTRACT_VERSION, "model": assessor.model}
+        out = {"status": "ok", "mode": "live", "contract_version": BACKEND_CONTRACT_VERSION, "model": assessor.model}
+        if hasattr(assessor, "model_health"):
+            out.update(assessor.model_health())
+        return out
 
     @app.post("/v1/assess", response_model=BackendAssessResponse)
     def assess(body: BackendAssessRequest, response: Response) -> BackendAssessResponse:

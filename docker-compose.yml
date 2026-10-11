@@ -19,7 +19,9 @@
 #                                           packet-grounded stub (model=stub) by default; live checked pipeline when
 #                                           SYSTEM2_LLAMA_URL is set (the gateway, http://gateway:4000, or llama-server
 #                                           directly). Optional vision/ocr/image_b64 inputs (V# rows, annotated image).
-#                                           Kit mounted read-only at /app/kit (SPOT_KIT_DIR) for grounding.
+#                                           Kit mounted read-only at /app/kit (SPOT_KIT_DIR) for grounding. Live /health
+#                                           reports model_status (up/down/unknown; 1-token probe every
+#                                           SYSTEM2_MODEL_PROBE_S); the backend marks system2 degraded when it is down.
 # gateway    4000  local, hybrid, neon, system2  LiteLLM proxy: one OpenAI-compatible endpoint, Bearer LITELLM_MASTER_KEY.
 #                                           Aliases system2 / system2-vision -> llama-server (LLAMA_URL, VISION_LLAMA_URL;
 #                                           an SSH tunnel to the AMD box by default), system1 -> Laya /v1/predict,
@@ -242,6 +244,8 @@ services:
       SYSTEM2_LLAMA_API_KEY: ${SYSTEM2_LLAMA_API_KEY:-${LITELLM_MASTER_KEY:-sk-spot-gateway-dev-key-change-me}}
       SYSTEM2_DEADLINE_S: ${SYSTEM2_DEADLINE_S:-15}   # text requests (p95 target); raise only for slow local models; (0, 120]
       SYSTEM2_IMAGE_DEADLINE_S: ${SYSTEM2_IMAGE_DEADLINE_S:-25}   # requests with image_b64 only (text: 15 s); (0, 120]
+      SYSTEM2_MODEL_PROBE_S: ${SYSTEM2_MODEL_PROBE_S:-30}   # live: check the model answers (/health model_status); [5, 3600]
+      SYSTEM2_MODEL_PROBE_TIMEOUT_S: ${SYSTEM2_MODEL_PROBE_TIMEOUT_S:-15}   # one model check's timeout; (0, 120]
       SYSTEM2_CACHE_DIR: ${SYSTEM2_CACHE_DIR:-}
     depends_on:
       gateway: {condition: service_healthy, required: false}
