@@ -1,7 +1,7 @@
 import { ArrowRight } from "lucide-react";
 import { SpotlightLogo } from "./SpotlightLogo";
 import { BannerControls } from "./BannerControls";
-import { TypeIn } from "./TypeIn";
+import { TypeCycle } from "./TypeCycle";
 import { ScrollLink } from "./ScrollLink";
 
 /* The shift-start banner. It exists to state the thesis in one sentence
@@ -37,7 +37,17 @@ import { ScrollLink } from "./ScrollLink";
 
    The supplied radar rings stay still while its offset arrow sweeps around
    the center. Reduced motion restores the original static composition. */
-const HEADLINE = "What should I check first?";
+/* The questions the console answers, asked one after another. The first is
+   the banner's accessible name and what reduced motion shows; keep each short
+   enough for one line at sm and up, so the banner never changes height. */
+const HEADLINES = [
+  "What should I check first?",
+  "Which flags need me now?",
+  "Which missions hid a failure?",
+  "Which assets keep failing?",
+  "Where is SPOT struggling?",
+  "Is low battery costing us?",
+] as const;
 
 /** The claim in the body copy is passed in, not written here: the numbers come
     from the kit, so the sentence stays true if the data changes under it. */
@@ -62,14 +72,15 @@ export function WelcomeBanner({
       </div>
 
       <div className="relative max-w-2xl pt-8 sm:pt-0">
-        {/* aria-label is load-bearing, not belt-and-braces: TypeIn's output is
-            aria-hidden, so this is the heading's only accessible name. */}
+        {/* aria-label is load-bearing, not belt-and-braces: TypeCycle's output
+            is aria-hidden, so this is the heading's only accessible name. The
+            minimum height holds two lines where a phrase can wrap, one above. */}
         <h2
           id="banner-heading"
-          aria-label={HEADLINE}
-          className="text-2xl font-semibold tracking-tight text-white sm:text-3xl"
+          aria-label={HEADLINES[0]}
+          className="min-h-[2lh] text-2xl font-semibold tracking-tight text-white sm:min-h-[1lh] sm:text-3xl"
         >
-          <TypeIn text={HEADLINE} startDelay={140} step={26} />
+          <TypeCycle phrases={HEADLINES} />
         </h2>
         <p className="anim-rise mt-2 text-sm leading-relaxed text-white/90 [--rise:6px] [animation-delay:760ms] sm:text-base">
           SPOTlight reads every inspection mission SPOT ran and ranks what an

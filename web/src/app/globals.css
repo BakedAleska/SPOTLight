@@ -706,22 +706,8 @@ body {
    version into two lines sliding sideways. Per-character spans wrap normally,
    and because every character occupies its final box from the first frame,
    nothing reflows as the line fills in. */
-@keyframes type {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-.anim-type {
-  animation: type 1ms linear both;
-}
-
-/* The caret appears as the last character lands, blinks twice, and is gone —
-   `both` holds the final keyframe, so it ends hidden rather than pulsing
-   forever on a settled page. */
+/* The banner's typewriter caret (TypeCycle): solid while characters land,
+   blinking while a phrase holds or between phrases. */
 @keyframes caret {
   0%,
   49% {
@@ -733,14 +719,18 @@ body {
   }
 }
 
-.anim-caret {
+.type-caret {
   display: inline-block;
   width: 0.08em;
   height: 0.95em;
   margin-left: 0.06em;
   vertical-align: -0.08em;
   background: currentColor;
-  animation: caret 600ms linear 2 both;
+  animation: caret 1060ms linear infinite;
+}
+
+.type-caret[data-typing] {
+  animation: none;
 }
 
 /* Chart bars growing up from the baseline. Only a `from` keyframe: the

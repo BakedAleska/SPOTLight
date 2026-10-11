@@ -6,14 +6,14 @@ import { Check, ChevronDown, RotateCcw } from "lucide-react";
 
 /* The classes that carry a load animation. Listed explicitly rather than
    matched on a prefix so a future `.animate-*` utility can't get swept up. */
-const ANIMATED = ".anim-rise, .anim-float, .anim-type, .anim-caret, .anim-grow";
+const ANIMATED = ".anim-rise, .anim-float, .anim-grow";
 
 /**
  * Restart every load animation on the page.
  *
  * Removing and re-adding the class is the restart that survives this
  * codebase's details: the stagger lives in inline `animation-delay` (set per
- * character by TypeIn and per panel by Panel), and anything that touches the
+ * panel by Panel), and anything that touches the
  * `animation` shorthand — the other common restart trick — would wipe those
  * delays and collapse the cascade into one flat pop.
  *

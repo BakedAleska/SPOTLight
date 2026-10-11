@@ -143,7 +143,7 @@ export default function HelpPage() {
 
           <Section id="analytics" title="Analytics" lead="The full set of fleet charts, grouped by question.">
             <Bullets>
-              <li>Sections: <em>Reliability</em> (where actions succeed and what breaks them), <em>Configuration</em>, <em>Missions</em>, <em>Failures &amp; anomalies</em> and <em>Waypoints</em>. Use the chips at the top to jump between them.</li>
+              <li>Sections: <em>Reliability</em> (where actions succeed and what breaks them), <em>Configuration</em>, <em>Missions</em>, <em>Failures &amp; anomalies</em> and <em>Waypoints</em>.</li>
               <li>Click any bar, slice, point or cell to open the rows behind it: the matching actions, missions, anomalies or readings, which you can drill into further.</li>
               <li>Shaded bands and whiskers are 95% intervals. A wide interval means few samples, so read the bar as a rough estimate.</li>
               <li>A bar in red marks the weak spot the chart is pointing at, such as the worst inspection type or the low-battery band.</li>
