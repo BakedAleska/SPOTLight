@@ -228,6 +228,8 @@ is unchanged.
   `cited: false`; `retrieved` then lists every id the tools returned (show it as "consulted, not cited"). `503 {"error": "orchestrator_unset"}`
   when `ORCHESTRATOR_URL` is unset; `503 {"error": "orchestrator_unavailable"}` when it is down. Open like `/explain`.
 - `GET /health` adds `orchestrator` (`unset | up | down | degraded`, plus `breaker`).
+- `GET /health` `system2` adds `model_status` (`up | down | unknown | stub`, ADDED 2026-10-11) from System 2's
+  `/health`; `system2.status` is `degraded` when `model_status` is `down` (System 2 answers, but only with its template).
 - `app.model_calls`: orchestrator calls are logged as `system = 'system2'` (the table's CHECK allows
   system1/system2/embed) with `endpoint = 'orchestrator:/v1/assess'` (or `/v1/ask`) and `metadata.via =
   'orchestrator'`, `route`, `source`, `system2_path`.
@@ -350,6 +352,14 @@ Tables: `live_runs`, `live_captures` (`db/migrations/013_live.sql`). Routes: `ba
   `tokens_per_sec` describe the generation that produced it; callers logging live speed skip hits. The cache key is
   `(flag_id, packet_hash, model, prompt_ver)` and only `llm`/`retry` results are stored; a stored entry is re-checked
   against the current packet before it is served. Live `GET /health` adds `"model"` and reports `"mode": "live"`.
+- **Model probe (ADDED 2026-10-11; additive).** Live `GET /health` also reports whether the model behind System 2
+  answers: `"model_status": "up" | "down" | "unknown"` (unknown until the first probe finishes), `"model_checked_s_ago"`
+  (int or null), `"model_probe_ms"` (int or null) and, when down, `"model_error"` (a short kind such as `timeout`,
+  `transport` or `http 401`; never a URL, host, port or key). A background thread sends a 1-token chat completion over
+  the same URL, model and key as `/v1/assess` every `SYSTEM2_MODEL_PROBE_S` (default 30 s) with a
+  `SYSTEM2_MODEL_PROBE_TIMEOUT_S` (default 15 s) timeout, so `/health` itself never waits on the model. A probe is
+  skipped while an assessment is running, and an `llm`/`retry` answer counts as a successful probe. Stub mode is
+  unchanged (no `model_*` keys).
 - System 2 request the backend sends: `POST /v1/assess {"flag_id", "request_id", "flag", "event", "reasons":
   [detail strings], "context": <packet from GET /flags/{id}/context>}`; it accepts `reasoning` or R3's
   `evidence[{claim, ids}]`. Optional `POST /v1/debrief {"mission_id", "facts"}` → `{"summary",

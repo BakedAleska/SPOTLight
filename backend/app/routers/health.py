@@ -48,6 +48,7 @@ async def health(deep: bool = Query(True, description="Probe every dependency (e
     for name, res in zip(names, results):
         if isinstance(res, Exception):
             res = {"status": "down", "error": str(res)}
-        res = {k: v for k, v in res.items() if k in ("status", "url", "error", "breaker", "http", "model_loaded")}
+        res = {k: v for k, v in res.items() if k in ("status", "url", "error", "breaker", "http", "model_loaded",
+                                                     "model_status")}
         setattr(out, name, ServiceHealth(**res))
     return out

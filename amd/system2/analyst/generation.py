@@ -290,6 +290,24 @@ class LlamaGenerator:
         data = self._post(self._body(packet, chosen, errors, self.model, False), headers, left)
         return dataclasses.replace(parse_envelope(data, self.model), image_used=False)
 
+    def probe(self, timeout_s: float) -> None:
+        """One 1-token completion on the text model (same URL, model and key as an assessment); raises
+        GenerationError when the server does not answer with a JSON chat completion within `timeout_s`."""
+        body = {'messages': [{'role': 'user', 'content': 'Reply with ok.'}], 'max_tokens': 1, 'temperature': 0,
+                'stream': False, 'chat_template_kwargs': {'enable_thinking': False}}
+        if self.model:
+            body['model'] = self.model
+        headers = {'Content-Type': 'application/json'}
+        if self._api_key:
+            headers['Authorization'] = 'Bearer %s' % self._api_key
+        data = self._post(json.dumps(body).encode('utf-8'), headers, timeout_s)
+        try:
+            ok = isinstance(json.loads(data).get('choices'), list)
+        except (ValueError, AttributeError):
+            ok = False
+        if not ok:
+            raise GenerationError('envelope', 'not a chat completion')
+
     def _body(self, packet, chosen, errors, model, include_image) -> bytes:
         return json.dumps(request_body(packet, chosen, errors, model, self.max_tokens, include_image),
                           ensure_ascii=False).encode('utf-8')
