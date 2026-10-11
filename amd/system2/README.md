@@ -120,11 +120,11 @@ template. Every result is a training-pool development number, and `scope.headlin
 Phase 4 owns held-out headline numbers, confidence intervals, human labels and any entailment judge. Phase 3
 owns live serving and the model bakeoff.
 
-**Token budget.** `max_tokens` defaults to 350. The SRV-00 smoke reply used 439 output tokens, but that was the
-uncapped Phase 1 prompt. The Phase 2 prompt uses compact few-shots and schema caps (at most 3 claims of 160
-characters, and a 240-character answer) to fit within 350. Whether Qwen3.5-9B actually fits is **unmeasured**. A
-reply that hits the limit (`finish_reason=length`) counts as truncated: it is retried, then falls back to the
-template, and is never accepted.
+**Token budget.** `max_tokens` defaults to 512 (350 until 2026-10-11). The SRV-00 smoke reply used 439 output
+tokens, but that was the uncapped Phase 1 prompt. The Phase 2 prompt uses compact few-shots and schema caps (at
+most 3 claims of 160 characters, and a 240-character answer). On the M001 replay (2026-10-11) Qwen3.8-27B
+pretty-printed a valid reply past 350 tokens, so the cap was raised. A reply that hits the limit
+(`finish_reason=length`) counts as truncated: it is retried, then falls back to the template, and is never accepted.
 
 **Fake HTTP versus a measured run.** `tests/test_evaluation.py` runs the same CLI against a fake loopback
 llama-server, so its numbers are regression checks of the harness, not measurements. A measurement is a run
@@ -181,9 +181,11 @@ the same normalization and checker as the pipeline's fallback, so its paths are 
    (`amd/system1/data/kit/`) for now; swaps to Neon views later.
 2. **Output schema** (R3): `evidence[{claim, ids}]` → `answer` → `question` → `recommended_action` (enum) →
    `confidence` → `insufficient_context`. Grammar-enforced; the `ids` enum is built per packet.
-3. **Prompt**: system prompt + 3 few-shot packet→JSON examples, thinking off, `max_tokens` ~350.
-4. **Post-check** (R4): every number and asset/waypoint name in the output must appear in the packet; retry once,
-   then fall back to a templated explanation.
+3. **Prompt**: system prompt + 3 few-shot packet→JSON examples, thinking off, `max_tokens` 512.
+4. **Post-check** (R4): every number and asset/waypoint name in the output must appear in the rows it cites; retry
+   once, then fall back to a templated explanation. Two references need no row: the flag's own subject (its
+   asset, waypoint and mission IDs and the asset/waypoint names, plus "flag <id>"), and the short form of a cited
+   ID (`mission:M001` → M001, `flag:14` → "flag 14"). Numbers always need a cited row.
 5. **Test set + eval** (R6): held-out flags; schema validity, citation validity, number consistency, latency.
 6. **Serve** on the AMD box behind `/v1/assess`, and precompute explanations for every flag (R7).
 

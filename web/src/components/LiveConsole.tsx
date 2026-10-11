@@ -8,6 +8,7 @@ import {
 import { Panel } from "./Panel";
 import { LoadingDots } from "./LoadingDots";
 import { QwenDraftView } from "./QwenDraft";
+import { ModelExplanation } from "./ModelOutput";
 import { RouteAhead } from "./RouteAhead";
 import { ModelCallsPanel, RunModelCharts } from "./LiveModelPanels";
 import { anchors } from "@/lib/waypoints";
@@ -322,16 +323,14 @@ function CaptureCard({ c, stop }: { c: LiveCapture; stop?: LiveStop }) {
       </div>
       <div className="flex min-w-0 flex-col gap-3 text-sm">
         <Section icon={<Brain size={14} />} title="Qwen explanation (System 2)">
-          {c.qwen_source === "pending" && draft ? <QwenDraftView draft={draft} label="Qwen writing · unverified draft" formatAction={human} catchUpMs={450} compact />
+          {c.qwen_source === "pending" && draft ? <QwenDraftView draft={draft} label="Qwen writing · unverified draft" catchUpMs={450} compact />
             : c.qwen_source === "pending" || (!c.qwen && c.verdict && c.qwen_source !== "error") ? <p className="flex items-center gap-2 text-accent-ink">Qwen analysing <LoadingDots color="currentColor" /></p>
             : !c.qwen ? <p className="text-muted">{c.qwen_source === "error" ? "The run ended before Qwen's answer was stored." : "—"}</p>
             : draft ? <p className="text-muted">Qwen did not finish; its unverified draft was discarded.</p> : <>
               {c.qwen.source === "template" && <p className="rounded bg-warn/10 px-2 py-1 text-xs font-semibold text-warn">TEMPLATE · Qwen did not answer ({c.qwen.fallback_reason?.slice(0, 120)})</p>}
               {c.qwen.question && <p className="text-xs text-muted">Q: {c.qwen.question}</p>}
-              <p className="text-ink">{c.qwen.answer}</p>
-              {c.qwen.recommended_action && <p className="text-ink">Recommended: <strong>{human(c.qwen.recommended_action)}</strong></p>}
-              {c.qwen.evidence?.length ? <ul className="list-disc pl-4 text-xs text-muted">{c.qwen.evidence.slice(0, 4).map((e, i) => <li key={i}>{e.claim} <span className="font-mono">[{e.ids.join(", ")}]</span></li>)}</ul>
-                : c.qwen.reasoning && <p className="line-clamp-4 text-xs text-muted" title={c.qwen.reasoning}>{c.qwen.reasoning}</p>}
+              <ModelExplanation answer={c.qwen.answer} evidence={c.qwen.evidence} reasoning={c.qwen.reasoning}
+                recommendedAction={c.qwen.recommended_action} compact limit={4} />
               <p className="text-[11px] text-muted">{c.qwen.source === "system2" ? `${c.qwen.model} · ${ms(c.qwen.latency_ms)}${c.qwen.tokens_per_sec ? ` · ${c.qwen.tokens_per_sec.toFixed(1)} tok/s` : ""}${c.qwen.confidence_label ? ` · confidence ${c.qwen.confidence_label}` : ""}${c.qwen.image ? ` · image ${c.qwen.image}` : ""}` : "template (checked rules text, not a model answer)"}</p>
             </>}
         </Section>

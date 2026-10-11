@@ -179,7 +179,11 @@ EMBED_URL=http://host.docker.internal:18081
 LLAMA_URL=http://host.docker.internal:18080   # the gateway's llama-server upstream
 SYSTEM2_LLAMA_URL=http://gateway:4000  SYSTEM2_MODEL=qwen3.5-9b-q4km   # live System 2 via the gateway alias
 ORCHESTRATOR_URL=http://orchestrator:8085
-# The 27B answers 350 tokens in ~16 s plus ~1 s of tunnel per new connection: widen the timeout chain
+# Or skip the local system2 container and use the box's System 2 (tunnel 18083, straight to its llama-server;
+# the replay runs used this on 2026-10-11). Its key is SYSTEM2_API_KEY in /root/spot-secrets.env on the box, and
+# its own deadline is 90 s, so give the orchestrator room for two 27B attempts:
+#   SYSTEM2_URL=http://host.docker.internal:18083  SYSTEM2_API_KEY=<box key>  ORCH_SYSTEM2_BUDGET_S=95
+# The 27B answers 350 tokens in ~16 s (the cap is 512) plus ~1 s of tunnel per new connection: widen the timeout chain
 # (SYSTEM2_DEADLINE_S, GATEWAY_SYSTEM2_TIMEOUT_S, ORCH_*, REQUEST_DEADLINE_S, WEB_EXPLAIN_TIMEOUT_MS; see below).
 # 5.
 make up && make e2e

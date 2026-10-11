@@ -9,14 +9,15 @@ Only keywords in SCHEMA_KEYWORDS are emitted (the subset scripts/smoke_serve.py 
 lengths). Property order follows GEN-01 for generation; validation never depends on key order.
 
 LlamaGenerator(url) implements the pipeline generator protocol over llama-server's OpenAI-compatible
-/v1/chat/completions: thinking off, temperature 0, max_tokens 350. Every transport or envelope problem (HTTP
+/v1/chat/completions: thinking off, temperature 0, max_tokens 512. Every transport or envelope problem (HTTP
 status, timeout, oversized body, non-JSON, NaN/Infinity, wrong types, fewer than three few-shots) raises
 GenerationError, so run_pipeline counts it as an attempt and retries once or falls back to the checked template.
 The time budget covers the whole call: a socket timeout only bounds each recv, so a watchdog shuts the socket at
 the deadline and a server or tunnel that trickles headers or body cannot hold the call open past it.
 The completion text itself is judged only by run_pipeline: finish_reason 'length' is truncation even when the
 text parses, and token counts are recorded as metadata, never used to infer validity. The recorded SRV-00 smoke
-needed 439 output tokens; the budget stays at 350 and long replies fall back rather than being assumed valid.
+needed 439 output tokens; the budget was 350 until 2026-10-11, when the 27B pretty-printed a valid reply past
+it (M001 run). It is 512 now; a reply that still hits it is truncation and falls back, never assumed valid.
 No model is loaded here and nothing is wired into the live API in this phase.
 
 Images (contract backend.2): when the packet carries an image, the request goes to `vision_model` (default: the
@@ -65,7 +66,7 @@ from .pipeline import Generation, GenerationError
 from .prompts import (ANSWER_CHARS, CLAIM_CHARS, FEWSHOT_COUNT, MAX_EVIDENCE, Example, build_messages,
                       load_examples, prompt_identity, select_examples)
 
-MAX_TOKENS = 350            # GEN-03; see module docstring for the 439-token observation
+MAX_TOKENS = 512            # GEN-03; was 350 (module docstring: the 439-token smoke, the 2026-10-11 M001 run)
 TEMPERATURE = 0
 TIMEOUT_S = 15.0            # per call; run_pipeline passes its remaining deadline, the smaller one wins
 IMAGE_TIMEOUT_S = 25.0      # per call for packets with an image (SYSTEM2_IMAGE_DEADLINE_S)

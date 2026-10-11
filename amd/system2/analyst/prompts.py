@@ -5,8 +5,8 @@ source-row hash, availability time and the fold-2 holdout exclusion, and this mo
 mission and every lineage mission against HOLDOUT_MISSIONS. Each example answer is a compact form of the shared
 template (same cited IDs, action and confidence; claims keep only verbatim key=value pairs from the cited row) and
 must pass check_assessment() and the strict generation model before use, so a bad example fails loudly instead of
-teaching the model to cite badly. Compact answers keep the 350-token budget: the Phase 1.1 smoke needed 439 output
-tokens for an uncapped reply (STATE, SRV-00), so the fix is a shorter answer, not a larger max_tokens.
+teaching the model to cite badly. Compact answers keep replies short (the Phase 1.1 smoke needed 439 output tokens
+uncapped); the budget is 512 since the 27B pretty-printed a valid reply past the old 350 (2026-10-11).
 
 The current packet goes last, in its own user message, with the question as its last key. An example that shares
 any evidence content with the current packet is skipped (no case is ever its own few-shot). Schema enums are built
