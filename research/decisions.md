@@ -51,6 +51,8 @@ Single source of truth. Each entry is the decision plus why, in one or two lines
 - **Provenance notes go in `facts`, never `gaps` (2026-10-11).** System 2 treats any `gaps` entry as insufficient context and answers its template without calling the model, so the live packet's "kit row re-sent; simulated photo" note had turned every `/live` stop into a TEMPLATE with no drafts; it is now a cited fact and live packets carry no `gaps`.
 - **Demo inspection imagery lives in Neon (2026-10-11, user decision).** 68 images (40 herislab thermal motors, MIT; 16 MeasureBench real pressure gauges, CC BY-SA 4.0; 12 spectrograms we synthesize) with 32 mock assets (`MOTOR-3xx`, `PG-3xx`, `AIR-3xx`, `PUMP-3xx`, `VALVE-301`), bytes in `raw.inspection_media.content` (migration 016), shown in the Assets page gallery with source and licence, every card marked mock. Benchmark items that can't be republished stay out: RPM-10K (licence TBD) and RMIS renders (no-derivatives).
 
+- **SPOTbot grounds only plant questions (2026-10-11, user decision; chat contract `chat.4` §10).** A rule-based router, with no extra model call, sends greetings and general questions to a general answer: no retrieval, no citation rule, no "unverified" badge. Mission chats, questions naming an id or using plant words, and follow-ups to cited answers stay strictly grounded. Anything unsure is probed, and grounds only if retrieval finds plant records; the Spot manual alone doesn't count. Forced grounding had made "hi" cite fleet stats and made "how does lidar work?" refuse.
+
 ## Pending
 - Roles.
 - Public access to the AMD services for Vercel (relay VM or tunnel agent; `docs/AMD-K8S-PLAN.md` §5-6).

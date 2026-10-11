@@ -79,7 +79,7 @@ async def test_fast_mode_event_order_payloads_and_request(ch, mock):
     assert msg["thinking_ms"] is None and msg["latency_ms"] >= 0
     assert msg["grounding"] == {"grounded": True, "cited_ids": ["incident:AN012", "asset:HX-217"], "unknown_ids": [],
                                 "unverified_numbers": [], "source_count": len(ids), "retrieval_mode": "hybrid",
-                                "graph_seeds": ret["graph_seeds"]}
+                                "graph_seeds": ret["graph_seeds"], "mode": "grounded"}
     assert msg["usage"] == {"prompt_tokens": 3100, "output_tokens": 40, "thoughts_tokens": 12}
     assert msg["sources"] == sources["sources"] and msg["error_code"] is None
     assert conv["message_count"] == 2 and conv["title_source"] == "auto"

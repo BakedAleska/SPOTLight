@@ -107,9 +107,12 @@ class Prior:
 
 
 def prior_answer(history: List[Dict[str, Any]]) -> Optional[Prior]:
-    """The latest assistant answer with text that is not an error, from stored messages (oldest first)."""
+    """The latest assistant answer with text that is not an error, from stored messages (oldest first). chat.4: a
+    general answer (§10, e.g. "you're welcome") is skipped, so it doesn't reset the evidence a follow-up refers to."""
     for m in reversed(history or []):
         if m.get("role") != "assistant" or m.get("status") == "error" or not (m.get("content") or "").strip():
+            continue
+        if (m.get("grounding") or {}).get("mode") == "general":
             continue
         by_id = {s.get("id"): s for s in m.get("sources") or [] if isinstance(s, dict) and s.get("id")}
         cited = [by_id[c] for c in dict.fromkeys(m.get("citations") or []) if c in by_id][:CARRY_MAX]

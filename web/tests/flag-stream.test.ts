@@ -260,7 +260,7 @@ test("the typewriter reveal never shows more than the snapshot and puts the care
 test("stage labels and the live poll interval", () => {
   assert.equal(stageLabel(null, false), "Starting the explanation…");
   assert.equal(stageLabel("context", false), "Gathering context…");
-  assert.equal(stageLabel("system2", true), "Qwen is writing…");
+  assert.equal(stageLabel("system2", true), "SPOTbot is writing…");
   assert.equal(stageLabel("storing", true), "Checking and saving the answer…");
   assert.equal(stageLabel("cached", false), "Loading the saved explanation…");
   const running = { status: "running" } as const;

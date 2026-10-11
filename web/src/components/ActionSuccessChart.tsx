@@ -1,5 +1,7 @@
+import Link from "next/link";
 import { Panel } from "./Panel";
 import type { SuccessGroup } from "@/lib/types";
+import { breakdownHref } from "@/lib/breakdown-link";
 
 /* Action success by inspection type, as a column chart: the fleet-wide view of
    which kinds of work SPOT gets right and which it doesn't. Best type on the
@@ -150,16 +152,17 @@ export function ActionSuccessChart({
             {groups.map((group, i) => {
               const isFlagged = group.key === flagged;
               return (
-                <div
+                <Link
                   key={group.key}
                   // The hover band is Grafana's: the whole column lights up,
                   // so a 24px bar doesn't have to be hit precisely. `title`
                   // carries the counts behind the percentage; the same string
                   // is the column's accessible name, so it isn't mouse-only.
-                  className="group relative flex h-full flex-1 items-end justify-center rounded-t-sm transition-colors hover:bg-surface-2"
-                  role="img"
-                  aria-label={`${group.label}: ${group.successRate}% of ${group.sampleSize} actions succeeded`}
-                  title={`${group.label} — ${group.successRate}% success, n=${group.sampleSize}`}
+                  // A click opens every action of this type (/analytics/breakdown).
+                  href={breakdownHref({ view: "actions", type: group.key })}
+                  className="group relative flex h-full flex-1 items-end justify-center rounded-t-sm transition-colors hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-accent"
+                  aria-label={`${group.label}: ${group.successRate}% of ${group.sampleSize} actions succeeded. Show these actions.`}
+                  title={`${group.label} — ${group.successRate}% success, n=${group.sampleSize}. Click to see them.`}
                 >
                   <div
                     className={`anim-grow relative w-full rounded-t-[4px] ${isFlagged ? "bg-bad" : "bg-ok"}`}
@@ -184,7 +187,7 @@ export function ActionSuccessChart({
                       {group.successRate}%
                     </span>
                   </div>
-                </div>
+                </Link>
               );
             })}
           </div>

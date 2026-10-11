@@ -10,6 +10,7 @@ import type { Flag } from "@/lib/types";
 import type { DashboardData } from "@/lib/dashboard";
 import { explanationLabel, type FlagAction, type FlagDetailData, type FlagExplanation } from "@/lib/flag-detail";
 import { loadExplanation, stageLabel, type ExplainProgress } from "@/lib/explanation-stream";
+import { displayText, displayJson } from "@/lib/display";
 
 const BUTTON = "rounded border border-line px-3 py-2 text-sm hover:bg-surface-2 disabled:opacity-50";
 
@@ -112,16 +113,16 @@ export function FlagDetails({ flag, features, onClose, onChanged }: {
       {!data && !error && <LoadingIndicator compact label="Loading flag details…" />}
       <button type="button" disabled={saving || isValidating} onClick={() => void mutate()} className={`${BUTTON} mt-3`}>Refresh flag</button>
       {data && <>
-        <p className="mt-4 text-sm">Status: <strong>{data.flag.status}</strong> · {data.flag.severity} · score {data.flag.score}</p>
+        <p className="mt-4 text-sm">Status: <strong>{data.flag.status}</strong> · {data.flag.severity} · Confidence {Math.round(data.flag.score)}%</p>
         <p className="mt-1 text-sm text-muted">Mission {data.flag.mission_id ?? "unassigned"}{data.flag.action_id ? ` · Action ${data.flag.action_id}` : ""}</p>
-        {(data.assessment || data.system1?.length) && <section className="mt-5" aria-label="Stored model outputs">
-          <h3 className="font-semibold">Live stored model outputs</h3>
-          {data.assessment && <div className="mt-2 space-y-2 text-sm"><p className="text-muted">{String(data.assessment.model ?? "unknown")} · {String(data.assessment.state ?? "pending")}</p><ModelExplanation answer={typeof data.assessment.answer === "string" ? data.assessment.answer : null} evidence={data.assessment.evidence} reasoning={data.assessment.reasoning} recommendedAction={typeof data.assessment.recommended_action === "string" ? data.assessment.recommended_action : null} />{typeof data.assessment.recommended_action !== "string" && <p><strong>Recommended action: </strong>Pending</p>}</div>}
-          <details className="mt-3 text-xs"><summary className="cursor-pointer text-accent-ink">All prediction and assessment fields</summary><pre className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap break-words rounded border border-line bg-canvas p-3">{JSON.stringify({ system1: data.system1, assessment: data.assessment }, null, 2)}</pre></details>
+        {(data.assessment || (data.system1?.length ?? 0) > 0) && <section className="mt-5" aria-label="SPOTbot analysis">
+          <h3 className="font-semibold">SPOTbot analysis</h3>
+          {data.assessment && <div className="mt-2 space-y-2 text-sm"><ModelExplanation answer={typeof data.assessment.answer === "string" ? data.assessment.answer : null} evidence={data.assessment.evidence} reasoning={data.assessment.reasoning} recommendedAction={typeof data.assessment.recommended_action === "string" ? data.assessment.recommended_action : null} />{typeof data.assessment.recommended_action !== "string" && <p><strong>Recommended action: </strong>Pending</p>}</div>}
+          <details className="mt-3 text-xs"><summary className="cursor-pointer text-accent-ink">All prediction and assessment fields</summary><pre className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap break-words rounded border border-line bg-canvas p-3">{displayJson({ system1: data.system1, assessment: data.assessment })}</pre></details>
         </section>}
         <h3 className="mt-5 font-semibold">Evidence</h3>
         <ul className="mt-2 list-disc space-y-2 pl-5 text-sm">
-          {data.flag.reasons.filter((reason) => typeof reason.detail === "string").map((reason, index) => <li key={`${reason.rule}-${index}`}>{reason.detail}</li>)}
+          {data.flag.reasons.filter((reason) => typeof reason.detail === "string").map((reason, index) => <li key={`${reason.rule}-${index}`}>{displayText(reason.detail ?? "")}</li>)}
         </ul>
         {features.flagExplanations && <section className="mt-5" aria-label="Flag explanation">
           <button type="button" disabled={explaining} onClick={startExplanation} className={BUTTON}>
@@ -138,7 +139,7 @@ export function FlagDetails({ flag, features, onClose, onChanged }: {
               {/* The draft box names its own stage, including the checks after Qwen stops writing. */}
               {!explain.draft && <p aria-hidden="true" className="flex items-center gap-2 text-xs text-muted">{stageLabel(explain.stage, false)} <LoadingDots color="currentColor" /></p>}
               {explain.draft && <QwenDraftView draft={explain.draft} catchUpMs={220} finished={explain.stage === "storing"}
-                label={explain.stage === "storing" ? "Checking and saving… · unverified draft" : "Qwen is writing · unverified draft"} />}
+                label={explain.stage === "storing" ? "Checking and saving… · unverified draft" : "SPOTbot is writing · unverified draft"} />}
             </>}
             {explain.status === "fallback" && <LoadingIndicator compact label="Loading explanation…" />}
             {explain.status === "error" && <p role="alert" className="text-bad">{explain.message}</p>}

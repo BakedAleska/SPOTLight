@@ -162,7 +162,7 @@ export function formatFields(raw: { key: string; value: string }[]): ClaimField[
 
 const NAMESPACES: Record<string, string> = {
   action: "Action", reading: "Reading", anomaly: "Anomaly", flag: "Flag", mission: "Mission", asset: "Asset",
-  location: "Waypoint", manual: "Manual", note: "Operator note", s1: "Laya answer", incident: "Incident",
+  location: "Waypoint", manual: "Manual", note: "Operator note", s1: "Confidence model answer", incident: "Incident",
 };
 
 /** A cited row by name: action:A0089 -> "Action A0089", F1 -> "Fact F1", V2 -> "Image reading V2". */

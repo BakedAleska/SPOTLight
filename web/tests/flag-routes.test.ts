@@ -79,7 +79,7 @@ test("explanation labels and the configurable explain timeout", async () => {
   assert.equal(explanationLabel({ source: "template" }), "Rule-based explanation");
   assert.equal(explanationLabel({ source: "system1" }), "Triage summary (not escalated)");
   assert.equal(explanationLabel({ source: "system2", model: "stub" }), "Evidence summary (stub)");
-  assert.equal(explanationLabel({ source: "system2", model: "qwen3.5-9b-q4km" }), "Model explanation");
+  assert.equal(explanationLabel({ source: "system2", model: "qwen3.5-9b-q4km" }), "SPOTbot explanation");
   assert.equal(explainTimeoutMs(undefined), 50_000);
   assert.equal(explainTimeoutMs("95000"), 95_000);
   assert.equal(explainTimeoutMs("abc"), 50_000);

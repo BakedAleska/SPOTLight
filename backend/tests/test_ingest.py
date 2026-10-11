@@ -148,7 +148,7 @@ async def test_mission_completed_green_but_broken(h, mock):
     res = await _post(h, replay_event("E00022"))      # M001: COMPLETED with failures + a HIGH anomaly
     assert res["kind"] == "mission" and res["decision"]["escalated"] is True
     assert "mission_misleading_serious" in res["rules"]["fired"]
-    assert res["decision"]["title"].startswith("Mission M001 reported COMPLETED but")
+    assert res["decision"]["title"] == "Mission M001 marked complete, but 2 of 10 actions failed and 1 serious anomaly"
 
 
 async def test_raw_is_idempotent_and_enriched_payload(h, mock):

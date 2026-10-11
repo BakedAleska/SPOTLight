@@ -19,6 +19,18 @@ const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
  */
 export function groundingBadge(grounding: Grounding | null | undefined): GroundingBadge | null {
   if (!grounding) return null;
+  // chat.4 (§10): a greeting or general question is answered without plant data, so there is nothing to cite and
+  // no "unverified" warning; only plant ids it names anyway are worth a flag.
+  if (grounding.mode === "general") {
+    const named = grounding.fleet_ids ?? [];
+    return named.length
+      ? {
+          tone: "warn",
+          label: "Mentions plant data without sources",
+          detail: `This was answered as a general question, with no plant data attached, but it names ${named.join(", ")}. Ask about them directly for a sourced answer.`,
+        }
+      : { tone: "muted", label: "General answer", detail: "A greeting or general question: answered without looking up plant data, so there is nothing to cite." };
+  }
   const cited = grounding.cited_ids?.length ?? 0;
   const unknown = grounding.unknown_ids?.length ?? 0;
   const numbers = grounding.unverified_numbers?.length ?? 0;

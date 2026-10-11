@@ -5,6 +5,8 @@ import { useState } from "react";
 import { FlagDetails } from "@/components/FlagDetails";
 import type { Flag } from "@/lib/types";
 import { PriorityQueue } from "@/components/PriorityQueue";
+import { QueueFilters } from "@/components/QueueFilters";
+import { filterFlags, isFiltered, NO_FILTER, type QueueFilter } from "@/lib/queue-filter";
 import { WelcomeBanner } from "@/components/WelcomeBanner";
 import { LoadingIndicator } from "@/components/LoadingIndicator";
 import type { DashboardData } from "@/lib/dashboard";
@@ -19,6 +21,7 @@ async function fetchDashboard(url: string): Promise<DashboardData> {
    about this page's reading order rather than about any one card. */
 const STAGGER = 55;
 export default function Dashboard({ initialData }: { initialData: DashboardData }) {
+  const [filter, setFilter] = useState<QueueFilter>(NO_FILTER);
   const [selectedFlag, setSelectedFlag] = useState<Flag | null>(() => {
     if (typeof window === "undefined") return null;
     const id = new URLSearchParams(window.location.search).get("flag");
@@ -47,7 +50,8 @@ export default function Dashboard({ initialData }: { initialData: DashboardData 
       </div>
     );
   }
-  const { stats, flags } = data;
+  const { flags } = data;
+  const shown = filterFlags(flags, filter);
   return (
     <div className="mx-auto flex max-w-[1600px] flex-col gap-4 p-4">
       <h1 className="sr-only">SPOT operator overview</h1>
@@ -55,19 +59,14 @@ export default function Dashboard({ initialData }: { initialData: DashboardData 
       <WelcomeBanner hiddenFailures={data.hiddenFailures} />
 
       {/* Overview is deliberately two things: the banner's question and the
-          list that answers it. Headline figures sit on one quiet line; the
-          fleet chart and the live model board live on /analytics. */}
-      <ul aria-label="Headline metrics" className="flex flex-wrap gap-x-6 gap-y-1 px-1 text-sm text-muted">
-        {stats.map((stat) => (
-          <li key={stat.label} title={stat.note}>
-            <span className="nums font-mono font-semibold text-ink">{stat.value}{stat.unit === "%" ? "%" : stat.unit ? ` ${stat.unit}` : ""}</span>{" "}
-            {stat.label.toLowerCase()}
-          </li>
-        ))}
-      </ul>
+          list that answers it, with search and filters over that list. The
+          fleet figures and charts live on /analytics. */}
+      <QueueFilters flags={flags} value={filter} onChange={setFilter} shown={shown.length} />
 
       <div id="queue" className="scroll-mt-4">
-        <PriorityQueue flags={flags} total={data.flagCount} delay={STAGGER} onSelect={data.features.flagDetails ? selectFlag : undefined} />
+        <PriorityQueue flags={shown} total={isFiltered(filter) ? flags.length : data.flagCount} delay={STAGGER}
+          emptyMessage={isFiltered(filter) ? "No open flags match these filters." : undefined}
+          onSelect={data.features.flagDetails ? selectFlag : undefined} />
       </div>
       {selectedFlag && data.features.flagDetails && <FlagDetails key={selectedFlag.id} flag={selectedFlag} features={data.features} onClose={() => selectFlag(null)} onChanged={() => void mutate()} />}
     </div>

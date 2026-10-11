@@ -23,7 +23,7 @@ def test_valid_answer_is_grounded():
             "[stat:battery_bands].")
     assert out == {"grounded": True, "cited_ids": ["incident:AN012", "stat:battery_bands"], "unknown_ids": [],
                    "unverified_numbers": [], "source_count": 4, "retrieval_mode": "hybrid",
-                   "graph_seeds": ["asset:HX-217"]}
+                   "graph_seeds": ["asset:HX-217"], "mode": "grounded"}
 
 
 def test_unknown_id_is_not_grounded():
