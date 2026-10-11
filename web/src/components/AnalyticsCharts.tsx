@@ -113,8 +113,8 @@ export function AnalyticsCharts({ data }: { data: FleetAnalytics }) {
                 formatter={(value, name) => (Array.isArray(value) ? [`${value[0]}–${value[1]}%`, "95% interval"] : [`${value}%`, name])}
                 labelFormatter={(band, payload) => `Battery ${band} · n=${payload?.[0]?.payload?.n ?? 0}`}
               />
-              <Area dataKey="ci" stroke="none" fill="var(--c-series-1)" fillOpacity={0.16} isAnimationActive={false} name="95% interval" />
-              <Line dataKey="rate" name="Success" stroke="var(--c-series-1)" strokeWidth={2} dot={{ r: 4, strokeWidth: 2, fill: "var(--c-surface)" }} isAnimationActive={false} />
+              <Area dataKey="ci" stroke="none" fill="var(--c-series-1)" fillOpacity={0.16} animationDuration={700} animationEasing="ease-out" name="95% interval" />
+              <Line dataKey="rate" name="Success" stroke="var(--c-series-1)" strokeWidth={2} dot={{ r: 4, strokeWidth: 2, fill: "var(--c-surface)" }} animationBegin={250} animationDuration={1200} animationEasing="ease-in-out" />
             </ComposedChart>
           </Plot>
           {cliff && best && (
@@ -131,7 +131,7 @@ export function AnalyticsCharts({ data }: { data: FleetAnalytics }) {
               <XAxis type="number" domain={[0, 100]} unit="%" tick={AXIS} tickLine={false} axisLine={false} />
               <YAxis type="category" dataKey="environment" tick={AXIS} tickLine={false} axisLine={false} width={96} />
               <Tooltip {...TOOLTIP} formatter={(value, _name, item) => [`${value}% · n=${item.payload.n}`, "Success"]} />
-              <Bar dataKey="rate" name="Success" radius={[0, 4, 4, 0]} isAnimationActive={false} label={{ position: "right", fill: "var(--c-muted)", fontSize: 11, formatter: (v: unknown) => `${v}%` }}>
+              <Bar dataKey="rate" name="Success" radius={[0, 4, 4, 0]} animationDuration={900} animationEasing="ease-out" label={{ position: "right", fill: "var(--c-muted)", fontSize: 11, formatter: (v: unknown) => `${v}%` }}>
                 {data.environments.map((row) => (
                   <Cell key={row.environment} fill={row === worstEnv ? "var(--c-bad)" : "var(--c-series-1)"} />
                 ))}
@@ -153,8 +153,8 @@ export function AnalyticsCharts({ data }: { data: FleetAnalytics }) {
                 {...TOOLTIP}
                 formatter={(value, name, item) => [`${value ?? "—"}% · n=${item.payload[`n${String(name)}`]}`, name]}
               />
-              <Bar dataKey="V1" fill="var(--c-series-1)" radius={[4, 4, 0, 0]} maxBarSize={22} isAnimationActive={false} />
-              <Bar dataKey="V2" fill="var(--c-series-2)" radius={[4, 4, 0, 0]} maxBarSize={22} isAnimationActive={false} />
+              <Bar dataKey="V1" fill="var(--c-series-1)" radius={[4, 4, 0, 0]} maxBarSize={22} animationDuration={700} animationEasing="ease-out" />
+              <Bar dataKey="V2" fill="var(--c-series-2)" radius={[4, 4, 0, 0]} maxBarSize={22} animationBegin={350} animationDuration={700} animationEasing="ease-out" />
             </BarChart>
           </Plot>
           <SeriesKey items={[{ label: "V1", color: VERSION_FILL.V1 }, { label: "V2", color: VERSION_FILL.V2 }]} />
@@ -168,7 +168,7 @@ export function AnalyticsCharts({ data }: { data: FleetAnalytics }) {
               <XAxis type="number" tickFormatter={(v: number) => `${v} pts`} tick={AXIS} tickLine={false} axisLine={false} />
               <YAxis type="category" dataKey="version" tick={AXIS} tickLine={false} axisLine={false} width={32} />
               <Tooltip {...TOOLTIP} formatter={(value, _name, item) => [`${value} pts · ${item.payload.missions} missions`, "Mean drain"]} />
-              <Bar dataKey="drain" name="Mean drain" radius={[0, 4, 4, 0]} isAnimationActive={false} label={{ position: "right", fill: "var(--c-muted)", fontSize: 11, formatter: (v: unknown) => `${v} pts` }}>
+              <Bar dataKey="drain" name="Mean drain" radius={[0, 4, 4, 0]} animationDuration={1300} animationEasing="ease-in-out" label={{ position: "right", fill: "var(--c-muted)", fontSize: 11, formatter: (v: unknown) => `${v} pts` }}>
                 {data.drain.map((row) => <Cell key={row.version} fill={VERSION_FILL[row.version] ?? "var(--c-series-3)"} />)}
               </Bar>
             </BarChart>
@@ -189,8 +189,8 @@ export function AnalyticsCharts({ data }: { data: FleetAnalytics }) {
               <XAxis dataKey="id" tick={AXIS} tickLine={false} axisLine={{ stroke: "var(--c-line)" }} interval="preserveStartEnd" minTickGap={8} />
               <YAxis allowDecimals={false} tick={AXIS} tickLine={false} axisLine={false} width={40} />
               <Tooltip {...TOOLTIP} labelFormatter={(id, payload) => `${id} · ${payload?.[0]?.payload?.version ?? ""} · reported ${payload?.[0]?.payload?.reported ?? ""}`} />
-              <Bar dataKey="succeeded" name="Succeeded" stackId="a" fill="var(--c-ok)" isAnimationActive={false} />
-              <Bar dataKey="failed" name="Failed" stackId="a" fill="var(--c-bad)" radius={[4, 4, 0, 0]} isAnimationActive={false} />
+              <Bar dataKey="succeeded" name="Succeeded" stackId="a" fill="var(--c-ok)" animationDuration={650} animationEasing="ease-out" />
+              <Bar dataKey="failed" name="Failed" stackId="a" fill="var(--c-bad)" radius={[4, 4, 0, 0]} animationBegin={650} animationDuration={450} animationEasing="ease-in" />
             </BarChart>
           </Plot>
           <SeriesKey items={[{ label: "Succeeded", color: "var(--c-ok)" }, { label: "Failed", color: "var(--c-bad)" }]} />
@@ -203,7 +203,7 @@ export function AnalyticsCharts({ data }: { data: FleetAnalytics }) {
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Tooltip {...TOOLTIP} formatter={(value, name) => [`${value} missions`, name]} />
-                  <Pie data={data.truth} dataKey="count" nameKey="label" innerRadius="62%" outerRadius="100%" paddingAngle={2} stroke="var(--c-surface)" strokeWidth={2} isAnimationActive={false}>
+                  <Pie data={data.truth} dataKey="count" nameKey="label" innerRadius="62%" outerRadius="100%" paddingAngle={2} stroke="var(--c-surface)" strokeWidth={2} startAngle={90} endAngle={-270} animationBegin={100} animationDuration={1100} animationEasing="ease-out">
                     {data.truth.map((slice) => <Cell key={slice.key} fill={TRUTH_FILL[slice.key]} />)}
                   </Pie>
                 </PieChart>
@@ -233,7 +233,7 @@ export function AnalyticsCharts({ data }: { data: FleetAnalytics }) {
               <XAxis dataKey="id" tick={AXIS} tickLine={false} axisLine={{ stroke: "var(--c-line)" }} interval="preserveStartEnd" minTickGap={8} />
               <YAxis domain={[0, 100]} unit="%" tick={AXIS} tickLine={false} axisLine={false} width={44} />
               <Tooltip {...TOOLTIP} formatter={(value, _name, item) => [Array.isArray(value) ? `${value[1]}% → ${value[0]}%` : String(value), `Battery (${item.payload.version})`]} />
-              <Bar dataKey="battery" name="Battery start → end" radius={4} isAnimationActive={false}>
+              <Bar dataKey="battery" name="Battery start → end" radius={4} animationDuration={1000} animationEasing="ease-in-out">
                 {data.missions.map((m) => <Cell key={m.id} fill={VERSION_FILL[m.version] ?? "var(--c-series-3)"} />)}
               </Bar>
             </BarChart>
@@ -251,7 +251,7 @@ export function AnalyticsCharts({ data }: { data: FleetAnalytics }) {
               <XAxis type="number" allowDecimals={false} tick={AXIS} tickLine={false} axisLine={false} />
               <YAxis type="category" dataKey="mode" tick={AXIS} tickLine={false} axisLine={false} width={150} />
               <Tooltip {...TOOLTIP} formatter={(value) => [`${value} actions`, "Failed"]} />
-              <Bar dataKey="count" name="Failed actions" fill="var(--c-series-1)" radius={[0, 4, 4, 0]} isAnimationActive={false} label={{ position: "right", fill: "var(--c-muted)", fontSize: 11 }} />
+              <Bar dataKey="count" name="Failed actions" fill="var(--c-series-1)" radius={[0, 4, 4, 0]} animationDuration={800} animationEasing="ease-out" label={{ position: "right", fill: "var(--c-muted)", fontSize: 11 }} />
             </BarChart>
           </Plot>
           {topMode && <Caption>{topMode.mode} is the leading cause, behind {topMode.count} failed actions.</Caption>}
@@ -274,7 +274,9 @@ export function AnalyticsCharts({ data }: { data: FleetAnalytics }) {
                   stroke="var(--c-surface)"
                   strokeWidth={1}
                   radius={i === 3 ? [0, 4, 4, 0] : 0}
-                  isAnimationActive={false}
+                  animationBegin={i * 220}
+                  animationDuration={420}
+                  animationEasing="linear"
                 />
               ))}
             </BarChart>
@@ -291,8 +293,8 @@ export function AnalyticsCharts({ data }: { data: FleetAnalytics }) {
               <YAxis type="number" dataKey="duration" name="Duration" unit="s" tick={AXIS} tickLine={false} axisLine={false} width={48} />
               <ZAxis range={[36, 36]} />
               <Tooltip {...TOOLTIP} cursor={{ strokeDasharray: "3 3", stroke: "var(--c-line-strong)" }} />
-              <Scatter name="Succeeded" data={data.scatter.success} fill="var(--c-ok)" fillOpacity={0.55} shape="circle" isAnimationActive={false} />
-              <Scatter name="Failed" data={data.scatter.failed} fill="var(--c-bad)" shape="cross" isAnimationActive={false} />
+              <Scatter name="Succeeded" data={data.scatter.success} fill="var(--c-ok)" fillOpacity={0.55} shape="circle" animationDuration={700} animationEasing="ease-out" />
+              <Scatter name="Failed" data={data.scatter.failed} fill="var(--c-bad)" shape="cross" animationBegin={500} animationDuration={600} animationEasing="ease-out" />
             </ScatterChart>
           </Plot>
           <SeriesKey items={[{ label: "Succeeded (●)", color: "var(--c-ok)" }, { label: "Failed (+)", color: "var(--c-bad)" }]} />
@@ -308,8 +310,8 @@ export function AnalyticsCharts({ data }: { data: FleetAnalytics }) {
               <XAxis type="number" tickFormatter={(v: number) => `${Math.round(v * 100)}%`} tick={AXIS} tickLine={false} axisLine={false} />
               <YAxis type="category" dataKey="measurement" tick={AXIS} tickLine={false} axisLine={false} width={130} />
               <Tooltip {...TOOLTIP} formatter={(value, name) => [`${value} readings`, name]} />
-              <Bar dataKey="good" name="Good" stackId="q" fill="var(--c-ok)" stroke="var(--c-surface)" strokeWidth={1} isAnimationActive={false} />
-              <Bar dataKey="questionable" name="Questionable" stackId="q" fill="var(--c-accent)" stroke="var(--c-surface)" strokeWidth={1} radius={[0, 4, 4, 0]} isAnimationActive={false} />
+              <Bar dataKey="good" name="Good" stackId="q" fill="var(--c-ok)" stroke="var(--c-surface)" strokeWidth={1} animationDuration={700} animationEasing="ease-out" />
+              <Bar dataKey="questionable" name="Questionable" stackId="q" fill="var(--c-accent)" stroke="var(--c-surface)" strokeWidth={1} radius={[0, 4, 4, 0]} animationBegin={700} animationDuration={500} animationEasing="ease-out" />
             </BarChart>
           </Plot>
           <SeriesKey items={[{ label: "Good", color: "var(--c-ok)" }, { label: "Questionable", color: "var(--c-accent)" }]} />
@@ -366,7 +368,7 @@ function Heatmap({ heatmap }: { heatmap: FleetAnalytics["heatmap"] }) {
           ))}
           <span role="columnheader" className="px-1 py-1 text-center font-medium text-faint">All</span>
         </div>
-        {heatmap.rows.map((row) => (
+        {heatmap.rows.map((row, r) => (
           <div key={row.id} role="row" className="contents">
             <span role="rowheader" className="truncate px-2 py-1.5 text-ink" title={`${row.id} · ${row.environment}`}>
               {row.name}
@@ -376,13 +378,13 @@ function Heatmap({ heatmap }: { heatmap: FleetAnalytics["heatmap"] }) {
                 key={heatmap.types[i].key}
                 role="cell"
                 title={cell ? `${row.name} · ${heatmap.types[i].label}: ${cell.rate}% failed, n=${cell.n}` : `${row.name} · ${heatmap.types[i].label}: no actions`}
-                className="nums rounded-sm px-1 py-1.5 text-center font-mono text-ink"
-                style={{ background: cell ? fill(cell.rate) : "transparent" }}
+                className="heat-cell nums rounded-sm px-1 py-1.5 text-center font-mono text-ink"
+                style={{ background: cell ? fill(cell.rate) : "transparent", animationDelay: `${(r + i) * 28}ms` }}
               >
                 {cell ? `${Math.round(cell.rate)}%` : ""}
               </span>
             ))}
-            <span role="cell" className="nums rounded-sm px-1 py-1.5 text-center font-mono font-semibold text-ink" style={{ background: fill(row.rate) }} title={`${row.name}: ${row.rate}% failed, n=${row.n}`}>
+            <span role="cell" className="heat-cell nums rounded-sm px-1 py-1.5 text-center font-mono font-semibold text-ink" style={{ background: fill(row.rate), animationDelay: `${(r + heatmap.types.length) * 28}ms` }} title={`${row.name}: ${row.rate}% failed, n=${row.n}`}>
               {Math.round(row.rate)}%
             </span>
           </div>

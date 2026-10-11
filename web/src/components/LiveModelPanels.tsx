@@ -79,7 +79,7 @@ export function RunModelCharts({ captures, route }: { captures: LiveCapture[]; r
                 <XAxis dataKey="stop" tick={AXIS} tickLine={false} axisLine={{ stroke: "var(--c-line)" }} />
                 <YAxis domain={[0, 100]} unit="%" tick={AXIS} tickLine={false} axisLine={false} width={44} />
                 <Tooltip {...TOOLTIP} labelFormatter={(stop) => `Stop ${stop}`} formatter={(value, _n, item) => [value == null ? "not scored" : `${value}%`, `p(escalate) · ${item.payload.verdict ?? "triaging"}`]} />
-                <Bar dataKey="p" name="p(escalate)" radius={[4, 4, 0, 0]} maxBarSize={36} isAnimationActive={false}>
+                <Bar dataKey="p" name="p(escalate)" radius={[4, 4, 0, 0]} maxBarSize={36} animationDuration={700} animationEasing="ease-out">
                   {risk.map((r) => <Cell key={r.stop} fill={r.verdict === "red" ? "var(--c-bad)" : r.verdict === "green" ? "var(--c-ok)" : "var(--c-line-strong)"} />)}
                 </Bar>
               </BarChart>
@@ -100,7 +100,7 @@ export function RunModelCharts({ captures, route }: { captures: LiveCapture[]; r
                 <YAxis unit="s" tick={AXIS} tickLine={false} axisLine={false} width={44} />
                 <Tooltip {...TOOLTIP} labelFormatter={(stop) => `Stop ${stop}`} formatter={(value, name) => [value == null ? "—" : `${value} s`, name]} />
                 {STAGES.map((stage, i) => (
-                  <Bar key={stage.key} dataKey={stage.key} stackId="t" fill={stage.color} stroke="var(--c-surface)" strokeWidth={1} maxBarSize={36} radius={i === STAGES.length - 1 ? [4, 4, 0, 0] : 0} isAnimationActive={false} />
+                  <Bar key={stage.key} dataKey={stage.key} stackId="t" fill={stage.color} stroke="var(--c-surface)" strokeWidth={1} maxBarSize={36} radius={i === STAGES.length - 1 ? [4, 4, 0, 0] : 0} animationBegin={i * 250} animationDuration={400} animationEasing="linear" />
                 ))}
               </BarChart>
             </ResponsiveContainer>
@@ -143,7 +143,7 @@ export function ModelCallsPanel() {
                   <XAxis dataKey="index" tick={AXIS} tickLine={false} axisLine={{ stroke: "var(--c-line)" }} />
                   <YAxis unit="ms" tick={AXIS} tickLine={false} axisLine={false} width={60} />
                   <Tooltip {...TOOLTIP} cursor={{ stroke: "var(--c-line-strong)" }} labelFormatter={(_, payload) => payload?.[0]?.payload?.label ?? ""} />
-                  {systems.map((system, i) => <Line key={system} name={system} dataKey={system} connectNulls stroke={STAGES[i].color} strokeWidth={2} dot={{ r: 2 }} isAnimationActive={false} />)}
+                  {systems.map((system, i) => <Line key={system} name={system} dataKey={system} connectNulls stroke={STAGES[i].color} strokeWidth={2} dot={{ r: 2 }} animationDuration={1000} />)}
                 </LineChart>
               </ResponsiveContainer>
             </div>

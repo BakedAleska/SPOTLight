@@ -754,6 +754,18 @@ body {
   animation: grow 800ms var(--ease-settle) both;
 }
 
+/* Heatmap cells pop in on a diagonal wave; the delay is set inline per cell. */
+@keyframes heat-cell-in {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+
+.heat-cell {
+  animation: heat-cell-in 380ms var(--ease-settle) both;
+}
+
 /* One visible focus style everywhere, so keyboard users are never lost. */
 :focus-visible {
   outline: 2px solid var(--c-focus);
