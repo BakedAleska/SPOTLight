@@ -9,7 +9,9 @@ import { QueueFilters } from "@/components/QueueFilters";
 import { filterFlags, isFiltered, NO_FILTER, type QueueFilter } from "@/lib/queue-filter";
 import { WelcomeBanner } from "@/components/WelcomeBanner";
 import { LoadingIndicator } from "@/components/LoadingIndicator";
+import { OverviewAnalytics } from "@/components/OverviewAnalytics";
 import type { DashboardData } from "@/lib/dashboard";
+import type { OverviewAnalyticsData } from "@/lib/overview";
 
 async function fetchDashboard(url: string): Promise<DashboardData> {
   const response = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(15_000) });
@@ -20,8 +22,14 @@ async function fetchDashboard(url: string): Promise<DashboardData> {
 /* The load cascade lives here, not inside the panels, because it is a fact
    about this page's reading order rather than about any one card. */
 const STAGGER = 55;
-export default function Dashboard({ initialData }: { initialData: DashboardData }) {
+export default function Dashboard({ initialData, analytics }: {
+  initialData: DashboardData;
+  /** The Overview's charts beside the queue. /review renders the queue alone. */
+  analytics?: OverviewAnalyticsData;
+}) {
   const [filter, setFilter] = useState<QueueFilter>(NO_FILTER);
+  /** The queue row that is open; the analytics beside the queue follow it. */
+  const [openId, setOpenId] = useState<string | null>(null);
   const [selectedFlag, setSelectedFlag] = useState<Flag | null>(() => {
     if (typeof window === "undefined") return null;
     const id = new URLSearchParams(window.location.search).get("flag");
@@ -52,21 +60,46 @@ export default function Dashboard({ initialData }: { initialData: DashboardData 
   }
   const { flags } = data;
   const shown = filterFlags(flags, filter);
+  // A row hidden by the filters is not open as far as the charts are concerned.
+  const openFlag = shown.find((flag) => flag.id === openId) ?? null;
   return (
     <div className="mx-auto flex max-w-[1600px] flex-col gap-4 p-4">
       <h1 className="sr-only">SPOT operator overview</h1>
 
       <WelcomeBanner hiddenFailures={data.hiddenFailures} />
 
-      {/* Overview is deliberately two things: the banner's question and the
-          list that answers it, with search and filters over that list. The
-          fleet figures and charts live on /analytics. */}
-      <QueueFilters flags={flags} value={filter} onChange={setFilter} shown={shown.length} />
+      {/* The banner's question, the list that answers it (with search and
+          filters over it), and beside the list a few fleet charts that turn
+          to whichever flag is open. On a wide container the queue takes the
+          left ~60% and the charts the rest, both panels the same height; the
+          filters sit over the queue only, since they filter only the queue.
+          Narrower, everything stacks, queue first. The full chart catalogue
+          is /analytics. */}
+      <div className="@container">
+        <div className={`grid gap-4 ${analytics ? "@4xl:grid-cols-[minmax(0,3fr)_minmax(22rem,2fr)] @4xl:grid-rows-[auto_1fr]" : ""}`}>
+          <div className="min-w-0 @4xl:col-start-1 @4xl:row-start-1">
+            <QueueFilters flags={flags} value={filter} onChange={setFilter} shown={shown.length} />
+          </div>
 
-      <div id="queue" className="scroll-mt-4">
-        <PriorityQueue flags={shown} total={isFiltered(filter) ? flags.length : data.flagCount} delay={STAGGER}
-          emptyMessage={isFiltered(filter) ? "No open flags match these filters." : undefined}
-          onSelect={data.features.flagDetails ? selectFlag : undefined} />
+          <div id="queue" className="min-w-0 scroll-mt-4 @4xl:col-start-1 @4xl:row-start-2">
+            <PriorityQueue flags={shown} total={isFiltered(filter) ? flags.length : data.flagCount} delay={STAGGER}
+              emptyMessage={isFiltered(filter) ? "No open flags match these filters." : undefined}
+              openId={openId} onOpenChange={setOpenId}
+              onSelect={data.features.flagDetails ? selectFlag : undefined} />
+          </div>
+
+          {/* Side by side, the queue sets the row's height and the charts
+              fill it (absolutely, so a taller chart never stretches the queue
+              into a gap under its last row); 30rem keeps them readable when
+              filters shrink the queue to a row or two. */}
+          {analytics && (
+            <div className="relative min-w-0 @4xl:col-start-2 @4xl:row-start-2 @4xl:min-h-[30rem]">
+              <div className="h-full @4xl:absolute @4xl:inset-0">
+                <OverviewAnalytics data={analytics} flag={openFlag} delay={STAGGER * 2} />
+              </div>
+            </div>
+          )}
+        </div>
       </div>
       {selectedFlag && data.features.flagDetails && <FlagDetails key={selectedFlag.id} flag={selectedFlag} features={data.features} onClose={() => selectFlag(null)} onChanged={() => void mutate()} />}
     </div>

@@ -1,0 +1,15 @@
+event: meta
+data: {"conversation_id":"00000000-0000-4000-8000-000000000001","request_id":"r-golden","model":"gemini-3.8-flash","mode":"fast","user_message":{"message_id":"00000000-0000-4000-8000-000000000002","conversation_id":"00000000-0000-4000-8000-000000000001","seq":1,"role":"user","content":"hi","thinking":null,"thinking_ms":null,"model":null,"mode":null,"status":"complete","sources":[],"citations":[],"grounding":null,"usage":null,"latency_ms":null,"error":null,"error_code":null,"created_at":"2026-10-10T12:00:01Z"}}
+
+event: sources
+data: {"sources":[],"retrieval":{"mode":null,"graph_seeds":[],"latency_ms":1000,"counts":{"rag":0,"graph":0,"sql":0},"gaps":[],"mission_id":null,"answer_mode":"general","route":"small_talk"}}
+
+event: delta
+data: {"delta":"Hi! I'm SPOTbot. "}
+
+event: delta
+data: {"delta":"Ask me about a mission, an asset or a flag and I'll look it up."}
+
+event: done
+data: {"message":{"message_id":"00000000-0000-4000-8000-000000000003","conversation_id":"00000000-0000-4000-8000-000000000001","seq":2,"role":"assistant","content":"Hi! I'm SPOTbot. Ask me about a mission, an asset or a flag and I'll look it up.","thinking":null,"thinking_ms":null,"model":"gemini-3.8-flash","mode":"fast","status":"complete","sources":[],"citations":[],"grounding":{"grounded":false,"cited_ids":[],"unknown_ids":[],"unverified_numbers":[],"source_count":0,"retrieval_mode":null,"graph_seeds":[],"mode":"general","fleet_ids":[]},"usage":{"prompt_tokens":3100,"output_tokens":40,"thoughts_tokens":12},"latency_ms":1000,"error":null,"error_code":null,"created_at":"2026-10-10T12:00:02Z"},"conversation":{"conversation_id":"00000000-0000-4000-8000-000000000001","title":"hi","title_source":"auto","model":"gemini-3.8-flash","mode":"fast","pinned":false,"created_at":"2026-10-10T12:00:03Z","updated_at":"2026-10-10T12:00:04Z","message_count":2,"mission_id":null,"mission":null}}
+
