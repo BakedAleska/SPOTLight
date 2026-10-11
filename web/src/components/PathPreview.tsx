@@ -66,7 +66,9 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
   const selected = points.find(p => p.id === selectedId) ?? current;
   const battery = events.filter(e => e.battery != null).at(-1)?.battery;
   const last = events.at(-1);
-  const planned = useMemo(() => legsPath(segments.flatMap(s => s.leg ? [s.leg] : [])), [segments]);
+  // Only the trip underway, or the next one while SPOT is stopped, is drawn ahead of it.
+  const nextTravel = segments.find(s => s.leg && s.end > elapsed)?.leg?.travel;
+  const planned = legsPath(segments.flatMap(s => s.leg && s.leg.travel === nextTravel ? [s.leg] : []));
   // Walked so far: every finished leg, plus the one underway cut at SPOT's position.
   const underway = frame?.leg && elapsed < frame.end ? frame.leg : undefined;
   const walked = legsPath([...segments.filter(s => s.leg && s.end <= elapsed).map(s => s.leg!), ...(underway ? [underway] : [])], underway ? frame?.progress : 1);
@@ -101,7 +103,7 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
             <text y="65" textAnchor="middle" fill="white" stroke="black" strokeWidth="3" paintOrder="stroke" fontSize="15" fontWeight="bold">SPOT</text>
           </g>}
         </svg>
-        <p className="mt-3 text-xs text-muted">Dashed: planned route · Solid: visited route · !: error. Travel follows the hallways and stairs between stops; activity durations are compressed from the logs.</p>
+        <p className="mt-3 text-xs text-muted">Dashed: route to the next stop · Solid: visited route · !: error. Travel follows the hallways and stairs between stops; activity durations are compressed from the logs.</p>
         <div className="mt-4 flex flex-col gap-3 border-t border-line pt-4">
           <label className="text-xs text-muted">Replay position · event {index + 1} of {mission.events.length}<input className="mt-2 w-full accent-accent-ink" type="range" min="0" max={duration} value={elapsed} onChange={e => setElapsed(Number(e.target.value))} /></label>
           <div className="flex flex-wrap items-center gap-2"><button className={control} onClick={() => {
