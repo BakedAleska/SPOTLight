@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Pause, Play, RotateCcw, Radio, Route, TriangleAlert, ScanLine, CheckCircle2, ArrowRight, AudioLines } from "lucide-react";
+import { Pause, Play, RotateCcw, Radio, Route, TriangleAlert, ScanLine, CheckCircle2, ArrowRight, AudioLines, ArrowUp, ArrowDown } from "lucide-react";
 import { Panel } from "./Panel";
 import type { PathEvent, PathFeed, PathMission, PathPoint } from "@/lib/path-types";
 
@@ -75,9 +75,12 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
   const located = events.map(e => ({ ...e, locationId: e.locationId ?? events.find(start => start.actionId && start.actionId === e.actionId && start.locationId)?.locationId }));
   const visited = located.flatMap(e => { const p = points.find(p => p.id === e.locationId); return p ? [p] : []; }).filter((p, i, list) => i === 0 || list[i - 1].id !== p.id);
   const current = mode === "replay" ? (frame?.moving ? frame.from : frame?.to) : visited.at(-1);
+  const changingFloor = mode === "replay" && !!frame?.moving && frame.from?.floor !== frame.to?.floor;
+  const floorUp = (frame?.to?.floor ?? 0) > (frame?.from?.floor ?? 0);
+  const floorLabel = `Floor ${frame?.from?.floor} → Floor ${frame?.to?.floor}`;
   const marker = mode === "replay" && frame ? { x: frame.x, y: frame.y } : current;
   const active = mode === "replay" && playing && !finished;
-  const activity = mode === "replay" ? frame?.activity ?? "Ready" : "Latest observed position";
+  const activity = changingFloor ? `${floorUp ? "Going up" : "Going down"} · ${floorLabel}` : mode === "replay" ? frame?.activity ?? "Ready" : "Latest observed position";
   const errors = located.filter(e => e.error);
   const selected = points.find(p => p.id === selectedId) ?? current;
   const battery = events.filter(e => e.battery != null).at(-1)?.battery;
@@ -98,7 +101,11 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
           <image href="/kit/fictional_floor_plan.png" width="1095" height="595" />
           {mode === "replay" && <polyline points={path(planned)} fill="none" stroke="white" strokeWidth="3" strokeDasharray="8 8" opacity="0.65" />}
           <polyline points={path(visited)} fill="none" stroke="var(--c-accent-ink)" strokeWidth="5" strokeLinejoin="round" />
-          {mode === "replay" && frame?.moving && <line x1={frame.from?.x} y1={frame.from?.y} x2={frame.x} y2={frame.y} stroke="var(--c-accent-ink)" strokeWidth="5" />}
+          {mode === "replay" && frame?.moving && <line x1={frame.from?.x} y1={frame.from?.y} x2={frame.x} y2={frame.y} stroke="var(--c-accent-ink)" strokeWidth="5" strokeDasharray={changingFloor ? "8 6" : undefined} />}
+          {changingFloor && <g aria-label={`Changing floor: ${floorLabel}`}>
+            <rect x={frame?.to?.floor === 2 ? 756 : 16} y="15" width={frame?.to?.floor === 2 ? 327 : 731} height="570" rx="3" fill="none" stroke="var(--c-accent-ink)" strokeWidth="4" strokeDasharray="12 8" opacity="0.8" />
+            <g transform="translate(395 20)"><rect width="305" height="48" rx="12" fill="var(--c-surface)" stroke="var(--c-accent-ink)" strokeWidth="2" /><text x="152" y="30" textAnchor="middle" fill="var(--c-ink)" fontSize="19" fontWeight="bold">{floorLabel}</text></g>
+          </g>}
           {points.map(p => {
             const fault = errors.some(e => e.locationId === p.id);
             return <g key={p.id} role="button" tabIndex={0} aria-label={`${p.id}: ${p.name}${fault ? ", error detected" : ""}`} onClick={() => setSelectedId(p.id)} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSelectedId(p.id); } }} className="cursor-pointer">
@@ -111,8 +118,11 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
             {((active && !frame?.moving && last?.type === "ACTION_STARTED") || (mode === "live" && last?.type === "ACTION_STARTED")) && <g className="spot-working-spinner" aria-label="SPOT working">
               {[0, 1, 2, 3, 4].map(i => <circle key={i} cx={46 * Math.cos((-110 - i * 17) * Math.PI / 180)} cy={46 * Math.sin((-110 - i * 17) * Math.PI / 180)} r="3.5" fill="white" opacity={1 - i * 0.16} />)}
             </g>}
+            {changingFloor && <g className={active ? "spot-floor-chevron" : undefined} style={{ "--floor-direction": floorUp ? "-1" : "1" } as React.CSSProperties} aria-hidden="true">
+              <path d={floorUp ? "M -16 -48 L 0 -62 L 16 -48 M -16 -62 L 0 -76 L 16 -62" : "M -16 -76 L 0 -62 L 16 -76 M -16 -62 L 0 -48 L 16 -62"} fill="none" stroke="white" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+            </g>}
             <image href="/spotlight-logo-small.svg" x="-30" y="-34" width="60" height="68" filter="url(#spot-marker-contrast)" />
-            <text y="65" textAnchor="middle" fill="white" stroke="black" strokeWidth="3" paintOrder="stroke" fontSize="15" fontWeight="bold">SPOT</text>
+            <text y="65" textAnchor="middle" fill="white" stroke="black" strokeWidth="3" paintOrder="stroke" fontSize="15" fontWeight="bold">{changingFloor ? `F${frame?.from?.floor} → F${frame?.to?.floor}` : "SPOT"}</text>
           </g>}
         </svg>
         <p className="mt-3 text-xs text-muted">Dashed: planned route · Solid: visited route · !: error. Travel is interpolated between stops; activity durations are compressed from the logs.</p>
@@ -128,7 +138,7 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
       <div className="panel-stack flex min-h-0 min-w-0 flex-col gap-4">
         <Panel title="SPOT activity" aside={active ? "IN PROGRESS" : finished ? "COMPLETE" : "PAUSED"}>
           <div className="flex items-center gap-3"><div className={`grid size-12 shrink-0 place-items-center rounded-full border border-line bg-surface-2 text-accent-ink ${active && !frame?.moving ? "spot-activity-icon" : ""}`}>
-            {frame?.moving ? <ArrowRight size={24} /> : activity.includes("Listening") ? <AudioLines size={24} /> : finished ? <CheckCircle2 size={24} /> : <ScanLine size={24} />}
+            {changingFloor ? floorUp ? <ArrowUp size={24} /> : <ArrowDown size={24} /> : frame?.moving ? <ArrowRight size={24} /> : activity.includes("Listening") ? <AudioLines size={24} /> : finished ? <CheckCircle2 size={24} /> : <ScanLine size={24} />}
           </div><div><p className="text-sm font-semibold text-ink">{activity}</p><p className="mt-1 text-xs text-muted">{frame?.moving ? `${frame.from?.id} → ${frame.to?.id}` : last?.assetName ?? current?.name ?? "Preparing mission"}</p></div></div>
           {mode === "replay" && <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-surface-2"><div className="h-full bg-accent-ink" style={{ width: `${(frame?.progress ?? 0) * 100}%` }} /></div>}
         </Panel>

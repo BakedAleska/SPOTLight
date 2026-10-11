@@ -810,3 +810,10 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .spot-working-spinner { animation: none; }
 }
+
+/* Floor-change arrows signal vertical travel without inventing a stair location. */
+.spot-floor-chevron { animation: spot-floor-step 1s ease-in-out infinite; filter: drop-shadow(0 1px 2px black); }
+@keyframes spot-floor-step {
+  50% { transform: translateY(calc(var(--floor-direction) * 8px)); opacity: 0.5; }
+}
+@media (prefers-reduced-motion: reduce) { .spot-floor-chevron { animation: none; } }
