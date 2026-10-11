@@ -1,6 +1,7 @@
 "use client";
 
 import useSWR from "swr";
+import { LiveModelBoard } from "./LiveModelBoard";
 import { useState } from "react";
 import { FlagDetails } from "@/components/FlagDetails";
 import type { Flag } from "@/lib/types";
@@ -38,7 +39,7 @@ export default function Dashboard({ initialData }: { initialData: DashboardData 
   }
   const { data, error, isValidating, mutate } = useSWR<DashboardData>("/api/dashboard", fetchDashboard, {
     fallbackData: initialData,
-    refreshInterval: 10_000,
+    refreshInterval: 2500,
     shouldRetryOnError: false,
     revalidateOnFocus: false,
   });
@@ -58,7 +59,7 @@ export default function Dashboard({ initialData }: { initialData: DashboardData 
       <h1 className="sr-only">SPOT operator overview</h1>
 
       <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted">
-        <p role="status">{error ? "Connection interrupted. Showing the last successful update." : data.source === "kit" ? "Challenge kit data · checking backend every 10 seconds" : "Live backend data · refreshes every 10 seconds"}</p>
+        <p role="status">{error ? "Connection interrupted. Showing the last successful update." : data.source === "kit" ? "Challenge kit data · checking backend every 2.5 seconds" : "Live backend data · refreshes every 2.5 seconds"}</p>
         <button type="button" onClick={() => void mutate()} disabled={isValidating} className="rounded border border-line px-3 py-1 disabled:opacity-50">
           {isValidating ? "Refreshing…" : "Refresh now"}
         </button>
@@ -87,6 +88,7 @@ export default function Dashboard({ initialData }: { initialData: DashboardData 
           />
         </div>
       </div>
+      <LiveModelBoard />
       {selectedFlag && data.features.flagDetails && <FlagDetails key={selectedFlag.id} flag={selectedFlag} features={data.features} onClose={() => selectFlag(null)} onChanged={() => void mutate()} />}
     </div>
   );

@@ -13,7 +13,7 @@ To start just the dashboard against the existing Docker backend:
 docker compose up -d web
 ```
 
-The overview fetches `/api/dashboard` immediately and every 10 seconds while visible. This Next.js server
+The overview fetches `/api/dashboard` immediately and every 2.5 seconds while visible. This Next.js server
 route requests `/api/v1/insights/overview`, `/flags?status=OPEN&limit=500`, `/assets`, `/locations`, and
 `/insights/reliability?group_by=battery_band` from FastAPI. Backend order and scores are preserved.
 Up to 500 open escalated flags are displayed, with the total shown when the queue is larger. Metrics and
@@ -84,3 +84,14 @@ Without `BACKEND_URL` the routes fall back to `http://127.0.0.1:8000/api/v1`, wh
 still loads with a notice that it is showing challenge-kit data. Env changes only apply to new deployments, so
 redeploy after setting them. If the backend later moves to direct browser calls, it will need a `NEXT_PUBLIC_API_URL`
 (inlined at build time) and CORS for the Vercel domain. The current server proxy needs neither.
+
+## Live model outputs
+
+Overview and Analytics include live Laya probability charts, System 2 confidence
+and assessments, model response latency, prediction answers, and pipeline outputs.
+See [MODEL-STREAM.md](MODEL-STREAM.md) for the endpoint wiring, data limits and
+validation. With no reachable backend the panels explicitly wait for results.
+
+For native development, copy `.env.example` to `.env.local` and set `BACKEND_URL`
+when the backend is deployed. Optional `BACKEND_ADMIN_TOKEN` enables model-call
+metrics; it stays on the server. Restart Next.js after configuring these values.
