@@ -54,7 +54,7 @@ function DisabledNotice() {
     <div className="grid h-full place-items-center p-6">
       <div className="max-w-md text-center">
         <MessageSquareOff size={28} aria-hidden="true" className="mx-auto text-muted" />
-        <h1 className="mt-3 text-lg font-semibold text-ink">AI Assistance is turned off</h1>
+        <h1 className="mt-3 text-lg font-semibold text-ink">SPOTbot is turned off</h1>
         <p className="mt-2 text-sm text-muted">
           This deployment has <code className="rounded bg-surface-2 px-1 font-mono text-[0.9em]">FEATURE_AI_ASSISTANT=false</code>.
           Set it to <code className="rounded bg-surface-2 px-1 font-mono text-[0.9em]">true</code> and restart the web service to use the chat.
@@ -65,7 +65,7 @@ function DisabledNotice() {
 }
 
 /**
- * The whole AI Assistance page. Rendered by app/assistant/layout.tsx, so it
+ * The whole SPOTbot page. Rendered by app/assistant/layout.tsx, so it
  * stays mounted while the URL moves between /assistant and
  * /assistant/<id>; the conversation shown is derived from the pathname. The
  * live answer itself lives in lib/chat/store, outside React.
@@ -125,6 +125,22 @@ export function ChatApp() {
   const [text, setText] = useState("");
   const [sources, setSources] = useState<(SourcesView & { thread: string | null }) | null>(null);
   const composerRef = useRef<ComposerHandle>(null);
+
+  // /assistant?ask=… (from a flag in the Overview queue) starts a new chat with
+  // the question written but not sent, so the operator can edit it first. The
+  // parameter is dropped once read, so a reload doesn't write it in again.
+  const ask = useSearchParams().get("ask");
+  const [askTaken, setAskTaken] = useState<string | null>(null);
+  if (ask !== askTaken) {
+    setAskTaken(ask);
+    if (ask) setText(ask);
+  }
+  useEffect(() => {
+    if (!ask) return;
+    clearDraft();
+    router.replace("/assistant", { scroll: false });
+    composerRef.current?.focus();
+  }, [ask, router]);
 
   // The URL caught up with a chat started from /assistant: the draft pointer
   // has done its job, and /assistant should mean "new chat" again.
@@ -193,7 +209,7 @@ export function ChatApp() {
   const streaming = !!thread?.stream;
   const composerBlocked = !catalog || !configured;
   const blockedReason = catalogQuery.error
-    ? "The assistant backend is unreachable."
+    ? "SPOTbot's backend is unreachable."
     : catalog && !configured
       ? "Gemini API key not configured."
       : undefined;
@@ -312,7 +328,7 @@ export function ChatApp() {
         {catalogQuery.error && !disabled && (
           <div role="alert" className="flex items-center gap-2 border-b border-bad/35 bg-bad/5 px-4 py-2.5 text-sm text-ink">
             <TriangleAlert size={16} aria-hidden="true" className="shrink-0 text-bad" />
-            <p className="min-w-0 flex-1">Cannot reach the assistant backend. Check that it is running.</p>
+            <p className="min-w-0 flex-1">Cannot reach SPOTbot&apos;s backend. Check that it is running.</p>
             <button type="button" onClick={() => void catalogQuery.mutate()} className="inline-flex cursor-pointer items-center gap-1 font-medium text-info hover:underline">
               <RotateCw size={13} aria-hidden="true" /> Retry
             </button>

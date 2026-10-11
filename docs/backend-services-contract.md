@@ -65,7 +65,7 @@ The route tree agreed with the user (versioned under `/api/v1`):
 `events` (POST ingest, batch, GET feed) · `replay` (start/stop/status, + step in stepped mode) · `flags` (list, get, context, explain, ack) ·
 `missions` (list, get, timeline, debrief) · `system1` (predict proxy, forecast) · `assets` · `locations` ·
 `insights` (overview, reliability) · `search` (RAG) · `ops` (model-call stats, jobs, reset-demo) · `ask` (orchestrator proxy) ·
-`chat` (AI Assistance: conversations CRUD, models, suggestions, missions picker and mission chats (`chat.3`), SSE messages; `docs/chat-contract.md`) · `/health`.
+`chat` (SPOTbot: conversations CRUD, models, suggestions, missions picker and mission chats (`chat.3`), SSE messages; `docs/chat-contract.md`) · `/health`.
 
 Ingest pipeline for `POST /api/v1/events`:
 1. Append verbatim to `raw.spot_event_log`.

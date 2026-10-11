@@ -1,10 +1,10 @@
-# AI Assistance chat: contract (2026-10-11, `chat.3`)
+# SPOTbot chat: contract (2026-10-11, `chat.3`)
 
 `chat.2` (after the cross-layer audit) is additive. It adds carry-over sources, history rules, one shared citation rule,
 the date/time number rule, `retrieval.gaps`, `error_code`, no Markdown images, and client send/stop rules, all marked
 (`chat.2`) below. `systemInstruction` is used for **every** model family, including Gemma 4 (verified to work).
 
-The "AI Assistance" tab (formerly "AI review") is a ChatGPT-style chat. Operators ask about past problems and missions,
+The "SPOTbot" tab (formerly "AI review", then "AI Assistance") is a ChatGPT-style chat. Operators ask about past problems and missions,
 and every answer is grounded in the project database: the RAG `documents` table, the knowledge graph
 (`kg_nodes`/`kg_edges`) and plain SQL over the kit tables. Gemini (Google AI Studio API key) writes the answer;
 the backend does all retrieval. Chats are stored in Postgres so history survives reloads and devices.
@@ -306,8 +306,8 @@ error     {"code", "detail", "retry_after_s"?: int, "message": Message | null}
 - A non-200 response is a JSON error body, not SSE. One attempt, no retries.
 
 ## 6. Web (`web` agent)
-- Nav: "AI review" becomes **"AI Assistance"** (same Sparkles icon), `href: "/assistant"`, active on `/assistant/*`.
-  Breadcrumbs `SPOTlight › AI Assistance` (plus the chat title on `/assistant/[id]`).
+- Nav: "AI review" becomes **"SPOTbot"** (same Sparkles icon), `href: "/assistant"`, active on `/assistant/*`.
+  Breadcrumbs `SPOTlight › SPOTbot` (plus the chat title on `/assistant/[id]`).
 - Pages: `/assistant` (new chat) and `/assistant/[conversationId]`. Browser calls go only to Next.js routes under
   `/api/chat/**`, which proxy to the backend with `BACKEND_URL` (the `backendRequest` pattern). The `messages` route
   pipes the backend's SSE body through unbuffered and aborts upstream when the browser aborts (Stop).

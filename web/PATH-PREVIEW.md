@@ -4,7 +4,7 @@ Open `/missions/replay` through Missions → Replay. Choose a mission and play,
 pause, restart, change speed, or scrub recorded events. Errors appear only once
 that event has been reached. Select a waypoint or an error to inspect its location.
 
-The map is the supplied `fictional_floor_plan.png`. Its 1095 × 595 image anchors
+The map is `public/spot-blueprint.svg`, redrawn 1:1 over the kit's `fictional_floor_plan.png`. Its 1095 × 595 image anchors
 are recorded in `src/lib/path-data.ts`, at the tips of the labeled waypoint pins.
 The synthetic CSV x/y coordinates do not align with this illustration. Route
 lines connect recorded stops and do not assert the robot's traveled geometry.

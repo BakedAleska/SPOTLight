@@ -48,7 +48,7 @@ For native development set them in `web/.env.local` and restart the dev server.
 Reopen reverses the flag's status change; it does not delete the recorded acknowledgement, resolution,
 or note. After closing an acknowledged/resolved flag, reopen its detail at `/?flag=<flag_id>`.
 
-## AI Assistance (`/assistant`)
+## SPOTbot (`/assistant`)
 
 A ChatGPT-style chat over the mission data (contract: `docs/chat-contract.md`). The browser only calls
 `/api/chat/**`; those routes proxy to FastAPI's `/api/v1/chat` with `BACKEND_URL`, and the messages

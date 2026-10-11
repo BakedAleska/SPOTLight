@@ -35,6 +35,6 @@ export const nav: NavItem[] = [
   },
   { label: "Analytics", icon: ChartColumn, href: "/analytics" },
   { label: "Assets", icon: Boxes, href: "/assets" },
-  { label: "AI Assistance", icon: Sparkles, href: "/assistant" },
+  { label: "SPOTbot", icon: Sparkles, href: "/assistant" },
   { label: "Settings", icon: Settings, href: "/settings" },
 ];

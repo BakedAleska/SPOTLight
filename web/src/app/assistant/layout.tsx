@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { ChatApp, ChatSkeleton } from "@/components/chat/ChatApp";
 
 export const metadata: Metadata = {
-  title: "AI Assistance — SPOTlight",
+  title: "SPOTbot — SPOTlight",
   description: "Ask about SPOT missions, assets and flags; every answer cites the mission data it used.",
 };
 

@@ -1,4 +1,4 @@
-// Image-pixel anchors at the tips of the labeled pins in fictional_floor_plan.png (1095 x 595).
+// Image-pixel anchors at the tips of the labeled pins in spot-blueprint.svg (1095 x 595, 1:1 with the kit's fictional_floor_plan.png).
 // The kit's CSV coordinates are a separate synthetic space, not image pixels.
 export const anchors: Record<string, [number, number]> = {
   WP01: [109, 475], WP02: [113, 328], WP03: [253, 249], WP04: [215, 102],

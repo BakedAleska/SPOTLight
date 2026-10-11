@@ -145,7 +145,7 @@ async def test_gemma_fast_sends_no_thinking_config_and_hides_thoughts(ch_gemma, 
     b = cap[0]["body"]
     assert b["generationConfig"] == {"maxOutputTokens": 8192}            # no thinkingConfig at all (§0)
     # chat.2: systemInstruction for every family, Gemma 4 included; the user turn is just sources + question
-    assert b["systemInstruction"]["parts"][0]["text"].startswith("You are SPOTlight's AI assistant")
+    assert b["systemInstruction"]["parts"][0]["text"].startswith("You are SPOTbot, SPOTlight's AI assistant")
     assert b["contents"][0]["parts"][0]["text"].startswith("<sources>\n")
 
 

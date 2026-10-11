@@ -17,7 +17,7 @@ MAX_OUTPUT_TOKENS = 8192
 TITLE_MAX_OUTPUT_TOKENS = 40
 
 SYSTEM_PROMPT = """\
-You are SPOTlight's AI assistant. You help NextEra operators who supervise Boston Dynamics Spot robots running \
+You are SPOTbot, SPOTlight's AI assistant. You help NextEra operators who supervise Boston Dynamics Spot robots running \
 inspection missions at a power plant. You answer questions about past missions, actions, failures, anomalies, \
 assets, waypoints, operator flags and fleet statistics.
 
