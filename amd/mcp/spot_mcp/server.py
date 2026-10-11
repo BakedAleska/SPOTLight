@@ -2,10 +2,12 @@
 
 Run:  python -m spot_mcp                      (stdio, for local MCP clients)
       python -m spot_mcp --http --port 8090    (streamable HTTP at /mcp, for the System 2 worker)
+      asgi.py                                  (the same HTTP app, as a Vercel Function; see README)
 """
 from __future__ import annotations
 
 import argparse
+import hmac
 import json
 import logging
 import os
@@ -269,19 +271,39 @@ def service_from_env(settings: Optional[Settings] = None) -> ContextService:
 
 
 class BearerAuth:
-    """Optional shared-secret check for the HTTP transport (MCP_AUTH_TOKEN). /healthz stays open."""
+    """Optional shared-secret check for the HTTP transport (MCP_AUTH_TOKEN). /healthz stays open.
+    Other scope types (lifespan) pass straight through, so the wrapped app's lifespan still runs."""
 
     def __init__(self, app, token: str):
-        self.app, self.token = app, token
+        self.app, self.expected = app, ("Bearer " + token).encode()
 
     async def __call__(self, scope, receive, send):
         if scope["type"] == "http" and scope.get("path") != "/healthz":
             hdrs = dict(scope.get("headers") or [])
-            if hdrs.get(b"authorization", b"").decode() != "Bearer " + self.token:
+            if not hmac.compare_digest(hdrs.get(b"authorization", b""), self.expected):
                 from starlette.responses import JSONResponse
                 await JSONResponse({"error": "unauthorized"}, status_code=401)(scope, receive, send)
                 return
         await self.app(scope, receive, send)
+
+
+LOOPBACK = ("127.0.0.1", "localhost", "::1")
+
+
+def create_app(service: Optional[ContextService] = None, *, host: str = "0.0.0.0", token: Optional[str] = None):
+    """The streamable-HTTP ASGI app (/mcp plus an open /healthz), shared by `main()` and `asgi.py` (Vercel).
+
+    Stateless + JSON responses: each POST stands alone, so any instance can answer it and nothing streams.
+    The app's ASGI lifespan starts the SDK's session manager (requests fail without it); uvicorn and Vercel's
+    Python runtime both run it. `host` only decides the SDK's DNS-rebinding guard, which is on for loopback hosts.
+    """
+    app = build_server(service or service_from_env()).streamable_http_app(
+        stateless_http=True, json_response=True, host=host)
+    if token:
+        return BearerAuth(app, token)
+    if host not in LOOPBACK:
+        log.warning("serving on %s without MCP_AUTH_TOKEN: anyone who can reach the port can read the data", host)
+    return app
 
 
 def main(argv=None) -> None:
@@ -295,17 +317,12 @@ def main(argv=None) -> None:
     # stdio: stdout is the protocol channel, so logs must go to stderr.
     logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"), stream=sys.stderr,
                         format="%(asctime)s %(levelname)s %(name)s: %(message)s")
-    server = build_server(service_from_env())
+    service = service_from_env()
     if not http:
-        server.run("stdio")
+        build_server(service).run("stdio")
         return
     import uvicorn
-    app = server.streamable_http_app(stateless_http=True, json_response=True, host=a.host)
-    token = os.environ.get("MCP_AUTH_TOKEN")
-    if token:
-        app = BearerAuth(app, token)
-    elif a.host not in ("127.0.0.1", "localhost", "::1"):
-        log.warning("serving on %s without MCP_AUTH_TOKEN: anyone who can reach the port can read the data", a.host)
+    app = create_app(service, host=a.host, token=os.environ.get("MCP_AUTH_TOKEN"))
     log.info("spot-context MCP on http://%s:%d/mcp (policy %s)", a.host, a.port, D.POLICY_SOURCE)
     uvicorn.run(app, host=a.host, port=a.port, log_level=os.environ.get("LOG_LEVEL", "info").lower())
 

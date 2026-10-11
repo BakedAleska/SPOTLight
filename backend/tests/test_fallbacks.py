@@ -52,6 +52,19 @@ async def test_context_from_mcp(h, mock):
     assert r.status_code == 200 and r.json()["source"] == "mcp" and r.json()["question"] == "q?"
 
 
+async def test_mcp_client_sends_auth_on_every_request_including_the_session_delete(mock):
+    """An MCP server with MCP_AUTH_TOKEN checks the bearer on DELETE too; without it the close got a 401."""
+    from app.services.mcp import MCPClient
+    mcp_server(mock, {"packet_version": "1"})
+    async with httpx.AsyncClient() as http:
+        out = await MCPClient(MCP, http, auth_token="tok").call_tool("get_flag_context", {"flag_id": 1}, "r1")
+    assert out["packet_version"] == "1"
+    sent = [c.request for c in mock.calls]
+    assert [r.method for r in sent] == ["POST", "POST", "POST", "DELETE"]
+    assert all(r.headers.get("authorization") == "Bearer tok" for r in sent)
+    assert sent[-1].headers["mcp-session-id"] == "s1"
+
+
 @pytest.mark.parametrize("how", ["http503", "connect"])
 async def test_context_falls_back_to_sql_packet(h, mock, how):
     fid = await _action_flag(h, mock)

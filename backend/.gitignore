@@ -1,3 +1,6 @@
 .venv/
 __pycache__/
 .pytest_cache/
+# Built by vercel_build.py on every Vercel deploy from amd/system1 (never commit a copy).
+_shared/
+.vercel/

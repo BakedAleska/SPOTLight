@@ -66,6 +66,23 @@ def parse_jobs(req: PredictRequest) -> list:
     return jobs
 
 
+def load_engine(engine_cls, settings: Settings):
+    """The configured checkpoint, else LAYA_FALLBACK_CHECKPOINT (e.g. a private fine-tune with no HF_TOKEN)."""
+    name = settings.checkpoint + ("/" + settings.checkpoint_subdir if settings.checkpoint_subdir else "")
+    try:
+        eng = engine_cls.load(settings.checkpoint, settings.device, settings.amp, settings.max_batch,
+                              subdir=settings.checkpoint_subdir)
+        eng.checkpoint = name
+        return eng
+    except Exception as exc:
+        fallback = settings.fallback_checkpoint
+        if not fallback or fallback == settings.checkpoint:
+            raise
+        log.warning("could not load %s (%s: %s); falling back to %s", name, type(exc).__name__,
+                    str(exc).splitlines()[0][:200] if str(exc) else "", fallback)
+        return engine_cls.load(fallback, settings.device, settings.amp, settings.max_batch)
+
+
 def create_app(settings: Optional[Settings] = None, engine=None) -> FastAPI:
     """`engine` is injectable for tests; otherwise the checkpoint is loaded once at startup."""
     settings = settings or Settings.from_env()
@@ -75,7 +92,7 @@ def create_app(settings: Optional[Settings] = None, engine=None) -> FastAPI:
         eng = engine
         if eng is None:
             from .engine import Engine
-            eng = Engine.load(settings.checkpoint, settings.device, settings.amp, settings.max_batch)
+            eng = load_engine(Engine, settings)
             if settings.warmup:
                 log.info("warmup: %.2fs", eng.warmup())
         app.state.engine = eng

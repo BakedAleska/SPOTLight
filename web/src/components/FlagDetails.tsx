@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import useSWR from "swr";
 import type { Flag } from "@/lib/types";
 import type { DashboardData } from "@/lib/dashboard";
-import type { FlagAction, FlagDetailData, FlagExplanation } from "@/lib/flag-detail";
+import { explanationLabel, type FlagAction, type FlagDetailData, type FlagExplanation } from "@/lib/flag-detail";
 
 const BUTTON = "rounded border border-line px-3 py-2 text-sm hover:bg-surface-2 disabled:opacity-50";
 
@@ -93,7 +93,7 @@ export function FlagDetails({ flag, features, onClose, onChanged }: {
           </button>
           {explanation.error && <p role="alert" className="mt-2 text-bad">{explanation.error.message}</p>}
           {explanation.data && <div className="mt-3 space-y-2 text-sm">
-            <p className="text-muted">{explanation.data.source === "template" ? "Rule-based explanation" : explanation.data.model === "stub" ? "Evidence summary (stub)" : "Model explanation"}</p>
+            <p className="text-muted">{explanationLabel(explanation.data)}</p>
             <p>{explanation.data.answer}</p>
             <p>{explanation.data.reasoning}</p>
             <p><strong>Recommended action: </strong>{explanation.data.recommended_action ?? "No recommendation available."}</p>

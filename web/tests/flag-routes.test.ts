@@ -72,3 +72,16 @@ test("bad flag IDs never reach the backend", async () => {
   globalThis.fetch = async () => { throw new Error("Backend must not be called"); };
   assert.equal((await detail(request(), { params: Promise.resolve({ id: "../ops" }) })).status, 400);
 });
+
+test("explanation labels and the configurable explain timeout", async () => {
+  const { explanationLabel, explainTimeoutMs } = await import("../src/lib/flag-detail");
+  assert.equal(explanationLabel({ source: "system2_template", model: "template" }), "Rule-based explanation");
+  assert.equal(explanationLabel({ source: "template" }), "Rule-based explanation");
+  assert.equal(explanationLabel({ source: "system1" }), "Triage summary (not escalated)");
+  assert.equal(explanationLabel({ source: "system2", model: "stub" }), "Evidence summary (stub)");
+  assert.equal(explanationLabel({ source: "system2", model: "qwen3.5-9b-q4km" }), "Model explanation");
+  assert.equal(explainTimeoutMs(undefined), 50_000);
+  assert.equal(explainTimeoutMs("95000"), 95_000);
+  assert.equal(explainTimeoutMs("abc"), 50_000);
+  assert.equal(explainTimeoutMs("999999"), 50_000);
+});

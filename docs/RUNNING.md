@@ -37,7 +37,8 @@ the backend; the dashboard's read endpoints require no admin token. This wires t
 flag details, explanations and acknowledge/resolve/reopen actions are available. The search box remains
 unfinished. `FEATURE_FLAG_DETAILS`, `FEATURE_FLAG_ACTIONS`, and `FEATURE_FLAG_EXPLANATIONS` independently
 disable features with `false` (disabling details also disables its dependent features). After changing
-the root `.env`, run `docker compose up -d --no-deps web`. Re-enable with `true`; data is retained.
+the root `.env`, run `docker compose up -d --no-deps web`. `WEB_EXPLAIN_TIMEOUT_MS` (default 50000, 5000–120000) sets how
+long the dashboard waits for an explanation; raise it when System 2 runs a slow local model. Re-enable with `true`; data is retained.
 
 ```bash
 cp .env.example .env                # pick COMPOSE_PROFILES; dev passwords are fine locally
@@ -100,9 +101,12 @@ make down      # or `make wipe` to drop the database volume too
 - **GPU expectation:** on the AMD GPU a 64-event batch is one forward pass (well under a second), so none of
   this throttling shows. Run the demo in `hybrid` mode, with the contract-default timeouts.
 - Memory: give Docker Desktop at least 8 GB. `LAYA_MAX_BATCH=16` keeps System 1 under ~3.5 GB on large batches.
-- Fine-tuned Laya: put the run under `amd/system1/checkpoints/` (mounted read-only at `/models/checkpoints`), set
-  `LAYA_CHECKPOINT=/models/checkpoints/<run>/best`, then run `docker compose up -d system1`.
-  Check with `curl localhost:8082/v1/model`: it should show `fine_tuned: true`.
+- Fine-tuned Laya is the default: on first start System 1 downloads only `run4_B_lora_lr4/best/` (~850 MB) from the
+  private HF repo `Jyler/KnightHacks-Laya-Model` into the `hf-cache` volume, then reuses it. Put a read token in `.env`
+  as `HF_TOKEN=hf_...`. Without one, System 1 logs a warning and loads base Laya (`LAYA_FALLBACK_CHECKPOINT`).
+  Another run: `LAYA_CHECKPOINT_SUBDIR=<run>/best`. A local run: put it under `amd/system1/checkpoints/` (mounted
+  read-only at `/models/checkpoints`) and set `LAYA_CHECKPOINT=/models/checkpoints/<run>/best`. After a change, run
+  `docker compose up -d system1`. Check with `curl localhost:8082/v1/model`: it should show `fine_tuned: true`.
 
 ## Mode 2: `hybrid`: models native on the AMD GPU box
 The current SSH-reachable box (Radeon Pro W7900D, gfx1100, 48 GB; `ssh spot-amd`): specs, proxy, the Hugging Face
@@ -146,6 +150,12 @@ E2E_DATABASE_URL=$DATABASE_URL backend/.venv/bin/python scripts/e2e.py
 `spot_mcp_user` with those passwords. If Neon refuses `CREATE ROLE`, create the users in the Neon console instead,
 then re-run. Make a Neon branch before any `reset`.
 
+### Backend on Vercel (no Docker)
+The backend also deploys as its own Vercel project (Root Directory `backend/`); steps, env vars and checks are in
+`backend/README.md` "Deploy on Vercel". Run `python db/setup.py migrate` against Neon first (`010_replay_runs.sql`).
+On Vercel the replay is `REPLAY_MODE=stepped`: after `POST /api/v1/replay/start`, something must call
+`POST /api/v1/replay/step` in a loop (contract "Serverless deployment and stepped replay"). Docker is unchanged.
+
 ## Timeouts and keys (how the layers nest)
 Each layer gives up before its caller does, so the caller always gets an answer it can store:
 
@@ -155,7 +165,7 @@ Each layer gives up before its caller does, so the caller always gets an answer 
 | backend -> orchestrator call | min(42 s, time left - 3 s) | `ORCHESTRATOR_TIMEOUT_S` (42) | the backend's own MCP -> System 2 -> template path with the time left |
 | orchestrator `/v1/assess` | 40 s total, `min(3 s, 10 %)` reserve | `ORCH_DEADLINE_S` (40) | template; `trace` shows the skipped/timed-out node |
 | orchestrator nodes | context 15 s (<= 40 %), System 1 6 s, vision 12 s, System 2 20 s, or 28 s when an image is sent (`ORCH_SYSTEM2_IMAGE_BUDGET_S`; vision is capped so that budget stays free, at least 3 s); each capped by what is left | `ORCH_*_BUDGET_S` | node `skipped`/`timeout`, the graph continues |
-| System 2 generation | 15 s over at most two attempts; **25 s for requests with an image** (`SYSTEM2_IMAGE_DEADLINE_S`): the image call keeps 8 s back and on a timeout the same attempt is re-sent text-only | 15 fixed / `SYSTEM2_IMAGE_DEADLINE_S` (25) | checked template, `path: fallback` |
+| System 2 generation | 15 s over at most two attempts; **25 s for requests with an image** (`SYSTEM2_IMAGE_DEADLINE_S`): the image call keeps 8 s back and on a timeout the same attempt is re-sent text-only | `SYSTEM2_DEADLINE_S` (15) / `SYSTEM2_IMAGE_DEADLINE_S` (25) | checked template, `path: fallback` |
 | gateway upstream | `system2` 15 s, `system2-vision` 30 s, `system1` 10 s, `embed` 10 s | `GATEWAY_*_TIMEOUT_S` | error to the caller (no retries, no fallback model) |
 
 System 2 closes its own socket at 15 s (25 s with an image), so the gateway's 30 s vision timeout only matters for
@@ -170,7 +180,7 @@ deadline. `/v1/ask` has its own 30 s (`ASK_DEADLINE_S`, at most 4 tool calls).
 | `ORCHESTRATOR_API_KEY` | `X-API-Key` | backend -> orchestrator (>= 16 chars; refuses to start without one) |
 | `LITELLM_MASTER_KEY` | `Authorization: Bearer` | system2 (`SYSTEM2_LLAMA_API_KEY`), orchestrator (`GATEWAY_KEY`) -> gateway (`sk-`, >= 16 chars) |
 | `VISION_API_KEY` | `X-API-Key` | orchestrator -> vision (required, >= 16 chars; refuses to start without one) |
-| `MCP_AUTH_TOKEN` | `Authorization: Bearer` | backend, orchestrator -> mcp (optional) |
+| `MCP_AUTH_TOKEN` | `Authorization: Bearer` | backend, orchestrator -> mcp (optional; required by the Vercel deploy) |
 
 ## Useful commands
 ```bash
@@ -222,6 +232,7 @@ pipeline: at most two llama-server attempts inside a 15 s deadline, then the che
 | `SYSTEM2_CACHE_DIR` | explanation cache directory; `off` disables it (measurement runs: every request generates) | `amd/system2/cache` in a checkout; none in the image unless set to a writable mount |
 | `SYSTEM2_RECORD_DIR` | measurement runs: append one JSON line per request (raw text of every attempt, checker errors, timings, cache and image status) to `<dir>/system2-records.jsonl` | unset = off |
 | `SYSTEM2_VISION_MODEL` | model for requests that carry `image_b64` (gateway alias `system2-vision`) | compose: `system2-vision`; native: `SYSTEM2_MODEL` |
+| `SYSTEM2_DEADLINE_S` | generation deadline for text requests (the 15 s p95 target); raise only for a slow local model; must be in (0, 120] | `15` |
 | `SYSTEM2_IMAGE_DEADLINE_S` | generation deadline for requests with `image_b64` (text keeps 15 s); must be in (0, 120] | `25` |
 | `SYSTEM2_LLAMA_API_KEY` | sent as `Authorization: Bearer` (the gateway's `LITELLM_MASTER_KEY`); a llama-server without `--api-key` ignores it | compose: `LITELLM_MASTER_KEY`; native: unset |
 

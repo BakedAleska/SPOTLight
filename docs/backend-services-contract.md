@@ -5,6 +5,7 @@ Companion to `docs/system2-rag-contract.md` (Neon tables, embedding API, MCP). *
 ## Services and ports (one container each; see CLAUDE.md "Engineering rules")
 | Service | Folder | Port | Owner |
 |---|---|---|---|
+| Web dashboard (Next.js dev server; calls the backend via `BACKEND_URL`) | `web/` | 3000 | frontend |
 | Backend API (FastAPI) | `backend/` | 8000 | backend agent |
 | System 1: Laya inference | `amd/system1/service/` | 8082 | System 1 service agent |
 | Embedding service | `amd/embed/` | 8081 | pgvector agent |
@@ -48,7 +49,10 @@ GET /health         → {"ok": true, "model_loaded": true}
 
 | Env var | Meaning | Default |
 |---|---|---|
-| `LAYA_CHECKPOINT` | HF repo id or local dir (a fine-tuned `best/` mounted at `/models/laya`) | `convaiinnovations/laya` |
+| `LAYA_CHECKPOINT` | HF repo id or local dir (a fine-tuned `best/` mounted at `/models/laya`) | `convaiinnovations/laya` (compose: `Jyler/KnightHacks-Laya-Model`) |
+| `LAYA_CHECKPOINT_SUBDIR` | folder inside the HF repo holding the checkpoint; only `<subdir>/*` is downloaded (into `HF_HOME`, cached across restarts). Ignored for a local dir | unset (compose: `run4_B_lora_lr4/best`) |
+| `LAYA_FALLBACK_CHECKPOINT` | loaded when the primary checkpoint can't be downloaded or loaded (e.g. a private repo with no `HF_TOKEN`); logged as a warning, and `/v1/model` then reports the fallback with `fine_tuned: false`. Empty = fail instead | `convaiinnovations/laya` |
+| `HF_TOKEN` | read token for a private checkpoint repo | unset |
 | `LAYA_DEVICE` | `auto` / `cpu` / `cuda` | `auto` |
 | `SPOT_AMP` | `1` = fp16 autocast on GPU, `0` = fp32 | `1` |
 | `LOGS_DATABASE_URL` | optional: log every call to `app.model_calls` (system=`system1`) | unset (no logging) |
@@ -59,7 +63,7 @@ is the repo root, so the image can COPY `amd/system1/triage/`. Laya is pinned to
 
 ## Backend API (FastAPI), port 8000
 The route tree agreed with the user (versioned under `/api/v1`):
-`events` (POST ingest, batch, GET feed) · `replay` (start/stop/status) · `flags` (list, get, context, explain, ack) ·
+`events` (POST ingest, batch, GET feed) · `replay` (start/stop/status, + step in stepped mode) · `flags` (list, get, context, explain, ack) ·
 `missions` (list, get, timeline, debrief) · `system1` (predict proxy, forecast) · `assets` · `locations` ·
 `insights` (overview, reliability) · `search` (RAG) · `ops` (model-call stats, jobs, reset-demo) · `/health`.
 
@@ -92,7 +96,7 @@ Every step logs to `app.*` with one `request_id`.
 | `TRIAGE_MODE` | `serial` or `parallel` (see step 6) | `serial` |
 | `SYSTEM1_TIMEOUT_S` / `EMBED_TIMEOUT_S` / `MCP_TIMEOUT_S` / `SYSTEM2_TIMEOUT_S` | per-call timeouts | `5` / `10` / `15` / `60` |
 | `SEARCH_EMBED_TIMEOUT_S` | `/search` waits this long for the query embedding, then falls back to full text (CPU embedder ~2.3 s) | `4` |
-| `MCP_AUTH_TOKEN` | sent as `Authorization: Bearer …` when the MCP server requires it | unset |
+| `MCP_AUTH_TOKEN` | sent as `Authorization: Bearer …` when the MCP server requires it (always on Vercel, `https://<mcp-project>.vercel.app/mcp`; `amd/mcp/README.md`) | unset |
 | `SYSTEM2_API_KEY` | sent as `X-API-Key` to System 2 | unset |
 | `EMBED_DIM`, `EMBED_DOC_PREFIX` | checked on every embedding / prepended to operator-note documents | `1024` / empty |
 | `REPLAY_SPEED`, `REPLAY_MAX_GAP_S` | replay pace (robot seconds per wall second; cap per wait) | `60`, `2` |
@@ -106,6 +110,43 @@ Every step logs to `app.*` with one `request_id`.
 | `ORCHESTRATOR_TIMEOUT_S` | per-call cap for orchestrator calls; `/explain` also caps it at the deadline minus the reserve (45 - 3 = 42) | `42` |
 | `CORS_ORIGINS` | comma-separated browser origins allowed by CORS (the dashboard's origin; `*` is not the default) | `http://localhost:3000` |
 | `DB_POOL_MAX`, `LOG_REQUESTS` | | `10`, `1` |
+| `SERVERLESS` | `1` = no per-process assumptions (see "Serverless deployment"): pool `min_size` 0 + a connection check on checkout, pending log writes awaited before the response. Unset = on when Vercel's `VERCEL` env var is set | auto |
+| `DB_POOL_MIN` | pool connections kept open | `1` (`0` when serverless) |
+| `REPLAY_MODE` | `background` (asyncio task, Docker) or `stepped` (state in `replay_runs`, driven by `POST /replay/step`) | `background` (`stepped` when serverless) |
+| `REPLAY_STEP_BUDGET_S` | default time budget of one `POST /replay/step` | `10` |
+
+### Serverless deployment and stepped replay (ADDED 2026-10-10; additive)
+The backend also runs as a Vercel Python function (Root Directory `backend/`, entry `backend/index.py`, config
+`backend/vercel.json`; runbook: `backend/README.md` "Deploy on Vercel"). Instances there are not sticky and can be
+frozen between requests, so no state that must survive may live only in process memory. Docker Compose is unchanged
+(`background` replay).
+- **Shared code.** Vercel bundles only the Root Directory, so the build command `python3 vercel_build.py` copies
+  `amd/system1/triage/{__init__,events,kit,policy,questions,render}.py` and `amd/system1/data/kit/` into
+  `backend/_shared/amd/system1/` (git-ignored, never committed). `TRIAGE_DIR`/`KIT_DIR` defaults use the repo copy
+  when it exists (local, Docker, CI) and `_shared` otherwise, so the drift guard keeps testing the one canonical copy.
+- **Stepped replay** (`REPLAY_MODE=stepped`). Same `POST /replay/start` body and `GET /replay/status` /
+  `POST /replay/stop` shapes; the status adds `mode: "stepped"`, `cursor` and `next_due_in_s`. The run lives in table
+  `replay_runs` (`db/migrations/010_replay_runs.sql`): the selected `event_ids` (fixed at start), `next_index`,
+  `counts`, `last_event`, `state` (`running | stopped | finished | error`) and a lease. At most one run is `running`
+  (partial unique index), so a second start is 409 whichever instance gets it.
+- `POST /api/v1/replay/step {"run_id"?, "budget_s"? (0.5-60, default REPLAY_STEP_BUDGET_S), "max_events"? (1-500,
+  default 100)}` (admin): takes the run's lease, ingests the events that are due, stops at the budget or at
+  `max_events`, and returns the status plus `step: {"ingested", "elapsed_ms", "busy", "done"}`. An event is due when
+  its paced offset (the background mode's gaps: robot time / `speed`, each capped at `max_gap_s`; `speed=0` = all
+  due at once) is at most the time since `started_at`. `next_due_in_s` says when the next event is due. A step that
+  finds the lease held by another step returns at once with `busy: true` (no error). With no running run it returns
+  the last run's status with `done: true`. 409 `replay_mode` in `background` mode; 503 without a database.
+- **Idempotent.** `next_index` and `counts` are written after every event, and only by the lease holder; a step
+  killed mid-run loses at most the event in flight, which the next step re-ingests under the same request id
+  `rp<run_id>-<event_id>` (raw log `ON CONFLICT DO NOTHING`, events/flags upserts). A lease expires after the step's
+  budget + 30 s, so a frozen or killed instance never blocks the run for long. `reset-demo` and `stop` end the run.
+- **Driving it.** The client calls start, then `step` in a loop (sleep `min(next_due_in_s, 2)` when it is > 0) until
+  `state != "running"`. Today the driver is the `curl` loop in `backend/README.md` (the web app has no replay
+  control); no process has to stay alive between calls, but the replay only advances while something calls `step`.
+- **Per-instance state (documented, not shared):** circuit breakers, the System 1 `busy` guard, the column cache,
+  `ops/model-calls` `routing.since_start` counters, `/health`'s `replay` (the last status this instance saw) and the
+  ACTION_STARTED detail cache for actions the kit lacks. Each instance learns them on its own; none is needed for
+  the stored data to be correct.
 
 ### Admin endpoints (ADDED 2026-10-10, audit H3)
 `/api/v1/ops/*`, `/api/v1/replay/*`, `POST /api/v1/events` and `POST /api/v1/events/batch` change or wipe state, so
@@ -198,7 +239,8 @@ is unchanged.
   Consumed context fields: `question` string, `allowed_actions` code-to-description object or code list,
   `suggested_action` allowed code, `citation_ids` string list, `missing`/`gaps` string lists,
   `insufficient_context` boolean; evidence sections `facts`, `similar_incidents`, `asset_history`, `manual`,
-  `policy`, `system1` object lists and recursive `event`/`mission` objects. IDs retain their supplied spelling.
+  `policy`, `system1`, `graph` (knowledge-graph facts, `docs/system2-rag-contract.md` §7) object lists and
+  recursive `event`/`mission` objects. IDs retain their supplied spelling.
   Evidence content comes from fact/text/content or substantive structured values, never IDs, titles or control metadata.
   Malformed consumed values, unknown actions and conflicting duplicate IDs return 422. Valid absent/unusable
   evidence, orphan citations, missing actions, nonempty missing/gaps or explicit insufficiency return 200 with

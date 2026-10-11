@@ -345,7 +345,7 @@ def normalize_packet(body: BackendAssessRequest) -> PreparedPacket:
     if suggested is not None and (not isinstance(suggested, str) or suggested not in actions):
         raise ValueError("suggested_action must belong to supplied allowed_actions")
     content = {}
-    for name in ("facts", "manual", "policy", "similar_incidents", "asset_history", "system1"):
+    for name in ("facts", "manual", "policy", "similar_incidents", "asset_history", "system1", "graph"):
         items = p.get(name, [])
         if not isinstance(items, list):
             raise ValueError("%s must be a list" % name)

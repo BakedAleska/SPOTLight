@@ -9,6 +9,7 @@ ADMIN_ROUTES = [
     ("POST", "/api/v1/events/batch", {"json": {"events": []}}),
     ("POST", "/api/v1/replay/start", {"json": {"speed": 0, "limit": 1}}),
     ("POST", "/api/v1/replay/stop", {}),
+    ("POST", "/api/v1/replay/step", {"json": {}}),
     ("GET", "/api/v1/replay/status", {}),
     ("POST", "/api/v1/ops/reset-demo", {"json": {"confirm": True}}),
     ("GET", "/api/v1/ops/model-calls", {}),

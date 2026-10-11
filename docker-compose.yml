@@ -88,6 +88,7 @@ services:
       FEATURE_FLAG_DETAILS: ${FEATURE_FLAG_DETAILS:-true}
       FEATURE_FLAG_ACTIONS: ${FEATURE_FLAG_ACTIONS:-true}
       FEATURE_FLAG_EXPLANATIONS: ${FEATURE_FLAG_EXPLANATIONS:-true}
+      EXPLAIN_TIMEOUT_MS: ${WEB_EXPLAIN_TIMEOUT_MS:-50000}   # wait for /explain; raise with a slow local System 2 model
     ports: ["${BIND_ADDR:-127.0.0.1}:3000:3000"]
     volumes:
       - "./web:/app"
@@ -178,8 +179,12 @@ services:
     image: spot-system1:compose-${TORCH_VARIANT:-cpu}
     profiles: [local, models]
     environment:
-      # Base Laya by default. Fine-tune: LAYA_CHECKPOINT=/models/checkpoints/<run>/best (mounted below).
-      LAYA_CHECKPOINT: ${LAYA_CHECKPOINT:-convaiinnovations/laya}
+      # Our fine-tuned Laya by default: only <repo>/<LAYA_CHECKPOINT_SUBDIR>/* is downloaded into hf-cache on first
+      # start (private repo: needs HF_TOKEN), then reused. If it can't be fetched, base Laya loads instead
+      # (LAYA_FALLBACK_CHECKPOINT; /v1/model shows which). Local run: LAYA_CHECKPOINT=/models/checkpoints/<run>/best.
+      LAYA_CHECKPOINT: ${LAYA_CHECKPOINT:-Jyler/KnightHacks-Laya-Model}
+      LAYA_CHECKPOINT_SUBDIR: ${LAYA_CHECKPOINT_SUBDIR-run4_B_lora_lr4/best}
+      LAYA_FALLBACK_CHECKPOINT: ${LAYA_FALLBACK_CHECKPOINT-convaiinnovations/laya}
       LAYA_DEVICE: ${LAYA_DEVICE:-auto}
       # CPU: 16 (event, question) pairs per forward pass; one 200-pair pass OOM-killed an 8 GB Docker VM.
       LAYA_MAX_BATCH: ${LAYA_MAX_BATCH:-16}
@@ -235,6 +240,7 @@ services:
       SYSTEM2_VISION_MODEL: ${SYSTEM2_VISION_MODEL:-system2-vision}   # only for requests with image_b64
       # Bearer for the gateway; a llama-server without --api-key ignores it.
       SYSTEM2_LLAMA_API_KEY: ${SYSTEM2_LLAMA_API_KEY:-${LITELLM_MASTER_KEY:-sk-spot-gateway-dev-key-change-me}}
+      SYSTEM2_DEADLINE_S: ${SYSTEM2_DEADLINE_S:-15}   # text requests (p95 target); raise only for slow local models; (0, 120]
       SYSTEM2_IMAGE_DEADLINE_S: ${SYSTEM2_IMAGE_DEADLINE_S:-25}   # requests with image_b64 only (text: 15 s); (0, 120]
       SYSTEM2_CACHE_DIR: ${SYSTEM2_CACHE_DIR:-}             # `off` disables the cache (measurement runs)
       SYSTEM2_RECORD_DIR: ${SYSTEM2_RECORD_DIR:-}           # measurement runs only: raw attempts to a writable mount
