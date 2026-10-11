@@ -22,6 +22,7 @@ import { Children, cloneElement, isValidElement, useRef, useState } from "react"
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Panel } from "./Panel";
+import { valueBar } from "./ValueBar";
 import type { FleetAnalytics } from "@/lib/fleet-analytics";
 import { breakdownHref, type BreakdownQuery } from "@/lib/breakdown-link";
 
@@ -170,7 +171,7 @@ export function AnalyticsCharts({ data }: { data: FleetAnalytics }) {
               <XAxis type="number" domain={[0, 100]} unit="%" tick={AXIS} tickLine={false} axisLine={false} />
               <YAxis type="category" dataKey="environment" tick={AXIS} tickLine={false} axisLine={false} width={96} />
               <Tooltip {...TOOLTIP} formatter={(value, _name, item) => [`${value}% · n=${item.payload.n}`, "Success"]} />
-              <Bar dataKey="rate" name="Success" radius={[0, 4, 4, 0]} animationDuration={900} animationEasing="ease-out" label={{ position: "right", fill: "var(--c-muted)", fontSize: 11, formatter: (v: unknown) => `${v}%` }}>
+              <Bar dataKey="rate" name="Success" radius={[0, 4, 4, 0]} animationDuration={900} animationEasing="ease-out" shape={valueBar({ position: "right", fontSize: 11, format: (v) => `${v}%` })}>
                 {data.environments.map((row) => (
                   <Cell key={row.environment} fill={row === worstEnv ? "var(--c-bad)" : "var(--c-series-1)"} />
                 ))}
@@ -208,7 +209,7 @@ export function AnalyticsCharts({ data }: { data: FleetAnalytics }) {
               <XAxis type="number" tickFormatter={(v: number) => `${v} pts`} tick={AXIS} tickLine={false} axisLine={false} />
               <YAxis type="category" dataKey="version" tick={AXIS} tickLine={false} axisLine={false} width={32} />
               <Tooltip {...TOOLTIP} formatter={(value, _name, item) => [`${value} pts · ${item.payload.missions} missions`, "Mean drain"]} />
-              <Bar dataKey="drain" name="Mean drain" radius={[0, 4, 4, 0]} animationDuration={1300} animationEasing="ease-in-out" label={{ position: "right", fill: "var(--c-muted)", fontSize: 11, formatter: (v: unknown) => `${v} pts` }}>
+              <Bar dataKey="drain" name="Mean drain" radius={[0, 4, 4, 0]} animationDuration={1300} animationEasing="ease-in-out" shape={valueBar({ position: "right", fontSize: 11, format: (v) => `${v} pts` })}>
                 {data.drain.map((row) => <Cell key={row.version} fill={VERSION_FILL[row.version] ?? "var(--c-series-3)"} />)}
               </Bar>
             </BarChart>
@@ -296,7 +297,7 @@ export function AnalyticsCharts({ data }: { data: FleetAnalytics }) {
               <XAxis type="number" allowDecimals={false} tick={AXIS} tickLine={false} axisLine={false} />
               <YAxis type="category" dataKey="mode" tick={AXIS} tickLine={false} axisLine={false} width={150} />
               <Tooltip {...TOOLTIP} formatter={(value) => [`${value} actions`, "Failed"]} />
-              <Bar dataKey="count" name="Failed actions" fill="var(--c-series-1)" radius={[0, 4, 4, 0]} animationDuration={800} animationEasing="ease-out" label={{ position: "right", fill: "var(--c-muted)", fontSize: 11 }} />
+              <Bar dataKey="count" name="Failed actions" fill="var(--c-series-1)" radius={[0, 4, 4, 0]} animationDuration={800} animationEasing="ease-out" shape={valueBar({ position: "right", fontSize: 11 })} />
             </BarChart>
           </Plot>
           {topMode && <Caption>{topMode.mode} is the leading cause, behind {topMode.count} failed actions.</Caption>}

@@ -18,6 +18,7 @@ import {
   YAxis,
 } from "recharts";
 import { Panel } from "./Panel";
+import { valueBar } from "./ValueBar";
 import type { Flag } from "@/lib/types";
 import { breakdownHref, type BreakdownQuery } from "@/lib/breakdown-link";
 import {
@@ -62,7 +63,6 @@ const TOOLTIP = {
   itemStyle: { color: "var(--c-ink)" },
   cursor: { fill: "var(--c-surface-2)" },
 };
-const VALUE_LABEL = { fill: "var(--c-muted)", fontSize: 10 };
 
 /** Marks outside the open flag's mission step back so its own read first. */
 const DIM = 0.28;
@@ -72,7 +72,7 @@ const PILL = "h-6 rounded px-2 text-xs transition-colors focus-visible:outline-2
 const PILL_ON = `${PILL} bg-surface-2 font-semibold text-ink`;
 const PILL_OFF = `${PILL} text-muted hover:text-ink`;
 
-const percent = (value: unknown) => (value == null ? "" : `${Math.round(Number(value))}%`);
+const percent = (value: number) => `${Math.round(value)}%`;
 
 /** The row under a chart-level click (Recharts reports the hovered category's index). */
 function at<T>(rows: T[], state: unknown): T | undefined {
@@ -147,6 +147,7 @@ export function OverviewAnalytics({
     <Panel
       title="Fleet analytics"
       aside={toggles}
+      toolbar
       className="@container h-full"
       bodyClassName="gap-3 p-4"
       delay={delay}
@@ -246,14 +247,14 @@ function TypesChart({ data, mission, go }: ChartProps) {
           <ReferenceLine y={data.fleetRate} stroke="var(--c-line-strong)" strokeDasharray="4 3" />
           <Bar dataKey="rate" name="Fleet" radius={[4, 4, 0, 0]} maxBarSize={32} animationDuration={700} animationEasing="ease-out"
             onClick={(_, i) => go({ view: "actions", type: rows[i]?.key })}
-            label={mission ? undefined : { position: "top", ...VALUE_LABEL, formatter: percent }}>
+            shape={mission ? undefined : valueBar({ position: "top", format: percent })}>
             {rows.map((row) => <Cell key={row.key} fill={row.key === flagged ? "var(--c-bad)" : "var(--c-series-1)"} />)}
           </Bar>
           {mission && (
             <Bar dataKey="mission" name={`Mission ${mission.id}`} fill="var(--c-accent)" radius={[4, 4, 0, 0]} maxBarSize={32}
               animationBegin={250} animationDuration={700} animationEasing="ease-out"
               onClick={(_, i) => go({ view: "actions", type: rows[i]?.key, mission: mission.id })}
-              label={{ position: "top", ...VALUE_LABEL, formatter: percent }} />
+              shape={valueBar({ position: "top", format: percent })} />
           )}
         </BarChart>
       </Plot>
@@ -299,7 +300,7 @@ function BatteryChart({ data, mission, go }: ChartProps) {
           />
           <Bar dataKey="rate" name="Success" radius={[4, 4, 0, 0]} maxBarSize={44} animationDuration={800} animationEasing="ease-out"
             onClick={(_, i) => go({ view: "actions", band: rows[i]?.key })}
-            label={{ position: "top", ...VALUE_LABEL, formatter: percent, offset: 10 }}>
+            shape={valueBar({ position: "top", format: percent, offset: 10 })}>
             {rows.map((row) => (
               <Cell key={row.key} className={FADE}
                 fill={row === cliff && best.rate - cliff.rate > 10 ? "var(--c-bad)" : "var(--c-series-1)"}
@@ -375,11 +376,11 @@ function FailuresChart({ data, mission, go }: ChartProps) {
           <Tooltip {...TOOLTIP} formatter={(value, name) => [`${value} failed action${value === 1 ? "" : "s"}`, name]} />
           <Bar dataKey="count" name="Fleet" fill="var(--c-series-1)" radius={[0, 4, 4, 0]} animationDuration={800} animationEasing="ease-out"
             onClick={(_, i) => go({ view: "actions", failure: rows[i]?.key })}
-            label={{ position: "right", ...VALUE_LABEL }} />
+            shape={valueBar({ position: "right" })} />
           {mission && (
             <Bar dataKey="mission" name={`Mission ${mission.id}`} fill="var(--c-accent)" radius={[0, 4, 4, 0]} animationBegin={250} animationDuration={700} animationEasing="ease-out"
               onClick={(_, i) => go({ view: "actions", failure: rows[i]?.key, mission: mission.id })}
-              label={{ position: "right", ...VALUE_LABEL, formatter: (v: unknown) => (Number(v) > 0 ? String(v) : "") }} />
+              shape={valueBar({ position: "right", hideZero: true })} />
           )}
         </BarChart>
       </Plot>

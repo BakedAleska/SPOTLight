@@ -239,6 +239,7 @@ export function PriorityQueue({
     <Panel
       title="Needs attention"
       aside={filters ?? (total > flags.length ? `${flags.length} of ${total} open flags` : `${total} open flags`)}
+      toolbar={!!filters}
       bodyClassName=""
       className="h-full"
       delay={delay}

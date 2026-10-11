@@ -24,6 +24,7 @@ export function Panel({
   bodyClassName = "p-4",
   delay = 0,
   collapsible = false,
+  toolbar = false,
 }: {
   title: string;
   /** Right-aligned header slot: counts, units, a time range. */
@@ -35,6 +36,9 @@ export function Panel({
   delay?: number;
   /** Adds a chevron that folds the body away. */
   collapsible?: boolean;
+  /** The aside is a control group (pills, toggles): it sits as far from the
+      header's right edge as from its top and bottom. */
+  toolbar?: boolean;
 }) {
   const id = slugify(title);
   const style = delay ? { animationDelay: `${delay}ms` } : undefined;
@@ -55,7 +59,7 @@ export function Panel({
       style={style}
       className={`anim-float panel-shadow flex flex-col overflow-hidden rounded-panel border border-line bg-surface ${className}`}
     >
-      <header className="flex h-9 shrink-0 items-center gap-3 border-b border-line px-4">
+      <header className={`flex h-9 shrink-0 items-center gap-3 border-b border-line ${toolbar ? "pr-1 pl-4" : "px-4"}`}>
         <h2 id={id} className="truncate text-sm font-medium text-ink">
           {title}
         </h2>
