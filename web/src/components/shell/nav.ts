@@ -2,6 +2,7 @@ import {
   Boxes,
   ChartColumn,
   LayoutDashboard,
+  Radio,
   Route,
   Settings,
   Sparkles,
@@ -22,6 +23,7 @@ export interface NavItem {
    the trends across missions. */
 export const nav: NavItem[] = [
   { label: "Overview", icon: LayoutDashboard, href: "/" },
+  { label: "Live patrol", icon: Radio, href: "/live" },
   {
     label: "Missions",
     icon: Route,

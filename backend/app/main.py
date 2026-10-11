@@ -1,7 +1,7 @@
 """SPOT operator dashboard backend (FastAPI), port 8000.
 
 Route tree (docs/backend-services-contract.md): /health and /api/v1/{events, replay, flags, missions, system1,
-assets, locations, insights, search, ops, ask, chat}; `chat` (docs/chat-contract.md) streams answers as SSE.
+assets, locations, insights, search, ops, ask, chat, live}; `chat` (docs/chat-contract.md) streams answers as SSE.
 Run: `uvicorn app.main:app --app-dir backend --port 8000`.
 """
 from __future__ import annotations
@@ -22,10 +22,11 @@ from fastapi.responses import JSONResponse
 from .config import Settings
 from .db.pool import DatabaseUnavailable
 from .deps import AdminAuthError, Services, build_services
-from .routers import (ask, assets, chat, events, flags, health, insights, locations, missions, ops, replay,
-                      search, system1)
+from .routers import (ask, assets, chat, events, flags, health, insights, live, locations, missions, ops,
+                      replay, search, system1)
 from .services.calllog import request_id_var
 from .services.flags import FlagNotFound, RequestDeadlineExceeded
+from .services.live import LiveError
 
 VERSION = "1.0.0"
 SERVERLESS_LOG_DRAIN_S = 2.0
@@ -44,6 +45,8 @@ TAGS = [
     {"name": "insights", "description": "Headline insights and reliability breakdowns."},
     {"name": "search", "description": "RAG search over documents (hybrid vector + full text)."},
     {"name": "ops", "description": "Model-call latency/throughput, jobs, demo reset."},
+    {"name": "live", "description": "Live simulation: an operator queues a route, the live runner walks it and every "
+                                    "stop is triaged (Laya + rules), photographed (simulated) and explained (Qwen)."},
     {"name": "chat", "description": "AI Assistance: stored chats answered by Gemini from the project database "
                                     "(RAG documents, knowledge graph, SQL), streamed as server-sent events."},
 ]
@@ -123,6 +126,10 @@ def create_app(settings: Optional[Settings] = None, services: Optional[Services]
         log.warning("database error on %s: %s", request.url.path, exc)
         return _err(503, "database_error", "%s: %s" % (type(exc).__name__, str(exc).strip()[:300]))
 
+    @app.exception_handler(LiveError)
+    async def _live(request: Request, exc: LiveError):
+        return _err(exc.status, "live_" + {404: "not_found", 409: "conflict"}.get(exc.status, "error"), exc.detail)
+
     @app.exception_handler(FlagNotFound)
     async def _no_flag(request: Request, exc: FlagNotFound):
         return _err(404, "not_found", "no flag with flag_id=%s" % exc.args[0])
@@ -144,7 +151,8 @@ def create_app(settings: Optional[Settings] = None, services: Optional[Services]
         return _err(500, "internal_error", "%s: %s" % (type(exc).__name__, exc))
 
     app.include_router(health.router)
-    for r in (events, replay, flags, missions, system1, assets, locations, insights, search, ops, ask, chat):
+    for r in (events, replay, flags, missions, system1, assets, locations, insights, search, ops, ask, chat,
+              live):
         app.include_router(r.router, prefix="/api/v1")
     return app
 

@@ -232,6 +232,54 @@ is unchanged.
   system1/system2/embed) with `endpoint = 'orchestrator:/v1/assess'` (or `/v1/ask`) and `metadata.via =
   'orchestrator'`, `route`, `source`, `system2_path`.
 
+### Live simulation (ADDED 2026-10-11; additive. Plan: `docs/LIVE-SIM-PLAN.md`, runbook: `docs/LIVE-RUNBOOK.md`)
+An operator queues one of five routes on the web console (`/live`); the **live runner** (`scripts/live_runner.py`, on
+the presenter laptop, the only machine that reaches the AMD box) claims it and walks its 8 stops. Vercel never talks to
+the box: the runner calls Laya, vision, System 2 and the embedder through SSH tunnels and posts every result here.
+Tables: `live_runs`, `live_captures` (`db/migrations/013_live.sql`). Routes: `backend/app/data/live_routes.json`
+(each stop = a kit action, `source_action_id`, with the rules' `planned_verdict`).
+- **What is real.** Each stop's robot log is the kit row of `source_action_id`, re-sent now as a new event under a
+  fresh action id `LIVE-<run_id>-<stop>` (mission `LIVE-<run_id>`), so a re-run never updates an earlier run's flags or
+  predictions. Values are never invented. The photo is a kit sample image picked by action type (`photo.label =
+  "simulated capture"`); vision rows are `pairing: "demo"` and never judge the asset. Red/green is the combined
+  decision of Laya and the rules in `TRIAGE_MODE=parallel` (either escalates; the rules' priority is a floor).
+- **Public** (the console polls every 2 s): `GET /live/routes`; `GET /live/runs?limit` (newest first, with
+  `red`/`green` counts); `GET /live/runs/{run_id}` (`{run, route, captures}`); `GET /live/captures?run_id&after`
+  (captures updated after the cursor, plus a new `cursor`); `GET /live/kg?run_id` (live KG nodes/edges of the run and
+  graph totals); `GET /live/preview?route_id` (every stop's canonical action event + rules verdict; no writes).
+- **Admin** (`X-Admin-Token`): `POST /live/runs {route_id, requested_by}` queues a run (`409 live_conflict` while one
+  is pending/running; a run with no progress for 10 min is marked `error` and stops blocking);
+  `POST /live/runs/{id}/cancel`. The runner: `POST /live/claim {runner}` (oldest pending -> running, logs
+  `MISSION_STARTED`; `{run: null}` when idle) -> per stop `i`:
+  1. `POST /live/runs/{id}/stops/{i}/start` logs `ACTION_STARTED` (no Laya call) and creates the capture
+     (`phase: arrived`, the map shows SPOT there). Returns `action_event`, the canonical action event the result will
+     be triaged on; the runner sets its `timestamp` to the result time.
+  2. The runner calls Laya `/v1/predict` with that event (kind `action`).
+  3. `POST .../stops/{i}/result {timestamp, laya}`: `laya` is `{status: "ok", answers, model, latency_ms, device,
+     fine_tuned}` or `{status: "unavailable", error}` (rules-only, `laya_unavailable`). The 7-step ingest runs with
+     these answers instead of calling `SYSTEM1_URL` (`IngestPipeline.ingest(..., laya=...)`; the Laya call is logged to
+     `app.model_calls` with `metadata.via = "live_runner"`). Writes `raw.spot_event_log` (source `live`), `events`
+     (`mission_id` NULL: live missions are not kit missions; the live ids are in `payload.live`/`payload.mission`),
+     `system1_predictions`, `flags` (red only), the capture (`phase: triaged`, verdict, Laya, rules, decision), the
+     event document `event:act-LIVE-<run>-<stop>` and the live KG rows. Returns `system2_request` (the System 2
+     `/v1/assess` body: a packet in the MCP `get_flag_context` shape, `packet_version: "1-live"`; `flag_id` is the
+     flag for a red stop, the `capture_id` for a green one, which has no flag), the photo, and `embed`: texts to embed.
+  4. The runner (in the background while SPOT walks on) sends the photo to vision, adds the `V#` rows and OCR to
+     `context` and calls System 2 with `image_b64`; then `POST .../stops/{i}/analysis {photo{path, sha256, bytes},
+     vision | vision_error, system2_request, system2 | system2_error, system2_ms, image_status, timings}`. A System 2
+     answer on a model path is stored as `qwen_source: system2` (assessment `DONE` for a red stop, `explanation:<id>`
+     document + KG node); otherwise the backend builds the checked template (`qwen_source: template`, assessment
+     `TEMPLATE`, never indexed) and says why in `qwen.fallback_reason`. Returns `embed` for the explanation.
+  5. `POST /live/runs/{id}/embeddings {model, items[{key, text, vector}]}`: `key` is `doc:<doc_id>` or
+     `node:<node_id>`; a vector is stored only if the row's stored text equals `text` and it has `EMBED_DIM` values.
+     Document-backed KG nodes take their document's vector.
+  `POST /live/runs/{id}/finish {status: done|error, error}` logs `MISSION_COMPLETED` (stored, not triaged) and sets
+  `counts` (`red`, `green`, `qwen`, `template`, `laya_live`, `stops`). Errors: `404 live_not_found`, `409
+  live_conflict` (e.g. a stop on a run that is not running, so a cancelled run stops the runner).
+- **Ingest additions** (all additive): `details.source_action_id` makes an unknown action id inherit that kit row;
+  `details.reading` / `details.anomaly` (kit rows) are used instead of looking them up by action id; `details.mission`
+  is the mission record for a live event; `details.live` marks a live event.
+
 ### Backend details (ADDED 2026-10-10 by the backend agent; additive)
 - **`flags.reasons`** is a list, verdicts first: `{"rule": "laya_verdict", "verdict", "confidence", "priority",
   "category", "model", "detail"}` (or `{"rule": "laya_unavailable", "detail"}` when System 1 is down), then

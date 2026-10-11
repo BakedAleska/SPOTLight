@@ -18,6 +18,7 @@ header table too) and this page. Ports and contracts are in `docs/backend-servic
 | `gateway` | 4000 (host: `GATEWAY_PORT`) | local, hybrid, neon, system2 | `amd/gateway/` | LiteLLM proxy (`litellm[proxy]==1.104.1`, hash-locked). One OpenAI-compatible endpoint, `Authorization: Bearer $LITELLM_MASTER_KEY`. Aliases `system2` / `system2-vision` -> llama-server (`LLAMA_URL`, `VISION_LLAMA_URL`; default the SSH tunnel on host port 18080), `system1` -> Laya `/v1/predict`, `embed` -> embed; hidden `qwen3.5-9b-q4km` = `system2`. Retries 0, no fallbacks, no DB/UI/telemetry. `GET /health/liveliness` is public. |
 | `vision` | 8084 | local, hybrid, neon, vision | `amd/vision/` | CPU-only OCR (RapidOCR/onnxruntime) + code readers: thermal colorbar, dial gauge, spectrogram, Orbit Key Results. `POST /v1/vision` returns `V#` readings, vision-vs-log `comparison`, Orbit-style `key_results`/`alert` and an annotated JPEG; never calls a model. Required `VISION_API_KEY` (header `X-API-Key`; the service refuses to start without one; `/health` open). JPEG/PNG/WebP only, 12 MP max, 2 concurrent analyses (503 when busy; plan ~2 GB RSS). Models baked into the image; no runtime internet. Contract: `docs/vision-contract.md`. |
 | `orchestrator` | 8085 | local, hybrid, neon | `amd/orchestrator/` | LangGraph. `POST /v1/assess`: MCP context -> System 1 (packet answers, else gateway `system1`) -> route (escalate / P1-P2 / rules / operator image -> full, else short System 1 answer) -> vision (with an image or `DEMO_IMAGES=1`) -> System 2 -> template fallback, all within `ORCH_DEADLINE_S` (40), with a per-node `trace`. `POST /v1/ask`: the System 2 model with the read-only MCP tools, at most 4 calls in 30 s. `X-API-Key: $ORCHESTRATOR_API_KEY`. `GET /v1/graph` = mermaid. The backend uses it only when `ORCHESTRATOR_URL` is set. Contract: `docs/orchestrator-contract.md`. |
+| `live-runner` | n/a | live | `scripts/live_runner.Dockerfile` | Live simulation runner (`scripts/live_runner.py`, standard library only): claims runs queued on the web console's `/live` page, walks the route's 8 stops and calls Laya, vision, System 2 (Qwen) and the embedder on the AMD box through host SSH tunnels (`LIVE_*_URL`), posting every result to the backend's admin API (`BACKEND_URL`, `ADMIN_TOKEN`). No port and no database credentials; heartbeat healthcheck. Runbook: `docs/LIVE-RUNBOOK.md`. |
 
 Published ports bind to `127.0.0.1` by default (`BIND_ADDR`). Inside the network the services use service names
 (`http://system1:8082`).
@@ -207,6 +208,19 @@ deadline. `/v1/ask` has its own 30 s (`ASK_DEADLINE_S`, at most 4 tool calls).
 | `LITELLM_MASTER_KEY` | `Authorization: Bearer` | system2 (`SYSTEM2_LLAMA_API_KEY`), orchestrator (`GATEWAY_KEY`) -> gateway (`sk-`, >= 16 chars) |
 | `VISION_API_KEY` | `X-API-Key` | orchestrator -> vision (required, >= 16 chars; refuses to start without one) |
 | `MCP_AUTH_TOKEN` | `Authorization: Bearer` | backend, orchestrator -> mcp (optional; required by the Vercel deploy) |
+
+## Live simulation (`/live`, profile `live`)
+The judges' demo: an operator starts one of five routes on the web console's `/live` page; the live runner on the
+presenter laptop walks it, calling the AMD box through SSH tunnels and posting results to the backend (Vercel or
+local). The runner holds only `BACKEND_URL` + `ADMIN_TOKEN` (+ the box services' keys); the web needs
+`BACKEND_ADMIN_TOKEN` for the Start/Cancel buttons. Runbook (tunnels, smoke check, Laya dry run, restarts):
+`docs/LIVE-RUNBOOK.md`. Contract: `docs/backend-services-contract.md` "Live simulation".
+```bash
+python scripts/live_runner.py --tunnel spot-amd --check      # one real request to every box service
+python scripts/live_runner.py --tunnel spot-amd --dry-run    # Laya on all 40 stops vs the plan (no writes)
+python scripts/live_runner.py --tunnel spot-amd              # serve runs started on /live
+COMPOSE_PROFILES=live docker compose up live-runner          # the same in Docker (tunnels on the host, 18081-18084)
+```
 
 ## Useful commands
 ```bash

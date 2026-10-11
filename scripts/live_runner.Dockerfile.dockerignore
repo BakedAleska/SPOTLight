@@ -1,0 +1,7 @@
+# Build context is the repo root (docker build -f scripts/live_runner.Dockerfile .). Send only what the runner needs.
+*
+!scripts/live_runner.py
+!web/public/kit/inspection/
+!amd/system2/fixtures/multimodal/gauge_demo.json
+**/__pycache__
+web/public/kit/inspection/annotated
