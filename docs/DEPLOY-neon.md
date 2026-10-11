@@ -102,3 +102,31 @@ With Docker on your machine, the compose `db-init` job does steps 3–5 in one g
 
 ## Re-running later
 Every command here is idempotent. After a schema change lands (a new `db/migrations/0NN_*.sql`), run `python db/setup.py migrate` with the owner URL **before** deploying the code that needs it. On Vercel, stepped replay and reset-demo return 503 until migration `010` is applied.
+
+## Current production and automation
+
+The deployed project is **SPOTlight** (`summer-sound-57299654`), main branch
+`br-wispy-hat-b54morim`, Postgres 17 in AWS us-east-2. The older SpotTheDog
+project is not the production database for these three services.
+
+Production currently contains 500 replay events and 51 flags after the completed
+stepped replay; the original seed contained 58 flags. The `demo-snapshot` branch
+`br-still-dawn-b55ga6ag` preserves the pre-replay baseline. Documents and graph
+population were deferred because no embedding endpoint was available.
+
+The GitHub `neon-migrate` job now runs migrations and status before Vercel deploys.
+It uses the `NEON_DATABASE_URL` secret from environment `NEON_API_KEY`: direct
+owner connection, database neondb, role neondb_owner. It does not seed, reset,
+rotate service passwords, create test branches, or call the Neon management API.
+See [the Actions guide](DEPLOY-github-actions.md) for exact configuration and
+[the deployment report](DEPLOY-status-2026-10-10.md) for evidence.
+
+### Migration initialization troubleshooting
+
+An installed pgvector extension can still be unloaded in a fresh database
+session. A function containing `SET hnsw.iterative_scan` then fails permission
+validation even for the owner. The migration renderer now executes
+`SELECT '[0]'::vector` when pgvector >= 0.8 is installed, registering the setting
+before defining search functions. The fix preserves the function-level setting;
+no privilege escalation or password change is needed. Keep this initialization
+in the same connection as the migrations; a separate psql process cannot fix it.

@@ -1,8 +1,8 @@
 # Deploy SPOTlight through GitHub Actions
 
-The workflow `.github/workflows/deploy-vercel.yml` deploys the repository to your Vercel account without connecting Vercel's GitHub app to this repository. It authenticates with a Vercel token and deploys three existing projects in order: MCP → backend → web.
+The workflow `.github/workflows/deploy-vercel.yml` deploys the repository to your Vercel account without connecting Vercel's GitHub app to this repository. It authenticates with a Vercel token and deploys production database migrations, then three existing projects in order: Neon → MCP → backend → web. The working deployment was verified in [run 38101671492](https://github.com/JylerTackson/SpotTheDOT/actions/runs/38101671492) at commit `a0ba13dc5527a61a404bed94f9e7755881febce4`.
 
-This replaces the Git import step, not account permissions or database setup. The token must be allowed to deploy all three projects, and a repository maintainer must merge the workflow and configure the GitHub environment. Never put a token or connection string in the workflow file.
+This replaces the Git import step, not account permissions or database setup. The token must be allowed to deploy all three projects, and a repository admin must configure the two GitHub environments. Never put a token or connection string in the workflow file.
 
 ## 1. Finish account setup
 
@@ -38,9 +38,31 @@ Use the generated credentials in the private, git-ignored local `.env` from depl
 
 Leave AMD service URLs and related API keys unset until those services exist. The workflow does not create, rotate or transfer application credentials through GitHub. It pulls Vercel's production configuration for builds; the pulled files are removed after deployment and are never uploaded as workflow artifacts. Changes to Vercel environment settings require another workflow run to redeploy.
 
-## 3. Configure the GitHub production environment
+## 3. Configure the two GitHub environments
 
-In `JylerTackson/SpotTheDOT`, go to **Settings → Environments → production**. Add a required reviewer and restrict deployment branches to `main`. Protect `main` with pull-request review and required CI checks so only reviewed code receives production secrets.
+In `JylerTackson/SpotTheDOT`, go to **Settings → Environments**. The workflow uses these exact names:
+
+| Job | Environment | Required secret |
+|---|---|---|
+| `neon-migrate` | `NEON_API_KEY` | `NEON_DATABASE_URL` |
+| `deploy` | `vercel deploy` | `VERCEL_TOKEN` |
+
+`NEON_API_KEY` is the name of an environment as well as an optional secret; the current migration job does not use that API-key secret. It connects directly with `NEON_DATABASE_URL`.
+
+For the **NEON_API_KEY** environment, set `NEON_DATABASE_URL` to the direct owner connection string copied from Neon **SPOTlight → main → Connect**, database `neondb`, role `neondb_owner`, connection pooling off. Service URLs in Vercel remain pooled and use the separate service login roles. The migration connection must point to the same branch as those service URLs.
+
+The following Neon variables are configured as account context, but the current workflow does not consume them or use them to select the database. Changing them does not change the connection string secret:
+
+| Variable | Value |
+|---|---|
+| `NEON_PROJECT_ID` | `summer-sound-57299654` |
+| `NEON_PARENT_BRANCH_ID` | `br-wispy-hat-b54morim` |
+| `NEON_DATABASE_NAME` | `neondb` |
+| `NEON_DATABASE_ROLE` | `neondb_owner` |
+
+For the **vercel deploy** environment, add the secret and variables below. An environment named `production` is not referenced by this workflow. GitHub environment names are separate from Vercel's Production target.
+
+Recommended protection: restrict both environments to `main`, add required reviewers, and protect main with pull-request review and CI checks. At the latest inspection, both environments had no reviewers or deployment branch restrictions; approval is not currently enforced.
 
 Add this **environment secret**:
 
@@ -66,11 +88,13 @@ For multiple services, `VERCEL_ORG_ID` and `VERCEL_TOKEN` alone are insufficient
 
 ## 4. Merge and run
 
-Merge this workflow into `main`. After the existing **CI** workflow succeeds for a push to `main`, the deployment workflow checks out that exact tested commit and waits for the production environment reviewer. It never deploys pull requests or fork commits. Automatic production deployments run serially and are not canceled midway.
+The workflow is merged into `main`. After the existing **CI** workflow succeeds for a push to `main`, the deployment workflow checks out that exact tested commit and runs Neon migrations before Vercel deployments. Environment approval is required only if a reviewer rule is configured. It never deploys pull requests or fork commits. Automatic production deployments run serially and are not canceled midway.
 
 For a configuration-only redeploy, select **Actions → Deploy SPOTlight to Vercel → Run workflow → main**. Manual runs are limited to `main`; they do not automatically wait for a new CI run, so select a commit whose CI has passed.
 
-The job installs Node 24, Python 3.12 and the pinned Vercel CLI. Each project is pulled, built with production settings and deployed with `--prebuilt --prod` from the repository root. The backend build therefore has access to the shared code and kit data. Deployment stops at the first failed build or HTTP check; earlier services may already be live, so this is not an atomic release.
+The Neon job installs Python 3.12 and `db/requirements.txt`, then runs `python db/setup.py migrate` and `python db/setup.py status` using the owner secret. It applies migrations directly to production; it does not create a test branch, seed, reset demo data, rotate passwords, or ingest embeddings. Vercel's `needs: neon-migrate` dependency skips deployment on migration failure.
+
+The Vercel job installs Node 24, Python 3.12, uv 0.13.0 with a pinned official setup action, and the pinned Vercel CLI. Each project is pulled, built with production settings and deployed with `--prebuilt --prod` from the repository root. The backend build therefore has access to the shared code and kit data. Deployment stops at the first failed build or HTTP check; earlier services may already be live, so this is not an atomic release.
 
 ## 5. Verification and remaining manual checks
 
@@ -91,7 +115,7 @@ Embeddings ingestion, graph building and embedding smoke tests remain deferred u
 - [Vercel build and prebuilt deployment](https://vercel.com/docs/cli/deploy)
 - [Vercel CI/CD with GitHub Actions](https://vercel.com/docs/deployments/configure-a-build#using-github-actions)
 
-This workflow has been prepared and validated locally with actionlint, but it has not been run. Merge it and configure the protected production environment before enabling automated deployments. The same Vercel account has now accepted direct CLI production deployments of all three projects; those do not enable GitHub Actions automatically.
+The complete workflow has now succeeded in [run 38101333927](https://github.com/JylerTackson/SpotTheDOT/actions/runs/38101333927) and [run 38101671492](https://github.com/JylerTackson/SpotTheDOT/actions/runs/38101671492): migrations, project ownership checks, all three builds/deployments, and production HTTP checks passed. Direct CLI deployment remains available for recovery.
 
 ## Verified project mapping
 
@@ -108,4 +132,18 @@ Use these values for the existing projects instead of creating duplicates:
 | `BACKEND_PRODUCTION_URL` | `https://spotlight-backend-tau.vercel.app` |
 | `WEB_PRODUCTION_URL` | `https://spotlight-web-mu.vercel.app` |
 
-Configure a fresh deployment token directly in the protected GitHub production environment after merging the workflow. No token value belongs in this table.
+Configure deployment tokens directly in the matching GitHub environment. No token value belongs in this table.
+
+## Troubleshooting and recovery
+
+| Failure | Resolution |
+|---|---|
+| Missing `VERCEL_ORG_ID` although it is configured | Confirm the deploy job references `vercel deploy`; values from another environment are not inherited. |
+| Migration connects to an old Neon project | Replace `NEON_DATABASE_URL`; changing `NEON_PROJECT_ID` alone has no effect. |
+| `permission denied to set parameter "hnsw.iterative_scan"` with the owner role | Use the merged pgvector initialization fix in `db/setup.py` ([PR #15](https://github.com/JylerTackson/SpotTheDOT/pull/15)). It loads pgvector in the same connection before rendering function settings. |
+| `[UV_ERROR] uv is required but was not found in PATH` | Ensure the Vercel job includes setup-uv ([PR #17](https://github.com/JylerTackson/SpotTheDOT/pull/17)). Python installation alone is insufficient. |
+| Vercel pull reports `[SENSITIVE]` placeholders | Sensitive runtime values cannot be pulled. Keep them in Vercel; do not paste credentials into logs or commit pulled files. Current builds passed with these placeholders. |
+
+After a secret-only correction, re-run failed jobs for a run whose code is still valid. After a code fix, let successful CI on the new main commit start a new deployment; rerunning an older run checks out its older commit. Inspect the Actions summary and production health before declaring success. Because the migration runner reapplies all SQL files, migration authors must preserve repeatability and compatibility with the currently deployed application.
+
+Temporary migration branches are not currently automated. Before a risky schema change, create an isolated Neon branch, test the migration there, then review the production change. The pgvector fix was validated this way, including two complete migration passes. Do not delete or reset production as a recovery shortcut.

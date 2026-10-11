@@ -17,7 +17,7 @@ browser ─▶ web (Next.js)  ── server-side BACKEND_URL ──▶ backend (
 
 | Project | Root Directory | Preset | Region | Max duration |
 |---|---|---|---|---|
-| MCP server | `amd/mcp` | Python (from `requirements.txt`) | `cle1` | 60 s |
+| MCP server | `amd/mcp` | FastAPI (ASGI-compatible Python builder) | `cle1` | 60 s |
 | backend | `backend` | FastAPI | `cle1` | 300 s |
 | web | `web` | Next.js (Node 24.x) | default | default |
 
@@ -38,7 +38,7 @@ Set the AMD URLs when they exist, then redeploy.
 - **Generate tokens with `openssl rand -hex 24`.** The same value must be set on both ends of each connection: `MCP_AUTH_TOKEN` on MCP and backend, `SYSTEM2_API_KEY` on backend and System 2, `ORCHESTRATOR_API_KEY` on backend and orchestrator.
 
 ## 1. MCP server
-1. **New project:** Add New → Project → import `JylerTackson/SpotTheDOT`. Set Root Directory to **`amd/mcp`**. Leave the build command empty.
+1. **New project:** Add New → Project → import `JylerTackson/SpotTheDOT`. Set Root Directory to **`amd/mcp`**, select the **FastAPI** preset, and leave the build command empty. The Other preset failed to detect the existing ASGI entrypoint during deployment.
 2. **Env vars (Production):**
 
    | Var | Value |
@@ -114,3 +114,21 @@ Set the AMD URLs when they exist, then redeploy.
 
 ## What stays local
 Docker Compose (`docker-compose.yml`, `docs/RUNNING.md`) is unchanged and is still how you run everything on one machine. The Vercel files only affect Vercel: `vercel.json`, `.vercelignore`, `.python-version`, `backend/index.py`, `backend/vercel_build.py`, `amd/mcp/asgi.py`.
+
+## Existing production and GitHub Actions
+
+The three projects already exist in team SpotTheDog (`spot-the-dog`):
+
+| Service | Production origin |
+|---|---|
+| MCP | https://spotlight-mcp.vercel.app |
+| Backend | https://spotlight-backend-tau.vercel.app |
+| Web | https://spotlight-web-mu.vercel.app |
+
+Use [DEPLOY-github-actions.md](DEPLOY-github-actions.md) for existing project IDs,
+secrets, environment names, and the working Neon → MCP → backend → web pipeline.
+This path does not require Vercel's GitHub app to import the repository. Successful
+CI on main triggers deployment; pushes to feature branches run CI without
+production deployment. Python prebuilt builds require uv on the GitHub runner.
+Vercel environment changes require a new deployment. Browser, authenticated MCP,
+and replay checks remain manual; automatic deployments do not reset demo data.
