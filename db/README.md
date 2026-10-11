@@ -126,3 +126,11 @@ GRAPH_TEST_EMBED=1 EMBED_URL=http://localhost:8081 make test-graph   # + the inc
 make test-db        # seed is non-destructive (tests/test_seed_nondestructive.py)
 make smoke          # RAG + graph queries and spot_mcp_reader permissions inside the stack
 ```
+
+### Repeated migrations on Neon
+
+The migration renderer initializes pgvector in each connection before adding
+`SET hnsw.iterative_scan` to search functions. An existing extension does not
+automatically load its configuration definitions in a fresh session; without
+initialization, repeated migrations can fail with an insufficient-privilege error
+even for `neondb_owner`. No extra role grants are required.
