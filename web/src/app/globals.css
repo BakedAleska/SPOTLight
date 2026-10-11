@@ -219,8 +219,8 @@
 
    The scrim is per-preset and not a style choice. White body text needs
    4.5:1 against the lightest stop of whichever ramp is showing, and these
-   ramps differ by nearly a stop of luminance — Noon's gold needs 42% to clear
-   it where Midnight's indigo clears at 24%. Pinning one scrim across all of
+   ramps differ by nearly a stop of luminance — Noon's gold needs 41% to clear
+   it where Midnight's near-black needs none. Pinning one scrim across all of
    them would mean either illegible text on the bright ramps or a Midnight so
    muddy it stops being a gradient. Each value below is the solved minimum
    plus a few points of margin; re-solve if a stop is ever re-tuned.
@@ -231,40 +231,71 @@
    is one of the ramp's own colours at partial alpha, so it can never be
    brighter than the stop the scrim was solved against.
 
-   Named presets are deliberately theme-independent: "Dusk" should look like
-   dusk whether the console is in light or dark. Only the theme-aware default
+   Named presets are deliberately theme-independent: "Dawn" should look like
+   dawn whether the console is in light or dark. Only the theme-aware default
    in the tables above follows the theme, and it is what Auto falls back to
    when the sweep is suppressed. */
+/* One preset per waypoint of the sweep below, with the same stops and scrims,
+   so the menu offers exactly the eight moods Auto tours and picking one pins
+   the frame you just saw go by. Keep the two lists in step. */
+:root[data-hero="midnight"] {
+  --c-hero-from: #070b24;
+  --c-hero-via: #16215c;
+  --c-hero-to: #3a3785;
+  --c-hero-scrim: 0;
+}
+
 :root[data-hero="dawn"] {
   --c-hero-from: #3a2a7a;
   --c-hero-via: #c0417a;
   --c-hero-to: #e8923a;
-  --c-hero-scrim: 0.38;
+  --c-hero-scrim: 0.39;
 }
 
 :root[data-hero="noon"] {
-  --c-hero-from: #1565c0;
-  --c-hero-via: #2a9fd6;
+  --c-hero-from: #0a5fc8;
+  --c-hero-via: #1b9ad8;
   --c-hero-to: #d9a520;
+  --c-hero-scrim: 0.41;
+}
+
+:root[data-hero="ember"] {
+  --c-hero-from: #6b1f4d;
+  --c-hero-via: #c9352b;
+  --c-hero-to: #e8661f;
+  --c-hero-scrim: 0.3;
+}
+
+:root[data-hero="aurora"] {
+  --c-hero-from: #053530;
+  --c-hero-via: #0d8c6b;
+  --c-hero-to: #35c48a;
   --c-hero-scrim: 0.42;
 }
 
-:root[data-hero="dusk"] {
-  --c-hero-from: #3b5bd9;
-  --c-hero-via: #8b4fd4;
-  --c-hero-to: #e8761f;
-  --c-hero-scrim: 0.32;
+:root[data-hero="storm"] {
+  --c-hero-from: #1a0b3d;
+  --c-hero-via: #6b2fb5;
+  --c-hero-to: #b73fd4;
+  --c-hero-scrim: 0.17;
 }
 
-:root[data-hero="midnight"] {
-  --c-hero-from: #0f1b3d;
-  --c-hero-via: #26306e;
-  --c-hero-to: #4a4a8f;
-  --c-hero-scrim: 0.24;
+:root[data-hero="glacier"] {
+  --c-hero-from: #08233f;
+  --c-hero-via: #1f6ea8;
+  --c-hero-to: #4aa8cc;
+  --c-hero-scrim: 0.36;
+}
+
+:root[data-hero="solar"] {
+  --c-hero-from: #6b1a08;
+  --c-hero-via: #d4480f;
+  --c-hero-to: #e8a21f;
+  --c-hero-scrim: 0.42;
 }
 
 /* ── Auto: the sweep ────────────────────────────────────────────────────────
-   Auto is not a fifth ramp, it is the absence of a choice — so instead of
+   Auto is not another ramp, it is the absence of a choice — so instead of
    picking one mood it tours all of them, and does it hard enough to be the
    point of the card rather than an ambience you stop noticing. Eight moods,
    six seconds apart, no holds: the ramp is always mid-change.

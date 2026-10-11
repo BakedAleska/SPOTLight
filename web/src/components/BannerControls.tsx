@@ -42,28 +42,46 @@ function replayAnimations() {
    The named ramps are fixed moods and look the same in either theme — but
    "fixed" is only the palette. The two lamp bodies keep moving under every
    preset; pinning stops the colour changing, not the card. */
-const HEROES = ["auto", "dawn", "noon", "dusk", "midnight"] as const;
+const HEROES = [
+  "auto",
+  "midnight",
+  "dawn",
+  "noon",
+  "ember",
+  "aurora",
+  "storm",
+  "glacier",
+  "solar",
+] as const;
 type Hero = (typeof HEROES)[number];
 
 const LABEL: Record<Hero, string> = {
   auto: "Auto",
+  midnight: "Midnight",
   dawn: "Dawn",
   noon: "Noon",
-  dusk: "Dusk",
-  midnight: "Midnight",
+  ember: "Ember",
+  aurora: "Aurora",
+  storm: "Storm",
+  glacier: "Glacier",
+  solar: "Solar",
 };
 
 /* The menu rows get a word about the ramp rather than a swatch each. A swatch
    would have to read --c-hero-*, and those resolve to whatever is *currently*
-   applied — so five swatches would all paint the same gradient.
+   applied — so every swatch would paint the same gradient.
    Picking crossfades the banner behind the open menu anyway, which is a far
    better preview than a 12px chip could be. */
 const HINT: Record<Hero, string> = {
   auto: "Tours all eight moods",
+  midnight: "Near-black into indigo",
   dawn: "Violet into amber",
   noon: "Bright blue into gold",
-  dusk: "The dark-mode default",
-  midnight: "Near-monochrome navy",
+  ember: "Wine into red-orange",
+  aurora: "Deep teal into green",
+  storm: "Near-black into magenta",
+  glacier: "Deep blue into steel",
+  solar: "Burnt red into gold",
 };
 
 /* Transparent fill, faint edge. These sit on artwork, so the controls are
@@ -204,7 +222,7 @@ export function BannerControls() {
                     aria-selected={selected}
                     // Focus is managed by the listbox, so the options stay out
                     // of the page's tab order: Tab leaves the menu, it does
-                    // not walk through five more stops inside it.
+                    // not walk through eight more stops inside it.
                     tabIndex={-1}
                     onClick={() => choose(option)}
                     className="flex w-full cursor-pointer items-center gap-2 px-2 py-1.5 text-left transition-colors hover:bg-surface-2 focus-visible:bg-surface-2"
