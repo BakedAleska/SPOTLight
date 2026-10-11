@@ -107,8 +107,6 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
             </g>;
           })}
           {current && marker && <g aria-label={`SPOT at ${current.id}`} transform={`translate(${marker.x} ${marker.y})`}>
-            {active && !frame?.moving && <circle className="spot-activity-ring" r="34" fill="none" stroke="var(--c-accent-ink)" strokeWidth="2" strokeDasharray="8 5" />}
-            <circle r="26" fill="var(--c-surface)" stroke="var(--c-accent-ink)" strokeWidth="3" />
             <image href="/spotlight-logo-small.svg" x="-18" y="-20" width="36" height="40" />
             <text y="42" textAnchor="middle" fill="white" stroke="black" strokeWidth="3" paintOrder="stroke" fontSize="15" fontWeight="bold">SPOT</text>
           </g>}
