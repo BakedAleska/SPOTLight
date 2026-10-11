@@ -33,6 +33,14 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(1);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  /** Rewind (paused) to the moment event `i` happens. Travel toward it is filed under the previous event, so this is
+      the first stationary segment for `i`. At least 1ms in, so the first event keeps the timeline open. */
+  function seekTo(i: number) {
+    const at = segments.find(s => s.eventIndex === i && !s.moving);
+    if (!at) return;
+    setPlaying(false);
+    setElapsed(Math.max(1, at.start));
+  }
   useEffect(() => {
     if (!playing) return;
     let request: number;
@@ -133,7 +141,7 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
       <ol ref={timeline} className={`flex snap-x gap-2.5 overflow-x-auto pb-2 transition-opacity duration-500 ${timelineOpen ? "opacity-100 delay-200" : "opacity-0"}`}>{(started ? events : []).map((e, i) => { const latest = i === events.length - 1; const place = e.locationId ? `${e.locationId}${e.assetName ? ` · ${e.assetName}` : ""}` : `Mission ${e.missionId}`; return <li key={e.id} className="aspect-square w-36 shrink-0 snap-end">
         {/* A fixed-size tile with a fixed skeleton — header, title, place, footer —
             so a sparse event and a busy one read as the same shape. */}
-        <button onClick={() => setSelectedId(e.locationId ?? null)} title={`${eventLabel(e)} · ${place}`} className={`flex h-full w-full flex-col rounded border p-2.5 text-left transition-colors hover:bg-surface-2 ${latest ? "border-accent-ink bg-surface-2" : e.error ? "border-bad/40" : "border-line"}`}>
+        <button onClick={() => { seekTo(i); setSelectedId(e.locationId ?? null); }} title={`Rewind to: ${eventLabel(e)} · ${place}`} className={`flex h-full w-full flex-col rounded border p-2.5 text-left transition-colors hover:bg-surface-2 ${latest ? "border-accent-ink bg-surface-2" : e.error ? "border-bad/40" : "border-line"}`}>
           <span className="flex items-center justify-between gap-2">
             <span className={e.error ? "text-bad" : "text-accent-ink"}>{e.error ? <TriangleAlert size={15} /> : e.type === "ACTION_STARTED" ? <ScanLine size={15} /> : <CheckCircle2 size={15} />}</span>
             {latest ? <span className="rounded bg-canvas px-1.5 py-0.5 text-[9px] font-semibold tracking-wide text-accent-ink">LATEST</span> : <span className="nums font-mono text-[10px] text-faint">#{i + 1}</span>}
