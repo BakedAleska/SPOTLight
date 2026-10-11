@@ -42,3 +42,4 @@ Single source of truth. Each entry is the decision plus why, in one or two lines
 ## Pending
 - Roles.
 - Public access to the AMD services for Vercel (relay VM or tunnel agent; `docs/AMD-K8S-PLAN.md` §5-6).
+- Backend replay on Vercel: functions run at most 300 s on Hobby, so the replay background task needs reworking.
