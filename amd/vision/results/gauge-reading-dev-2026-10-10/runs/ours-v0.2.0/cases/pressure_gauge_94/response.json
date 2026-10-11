@@ -1,0 +1,193 @@
+{
+ "media_id": "pressure_gauge_94",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "100",
+   "bbox": [
+    668,
+    250,
+    701,
+    276
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "80",
+   "bbox": [
+    622,
+    258,
+    649,
+    282
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "120",
+   "bbox": [
+    700,
+    272,
+    735,
+    300
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "60",
+   "bbox": [
+    587,
+    290,
+    615,
+    314
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "p",
+   "bbox": [
+    640,
+    305,
+    657,
+    325
+   ],
+   "conf": 0.755
+  },
+  {
+   "text": "140",
+   "bbox": [
+    720,
+    312,
+    755,
+    341
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "40",
+   "bbox": [
+    572,
+    334,
+    600,
+    359
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "Gauge",
+   "bbox": [
+    660,
+    353,
+    706,
+    384
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "160",
+   "bbox": [
+    713,
+    359,
+    749,
+    388
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "20",
+   "bbox": [
+    584,
+    377,
+    613,
+    404
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "hireTek",
+   "bbox": [
+    642,
+    371,
+    720,
+    420
+   ],
+   "conf": 0.848
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "pressure",
+   "value": 197.0,
+   "unit": "psi",
+   "confidence": 0.3,
+   "method": "hough_ray_ransac_labels",
+   "flags": [
+    "LABEL_OUTLIER",
+    "NEEDLE_OUTSIDE_SCALE",
+    "UNIT_UNKNOWN",
+    "AMBIGUOUS_NEEDLE"
+   ],
+   "point": [
+    670,
+    430
+   ],
+   "note": "two needle candidates: 162° -> 197 psi and 127° -> 172 psi (peak ratio 0.65); do not trust this value"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "psi",
+   "value": 197.0
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 30
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": 162.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 0.65
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.0
+  },
+  {
+   "name": "Full Scale",
+   "units": "psi",
+   "value": 160.0
+  },
+  {
+   "name": "Scale Labels Used",
+   "units": "",
+   "value": "5 of 8"
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 414,
+ "version": {
+  "service": "0.2.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

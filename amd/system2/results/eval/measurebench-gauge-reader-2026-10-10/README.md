@@ -1,5 +1,8 @@
 # Code gauge reader on MeasureBench real pressure gauges (2026-10-10)
 
+> **Superseded (scorer S0).** This first scoring assumed every reading was psi; with unit-aware scoring the 7 HIGH-trust readings are 1 correct / 6 wrong, not 2 / 5. Corrected, labelled results and the full scorer history: `amd/vision/results/gauge-reading-dev-2026-10-10/README.md`. This file is kept unchanged below as the original record.
+
+
 **What:** every `pressure_gauge` image (118) in MeasureBench `real_world` through our vision service
 (`amd/vision`, `POST /v1/vision`, `kind: gauge`, `annotate: false`, default settings, version 0.1.0, repo `db3fb1d`)
 on the W7900D box, scored against MeasureBench's human-annotated reading intervals. No model involved.

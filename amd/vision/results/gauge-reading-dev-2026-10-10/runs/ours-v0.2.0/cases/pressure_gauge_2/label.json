@@ -1,0 +1,29 @@
+{
+ "question_id": "pressure_gauge_2",
+ "question": "What is the reading of the pressure gauge?",
+ "evaluator": "multi_interval_matching",
+ "evaluator_kwargs": {
+  "intervals": [
+   [
+    -20,
+    -10
+   ],
+   [
+    -0.2,
+    -0.1
+   ]
+  ],
+  "units": [
+   [
+    "kPa"
+   ],
+   [
+    "Bar"
+   ]
+  ]
+ },
+ "meta_info": {
+  "source": "https://www.hippopx.com/en/pressure-meter-engineering-gauge-commercial-machine-industry-99048",
+  "uploader": "N/A"
+ }
+}

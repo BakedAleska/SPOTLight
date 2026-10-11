@@ -1,0 +1,18 @@
+{
+ "question_id": "pressure_gauge_9",
+ "question": "What is the reading of the instrument?",
+ "evaluator": "interval_matching",
+ "evaluator_kwargs": {
+  "interval": [
+   258,
+   262
+  ],
+  "units": [
+   "bar"
+  ]
+ },
+ "meta_info": {
+  "source": "https://www.needpix.com/photo/178614/thermometer-temperature-fever-measurement-celsius-fahrenheit-degree-measure-health",
+  "uploader": "Alex.ch"
+ }
+}

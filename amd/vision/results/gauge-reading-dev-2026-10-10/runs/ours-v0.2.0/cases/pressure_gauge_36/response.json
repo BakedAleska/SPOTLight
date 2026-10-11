@@ -1,0 +1,202 @@
+{
+ "media_id": "pressure_gauge_36",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "10",
+   "bbox": [
+    448,
+    135,
+    490,
+    172
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "15",
+   "bbox": [
+    546,
+    132,
+    592,
+    171
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "1.5",
+   "bbox": [
+    505,
+    172,
+    539,
+    200
+   ],
+   "conf": 0.961
+  },
+  {
+   "text": "5",
+   "bbox": [
+    403,
+    214,
+    426,
+    246
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "20",
+   "bbox": [
+    604,
+    212,
+    648,
+    247
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "M∩3-Y。",
+   "bbox": [
+    495,
+    272,
+    565,
+    298
+   ],
+   "conf": 0.855
+  },
+  {
+   "text": "0",
+   "bbox": [
+    430,
+    300,
+    454,
+    331
+   ],
+   "conf": 0.996
+  },
+  {
+   "text": "25",
+   "bbox": [
+    580,
+    298,
+    625,
+    335
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "kgf/cm²",
+   "bbox": [
+    491,
+    316,
+    569,
+    347
+   ],
+   "conf": 0.991
+  },
+  {
+   "text": "8",
+   "bbox": [
+    566,
+    341,
+    604,
+    381
+   ],
+   "conf": 0.943
+  },
+  {
+   "text": "ME65",
+   "bbox": [
+    455,
+    382,
+    493,
+    401
+   ],
+   "conf": 0.999
+  },
+  {
+   "text": "IP40",
+   "bbox": [
+    514,
+    382,
+    546,
+    399
+   ],
+   "conf": 0.998
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "pressure",
+   "value": 1.5,
+   "unit": "psi",
+   "confidence": 0.3,
+   "method": "hough_ray_ransac_labels",
+   "flags": [
+    "LABEL_OUTLIER",
+    "UNIT_UNKNOWN",
+    "AMBIGUOUS_NEEDLE"
+   ],
+   "point": [
+    391,
+    315
+   ],
+   "note": "two needle candidates: -116° -> 2 psi and 39° -> 16 psi (two-ended needle (opposite arm 0.34 r long)); do not trust this value"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "psi",
+   "value": 1.5
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 30
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": -116.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 0.46
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.34
+  },
+  {
+   "name": "Full Scale",
+   "units": "psi",
+   "value": 25.0
+  },
+  {
+   "name": "Scale Labels Used",
+   "units": "",
+   "value": "6 of 7"
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 427,
+ "version": {
+  "service": "0.2.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

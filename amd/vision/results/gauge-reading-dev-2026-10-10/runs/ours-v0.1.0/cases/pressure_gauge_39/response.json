@@ -1,0 +1,231 @@
+{
+ "media_id": "pressure_gauge_39",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "20",
+   "bbox": [
+    330,
+    173,
+    360,
+    199
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "140",
+   "bbox": [
+    357,
+    165,
+    394,
+    194
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "160180",
+   "bbox": [
+    380,
+    166,
+    449,
+    223
+   ],
+   "conf": 0.995
+  },
+  {
+   "text": "100",
+   "bbox": [
+    303,
+    187,
+    339,
+    216
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "80",
+   "bbox": [
+    290,
+    207,
+    320,
+    233
+   ],
+   "conf": 0.998
+  },
+  {
+   "text": "200",
+   "bbox": [
+    423,
+    213,
+    460,
+    242
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "60",
+   "bbox": [
+    281,
+    233,
+    313,
+    260
+   ],
+   "conf": 0.901
+  },
+  {
+   "text": "220",
+   "bbox": [
+    426,
+    238,
+    465,
+    269
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "40",
+   "bbox": [
+    286,
+    260,
+    317,
+    288
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "CENTFE",
+   "bbox": [
+    339,
+    263,
+    374,
+    287
+   ],
+   "conf": 0.816
+  },
+  {
+   "text": "240",
+   "bbox": [
+    418,
+    259,
+    461,
+    294
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "20",
+   "bbox": [
+    301,
+    284,
+    335,
+    315
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "60",
+   "bbox": [
+    415,
+    287,
+    446,
+    315
+   ],
+   "conf": 0.84
+  },
+  {
+   "text": "0",
+   "bbox": [
+    337,
+    309,
+    350,
+    323
+   ],
+   "conf": 0.993
+  },
+  {
+   "text": "280",
+   "bbox": [
+    383,
+    300,
+    422,
+    331
+   ],
+   "conf": 1.0
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "pressure",
+   "value": 337.0,
+   "unit": "psi",
+   "confidence": 0.3,
+   "method": "hough_ray_ransac_labels",
+   "flags": [
+    "LABEL_OUTLIER",
+    "AMBIGUOUS_NEEDLE"
+   ],
+   "point": [
+    485,
+    438
+   ],
+   "note": "two needle candidates: 87° -> 337 psi and 138° -> 543 psi (peak ratio 0.89); do not trust this value"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "psi",
+   "value": 337.0
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 30
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": 87.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 0.89
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.12
+  },
+  {
+   "name": "Full Scale",
+   "units": "psi",
+   "value": 280.0
+  },
+  {
+   "name": "Scale Labels Used",
+   "units": "",
+   "value": "13 of 14"
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 491,
+ "version": {
+  "service": "0.1.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

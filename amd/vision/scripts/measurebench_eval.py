@@ -38,17 +38,37 @@ sys.path.insert(0, str(ROOT))
 TOL_FRAC = 0.03
 FORCE_LOW = {"AMBIGUOUS_NEEDLE", "DEFAULT_SWEEP"}   # orchestrator.assess.FORCE_LOW_FLAGS
 TRUST_MIN = 0.5                                     # orchestrator VISION_TRUST_MIN default
-TO_KPA = {"psi": 6.894757, "bar": 100.0, "mbar": 0.1, "kpa": 1.0, "mpa": 1000.0, "pa": 0.001,
+TO_KPA = {"psi": 6.894757, "bar": 100.0, "mbar": 0.1, "hpa": 0.1, "kpa": 1.0, "mpa": 1000.0, "pa": 0.001,
+          "cmhg": 1.33322, "cmh2o": 0.0980665, "mmh2o": 0.00980665,
           "kgf/cm2": 98.0665, "inhg": 3.38639, "mmhg": 0.133322, "inh2o": 0.249089, "mh2o": 9.80665, "atm": 101.325}
 SPELLINGS = {
     "psi": ["psi", "pounds per square inch", "pound per square inch", "pound-force per square inch", "lb/in²",
             "lb/in2", "lbf/in2", "psig"],
-    "bar": ["bar"], "mbar": ["mbar", "millibar"], "kpa": ["kpa", "kilopascal", "kilopascals"],
+    "bar": ["bar"], "mbar": ["mbar", "millibar"], "hpa": ["hpa", "hectopascal", "hectopascals"],
+    "kpa": ["kpa", "kilopascal", "kilopascals"], "cmhg": ["cmhg", "cm hg"], "cmh2o": ["cmh2o", "cm h2o"],
+    "mmh2o": ["mmh2o", "mm h2o"],
     "mpa": ["mpa", "megapascal", "megapascals"], "pa": ["pa", "pascal"],
     "kgf/cm2": ["kgf/cm^2", "kgf/cm²", "kg/cm^2", "kg/cm²", "kg/cm2", "kgf/cm2"],
-    "inhg": ["inhg", "in hg", "inches of mercury"], "mmhg": ["mmhg", "mm hg"], "atm": ["atm"],
+    "inhg": ["inhg", "in hg", "inches of mercury", "in. hg", "inch hg"], "mmhg": ["mmhg", "mm hg", "millimeters of mercury"],
+    "atm": ["atm"], "inh2o": ["inh2o", "in h2o", "inches of water", "in. h2o", "in wc", "inwc"],
 }
 CANON = {s: c for c, ss in SPELLINGS.items() for s in ss}
+
+
+SUP = str.maketrans("⁰¹²³⁴⁵⁶⁷⁸⁹⁻", "0123456789-")
+MULT_RE = re.compile(r"^\s*[x×*]\s*10\s*\^?\s*(-?\d+)\s*|^\s*[x×*]\s*(\d*\.?\d+)\s*", re.IGNORECASE)
+
+
+def split_multiplier(u):
+    """("X10⁻¹MPa") -> ("MPa", 0.1): dials printed as 'x10^-1 MPa' or 'x0.1 MPa' scale the number."""
+    if u is None:
+        return None, 1.0
+    s = str(u).translate(SUP)
+    m = MULT_RE.match(s)
+    if not m:
+        return u, 1.0
+    factor = 10.0 ** int(m.group(1)) if m.group(1) is not None else float(m.group(2))
+    return s[m.end():].strip() or None, factor
 
 
 def canon_unit(u):
@@ -75,11 +95,16 @@ def score_one(kwargs: dict, value, unit) -> dict:
     ivs = label_intervals(kwargs)
     r = {"label_units": sorted({u for _, _, us in ivs for u in us}), "has_reading": value is not None,
          "unit_correct": False, "strict_correct": False, "tolerant_correct": False,
-         "value_correct_any_unit": False, "rel_error": None}
+         "value_correct_any_unit": False, "number_correct_ignoring_unit": False, "rel_error": None}
     if value is None:
         return r
+    unit, factor = split_multiplier(unit)
+    value = value * factor
     u = canon_unit(unit)
     best = None
+    for lo, hi, us in ivs:   # MeasureBench number_correct: the number alone, any interval, unit ignored
+        tol = TOL_FRAC * max(abs(hi), abs(lo), 1e-9)
+        r["number_correct_ignoring_unit"] |= lo - tol <= value <= hi + tol
     for lo, hi, us in ivs:
         if u in us or not us - {None}:   # no label units: any unit is accepted (MeasureBench unit_correct=None)
             r["unit_correct"] = True
@@ -97,6 +122,30 @@ def score_one(kwargs: dict, value, unit) -> dict:
                     r["value_correct_any_unit"] |= a - tol <= v <= b + tol
     r["rel_error"] = best
     return r
+
+
+FS_TOLS = (0.01, 0.02, 0.03)   # correctness within this fraction of the matching dial scale's span (reviewed items)
+
+
+def fs_correct(kwargs: dict, value, unit, scales) -> dict:
+    """{tol: bool}: unit matches a labelled interval AND |value - interval| <= tol * span of the reviewed dial scale
+    in that unit (span = max - min from the human review). Gauge accuracy is specified as % of full scale."""
+    out = {t: False for t in FS_TOLS}
+    if value is None:
+        return out
+    unit, factor = split_multiplier(unit)
+    value, u = value * factor, canon_unit(unit)
+    for lo, hi, us in label_intervals(kwargs):
+        if u not in us and us - {None}:
+            continue
+        span = next((s["max"] - s["min"] for s in scales if canon_unit(s["unit"]) == u
+                     and s.get("max") is not None and s.get("min") is not None), None)
+        if not span:
+            continue
+        d = 0.0 if lo <= value <= hi else min(abs(value - lo), abs(value - hi))
+        for t in FS_TOLS:
+            out[t] |= d <= t * span
+    return out
 
 
 def load_items(parquet: str):
@@ -160,6 +209,7 @@ def summarize(scored):
         return sum(1 for s in rows if s[key])
     return {"n": n, "with_reading": k(scored, "has_reading"), "unit_correct": k(scored, "unit_correct"),
             "strict_correct_all": k(scored, "strict_correct"), "tolerant_correct_all": k(scored, "tolerant_correct"),
+            "number_correct_ignoring_unit_all": k(scored, "number_correct_ignoring_unit"),
             "accepted": len(acc), "coverage": round(len(acc) / n, 3) if n else None,
             "accepted_tolerant_correct": k(acc, "tolerant_correct"), "accepted_strict_correct": k(acc, "strict_correct"),
             "accepted_wrong": len(acc) - k(acc, "tolerant_correct"),
@@ -170,6 +220,9 @@ def summarize(scored):
 def cmd_score(a):
     df = load_items(a.parquet)
     labels = {r.question_id: json.loads(r.evaluator_kwargs) for _, r in df.iterrows()}
+    reviewed = {}
+    if a.reviewed:
+        reviewed = {json.loads(x)["q"]: json.loads(x) for x in open(a.reviewed, encoding="utf-8") if x.strip()}
     idmap = {}
     if a.map:
         idmap = {json.loads(x)["opaque_id"]: json.loads(x)["question_id"] for x in open(a.map, encoding="utf-8")}
@@ -179,10 +232,22 @@ def cmd_score(a):
         qid = p.get("question_id") or idmap.get(p.get("opaque_id"))
         if qid not in labels:
             continue
+        if reviewed and not reviewed[qid]["eval_clean"]:
+            continue
         s = score_one(labels[qid], p.get("value"), p.get("unit"))
+        if reviewed:
+            for tol, ok in fs_correct(labels[qid], p.get("value"), p.get("unit"), reviewed[qid]["scales"]).items():
+                s["fs%d_correct" % round(tol * 100)] = ok
         scored.append(dict(s, question_id=qid, accepted=bool(p.get("accepted")), value=p.get("value"),
                            unit=p.get("unit"), latency_ms=p.get("latency_ms")))
     summary = summarize(scored)
+    if reviewed:
+        acc = [s for s in scored if s["accepted"]]
+        for tol in FS_TOLS:
+            k = "fs%d_correct" % round(tol * 100)
+            summary[k + "_all"] = sum(1 for s in scored if s[k])
+            summary[k + "_accepted"] = sum(1 for s in acc if s[k])
+            summary[k + "_accepted_wrong"] = len(acc) - summary[k + "_accepted"]
     print(json.dumps(summary, indent=1))
     if a.out:
         Path(a.out).write_text(json.dumps({"summary": summary, "tol_frac": TOL_FRAC, "cases": scored}, indent=1,
@@ -224,6 +289,7 @@ def main(argv=None):
     s.add_argument("--pred", required=True)
     s.add_argument("--out")
     s.add_argument("--map", help="opaque_id -> question_id map from `export` (for readers that saw opaque names)")
+    s.add_argument("--reviewed", help="reviewed_labels.jsonl: score only eval_clean items, add %%-of-scale correctness")
     a = ap.parse_args(argv)
     {"run": cmd_run, "score": cmd_score, "export": cmd_export}[a.cmd](a)
 

@@ -1,0 +1,182 @@
+{
+ "media_id": "pressure_gauge_100",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "5",
+   "bbox": [
+    511,
+    61,
+    532,
+    88
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "60",
+   "bbox": [
+    421,
+    124,
+    466,
+    160
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "6",
+   "bbox": [
+    611,
+    125,
+    631,
+    151
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "80",
+   "bbox": [
+    518,
+    135,
+    569,
+    176
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "100",
+   "bbox": [
+    547,
+    222,
+    607,
+    257
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "7",
+   "bbox": [
+    637,
+    237,
+    663,
+    266
+   ],
+   "conf": 0.998
+  },
+  {
+   "text": "bar",
+   "bbox": [
+    620,
+    258,
+    662,
+    287
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "20",
+   "bbox": [
+    387,
+    293,
+    434,
+    330
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "ARB",
+   "bbox": [
+    544,
+    299,
+    622,
+    330
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "4X4 ACCESSORIES",
+   "bbox": [
+    531,
+    333,
+    643,
+    354
+   ],
+   "conf": 0.968
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "pressure",
+   "value": 121.7,
+   "unit": "bar",
+   "confidence": 0.3,
+   "method": "hough_ray_ransac_labels",
+   "flags": [
+    "LABEL_OUTLIER",
+    "SHORT_NEEDLE",
+    "AMBIGUOUS_NEEDLE"
+   ],
+   "point": [
+    551,
+    387
+   ],
+   "note": "two needle candidates: 154° -> 122 bar and -155° -> 13 bar (peak ratio 0.73); do not trust this value"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "bar",
+   "value": 121.7
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 30
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": 154.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 0.73
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.18
+  },
+  {
+   "name": "Full Scale",
+   "units": "bar",
+   "value": 100.0
+  },
+  {
+   "name": "Scale Labels Used",
+   "units": "",
+   "value": "4 of 7"
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 383,
+ "version": {
+  "service": "0.2.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

@@ -1,0 +1,155 @@
+{
+ "media_id": "pressure_gauge_107",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "10",
+   "bbox": [
+    182,
+    418,
+    225,
+    464
+   ],
+   "conf": 0.735
+  },
+  {
+   "text": "120",
+   "bbox": [
+    238,
+    429,
+    280,
+    475
+   ],
+   "conf": 0.706
+  },
+  {
+   "text": "80",
+   "bbox": [
+    142,
+    436,
+    177,
+    472
+   ],
+   "conf": 0.974
+  },
+  {
+   "text": "4o",
+   "bbox": [
+    275,
+    472,
+    305,
+    503
+   ],
+   "conf": 0.515
+  },
+  {
+   "text": "60",
+   "bbox": [
+    120,
+    483,
+    148,
+    511
+   ],
+   "conf": 0.718
+  },
+  {
+   "text": "40",
+   "bbox": [
+    123,
+    524,
+    158,
+    559
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "bar",
+   "bbox": [
+    245,
+    523,
+    277,
+    555
+   ],
+   "conf": 0.982
+  },
+  {
+   "text": "KISTENS",
+   "bbox": [
+    260,
+    556,
+    310,
+    616
+   ],
+   "conf": 0.908
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "pressure",
+   "value": 96.0,
+   "unit": "bar",
+   "confidence": 0.4,
+   "method": "hough_ray_default_sweep",
+   "flags": [
+    "DEFAULT_SWEEP"
+   ],
+   "point": [
+    270,
+    507
+   ],
+   "note": "needle at 81° reads 96.0 bar"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "bar",
+   "value": 96.0
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 40
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": 81.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 0.24
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.0
+  },
+  {
+   "name": "Full Scale",
+   "units": "bar",
+   "value": 120.0
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 482,
+ "version": {
+  "service": "0.1.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

@@ -1,0 +1,201 @@
+{
+ "media_id": "pressure_gauge_48",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "4",
+   "bbox": [
+    179,
+    246,
+    220,
+    306
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "6",
+   "bbox": [
+    380,
+    251,
+    420,
+    315
+   ],
+   "conf": 0.995
+  },
+  {
+   "text": "圧力計",
+   "bbox": [
+    219,
+    289,
+    384,
+    337
+   ],
+   "conf": 0.919
+  },
+  {
+   "text": "赤針元宝気溜",
+   "bbox": [
+    188,
+    334,
+    403,
+    376
+   ],
+   "conf": 0.871
+  },
+  {
+   "text": "黒針制",
+   "bbox": [
+    189,
+    367,
+    288,
+    405
+   ],
+   "conf": 0.865
+  },
+  {
+   "text": "2",
+   "bbox": [
+    70,
+    391,
+    113,
+    455
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "8",
+   "bbox": [
+    486,
+    408,
+    523,
+    470
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "kg",
+   "bbox": [
+    249,
+    503,
+    288,
+    545
+   ],
+   "conf": 0.998
+  },
+  {
+   "text": "0",
+   "bbox": [
+    117,
+    561,
+    153,
+    622
+   ],
+   "conf": 0.998
+  },
+  {
+   "text": "10",
+   "bbox": [
+    409,
+    583,
+    458,
+    647
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "NAGANO",
+   "bbox": [
+    259,
+    653,
+    321,
+    677
+   ],
+   "conf": 0.999
+  },
+  {
+   "text": "No.855106",
+   "bbox": [
+    225,
+    680,
+    359,
+    714
+   ],
+   "conf": 1.0
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "pressure",
+   "value": 10.3,
+   "unit": "psi",
+   "confidence": 0.3,
+   "method": "hough_ray_ransac_labels",
+   "flags": [
+    "UNIT_UNKNOWN",
+    "AMBIGUOUS_NEEDLE"
+   ],
+   "point": [
+    422,
+    655
+   ],
+   "note": "two needle candidates: 149° -> 10 psi and -6° -> 5 psi (two-ended needle (opposite arm 0.82 r long)); do not trust this value"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "psi",
+   "value": 10.3
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 30
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": 149.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 2.41
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.82
+  },
+  {
+   "name": "Full Scale",
+   "units": "psi",
+   "value": 10.0
+  },
+  {
+   "name": "Scale Labels Used",
+   "units": "",
+   "value": "6 of 6"
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 428,
+ "version": {
+  "service": "0.2.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

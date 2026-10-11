@@ -1,0 +1,260 @@
+{
+ "media_id": "pressure_gauge_93",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "40",
+   "bbox": [
+    280,
+    213,
+    302,
+    236
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "600",
+   "bbox": [
+    281,
+    266,
+    313,
+    290
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "20",
+   "bbox": [
+    142,
+    308,
+    164,
+    331
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "400",
+   "bbox": [
+    210,
+    295,
+    242,
+    320
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "EN 837-1",
+   "bbox": [
+    255,
+    297,
+    325,
+    326
+   ],
+   "conf": 0.996
+  },
+  {
+   "text": "800",
+   "bbox": [
+    343,
+    303,
+    375,
+    328
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "60",
+   "bbox": [
+    415,
+    302,
+    439,
+    326
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "WIKA - Germany",
+   "bbox": [
+    251,
+    325,
+    325,
+    349
+   ],
+   "conf": 0.925
+  },
+  {
+   "text": "200",
+   "bbox": [
+    179,
+    364,
+    210,
+    388
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "1000",
+   "bbox": [
+    351,
+    374,
+    392,
+    401
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "psi",
+   "bbox": [
+    266,
+    403,
+    294,
+    427
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "bar",
+   "bbox": [
+    261,
+    440,
+    292,
+    465
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "1160",
+   "bbox": [
+    332,
+    438,
+    363,
+    459
+   ],
+   "conf": 0.995
+  },
+  {
+   "text": "0",
+   "bbox": [
+    171,
+    468,
+    183,
+    485
+   ],
+   "conf": 0.997
+  },
+  {
+   "text": "1 MPa= 10 bar",
+   "bbox": [
+    239,
+    463,
+    311,
+    486
+   ],
+   "conf": 0.936
+  },
+  {
+   "text": "80",
+   "bbox": [
+    369,
+    476,
+    392,
+    500
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "Cl.1.6",
+   "bbox": [
+    325,
+    501,
+    365,
+    523
+   ],
+   "conf": 0.958
+  },
+  {
+   "text": "[WIKA]",
+   "bbox": [
+    245,
+    516,
+    293,
+    534
+   ],
+   "conf": 0.949
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "pressure",
+   "value": 322.0,
+   "unit": "psi",
+   "confidence": 0.85,
+   "method": "hough_ray_ransac_labels",
+   "flags": [
+    "LABEL_OUTLIER"
+   ],
+   "point": [
+    157,
+    298
+   ],
+   "note": "needle at -61° reads 322.2 psi"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "psi",
+   "value": 322.0
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 85
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": -61.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 0.06
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.24
+  },
+  {
+   "name": "Full Scale",
+   "units": "psi",
+   "value": 1160.0
+  },
+  {
+   "name": "Scale Labels Used",
+   "units": "",
+   "value": "7 of 11"
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 496,
+ "version": {
+  "service": "0.2.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

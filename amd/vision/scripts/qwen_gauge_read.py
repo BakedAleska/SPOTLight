@@ -56,12 +56,21 @@ def crop_to_dial(raw: bytes):
     return buf.getvalue(), box
 
 
-def call(url, model, image: bytes, thinking: bool):
+REGISTERED = ("Registered instrument data for this gauge (from the facility's asset register, not a reading): "
+              "printed scale(s): {scales}. Use this to identify the scale and unit; read the needle position yourself.")
+
+
+def registered_text(scales) -> str:
+    return "; ".join("%s from %g to %g" % (s["unit"], s["min"], s["max"]) for s in scales
+                     if s.get("min") is not None and s.get("max") is not None)
+
+
+def call(url, model, image: bytes, thinking: bool, extra: str = ""):
     mime = "image/png" if image[:8] == b"\x89PNG\r\n\x1a\n" else "image/jpeg"
     body = {"model": model, "temperature": 0, "max_tokens": MAX_TOKENS if not thinking else 4096, "stream": False,
             "messages": [{"role": "user", "content": [
                 {"type": "image_url", "image_url": {"url": "data:%s;base64,%s" % (mime, base64.b64encode(image).decode())}},
-                {"type": "text", "text": PROMPT}]}],
+                {"type": "text", "text": PROMPT + ((" " + extra) if extra else "")}]}],
             "response_format": {"type": "json_schema", "json_schema": {"name": "gauge_reading", "schema": SCHEMA}},
             "chat_template_kwargs": {"enable_thinking": thinking}}
     req = urllib.request.Request(url.rstrip("/") + "/v1/chat/completions", json.dumps(body).encode(),
@@ -80,6 +89,9 @@ def main(argv=None):
     ap.add_argument("--model", default="qwen3.8-27b-q8_0")
     ap.add_argument("--variant", choices=("full", "dial_crop"), default="full")
     ap.add_argument("--thinking", action="store_true")
+    ap.add_argument("--registered", help="reviewed_labels.jsonl + --map: add each gauge's registered scale ranges "
+                                         "(unit, min, max; never a reading) to the prompt; only eval_clean items run")
+    ap.add_argument("--map", help="opaque_id -> question_id map (needed with --registered)")
     a = ap.parse_args(argv)
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
@@ -89,19 +101,29 @@ def main(argv=None):
             props = json.load(r)
     except Exception as exc:  # noqa: BLE001 - diagnostics only
         props = {"error": str(exc)}
-    (out / "run.json").write_text(json.dumps({"prompt": PROMPT, "schema": SCHEMA, "variant": a.variant,
+    (out / "run.json").write_text(json.dumps({"prompt": PROMPT, "registered_template": REGISTERED if a.registered else None,
+                                              "schema": SCHEMA, "variant": a.variant,
                                               "thinking": a.thinking, "temperature": 0, "max_tokens": MAX_TOKENS,
                                               "model": a.model, "server_props": {k: props.get(k) for k in (
                                                   "model_path", "build_info", "modalities", "n_ctx",
                                                   "default_generation_settings") if k in props}},
                                              indent=1, default=str), encoding="utf-8")
+    reg = {}
+    if a.registered:
+        qmap = {json.loads(x)["opaque_id"]: json.loads(x)["question_id"] for x in open(a.map, encoding="utf-8")}
+        rev = {json.loads(x)["q"]: json.loads(x) for x in open(a.registered, encoding="utf-8") if x.strip()}
+        reg = {oid: registered_text(rev[q]["scales"]) for oid, q in qmap.items() if rev[q]["eval_clean"]}
     with open(out / "predictions.jsonl", "w", encoding="utf-8") as fh:
         for path in sorted(Path(a.images).iterdir()):
+            if a.registered and path.stem not in reg:
+                continue
             raw = path.read_bytes()
             img, box = crop_to_dial(raw) if a.variant == "dial_crop" else (raw, None)
             rec = {"opaque_id": path.stem, "variant": a.variant, "crop": box}
             try:
-                data, ms = call(a.url, a.model, img, a.thinking)
+                extra = REGISTERED.format(scales=reg[path.stem]) if a.registered else ""
+                rec["registered"] = reg.get(path.stem)
+                data, ms = call(a.url, a.model, img, a.thinking, extra)
                 msg = data["choices"][0]["message"]
                 text = msg.get("content") or ""
                 rec.update(latency_ms=ms, raw=text, reasoning_chars=len(msg.get("reasoning_content") or ""),

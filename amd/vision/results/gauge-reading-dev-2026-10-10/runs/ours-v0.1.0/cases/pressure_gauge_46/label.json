@@ -1,0 +1,18 @@
+{
+ "question_id": "pressure_gauge_46",
+ "question": "What is the reading on the instrument(right,black pointer)?",
+ "evaluator": "interval_matching",
+ "evaluator_kwargs": {
+  "interval": [
+   480,
+   500
+  ],
+  "units": [
+   "kPa"
+  ]
+ },
+ "meta_info": {
+  "source": "https://www.youtube.com/watch?v=1e78y-C4rh0",
+  "uploader": ""
+ }
+}

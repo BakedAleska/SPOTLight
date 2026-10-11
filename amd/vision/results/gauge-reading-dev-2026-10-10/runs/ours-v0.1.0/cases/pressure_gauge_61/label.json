@@ -1,0 +1,29 @@
+{
+ "question_id": "pressure_gauge_61",
+ "question": "What is the reading on the instrument?",
+ "evaluator": "multi_interval_matching",
+ "evaluator_kwargs": {
+  "intervals": [
+   [
+    5,
+    6
+   ],
+   [
+    60,
+    80
+   ]
+  ],
+  "units": [
+   [
+    "ATM"
+   ],
+   [
+    "psi"
+   ]
+  ]
+ },
+ "meta_info": {
+  "source": "https://www.youtube.com/watch?v=wz3T877uobk",
+  "uploader": ""
+ }
+}

@@ -1,0 +1,29 @@
+{
+ "question_id": "pressure_gauge_69",
+ "question": "What is the reading on the instrument?",
+ "evaluator": "multi_interval_matching",
+ "evaluator_kwargs": {
+  "intervals": [
+   [
+    10.5,
+    10.5
+   ],
+   [
+    15000,
+    15500
+   ]
+  ],
+  "units": [
+   [
+    "bar"
+   ],
+   [
+    "kPa"
+   ]
+  ]
+ },
+ "meta_info": {
+  "source": "https://www.youtube.com/watch?v=v5nXPVpbEyA",
+  "uploader": ""
+ }
+}

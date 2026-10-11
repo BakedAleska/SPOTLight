@@ -1,0 +1,18 @@
+{
+ "question_id": "pressure_gauge_65",
+ "question": "What is the reading on the instrument(left, black)?",
+ "evaluator": "interval_matching",
+ "evaluator_kwargs": {
+  "interval": [
+   340.0,
+   340.0
+  ],
+  "units": [
+   "kPa"
+  ]
+ },
+ "meta_info": {
+  "source": "https://www.youtube.com/watch?v=yzDK8GAIqfM",
+  "uploader": ""
+ }
+}

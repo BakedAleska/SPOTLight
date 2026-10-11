@@ -1,0 +1,29 @@
+{
+ "question_id": "pressure_gauge_108",
+ "question": "What is the reading of the pressure gauge",
+ "evaluator": "multi_interval_matching",
+ "evaluator_kwargs": {
+  "intervals": [
+   [
+    -59,
+    -59
+   ],
+   [
+    -600,
+    -600
+   ]
+  ],
+  "units": [
+   [
+    "mbar"
+   ],
+   [
+    "mmH2O"
+   ]
+  ]
+ },
+ "meta_info": {
+  "source": "https://www.youtube.com/watch?v=vFtkBRmsoJY",
+  "uploader": ""
+ }
+}

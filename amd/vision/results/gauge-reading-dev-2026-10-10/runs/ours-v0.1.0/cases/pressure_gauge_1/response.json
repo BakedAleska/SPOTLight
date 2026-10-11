@@ -1,0 +1,301 @@
+{
+ "media_id": "pressure_gauge_1",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "2500",
+   "bbox": [
+    289,
+    51,
+    360,
+    88
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "2000",
+   "bbox": [
+    233,
+    79,
+    300,
+    116
+   ],
+   "conf": 0.988
+  },
+  {
+   "text": "3000",
+   "bbox": [
+    346,
+    70,
+    416,
+    107
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "3500",
+   "bbox": [
+    390,
+    107,
+    457,
+    142
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "1500",
+   "bbox": [
+    199,
+    121,
+    266,
+    159
+   ],
+   "conf": 0.998
+  },
+  {
+   "text": "SH",
+   "bbox": [
+    297,
+    152,
+    323,
+    171
+   ],
+   "conf": 0.995
+  },
+  {
+   "text": "KPROOF",
+   "bbox": [
+    322,
+    147,
+    369,
+    169
+   ],
+   "conf": 0.905
+  },
+  {
+   "text": "4000",
+   "bbox": [
+    406,
+    152,
+    476,
+    187
+   ],
+   "conf": 0.921
+  },
+  {
+   "text": "1000",
+   "bbox": [
+    185,
+    173,
+    254,
+    212
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "4500.",
+   "bbox": [
+    408,
+    205,
+    476,
+    241
+   ],
+   "conf": 0.925
+  },
+  {
+   "text": "500",
+   "bbox": [
+    195,
+    230,
+    254,
+    266
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "PSI",
+   "bbox": [
+    325,
+    231,
+    357,
+    257
+   ],
+   "conf": 0.999
+  },
+  {
+   "text": "HPGAC",
+   "bbox": [
+    282,
+    255,
+    372,
+    286
+   ],
+   "conf": 0.816
+  },
+  {
+   "text": "000.",
+   "bbox": [
+    400,
+    265,
+    446,
+    294
+   ],
+   "conf": 0.607
+  },
+  {
+   "text": "X",
+   "bbox": [
+    293,
+    285,
+    317,
+    305
+   ],
+   "conf": 0.74
+  },
+  {
+   "text": "CALIBRATED",
+   "bbox": [
+    318,
+    269,
+    406,
+    303
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "PROGRAM",
+   "bbox": [
+    293,
+    315,
+    326,
+    331
+   ],
+   "conf": 0.985
+  },
+  {
+   "text": "SER. NO.",
+   "bbox": [
+    293,
+    321,
+    339,
+    342
+   ],
+   "conf": 0.976
+  },
+  {
+   "text": "METCAL",
+   "bbox": [
+    295,
+    309,
+    321,
+    322
+   ],
+   "conf": 0.998
+  },
+  {
+   "text": "RAVY",
+   "bbox": [
+    296,
+    300,
+    319,
+    315
+   ],
+   "conf": 0.792
+  },
+  {
+   "text": "DATE",
+   "bbox": [
+    294,
+    337,
+    324,
+    355
+   ],
+   "conf": 0.997
+  },
+  {
+   "text": "DUE",
+   "bbox": [
+    295,
+    351,
+    321,
+    368
+   ],
+   "conf": 0.998
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "pressure",
+   "value": 3503.0,
+   "unit": "psi",
+   "confidence": 0.3,
+   "method": "hough_ray_ransac_labels",
+   "flags": [
+    "LABEL_OUTLIER",
+    "AMBIGUOUS_NEEDLE"
+   ],
+   "point": [
+    434,
+    111
+   ],
+   "note": "two needle candidates: 52° -> 3503 psi and -16° -> 2283 psi (peak ratio 0.73); do not trust this value"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "psi",
+   "value": 3503.0
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 30
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": 52.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 0.73
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.1
+  },
+  {
+   "name": "Full Scale",
+   "units": "psi",
+   "value": 4500.0
+  },
+  {
+   "name": "Scale Labels Used",
+   "units": "",
+   "value": "9 of 10"
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 690,
+ "version": {
+  "service": "0.1.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

@@ -1,0 +1,341 @@
+{
+ "media_id": "pressure_gauge_3",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "kPa",
+   "bbox": [
+    475,
+    113,
+    561,
+    171
+   ],
+   "conf": 0.994
+  },
+  {
+   "text": "16000",
+   "bbox": [
+    576,
+    111,
+    719,
+    216
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "12000",
+   "bbox": [
+    315,
+    114,
+    456,
+    212
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "2000",
+   "bbox": [
+    437,
+    246,
+    581,
+    312
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "20000",
+   "bbox": [
+    780,
+    259,
+    889,
+    414
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "1500",
+   "bbox": [
+    315,
+    301,
+    450,
+    371
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "psi",
+   "bbox": [
+    469,
+    303,
+    543,
+    356
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "2500",
+   "bbox": [
+    566,
+    292,
+    713,
+    362
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "8000",
+   "bbox": [
+    131,
+    267,
+    246,
+    396
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "USE NO",
+   "bbox": [
+    390,
+    396,
+    559,
+    457
+   ],
+   "conf": 0.999
+  },
+  {
+   "text": "0IL3000",
+   "bbox": [
+    552,
+    401,
+    765,
+    475
+   ],
+   "conf": 0.92
+  },
+  {
+   "text": "1000",
+   "bbox": [
+    261,
+    418,
+    390,
+    485
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "500",
+   "bbox": [
+    241,
+    523,
+    354,
+    593
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "00",
+   "bbox": [
+    701,
+    515,
+    777,
+    573
+   ],
+   "conf": 0.998
+  },
+  {
+   "text": "2400",
+   "bbox": [
+    835,
+    513,
+    920,
+    656
+   ],
+   "conf": 0.778
+  },
+  {
+   "text": "4000",
+   "bbox": [
+    111,
+    537,
+    172,
+    646
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "psi=pounds per sq. in.",
+   "bbox": [
+    343,
+    562,
+    686,
+    614
+   ],
+   "conf": 0.998
+  },
+  {
+   "text": "kPa=kilopascal",
+   "bbox": [
+    393,
+    611,
+    620,
+    662
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "4000",
+   "bbox": [
+    582,
+    642,
+    723,
+    703
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "UL",
+   "bbox": [
+    471,
+    680,
+    536,
+    754
+   ],
+   "conf": 0.854
+  },
+  {
+   "text": "psi",
+   "bbox": [
+    330,
+    694,
+    401,
+    747
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "psi",
+   "bbox": [
+    614,
+    700,
+    685,
+    753
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "kPa",
+   "bbox": [
+    260,
+    756,
+    342,
+    808
+   ],
+   "conf": 0.994
+  },
+  {
+   "text": "kPa",
+   "bbox": [
+    622,
+    764,
+    700,
+    815
+   ],
+   "conf": 0.996
+  },
+  {
+   "text": "USG",
+   "bbox": [
+    467,
+    804,
+    544,
+    853
+   ],
+   "conf": 0.927
+  },
+  {
+   "text": "28000",
+   "bbox": [
+    671,
+    740,
+    813,
+    864
+   ],
+   "conf": 1.0
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "pressure",
+   "value": 842.0,
+   "unit": "kPa",
+   "confidence": 0.3,
+   "method": "hough_ray_ransac_labels",
+   "flags": [
+    "LABEL_OUTLIER",
+    "AMBIGUOUS_NEEDLE"
+   ],
+   "point": [
+    146,
+    478
+   ],
+   "note": "two needle candidates: -85° -> 842 kPa and 103° -> 3139 kPa (two-ended needle (opposite arm 0.62 r long)); do not trust this value"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "kPa",
+   "value": 842.0
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 30
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": -85.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 1.29
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.62
+  },
+  {
+   "name": "Full Scale",
+   "units": "kPa",
+   "value": 4000.0
+  },
+  {
+   "name": "Scale Labels Used",
+   "units": "",
+   "value": "7 of 14"
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 1103,
+ "version": {
+  "service": "0.2.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

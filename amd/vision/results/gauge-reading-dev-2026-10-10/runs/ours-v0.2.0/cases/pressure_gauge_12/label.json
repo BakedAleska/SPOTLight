@@ -1,0 +1,32 @@
+{
+ "question_id": "pressure_gauge_12",
+ "question": "What is the reading of the longer black needle on the barometer?",
+ "evaluator": "multi_interval_matching",
+ "evaluator_kwargs": {
+  "intervals": [
+   [
+    1002,
+    1003
+   ],
+   [
+    752,
+    753
+   ]
+  ],
+  "units": [
+   [
+    "hPa",
+    "mba",
+    "millibars"
+   ],
+   [
+    "mmHg",
+    "millimetre of mercury"
+   ]
+  ]
+ },
+ "meta_info": {
+  "source": "https://openclipart.org/detail/292135/barometer",
+  "uploader": "algotruneman"
+ }
+}

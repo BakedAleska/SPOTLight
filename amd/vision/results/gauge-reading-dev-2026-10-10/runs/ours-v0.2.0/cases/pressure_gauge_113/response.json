@@ -1,0 +1,262 @@
+{
+ "media_id": "pressure_gauge_113",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "12",
+   "bbox": [
+    192,
+    159,
+    223,
+    187
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "14",
+   "bbox": [
+    257,
+    168,
+    291,
+    198
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "10",
+   "bbox": [
+    126,
+    182,
+    157,
+    210
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "16",
+   "bbox": [
+    317,
+    204,
+    349,
+    233
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "标准压力表",
+   "bbox": [
+    164,
+    250,
+    282,
+    284
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "18",
+   "bbox": [
+    356,
+    261,
+    388,
+    289
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "6",
+   "bbox": [
+    46,
+    295,
+    67,
+    319
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "20",
+   "bbox": [
+    365,
+    328,
+    403,
+    357
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "4",
+   "bbox": [
+    48,
+    365,
+    69,
+    391
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "22",
+   "bbox": [
+    351,
+    395,
+    388,
+    422
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "kgf/cm²",
+   "bbox": [
+    182,
+    414,
+    264,
+    446
+   ],
+   "conf": 0.962
+  },
+  {
+   "text": "2",
+   "bbox": [
+    77,
+    430,
+    100,
+    457
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "0.4",
+   "bbox": [
+    208,
+    459,
+    241,
+    487
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "0",
+   "bbox": [
+    131,
+    478,
+    151,
+    503
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "25",
+   "bbox": [
+    287,
+    471,
+    325,
+    500
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "中华人民共和国",
+   "bbox": [
+    182,
+    504,
+    266,
+    525
+   ],
+   "conf": 0.932
+  },
+  {
+   "text": "西安快表厂制造",
+   "bbox": [
+    189,
+    522,
+    258,
+    541
+   ],
+   "conf": 0.648
+  },
+  {
+   "text": "Nod6.6.441",
+   "bbox": [
+    195,
+    537,
+    259,
+    557
+   ],
+   "conf": 0.86
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "pressure",
+   "value": 8.3,
+   "unit": "psi",
+   "confidence": 0.3,
+   "method": "hough_ray_ransac_labels",
+   "flags": [
+    "LABEL_OUTLIER",
+    "UNIT_UNKNOWN",
+    "AMBIGUOUS_NEEDLE"
+   ],
+   "point": [
+    69,
+    218
+   ],
+   "note": "two needle candidates: -51° -> 8 psi and 119° -> 22 psi (two-ended needle (opposite arm 0.34 r long)); do not trust this value"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "psi",
+   "value": 8.3
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 30
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": -51.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 0.59
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.34
+  },
+  {
+   "name": "Full Scale",
+   "units": "psi",
+   "value": 25.0
+  },
+  {
+   "name": "Scale Labels Used",
+   "units": "",
+   "value": "12 of 13"
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 577,
+ "version": {
+  "service": "0.2.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

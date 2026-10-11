@@ -1,0 +1,31 @@
+{
+ "question_id": "pressure_gauge_43",
+ "question": "What is the reading on the instrument?",
+ "evaluator": "multi_interval_matching",
+ "evaluator_kwargs": {
+  "intervals": [
+   [
+    30,
+    31
+   ],
+   [
+    2.1,
+    2.2
+   ]
+  ],
+  "units": [
+   [
+    "LBS/IN^2",
+    "LBS/IN²"
+   ],
+   [
+    "kg/cm^2",
+    "kg/cm²"
+   ]
+  ]
+ },
+ "meta_info": {
+  "source": "https://www.youtube.com/watch?v=t0kl-Rthc-I",
+  "uploader": ""
+ }
+}

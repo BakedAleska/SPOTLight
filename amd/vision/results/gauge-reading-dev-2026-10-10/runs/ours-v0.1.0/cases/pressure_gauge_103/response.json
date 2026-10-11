@@ -1,0 +1,136 @@
+{
+ "media_id": "pressure_gauge_103",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "30",
+   "bbox": [
+    692,
+    256,
+    743,
+    302
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "20",
+   "bbox": [
+    626,
+    330,
+    677,
+    376
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "osi",
+   "bbox": [
+    734,
+    325,
+    780,
+    369
+   ],
+   "conf": 0.863
+  },
+  {
+   "text": "10",
+   "bbox": [
+    633,
+    430,
+    681,
+    474
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "Tire G",
+   "bbox": [
+    726,
+    431,
+    785,
+    477
+   ],
+   "conf": 0.997
+  },
+  {
+   "text": "Tir",
+   "bbox": [
+    725,
+    465,
+    785,
+    529
+   ],
+   "conf": 0.994
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "pressure",
+   "value": 8.0,
+   "unit": "psi",
+   "confidence": 0.3,
+   "method": "hough_ray_default_sweep",
+   "flags": [
+    "DEFAULT_SWEEP",
+    "AMBIGUOUS_NEEDLE"
+   ],
+   "point": [
+    318,
+    171
+   ],
+   "note": "two needle candidates: -63° -> 8 psi and 167° -> 34 psi (peak ratio 0.60); do not trust this value"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "psi",
+   "value": 8.0
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 30
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": -63.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 0.6
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.0
+  },
+  {
+   "name": "Full Scale",
+   "units": "psi",
+   "value": 30.0
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 331,
+ "version": {
+  "service": "0.1.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

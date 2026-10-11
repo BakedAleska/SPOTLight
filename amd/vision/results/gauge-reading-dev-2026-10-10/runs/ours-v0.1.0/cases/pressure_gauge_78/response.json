@@ -1,0 +1,119 @@
+{
+ "media_id": "pressure_gauge_78",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "30",
+   "bbox": [
+    128,
+    295,
+    168,
+    326
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "FILLED",
+   "bbox": [
+    177,
+    285,
+    303,
+    353
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "6",
+   "bbox": [
+    411,
+    343,
+    427,
+    370
+   ],
+   "conf": 0.947
+  },
+  {
+   "text": "MOW",
+   "bbox": [
+    117,
+    419,
+    162,
+    497
+   ],
+   "conf": 0.855
+  },
+  {
+   "text": "A/C",
+   "bbox": [
+    236,
+    482,
+    315,
+    533
+   ],
+   "conf": 0.951
+  },
+  {
+   "text": "PRO",
+   "bbox": [
+    234,
+    516,
+    322,
+    563
+   ],
+   "conf": 0.999
+  },
+  {
+   "text": "15",
+   "bbox": [
+    386,
+    526,
+    427,
+    559
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "0",
+   "bbox": [
+    129,
+    543,
+    148,
+    564
+   ],
+   "conf": 0.99
+  },
+  {
+   "text": "PSI",
+   "bbox": [
+    160,
+    559,
+    209,
+    590
+   ],
+   "conf": 0.997
+  }
+ ],
+ "readings": [],
+ "key_results": [],
+ "comparison": null,
+ "alert": null,
+ "flags": [
+  "AXIS_FIT_FAILED"
+ ],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 344,
+ "version": {
+  "service": "0.1.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

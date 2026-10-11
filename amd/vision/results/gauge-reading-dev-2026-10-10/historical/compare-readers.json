@@ -1,0 +1,3796 @@
+{
+ "per_reader": {
+  "ours_v01": {
+   "correct": 14,
+   "number_correct_ignoring_unit": 23,
+   "with_reading": 96
+  },
+  "ours_v02": {
+   "correct": 14,
+   "number_correct_ignoring_unit": 23,
+   "with_reading": 96
+  },
+  "eth": {
+   "correct": 15,
+   "number_correct_ignoring_unit": 27,
+   "with_reading": 60
+  },
+  "qwen_full": {
+   "correct": 35,
+   "number_correct_ignoring_unit": 40,
+   "with_reading": 117
+  },
+  "qwen_crop": {
+   "correct": 27,
+   "number_correct_ignoring_unit": 32,
+   "with_reading": 108
+  }
+ },
+ "oracle_any_correct": 57,
+ "pairs": {
+  "ours_v01+ours_v02": {
+   "agree": 96,
+   "agree_and_both_correct": 14,
+   "agree_but_wrong": 82,
+   "only_ours_v01_correct": 0,
+   "only_ours_v02_correct": 0
+  },
+  "ours_v01+eth": {
+   "agree": 8,
+   "agree_and_both_correct": 5,
+   "agree_but_wrong": 3,
+   "only_ours_v01_correct": 9,
+   "only_eth_correct": 10
+  },
+  "ours_v01+qwen_full": {
+   "agree": 5,
+   "agree_and_both_correct": 2,
+   "agree_but_wrong": 3,
+   "only_ours_v01_correct": 6,
+   "only_qwen_full_correct": 27
+  },
+  "ours_v01+qwen_crop": {
+   "agree": 6,
+   "agree_and_both_correct": 1,
+   "agree_but_wrong": 5,
+   "only_ours_v01_correct": 9,
+   "only_qwen_crop_correct": 22
+  },
+  "ours_v02+eth": {
+   "agree": 8,
+   "agree_and_both_correct": 5,
+   "agree_but_wrong": 3,
+   "only_ours_v02_correct": 9,
+   "only_eth_correct": 10
+  },
+  "ours_v02+qwen_full": {
+   "agree": 5,
+   "agree_and_both_correct": 2,
+   "agree_but_wrong": 3,
+   "only_ours_v02_correct": 6,
+   "only_qwen_full_correct": 27
+  },
+  "ours_v02+qwen_crop": {
+   "agree": 6,
+   "agree_and_both_correct": 1,
+   "agree_but_wrong": 5,
+   "only_ours_v02_correct": 9,
+   "only_qwen_crop_correct": 22
+  },
+  "eth+qwen_full": {
+   "agree": 10,
+   "agree_and_both_correct": 3,
+   "agree_but_wrong": 7,
+   "only_eth_correct": 9,
+   "only_qwen_full_correct": 29
+  },
+  "eth+qwen_crop": {
+   "agree": 5,
+   "agree_and_both_correct": 2,
+   "agree_but_wrong": 3,
+   "only_eth_correct": 11,
+   "only_qwen_crop_correct": 23
+  },
+  "qwen_full+qwen_crop": {
+   "agree": 39,
+   "agree_and_both_correct": 14,
+   "agree_but_wrong": 25,
+   "only_qwen_full_correct": 18,
+   "only_qwen_crop_correct": 10
+  }
+ },
+ "by_category": {
+  "dual_scale": {
+   "n": 39,
+   "ours_v01": 2,
+   "ours_v02": 2,
+   "eth": 1,
+   "qwen_full": 12,
+   "qwen_crop": 7
+  },
+  "single_scale": {
+   "n": 79,
+   "ours_v01": 12,
+   "ours_v02": 12,
+   "eth": 14,
+   "qwen_full": 23,
+   "qwen_crop": 20
+  },
+  "youtube": {
+   "n": 104,
+   "ours_v01": 13,
+   "ours_v02": 13,
+   "eth": 13,
+   "qwen_full": 29,
+   "qwen_crop": 23
+  },
+  "not_youtube": {
+   "n": 14,
+   "ours_v01": 1,
+   "ours_v02": 1,
+   "eth": 2,
+   "qwen_full": 6,
+   "qwen_crop": 4
+  }
+ },
+ "cases": [
+  {
+   "question_id": "pressure_gauge_0",
+   "dual_scale": false,
+   "youtube": false,
+   "group": "https://universe.roboflow.com/itu-weijie-wang/dial-meter-detection-4-points",
+   "ours_v01": {
+    "value": 3.4,
+    "unit": "bar",
+    "correct": true
+   },
+   "ours_v02": {
+    "value": 3.4,
+    "unit": "bar",
+    "correct": true
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 3.2,
+    "unit": "bar",
+    "correct": true
+   },
+   "qwen_crop": {
+    "value": 3.2,
+    "unit": "bar",
+    "correct": true
+   }
+  },
+  {
+   "question_id": "pressure_gauge_1",
+   "dual_scale": false,
+   "youtube": false,
+   "group": "https://www.publicdomainpictures.net/jp/view-image.php?image=298116&picture=",
+   "ours_v01": {
+    "value": 3503.0,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 3503.0,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": 2213.204946098089,
+    "unit": "psi",
+    "correct": true
+   },
+   "qwen_full": {
+    "value": 2300,
+    "unit": "PSI",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 2300,
+    "unit": "PSI",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_2",
+   "dual_scale": true,
+   "youtube": false,
+   "group": "https://www.hippopx.com/en/pressure-meter-engineering-gauge-commercial-machine-industry-99048",
+   "ours_v01": {
+    "value": -26.0,
+    "unit": "kPa",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": -26.0,
+    "unit": "kPa",
+    "correct": false
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 0,
+    "unit": "kPa",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 0,
+    "unit": "kPa",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_3",
+   "dual_scale": true,
+   "youtube": false,
+   "group": "https://commons.wikimedia.org/wiki/File:Psidial.jpg",
+   "ours_v01": {
+    "value": 842.0,
+    "unit": "kPa",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 842.0,
+    "unit": "kPa",
+    "correct": false
+   },
+   "eth": {
+    "value": 747.968902918567,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 1000,
+    "unit": "psi",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 950,
+    "unit": "psi",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_4",
+   "dual_scale": true,
+   "youtube": false,
+   "group": "https://en.wikipedia.org/wiki/Pressure_measurement#/media/File:MAXIMATOR-High-Pressure-Manometer-01a.jpg",
+   "ours_v01": {
+    "value": 42504.0,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 42504.0,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": 836.4123444146835,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 12000,
+    "unit": "psi",
+    "correct": true
+   },
+   "qwen_crop": {
+    "value": 12500,
+    "unit": "psi",
+    "correct": true
+   }
+  },
+  {
+   "question_id": "pressure_gauge_5",
+   "dual_scale": true,
+   "youtube": false,
+   "group": "https://pxhere.com/en/photo/142911",
+   "ours_v01": {
+    "value": 909.0,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 909.0,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": -1365.5052076683235,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 995,
+    "unit": "hPa",
+    "correct": true
+   },
+   "qwen_crop": {
+    "value": 995,
+    "unit": "hPa/mmHg",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_6",
+   "dual_scale": false,
+   "youtube": false,
+   "group": "https://pxhere.com/en/photo/142911",
+   "ours_v01": {
+    "value": 909.0,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 909.0,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": 683.2833148777577,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 750,
+    "unit": "mm Hg",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 750,
+    "unit": "mmHg",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_7",
+   "dual_scale": false,
+   "youtube": false,
+   "group": "Self-collected",
+   "ours_v01": {
+    "value": 16.0,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 16.0,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 9,
+    "unit": "bar",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 8,
+    "unit": "bar",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_8",
+   "dual_scale": false,
+   "youtube": false,
+   "group": "Self-collected",
+   "ours_v01": {
+    "value": 16.0,
+    "unit": "bar",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 16.0,
+    "unit": "bar",
+    "correct": false
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 9,
+    "unit": "bar",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 4,
+    "unit": "bar",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_9",
+   "dual_scale": false,
+   "youtube": false,
+   "group": "https://www.needpix.com/photo/178614/thermometer-temperature-fever-measurement-celsius-fahrenheit-degree-measure-health",
+   "ours_v01": {
+    "value": 535.0,
+    "unit": "bar",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 535.0,
+    "unit": "bar",
+    "correct": false
+   },
+   "eth": {
+    "value": 256.8411666930198,
+    "unit": "bar",
+    "correct": true
+   },
+   "qwen_full": {
+    "value": 250,
+    "unit": "bar",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 270,
+    "unit": "bar",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_10",
+   "dual_scale": false,
+   "youtube": false,
+   "group": "self-collected",
+   "ours_v01": {
+    "value": 0.9,
+    "unit": "MPa",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 0.9,
+    "unit": "MPa",
+    "correct": false
+   },
+   "eth": {
+    "value": 1.5818136983988431,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 0.18,
+    "unit": "MPa",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 0.2,
+    "unit": "MPa",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_11",
+   "dual_scale": true,
+   "youtube": false,
+   "group": "https://commons.wikimedia.org/wiki/File:MAXIMATOR-High-Pressure-Manometer-01a.jpg",
+   "ours_v01": {
+    "value": 2035.0,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 2035.0,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": 834.8404044110725,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 12000,
+    "unit": "psi",
+    "correct": true
+   },
+   "qwen_crop": {
+    "value": 1200,
+    "unit": "bar",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_12",
+   "dual_scale": true,
+   "youtube": false,
+   "group": "https://openclipart.org/detail/292135/barometer",
+   "ours_v01": {
+    "value": 1003.0,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 1003.0,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 998,
+    "unit": "hPa",
+    "correct": true
+   },
+   "qwen_crop": {
+    "value": 755,
+    "unit": "mmHg",
+    "correct": true
+   }
+  },
+  {
+   "question_id": "pressure_gauge_13",
+   "dual_scale": true,
+   "youtube": false,
+   "group": "https://picryl.com/media/a-barometer-measures-the-atmospheric-pressure-aboard-2f76cc",
+   "ours_v01": {
+    "value": 950.0,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 950.0,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 1020,
+    "unit": "hPa",
+    "correct": true
+   },
+   "qwen_crop": {
+    "value": 1030,
+    "unit": "hPa",
+    "correct": true
+   }
+  },
+  {
+   "question_id": "pressure_gauge_14",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "ciJUx4FDmn4",
+   "ours_v01": {
+    "value": 11.9,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 11.9,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 8.2,
+    "unit": "Kg/cm²",
+    "correct": true
+   },
+   "qwen_crop": {
+    "value": 8.5,
+    "unit": "Kg/cm²",
+    "correct": true
+   }
+  },
+  {
+   "question_id": "pressure_gauge_15",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "HEBBYu_dv9Y",
+   "ours_v01": {
+    "value": 83.0,
+    "unit": "psi",
+    "correct": true
+   },
+   "ours_v02": {
+    "value": 83.0,
+    "unit": "psi",
+    "correct": true
+   },
+   "eth": {
+    "value": 8.227605085116654,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 80,
+    "unit": "PSI",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 110,
+    "unit": "psi",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_16",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "HEBBYu_dv9Y",
+   "ours_v01": {
+    "value": 83.0,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 83.0,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": 36.523634646085654,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 80,
+    "unit": "PSI",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 110,
+    "unit": "psi",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_17",
+   "dual_scale": true,
+   "youtube": true,
+   "group": "f_HvDSZDOyc",
+   "ours_v01": {
+    "value": 4.3,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 4.3,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 60,
+    "unit": "psi",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 45,
+    "unit": "psi",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_18",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "JBXTzbb4wEU",
+   "ours_v01": {
+    "value": 66.0,
+    "unit": "psi",
+    "correct": true
+   },
+   "ours_v02": {
+    "value": 66.0,
+    "unit": "psi",
+    "correct": true
+   },
+   "eth": {
+    "value": 66.51431735876636,
+    "unit": "psi",
+    "correct": true
+   },
+   "qwen_full": {
+    "value": 70,
+    "unit": "psi",
+    "correct": true
+   },
+   "qwen_crop": {
+    "value": 70,
+    "unit": "psi",
+    "correct": true
+   }
+  },
+  {
+   "question_id": "pressure_gauge_19",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "fgl2yiPKQZ0",
+   "ours_v01": {
+    "value": 10.1,
+    "unit": "kg/cm²",
+    "correct": true
+   },
+   "ours_v02": {
+    "value": 10.1,
+    "unit": "kg/cm²",
+    "correct": true
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 10,
+    "unit": "Kg/cm²",
+    "correct": true
+   },
+   "qwen_crop": {
+    "value": 10,
+    "unit": "Kg/cm²",
+    "correct": true
+   }
+  },
+  {
+   "question_id": "pressure_gauge_20",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "krn4_IASVNY",
+   "ours_v01": {
+    "value": 103.4,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 103.4,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": 11.55110129023442,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 65,
+    "unit": "psi",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 12,
+    "unit": "psi",
+    "correct": true
+   }
+  },
+  {
+   "question_id": "pressure_gauge_21",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "h9DVECE2AWo",
+   "ours_v01": {
+    "value": 49.7,
+    "unit": "psi",
+    "correct": true
+   },
+   "ours_v02": {
+    "value": 49.7,
+    "unit": "psi",
+    "correct": true
+   },
+   "eth": {
+    "value": 50.38121427994679,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 48,
+    "unit": "PSI",
+    "correct": true
+   },
+   "qwen_crop": {
+    "value": 48,
+    "unit": "PSI",
+    "correct": true
+   }
+  },
+  {
+   "question_id": "pressure_gauge_22",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "WcYtLfyUK3M",
+   "ours_v01": {
+    "value": 119.0,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 119.0,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": -48.2971975296704,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 25,
+    "unit": "psi",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 10,
+    "unit": "psi",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_23",
+   "dual_scale": true,
+   "youtube": true,
+   "group": "FhXiUJnnGN4",
+   "ours_v01": {
+    "value": 3.9,
+    "unit": "bar",
+    "correct": true
+   },
+   "ours_v02": {
+    "value": 3.9,
+    "unit": "bar",
+    "correct": true
+   },
+   "eth": {
+    "value": 100.0,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 55,
+    "unit": "psi",
+    "correct": true
+   },
+   "qwen_crop": {
+    "value": 5.8,
+    "unit": "BAR",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_24",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "L_zw4bu9WNI",
+   "ours_v01": {
+    "value": 87.1,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 87.1,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 40,
+    "unit": "psi",
+    "correct": true
+   },
+   "qwen_crop": {
+    "value": 100,
+    "unit": "psi",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_25",
+   "dual_scale": true,
+   "youtube": true,
+   "group": "mu4k1R7zw-M",
+   "ours_v01": {
+    "value": 325.0,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 325.0,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 180,
+    "unit": "psi",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 190,
+    "unit": "psi",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_26",
+   "dual_scale": true,
+   "youtube": true,
+   "group": "yORk-5ESwqo",
+   "ours_v01": {
+    "value": 2.4,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 2.4,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": -12.933425282026448,
+    "unit": "psi",
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 45,
+    "unit": "psi",
+    "correct": true
+   },
+   "qwen_crop": {
+    "value": 45,
+    "unit": "kg/cm²",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_27",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "X2Yh19NhWK8",
+   "ours_v01": {
+    "value": 52.8,
+    "unit": "psi",
+    "correct": true
+   },
+   "ours_v02": {
+    "value": 52.8,
+    "unit": "psi",
+    "correct": true
+   },
+   "eth": {
+    "value": 53.58886854791591,
+    "unit": "psi",
+    "correct": true
+   },
+   "qwen_full": {
+    "value": 50,
+    "unit": "PSI",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 50,
+    "unit": "PSI",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_28",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "X4TZoFIsE2w",
+   "ours_v01": {
+    "value": 149.1,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 149.1,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": 53.16340360075897,
+    "unit": "psi",
+    "correct": true
+   },
+   "qwen_full": {
+    "value": 55,
+    "unit": "psi",
+    "correct": true
+   },
+   "qwen_crop": {
+    "value": 50,
+    "unit": "psi",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_29",
+   "dual_scale": true,
+   "youtube": true,
+   "group": "VmXdio44FTY",
+   "ours_v01": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "ours_v02": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 1.8,
+    "unit": "bar",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 10,
+    "unit": "bar",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_30",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "awK9NJTLi38",
+   "ours_v01": {
+    "value": 8.9,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 8.9,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": 15.234454926004958,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 70,
+    "unit": "",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 70,
+    "unit": "",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_31",
+   "dual_scale": true,
+   "youtube": true,
+   "group": "UsH3eMxFlCE",
+   "ours_v01": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "ours_v02": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 105,
+    "unit": "psi",
+    "correct": true
+   },
+   "qwen_crop": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_32",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "MFZZJIbFv_k",
+   "ours_v01": {
+    "value": 23.1,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 23.1,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 45,
+    "unit": "inches of water",
+    "correct": true
+   },
+   "qwen_crop": {
+    "value": 0,
+    "unit": "inches",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_33",
+   "dual_scale": true,
+   "youtube": true,
+   "group": "eEfyFiOUeUA",
+   "ours_v01": {
+    "value": 2.4,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 2.4,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": 211.805536745631,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 650,
+    "unit": "psi",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 350,
+    "unit": "psi",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_34",
+   "dual_scale": true,
+   "youtube": true,
+   "group": "I4F4HV4nipk",
+   "ours_v01": {
+    "value": 1.4,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 1.4,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": 3.6744877201909283,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 0.45,
+    "unit": "MPa",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 0.45,
+    "unit": "MPa",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_35",
+   "dual_scale": true,
+   "youtube": true,
+   "group": "JNPR8elHE-Q",
+   "ours_v01": {
+    "value": 10.3,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 10.3,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": 133.92913038983977,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 150,
+    "unit": "psi",
+    "correct": true
+   },
+   "qwen_crop": {
+    "value": 165,
+    "unit": "psi",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_36",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "OvmQrPnY_yc",
+   "ours_v01": {
+    "value": 1.5,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 1.5,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": 5.805744227102623,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 0,
+    "unit": "kgf/cm²",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 1,
+    "unit": "kgf/cm²",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_37",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "3zT0AoD_C8M",
+   "ours_v01": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "ours_v02": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 32,
+    "unit": "PSI",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 32,
+    "unit": "PSI",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_38",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "XBsUFfhLC8U",
+   "ours_v01": {
+    "value": 0.2,
+    "unit": "MPa",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 0.2,
+    "unit": "MPa",
+    "correct": false
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 0.1,
+    "unit": "MPa",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 0.05,
+    "unit": "MPa",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_39",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "L6clcoNxA38",
+   "ours_v01": {
+    "value": 337.0,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 337.0,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 0,
+    "unit": "mmHg",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 0,
+    "unit": "mmHg",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_40",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "Yck8lf-cSzE",
+   "ours_v01": {
+    "value": -0.3,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": -0.3,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 0.5,
+    "unit": "kgf/cm²",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 0.9,
+    "unit": "kgf/cm²",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_41",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "z9-m_ZBJRpk",
+   "ours_v01": {
+    "value": 0.3,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 0.3,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": 3.1396715936270283,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 0.1,
+    "unit": "КГС/СМ²",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 0.3,
+    "unit": "КГС/СМ²",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_42",
+   "dual_scale": true,
+   "youtube": true,
+   "group": "0IiY0o3A6i0",
+   "ours_v01": {
+    "value": 25.5,
+    "unit": "bar",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 25.5,
+    "unit": "bar",
+    "correct": false
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 25,
+    "unit": "psi",
+    "correct": true
+   },
+   "qwen_crop": {
+    "value": 25,
+    "unit": "bar",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_43",
+   "dual_scale": true,
+   "youtube": true,
+   "group": "t0kl-Rthc-I",
+   "ours_v01": {
+    "value": 2.1,
+    "unit": "kg/cm²",
+    "correct": true
+   },
+   "ours_v02": {
+    "value": 2.1,
+    "unit": "kg/cm²",
+    "correct": true
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 31,
+    "unit": "PSI/in²",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 30,
+    "unit": "KG/cm²",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_44",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "kE8CA5bPEkY",
+   "ours_v01": {
+    "value": 0.6,
+    "unit": "MPa",
+    "correct": true
+   },
+   "ours_v02": {
+    "value": 0.6,
+    "unit": "MPa",
+    "correct": true
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 0.55,
+    "unit": "MPa",
+    "correct": true
+   },
+   "qwen_crop": {
+    "value": 0.45,
+    "unit": "MPa",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_45",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "1e78y-C4rh0",
+   "ours_v01": {
+    "value": 971.0,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 971.0,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": 111.17084190661063,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 650,
+    "unit": "psi",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 500,
+    "unit": "kPa",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_46",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "1e78y-C4rh0",
+   "ours_v01": {
+    "value": 971.0,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 971.0,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": 111.17084190661063,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 650,
+    "unit": "psi",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 500,
+    "unit": "kPa",
+    "correct": true
+   }
+  },
+  {
+   "question_id": "pressure_gauge_47",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "WyTqZgriDHw",
+   "ours_v01": {
+    "value": 0.1,
+    "unit": "MPa",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 0.1,
+    "unit": "MPa",
+    "correct": false
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 0.05,
+    "unit": "MPa",
+    "correct": true
+   },
+   "qwen_crop": {
+    "value": 0.05,
+    "unit": "MPa",
+    "correct": true
+   }
+  },
+  {
+   "question_id": "pressure_gauge_48",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "--Iqgf05gDo",
+   "ours_v01": {
+    "value": 10.3,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 10.3,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 5.0,
+    "unit": "kg/cm²",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 4.8,
+    "unit": "kg/cm²",
+    "correct": true
+   }
+  },
+  {
+   "question_id": "pressure_gauge_49",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "rUxznILwXdY",
+   "ours_v01": {
+    "value": 0.2,
+    "unit": "MPa",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 0.2,
+    "unit": "MPa",
+    "correct": false
+   },
+   "eth": {
+    "value": 2.343357994283009,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 0.25,
+    "unit": "MPa",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 0.25,
+    "unit": "MPa",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_50",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "rczTGzvwE8A",
+   "ours_v01": {
+    "value": 0.0,
+    "unit": "MPa",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 0.0,
+    "unit": "MPa",
+    "correct": false
+   },
+   "eth": {
+    "value": 4.642606025166773,
+    "unit": "mpa",
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 0.045,
+    "unit": "MPa",
+    "correct": true
+   },
+   "qwen_crop": {
+    "value": 0.045,
+    "unit": "MPa",
+    "correct": true
+   }
+  },
+  {
+   "question_id": "pressure_gauge_51",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "AtrGRr__i1I",
+   "ours_v01": {
+    "value": 0.1,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 0.1,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": 5.44342907245251,
+    "unit": "mpa",
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 0.55,
+    "unit": "MPa",
+    "correct": true
+   },
+   "qwen_crop": {
+    "value": 0.1,
+    "unit": "PSI",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_52",
+   "dual_scale": true,
+   "youtube": true,
+   "group": "HQmlFIPNQlE",
+   "ours_v01": {
+    "value": 0.2,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 0.2,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 0.18,
+    "unit": "MPa",
+    "correct": true
+   },
+   "qwen_crop": {
+    "value": 0.2,
+    "unit": "MPa",
+    "correct": true
+   }
+  },
+  {
+   "question_id": "pressure_gauge_53",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "JIXlNFPathg",
+   "ours_v01": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "ours_v02": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 0.2,
+    "unit": "MPa",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 1.8,
+    "unit": "MPa",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_54",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "EwW-0pZcLvM",
+   "ours_v01": {
+    "value": -1.9,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": -1.9,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 1.6,
+    "unit": "MPa",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 0.7,
+    "unit": "MPa",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_55",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "DUZHndPU9rM",
+   "ours_v01": {
+    "value": 0.5,
+    "unit": "MPa",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 0.5,
+    "unit": "MPa",
+    "correct": false
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 0.5,
+    "unit": "MPa",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 0.45,
+    "unit": "MPa",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_56",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "m70O11t_o1I",
+   "ours_v01": {
+    "value": 0.3,
+    "unit": "MPa",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 0.3,
+    "unit": "MPa",
+    "correct": false
+   },
+   "eth": {
+    "value": 3.568452092313354,
+    "unit": "mpa",
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 0.45,
+    "unit": "MPa",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 0.3,
+    "unit": "MPa",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_57",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "qjMk7detri8",
+   "ours_v01": {
+    "value": 0.2,
+    "unit": "MPa",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 0.2,
+    "unit": "MPa",
+    "correct": false
+   },
+   "eth": {
+    "value": 2.5534902733463753,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 0.55,
+    "unit": "MPa",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 0.28,
+    "unit": "MPa",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_58",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "01jAFQ087II",
+   "ours_v01": {
+    "value": 12.8,
+    "unit": "MPa",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 12.8,
+    "unit": "MPa",
+    "correct": false
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 11,
+    "unit": "MPa",
+    "correct": true
+   },
+   "qwen_crop": {
+    "value": 11,
+    "unit": "MPa",
+    "correct": true
+   }
+  },
+  {
+   "question_id": "pressure_gauge_59",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "AkFJ1yOgQtA",
+   "ours_v01": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "ours_v02": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 0.05,
+    "unit": "MPa",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 0.02,
+    "unit": "MPa",
+    "correct": true
+   }
+  },
+  {
+   "question_id": "pressure_gauge_60",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "ZepVEMbHDP4",
+   "ours_v01": {
+    "value": 1.6,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 1.6,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": 4.657712240177688,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 0.5,
+    "unit": "MPa",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 0.3,
+    "unit": "MPa",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_61",
+   "dual_scale": true,
+   "youtube": true,
+   "group": "wz3T877uobk",
+   "ours_v01": {
+    "value": -536.0,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": -536.0,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 100,
+    "unit": "psi",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 420,
+    "unit": "PSI",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_62",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "KrYru-8THiM",
+   "ours_v01": {
+    "value": -1.7,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": -1.7,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 5,
+    "unit": "kgf/m²",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 5,
+    "unit": "kgf/cm²",
+    "correct": true
+   }
+  },
+  {
+   "question_id": "pressure_gauge_63",
+   "dual_scale": true,
+   "youtube": true,
+   "group": "xvdcz-zgtGI",
+   "ours_v01": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "ours_v02": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 0,
+    "unit": "kgf/cm²",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 10,
+    "unit": "kg/cm2",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_64",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "8zpZW6xoEKw",
+   "ours_v01": {
+    "value": 0.7,
+    "unit": "MPa",
+    "correct": true
+   },
+   "ours_v02": {
+    "value": 0.7,
+    "unit": "MPa",
+    "correct": true
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 0.55,
+    "unit": "MPa",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 0.55,
+    "unit": "MPa",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_65",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "yzDK8GAIqfM",
+   "ours_v01": {
+    "value": 418.0,
+    "unit": "kPa",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 418.0,
+    "unit": "kPa",
+    "correct": false
+   },
+   "eth": {
+    "value": 408.2586904277713,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 500,
+    "unit": "kPa",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 450,
+    "unit": "kPa",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_66",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "YFaQ0uMOMPc",
+   "ours_v01": {
+    "value": 11.4,
+    "unit": "MPa",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 11.4,
+    "unit": "MPa",
+    "correct": false
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 8.5,
+    "unit": "x10⁻¹MPa",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 7.5,
+    "unit": "x10⁻¹ MPa",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_67",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "YwruUBezCik",
+   "ours_v01": {
+    "value": 0.1,
+    "unit": "MPa",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 0.1,
+    "unit": "MPa",
+    "correct": false
+   },
+   "eth": {
+    "value": -20217.250765045086,
+    "unit": "mpa",
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 0.16,
+    "unit": "MPa",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 0.16,
+    "unit": "MPa",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_68",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "Ib86SPox4wQ",
+   "ours_v01": {
+    "value": 10.1,
+    "unit": "MPa",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 10.1,
+    "unit": "MPa",
+    "correct": false
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 9.8,
+    "unit": "X10⁻¹MPa",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 9.8,
+    "unit": "X10⁻¹MPa",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_69",
+   "dual_scale": true,
+   "youtube": true,
+   "group": "v5nXPVpbEyA",
+   "ours_v01": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "ours_v02": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 10,
+    "unit": "bar",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 0,
+    "unit": "bar",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_70",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "_f6KQbzqSiU",
+   "ours_v01": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "ours_v02": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 8.5,
+    "unit": "kg/cm²",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 8.8,
+    "unit": "kg/cm²",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_71",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "0H5hJxa2l1g",
+   "ours_v01": {
+    "value": 57.1,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 57.1,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 48,
+    "unit": "PSI",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 48,
+    "unit": "PSI",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_72",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "4MMVDUC-B_s",
+   "ours_v01": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "ours_v02": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "eth": {
+    "value": 2070.694582613764,
+    "unit": "psi",
+    "correct": true
+   },
+   "qwen_full": {
+    "value": 2200,
+    "unit": "psi",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_73",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "4XamrEv17AU",
+   "ours_v01": {
+    "value": 11.5,
+    "unit": "psi",
+    "correct": true
+   },
+   "ours_v02": {
+    "value": 11.5,
+    "unit": "psi",
+    "correct": true
+   },
+   "eth": {
+    "value": 11.446661467859403,
+    "unit": "psi",
+    "correct": true
+   },
+   "qwen_full": {
+    "value": 12,
+    "unit": "psi",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 12,
+    "unit": "psi",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_74",
+   "dual_scale": true,
+   "youtube": true,
+   "group": "5BeI4zXFM2E",
+   "ours_v01": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "ours_v02": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 2.5,
+    "unit": "bar",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 2.5,
+    "unit": "bar",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_75",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "7otMOej8DLE",
+   "ours_v01": {
+    "value": 53.1,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 53.1,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 20,
+    "unit": "PSI",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 20,
+    "unit": "PSI",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_76",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "7ZLGGRNX9r8",
+   "ours_v01": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "ours_v02": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "eth": {
+    "value": 34.74091552809136,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 35,
+    "unit": "psi",
+    "correct": true
+   },
+   "qwen_crop": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_77",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "86_51zxxc38",
+   "ours_v01": {
+    "value": 593.0,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 593.0,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 450,
+    "unit": "psi",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 450,
+    "unit": "psi",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_78",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "aWzK4_uq3wM",
+   "ours_v01": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "ours_v02": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 50,
+    "unit": "PSI",
+    "correct": true
+   },
+   "qwen_crop": {
+    "value": 50,
+    "unit": "PSI",
+    "correct": true
+   }
+  },
+  {
+   "question_id": "pressure_gauge_79",
+   "dual_scale": true,
+   "youtube": true,
+   "group": "b69dfIRIqs0",
+   "ours_v01": {
+    "value": 119.0,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 119.0,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": 127.56456814756811,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 125,
+    "unit": "cm²",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 110,
+    "unit": "cm²",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_80",
+   "dual_scale": true,
+   "youtube": true,
+   "group": "B-M6EhCKz90",
+   "ours_v01": {
+    "value": 12.3,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 12.3,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 10,
+    "unit": "bar",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 155,
+    "unit": "psi",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_81",
+   "dual_scale": true,
+   "youtube": true,
+   "group": "cCw-UZymz8Q",
+   "ours_v01": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "ours_v02": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 38,
+    "unit": "PSI",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_82",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "ch2heA9_HjU",
+   "ours_v01": {
+    "value": 97.0,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 97.0,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": 51.66870311231866,
+    "unit": "psi",
+    "correct": true
+   },
+   "qwen_full": {
+    "value": 50,
+    "unit": "PSI",
+    "correct": true
+   },
+   "qwen_crop": {
+    "value": 50,
+    "unit": "PSI",
+    "correct": true
+   }
+  },
+  {
+   "question_id": "pressure_gauge_83",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "ctfW1dpHVoE",
+   "ours_v01": {
+    "value": 58.5,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 58.5,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 30,
+    "unit": "PSI",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 30,
+    "unit": "PSI",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_84",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "dfxmtcUpmNo",
+   "ours_v01": {
+    "value": 126.0,
+    "unit": "psi",
+    "correct": true
+   },
+   "ours_v02": {
+    "value": 126.0,
+    "unit": "psi",
+    "correct": true
+   },
+   "eth": {
+    "value": 129.7790764625941,
+    "unit": "psi",
+    "correct": true
+   },
+   "qwen_full": {
+    "value": 130,
+    "unit": "psi",
+    "correct": true
+   },
+   "qwen_crop": {
+    "value": 130,
+    "unit": "psi",
+    "correct": true
+   }
+  },
+  {
+   "question_id": "pressure_gauge_85",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "DyDGZIUEDdQ",
+   "ours_v01": {
+    "value": 72.5,
+    "unit": "psi",
+    "correct": true
+   },
+   "ours_v02": {
+    "value": 72.5,
+    "unit": "psi",
+    "correct": true
+   },
+   "eth": {
+    "value": 71.56497755165572,
+    "unit": "psi",
+    "correct": true
+   },
+   "qwen_full": {
+    "value": 70,
+    "unit": "PSI",
+    "correct": true
+   },
+   "qwen_crop": {
+    "value": 75,
+    "unit": "PSI",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_86",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "FNpuy3jmFzg",
+   "ours_v01": {
+    "value": 9.2,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 9.2,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": 46.971561187520564,
+    "unit": "psi",
+    "correct": true
+   },
+   "qwen_full": {
+    "value": 50,
+    "unit": "psi",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 48,
+    "unit": "psi",
+    "correct": true
+   }
+  },
+  {
+   "question_id": "pressure_gauge_87",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "hgp9r60-yLU",
+   "ours_v01": {
+    "value": -233.0,
+    "unit": "MPa",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": -233.0,
+    "unit": "MPa",
+    "correct": false
+   },
+   "eth": {
+    "value": 7.876176323973278,
+    "unit": "mpa",
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 0.8,
+    "unit": "MPa",
+    "correct": true
+   },
+   "qwen_crop": {
+    "value": 0.8,
+    "unit": "MPa",
+    "correct": true
+   }
+  },
+  {
+   "question_id": "pressure_gauge_88",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "I6qe4-7R_n8",
+   "ours_v01": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "ours_v02": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 2.5,
+    "unit": "INCHES OF WATER",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 1.5,
+    "unit": "INCHES OF WATER",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_89",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "j_ItOlPfEMI",
+   "ours_v01": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "ours_v02": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "eth": {
+    "value": 38.143591620050444,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 35,
+    "unit": "PSI",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_90",
+   "dual_scale": true,
+   "youtube": true,
+   "group": "jImcsmu85sM",
+   "ours_v01": {
+    "value": 33.2,
+    "unit": "inHg",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 33.2,
+    "unit": "inHg",
+    "correct": false
+   },
+   "eth": {
+    "value": 17.435255530903333,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 16.5,
+    "unit": "inHg",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 17,
+    "unit": "inHg",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_91",
+   "dual_scale": true,
+   "youtube": true,
+   "group": "KQUN7ijjVK0",
+   "ours_v01": {
+    "value": 484.0,
+    "unit": "kPa",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 484.0,
+    "unit": "kPa",
+    "correct": false
+   },
+   "eth": {
+    "value": 71.91474450890613,
+    "unit": "psi",
+    "correct": true
+   },
+   "qwen_full": {
+    "value": 70,
+    "unit": "psi",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 350,
+    "unit": "psi",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_92",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "M87kc9_YBZs",
+   "ours_v01": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "ours_v02": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_93",
+   "dual_scale": true,
+   "youtube": true,
+   "group": "N8d6M8Gmhpw",
+   "ours_v01": {
+    "value": 322.0,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 322.0,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": 228.72214032087908,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 420,
+    "unit": "psi",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 350,
+    "unit": "psi",
+    "correct": true
+   }
+  },
+  {
+   "question_id": "pressure_gauge_94",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "NaatXlhib90",
+   "ours_v01": {
+    "value": 197.0,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 197.0,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": 89.68929901291949,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 90,
+    "unit": "PSI",
+    "correct": true
+   },
+   "qwen_crop": {
+    "value": 90,
+    "unit": "psi",
+    "correct": true
+   }
+  },
+  {
+   "question_id": "pressure_gauge_95",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "NrGgI7Rnmss",
+   "ours_v01": {
+    "value": 4.9,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 4.9,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 25,
+    "unit": "psi",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 35,
+    "unit": "psi",
+    "correct": true
+   }
+  },
+  {
+   "question_id": "pressure_gauge_96",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "PIWYZiCP7Pc",
+   "ours_v01": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "ours_v02": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 35,
+    "unit": "psi",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_97",
+   "dual_scale": true,
+   "youtube": true,
+   "group": "Q9eY2dMoF_Q",
+   "ours_v01": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "ours_v02": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 0.3,
+    "unit": "bar",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 0.7,
+    "unit": "bar x1000 hPa kPa inHg m",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_98",
+   "dual_scale": true,
+   "youtube": true,
+   "group": "rmff5lF2zVE",
+   "ours_v01": {
+    "value": 69.2,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 69.2,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": 34.07488593953726,
+    "unit": "bar",
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 38,
+    "unit": "psi",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 35,
+    "unit": "psi",
+    "correct": true
+   }
+  },
+  {
+   "question_id": "pressure_gauge_99",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "rmP6uXv5OOs",
+   "ours_v01": {
+    "value": -3.8,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": -3.8,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": 32.69582206606574,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 32,
+    "unit": "psi",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 32,
+    "unit": "psi",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_100",
+   "dual_scale": true,
+   "youtube": true,
+   "group": "RtztpxK9RFQ",
+   "ours_v01": {
+    "value": 121.7,
+    "unit": "bar",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 121.7,
+    "unit": "bar",
+    "correct": false
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 95,
+    "unit": "psi",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 95,
+    "unit": "psi",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_101",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "SHI1Uvmyo4w",
+   "ours_v01": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "ours_v02": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 30,
+    "unit": "psi",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 30,
+    "unit": "psi",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_102",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "SJ2degEf47A",
+   "ours_v01": {
+    "value": 87.8,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 87.8,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": 34.15141537960112,
+    "unit": "psi",
+    "correct": true
+   },
+   "qwen_full": {
+    "value": 35,
+    "unit": "psi",
+    "correct": true
+   },
+   "qwen_crop": {
+    "value": 38,
+    "unit": "psi",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_103",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "sJfq4LhoKhM",
+   "ours_v01": {
+    "value": 8.0,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 8.0,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": 28.12223735106958,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 32,
+    "unit": "psi",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 35,
+    "unit": "psi",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_104",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "SXtvERXlv8I",
+   "ours_v01": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "ours_v02": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 30,
+    "unit": "psi",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_105",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "tdZcBolAVeM",
+   "ours_v01": {
+    "value": 2.3,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 2.3,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 3.5,
+    "unit": "kg/cm²",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 0,
+    "unit": "kg/cm²",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_106",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "UbMmH1JKTTM",
+   "ours_v01": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "ours_v02": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "eth": {
+    "value": 34.49447031531247,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 35,
+    "unit": "PSI",
+    "correct": true
+   },
+   "qwen_crop": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_107",
+   "dual_scale": true,
+   "youtube": true,
+   "group": "v_x4g5XLMfI",
+   "ours_v01": {
+    "value": 96.0,
+    "unit": "bar",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 96.0,
+    "unit": "bar",
+    "correct": false
+   },
+   "eth": {
+    "value": 72.52079946931202,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 145,
+    "unit": "bar",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 140,
+    "unit": "bar",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_108",
+   "dual_scale": true,
+   "youtube": true,
+   "group": "vFtkBRmsoJY",
+   "ours_v01": {
+    "value": 1100.0,
+    "unit": "bar",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 1100.0,
+    "unit": "bar",
+    "correct": false
+   },
+   "eth": {
+    "value": -21355.976500949626,
+    "unit": "mbar",
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 60,
+    "unit": "mbar",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 650,
+    "unit": "mbar",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_109",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "vHfv9FoPQnY",
+   "ours_v01": {
+    "value": 14.2,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 14.2,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": 16.275744781778766,
+    "unit": "psi",
+    "correct": true
+   },
+   "qwen_full": {
+    "value": 18,
+    "unit": "psi",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 18,
+    "unit": "psi",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_110",
+   "dual_scale": true,
+   "youtube": true,
+   "group": "VX2C7qbRSIU",
+   "ours_v01": {
+    "value": 96.0,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 96.0,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 350,
+    "unit": "psi",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 370,
+    "unit": "psi",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_111",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "WGhZ1TdLRzY",
+   "ours_v01": {
+    "value": 13.3,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 13.3,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": 82.29121281128975,
+    "unit": "psi",
+    "correct": true
+   },
+   "qwen_full": {
+    "value": 75,
+    "unit": "psi",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 20,
+    "unit": "psi",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_112",
+   "dual_scale": true,
+   "youtube": true,
+   "group": "wugMEbOxPu4",
+   "ours_v01": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "ours_v02": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "eth": {
+    "value": 57.85728960115526,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 0,
+    "unit": "bar",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_113",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "wyCbtnm_xUA",
+   "ours_v01": {
+    "value": 8.3,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 8.3,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 8,
+    "unit": "kgf/cm²",
+    "correct": true
+   },
+   "qwen_crop": {
+    "value": 8.5,
+    "unit": "kgf/cm²",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_114",
+   "dual_scale": false,
+   "youtube": true,
+   "group": "XlHIOmFe-ts",
+   "ours_v01": {
+    "value": 11.4,
+    "unit": "psi",
+    "correct": true
+   },
+   "ours_v02": {
+    "value": 11.4,
+    "unit": "psi",
+    "correct": true
+   },
+   "eth": {
+    "value": 12.088727020277549,
+    "unit": "psi",
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 11,
+    "unit": "psi",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 10,
+    "unit": "psi",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_115",
+   "dual_scale": true,
+   "youtube": true,
+   "group": "XmgDcrHDm2Q",
+   "ours_v01": {
+    "value": 59.0,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 59.0,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 35,
+    "unit": "kg/cm²",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 10,
+    "unit": "psi",
+    "correct": false
+   }
+  },
+  {
+   "question_id": "pressure_gauge_116",
+   "dual_scale": true,
+   "youtube": true,
+   "group": "y998AkEfy40",
+   "ours_v01": {
+    "value": 41.0,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 41.0,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": 74.10539239121489,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 0,
+    "unit": "bar",
+    "correct": false
+   },
+   "qwen_crop": {
+    "value": 5,
+    "unit": "bar",
+    "correct": true
+   }
+  },
+  {
+   "question_id": "pressure_gauge_117",
+   "dual_scale": true,
+   "youtube": true,
+   "group": "znOcgR2aWJ8",
+   "ours_v01": {
+    "value": 1.6,
+    "unit": "psi",
+    "correct": false
+   },
+   "ours_v02": {
+    "value": 1.6,
+    "unit": "psi",
+    "correct": false
+   },
+   "eth": {
+    "value": null,
+    "unit": null,
+    "correct": false
+   },
+   "qwen_full": {
+    "value": 32,
+    "unit": "PSI",
+    "correct": true
+   },
+   "qwen_crop": {
+    "value": 2.7,
+    "unit": "kg/cm²",
+    "correct": false
+   }
+  }
+ ]
+}

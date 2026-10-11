@@ -1,0 +1,172 @@
+{
+ "media_id": "pressure_gauge_71",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "30",
+   "bbox": [
+    528,
+    134,
+    590,
+    176
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "20",
+   "bbox": [
+    475,
+    152,
+    541,
+    193
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "SHOCK PROOF",
+   "bbox": [
+    470,
+    173,
+    625,
+    238
+   ],
+   "conf": 0.996
+  },
+  {
+   "text": "40",
+   "bbox": [
+    576,
+    168,
+    647,
+    220
+   ],
+   "conf": 0.666
+  },
+  {
+   "text": "-10",
+   "bbox": [
+    429,
+    203,
+    487,
+    247
+   ],
+   "conf": 0.877
+  },
+  {
+   "text": "50.",
+   "bbox": [
+    580,
+    230,
+    647,
+    273
+   ],
+   "conf": 0.857
+  },
+  {
+   "text": "60",
+   "bbox": [
+    564,
+    295,
+    615,
+    332
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "PSI",
+   "bbox": [
+    412,
+    312,
+    444,
+    340
+   ],
+   "conf": 0.992
+  },
+  {
+   "text": "MARSHALL",
+   "bbox": [
+    444,
+    327,
+    567,
+    394
+   ],
+   "conf": 1.0
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "pressure",
+   "value": 57.1,
+   "unit": "psi",
+   "confidence": 0.3,
+   "method": "hough_ray_ransac_labels",
+   "flags": [
+    "LABEL_OUTLIER",
+    "NEEDLE_OUTSIDE_SCALE",
+    "AMBIGUOUS_NEEDLE"
+   ],
+   "point": [
+    677,
+    321
+   ],
+   "note": "two needle candidates: 117° -> 57 psi and 155° -> 67 psi (peak ratio 0.92); do not trust this value"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "psi",
+   "value": 57.1
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 30
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": 117.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 0.92
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.0
+  },
+  {
+   "name": "Full Scale",
+   "units": "psi",
+   "value": 40.0
+  },
+  {
+   "name": "Scale Labels Used",
+   "units": "",
+   "value": "4 of 5"
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 343,
+ "version": {
+  "service": "0.1.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

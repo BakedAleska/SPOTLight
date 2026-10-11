@@ -1,0 +1,19 @@
+{
+ "question_id": "pressure_gauge_87",
+ "question": "What is the reading of the pressure gauge",
+ "evaluator": "interval_matching",
+ "evaluator_kwargs": {
+  "interval": [
+   0.8,
+   0.8
+  ],
+  "units": [
+   "MPa",
+   "Megapascal"
+  ]
+ },
+ "meta_info": {
+  "source": "https://www.youtube.com/watch?v=hgp9r60-yLU",
+  "uploader": ""
+ }
+}

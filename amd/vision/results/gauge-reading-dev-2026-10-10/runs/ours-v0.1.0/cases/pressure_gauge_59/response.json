@@ -1,0 +1,59 @@
+{
+ "media_id": "pressure_gauge_59",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "MPa",
+   "bbox": [
+    661,
+    245,
+    691,
+    260
+   ],
+   "conf": 0.999
+  },
+  {
+   "text": "esM",
+   "bbox": [
+    593,
+    294,
+    621,
+    308
+   ],
+   "conf": 0.71
+  },
+  {
+   "text": "SE",
+   "bbox": [
+    595,
+    286,
+    608,
+    295
+   ],
+   "conf": 0.999
+  }
+ ],
+ "readings": [],
+ "key_results": [],
+ "comparison": null,
+ "alert": null,
+ "flags": [
+  "AXIS_FIT_FAILED"
+ ],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 294,
+ "version": {
+  "service": "0.1.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

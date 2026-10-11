@@ -1,0 +1,228 @@
+{
+ "media_id": "pressure_gauge_91",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "14",
+   "bbox": [
+    439,
+    202,
+    483,
+    249
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "600",
+   "bbox": [
+    199,
+    230,
+    265,
+    272
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "800",
+   "bbox": [
+    294,
+    228,
+    359,
+    269
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "400",
+   "bbox": [
+    139,
+    287,
+    203,
+    329
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "1000",
+   "bbox": [
+    344,
+    291,
+    426,
+    330
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "SERIES",
+   "bbox": [
+    265,
+    318,
+    356,
+    360
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "200",
+   "bbox": [
+    126,
+    383,
+    190,
+    423
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "1200",
+   "bbox": [
+    360,
+    380,
+    445,
+    423
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "0",
+   "bbox": [
+    166,
+    459,
+    187,
+    490
+   ],
+   "conf": 0.999
+  },
+  {
+   "text": "1400",
+   "bbox": [
+    331,
+    462,
+    415,
+    502
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "0",
+   "bbox": [
+    102,
+    522,
+    125,
+    555
+   ],
+   "conf": 0.999
+  },
+  {
+   "text": "WINTERS",
+   "bbox": [
+    200,
+    509,
+    353,
+    577
+   ],
+   "conf": 0.99
+  },
+  {
+   "text": "kPa",
+   "bbox": [
+    353,
+    516,
+    398,
+    551
+   ],
+   "conf": 0.987
+  },
+  {
+   "text": "200",
+   "bbox": [
+    419,
+    529,
+    483,
+    571
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "psi",
+   "bbox": [
+    355,
+    550,
+    394,
+    579
+   ],
+   "conf": 0.999
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "pressure",
+   "value": 484.0,
+   "unit": "kPa",
+   "confidence": 0.85,
+   "method": "hough_ray_ransac_labels",
+   "flags": [],
+   "point": [
+    188,
+    273
+   ],
+   "note": "needle at -42° reads 483.8 kPa"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "kPa",
+   "value": 484.0
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 85
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": -42.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 0.33
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.1
+  },
+  {
+   "name": "Full Scale",
+   "units": "kPa",
+   "value": 1400.0
+  },
+  {
+   "name": "Scale Labels Used",
+   "units": "",
+   "value": "8 of 8"
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 473,
+ "version": {
+  "service": "0.1.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

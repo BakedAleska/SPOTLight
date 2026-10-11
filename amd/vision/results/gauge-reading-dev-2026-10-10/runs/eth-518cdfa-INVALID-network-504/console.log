@@ -1,0 +1,2223 @@
+
+0: 640x640 1 Gauge Face, 55.1ms
+Speed: 1.8ms preprocess, 55.1ms inference, 1.0ms postprocess per image at shape (1, 3, 640, 640)
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Using cache found in /root/.cache/torch/hub/facebookresearch_dinov2_main
+-------------------
+Ellipse Fitting
+-------------------
+OCR
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textdet/dbnet/dbnet_resnet18_fpnc_1200e_icdar2015/dbnet_resnet18_fpnc_1200e_icdar2015_20220825_221614-7c0e94f2.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+10/10 23:29:56 - mmengine - WARNING - Failed to search registry with scope "mmocr" in the "function" registry tree. As a workaround, the current "function" registry in "mmengine" is used to build instance. This may cause unexpected failure when running the built modules. Please check whether "mmocr" is a correct scope, or whether the registry is initialized.
+10/10 23:29:56 - mmengine - WARNING - `Visualizer` backend is not initialized because save_dir is None.
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textrecog/abinet/abinet_20e_st-an_mj/abinet_20e_st-an_mj_20221005_012617-ead8c139.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Inference ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/module_losses/ce_module_loss.py:101: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/postprocessors/base.py:60: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmcv/cnn/bricks/transformer.py:819: UserWarning: Use same attn_mask in all attentions in BaseTransformerLayer 
+  warnings.warn(f'Use same attn_mask in all attentions in '
+/usr/local/lib/python3.8/site-packages/torch/nn/functional.py:4999: UserWarning: Support for mismatched key_padding_mask and attn_mask is deprecated. Use same type for both instead.
+  warnings.warn(
+
+0: 640x640 2 Gauge Needles, 44.1ms
+Speed: 0.3ms preprocess, 44.1ms inference, 1.7ms postprocess per image at shape (1, 3, 640, 640)
+/agr/plots.py:152: RuntimeWarning: More than 20 figures have been opened. Figures created through the pyplot interface (`matplotlib.pyplot.figure`) are retained until explicitly closed and may consume too much memory. (To control this warning, see the rcParam `figure.max_open_warning`). Consider using `matplotlib.pyplot.close()`.
+  plt.figure()
+
+0: 416x640 1 Gauge Face, 34.7ms
+Speed: 0.3ms preprocess, 34.7ms inference, 0.4ms postprocess per image at shape (1, 3, 640, 640)
+-------------------
+Segmentation
+-------------------
+Projection
+Unexpected err=ValueError('`min_samples` may not be larger than number of samples: n_samples = 1.'), type(err)=<class 'ValueError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+-------------------
+Ellipse Fitting
+-------------------
+OCR
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textdet/dbnet/dbnet_resnet18_fpnc_1200e_icdar2015/dbnet_resnet18_fpnc_1200e_icdar2015_20220825_221614-7c0e94f2.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textrecog/abinet/abinet_20e_st-an_mj/abinet_20e_st-an_mj_20221005_012617-ead8c139.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Inference ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   
+Using cache found in /root/.cache/torch/hub/facebookresearch_dinov2_main
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/module_losses/ce_module_loss.py:101: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/postprocessors/base.py:60: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmcv/cnn/bricks/transformer.py:819: UserWarning: Use same attn_mask in all attentions in BaseTransformerLayer 
+  warnings.warn(f'Use same attn_mask in all attentions in '
+/usr/local/lib/python3.8/site-packages/torch/nn/functional.py:4999: UserWarning: Support for mismatched key_padding_mask and attn_mask is deprecated. Use same type for both instead.
+  warnings.warn(
+
+0: 640x640 4 Gauge Needles, 42.7ms
+Speed: 0.2ms preprocess, 42.7ms inference, 3.8ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 640x448 1 Gauge Face, 32.6ms
+Speed: 0.2ms preprocess, 32.6ms inference, 0.4ms postprocess per image at shape (1, 3, 640, 640)
+-------------------
+Segmentation
+-------------------
+Projection
+Final reading is: 2213.204946098089 psi
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+-------------------
+Ellipse Fitting
+-------------------
+OCR
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textdet/dbnet/dbnet_resnet18_fpnc_1200e_icdar2015/dbnet_resnet18_fpnc_1200e_icdar2015_20220825_221614-7c0e94f2.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textrecog/abinet/abinet_20e_st-an_mj/abinet_20e_st-an_mj_20221005_012617-ead8c139.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Inference ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   
+Using cache found in /root/.cache/torch/hub/facebookresearch_dinov2_main
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/module_losses/ce_module_loss.py:101: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/postprocessors/base.py:60: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmcv/cnn/bricks/transformer.py:819: UserWarning: Use same attn_mask in all attentions in BaseTransformerLayer 
+  warnings.warn(f'Use same attn_mask in all attentions in '
+/usr/local/lib/python3.8/site-packages/torch/nn/functional.py:4999: UserWarning: Support for mismatched key_padding_mask and attn_mask is deprecated. Use same type for both instead.
+  warnings.warn(
+
+0: 640x640 1 Gauge Needle, 46.0ms
+Speed: 0.3ms preprocess, 46.0ms inference, 1.6ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 640x640 1 Gauge Face, 37.3ms
+Speed: 0.5ms preprocess, 37.3ms inference, 0.8ms postprocess per image at shape (1, 3, 640, 640)
+-------------------
+Segmentation
+-------------------
+Projection
+Didn't find any numbers with ocr
+Unexpected err=Exception('OCR failed, no numbers found'), type(err)=<class 'Exception'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+-------------------
+Ellipse Fitting
+-------------------
+OCR
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textdet/dbnet/dbnet_resnet18_fpnc_1200e_icdar2015/dbnet_resnet18_fpnc_1200e_icdar2015_20220825_221614-7c0e94f2.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textrecog/abinet/abinet_20e_st-an_mj/abinet_20e_st-an_mj_20221005_012617-ead8c139.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Inference ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   
+Using cache found in /root/.cache/torch/hub/facebookresearch_dinov2_main
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/module_losses/ce_module_loss.py:101: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/postprocessors/base.py:60: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmcv/cnn/bricks/transformer.py:819: UserWarning: Use same attn_mask in all attentions in BaseTransformerLayer 
+  warnings.warn(f'Use same attn_mask in all attentions in '
+/usr/local/lib/python3.8/site-packages/torch/nn/functional.py:4999: UserWarning: Support for mismatched key_padding_mask and attn_mask is deprecated. Use same type for both instead.
+  warnings.warn(
+
+0: 640x640 1 Gauge Needle, 46.8ms
+Speed: 0.4ms preprocess, 46.8ms inference, 1.6ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 640x640 1 Gauge Face, 34.5ms
+Speed: 0.3ms preprocess, 34.5ms inference, 0.7ms postprocess per image at shape (1, 3, 640, 640)
+-------------------
+Segmentation
+-------------------
+Projection
+Final reading is: 747.968902918567 None
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+-------------------
+Ellipse Fitting
+-------------------
+OCR
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textdet/dbnet/dbnet_resnet18_fpnc_1200e_icdar2015/dbnet_resnet18_fpnc_1200e_icdar2015_20220825_221614-7c0e94f2.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textrecog/abinet/abinet_20e_st-an_mj/abinet_20e_st-an_mj_20221005_012617-ead8c139.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Inference ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   
+Using cache found in /root/.cache/torch/hub/facebookresearch_dinov2_main
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/module_losses/ce_module_loss.py:101: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/postprocessors/base.py:60: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmcv/cnn/bricks/transformer.py:819: UserWarning: Use same attn_mask in all attentions in BaseTransformerLayer 
+  warnings.warn(f'Use same attn_mask in all attentions in '
+/usr/local/lib/python3.8/site-packages/torch/nn/functional.py:4999: UserWarning: Support for mismatched key_padding_mask and attn_mask is deprecated. Use same type for both instead.
+  warnings.warn(
+
+0: 640x640 1 Gauge Needle, 50.7ms
+Speed: 0.3ms preprocess, 50.7ms inference, 1.7ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 608x640 2 Gauge Faces, 48.9ms
+Speed: 0.4ms preprocess, 48.9ms inference, 0.5ms postprocess per image at shape (1, 3, 640, 640)
+-------------------
+Segmentation
+-------------------
+Projection
+Final reading is: 836.4123444146835 None
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+-------------------
+Ellipse Fitting
+-------------------
+OCR
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textdet/dbnet/dbnet_resnet18_fpnc_1200e_icdar2015/dbnet_resnet18_fpnc_1200e_icdar2015_20220825_221614-7c0e94f2.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textrecog/abinet/abinet_20e_st-an_mj/abinet_20e_st-an_mj_20221005_012617-ead8c139.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Inference ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   
+Using cache found in /root/.cache/torch/hub/facebookresearch_dinov2_main
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/module_losses/ce_module_loss.py:101: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/postprocessors/base.py:60: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmcv/cnn/bricks/transformer.py:819: UserWarning: Use same attn_mask in all attentions in BaseTransformerLayer 
+  warnings.warn(f'Use same attn_mask in all attentions in '
+/usr/local/lib/python3.8/site-packages/torch/nn/functional.py:4999: UserWarning: Support for mismatched key_padding_mask and attn_mask is deprecated. Use same type for both instead.
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmengine/visualization/visualizer.py:812: UserWarning: Warning: The polygon is out of bounds, the drawn polygon may not be in the image
+  warnings.warn(
+
+0: 640x640 3 Gauge Needles, 47.7ms
+Speed: 0.3ms preprocess, 47.7ms inference, 2.5ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 608x640 2 Gauge Faces, 43.2ms
+Speed: 0.4ms preprocess, 43.2ms inference, 0.7ms postprocess per image at shape (1, 3, 640, 640)
+-------------------
+Segmentation
+-------------------
+Projection
+Final reading is: 908.33766409105 None
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+-------------------
+Ellipse Fitting
+-------------------
+OCR
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textdet/dbnet/dbnet_resnet18_fpnc_1200e_icdar2015/dbnet_resnet18_fpnc_1200e_icdar2015_20220825_221614-7c0e94f2.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textrecog/abinet/abinet_20e_st-an_mj/abinet_20e_st-an_mj_20221005_012617-ead8c139.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Inference ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   
+Using cache found in /root/.cache/torch/hub/facebookresearch_dinov2_main
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/module_losses/ce_module_loss.py:101: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/postprocessors/base.py:60: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmcv/cnn/bricks/transformer.py:819: UserWarning: Use same attn_mask in all attentions in BaseTransformerLayer 
+  warnings.warn(f'Use same attn_mask in all attentions in '
+/usr/local/lib/python3.8/site-packages/torch/nn/functional.py:4999: UserWarning: Support for mismatched key_padding_mask and attn_mask is deprecated. Use same type for both instead.
+  warnings.warn(
+
+0: 640x640 1 Gauge Needle, 54.2ms
+Speed: 0.4ms preprocess, 54.2ms inference, 2.1ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 640x480 1 Gauge Face, 40.1ms
+Speed: 1.2ms preprocess, 40.1ms inference, 0.7ms postprocess per image at shape (1, 3, 640, 640)
+-------------------
+Segmentation
+-------------------
+Projection
+Final reading is: 683.2833148777577 None
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+-------------------
+Ellipse Fitting
+-------------------
+OCR
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textdet/dbnet/dbnet_resnet18_fpnc_1200e_icdar2015/dbnet_resnet18_fpnc_1200e_icdar2015_20220825_221614-7c0e94f2.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textrecog/abinet/abinet_20e_st-an_mj/abinet_20e_st-an_mj_20221005_012617-ead8c139.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Inference ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   
+Using cache found in /root/.cache/torch/hub/facebookresearch_dinov2_main
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/module_losses/ce_module_loss.py:101: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/postprocessors/base.py:60: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmcv/cnn/bricks/transformer.py:819: UserWarning: Use same attn_mask in all attentions in BaseTransformerLayer 
+  warnings.warn(f'Use same attn_mask in all attentions in '
+/usr/local/lib/python3.8/site-packages/torch/nn/functional.py:4999: UserWarning: Support for mismatched key_padding_mask and attn_mask is deprecated. Use same type for both instead.
+  warnings.warn(
+
+0: 640x640 6 Gauge Needles, 43.7ms
+Speed: 0.4ms preprocess, 43.7ms inference, 4.1ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 640x480 1 Gauge Face, 30.6ms
+Speed: 0.3ms preprocess, 30.6ms inference, 0.8ms postprocess per image at shape (1, 3, 640, 640)
+-------------------
+Segmentation
+-------------------
+Projection
+Unexpected err=ValueError('`min_samples` may not be larger than number of samples: n_samples = 1.'), type(err)=<class 'ValueError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+-------------------
+Ellipse Fitting
+-------------------
+OCR
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textdet/dbnet/dbnet_resnet18_fpnc_1200e_icdar2015/dbnet_resnet18_fpnc_1200e_icdar2015_20220825_221614-7c0e94f2.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textrecog/abinet/abinet_20e_st-an_mj/abinet_20e_st-an_mj_20221005_012617-ead8c139.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Inference ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   
+Using cache found in /root/.cache/torch/hub/facebookresearch_dinov2_main
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/module_losses/ce_module_loss.py:101: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/postprocessors/base.py:60: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmcv/cnn/bricks/transformer.py:819: UserWarning: Use same attn_mask in all attentions in BaseTransformerLayer 
+  warnings.warn(f'Use same attn_mask in all attentions in '
+/usr/local/lib/python3.8/site-packages/torch/nn/functional.py:4999: UserWarning: Support for mismatched key_padding_mask and attn_mask is deprecated. Use same type for both instead.
+  warnings.warn(
+
+0: 640x640 3 Gauge Needles, 50.4ms
+Speed: 0.3ms preprocess, 50.4ms inference, 2.4ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 448x640 1 Gauge Face, 37.4ms
+Speed: 0.3ms preprocess, 37.4ms inference, 0.4ms postprocess per image at shape (1, 3, 640, 640)
+-------------------
+Segmentation
+-------------------
+Projection
+Didn't find any numbers with ocr
+Unexpected err=Exception('OCR failed, no numbers found'), type(err)=<class 'Exception'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+-------------------
+Ellipse Fitting
+-------------------
+OCR
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textdet/dbnet/dbnet_resnet18_fpnc_1200e_icdar2015/dbnet_resnet18_fpnc_1200e_icdar2015_20220825_221614-7c0e94f2.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textrecog/abinet/abinet_20e_st-an_mj/abinet_20e_st-an_mj_20221005_012617-ead8c139.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Inference ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   
+Using cache found in /root/.cache/torch/hub/facebookresearch_dinov2_main
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/module_losses/ce_module_loss.py:101: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/postprocessors/base.py:60: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmcv/cnn/bricks/transformer.py:819: UserWarning: Use same attn_mask in all attentions in BaseTransformerLayer 
+  warnings.warn(f'Use same attn_mask in all attentions in '
+/usr/local/lib/python3.8/site-packages/torch/nn/functional.py:4999: UserWarning: Support for mismatched key_padding_mask and attn_mask is deprecated. Use same type for both instead.
+  warnings.warn(
+
+0: 640x640 1 Gauge Needle, 46.9ms
+Speed: 0.2ms preprocess, 46.9ms inference, 1.3ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 384x640 1 Gauge Face, 43.9ms
+Speed: 0.3ms preprocess, 43.9ms inference, 0.6ms postprocess per image at shape (1, 3, 640, 640)
+-------------------
+Segmentation
+-------------------
+Projection
+Final reading is: 256.8411666930198 bar
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+-------------------
+Ellipse Fitting
+-------------------
+OCR
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textdet/dbnet/dbnet_resnet18_fpnc_1200e_icdar2015/dbnet_resnet18_fpnc_1200e_icdar2015_20220825_221614-7c0e94f2.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textrecog/abinet/abinet_20e_st-an_mj/abinet_20e_st-an_mj_20221005_012617-ead8c139.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Inference ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   
+Using cache found in /root/.cache/torch/hub/facebookresearch_dinov2_main
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/module_losses/ce_module_loss.py:101: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/postprocessors/base.py:60: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmcv/cnn/bricks/transformer.py:819: UserWarning: Use same attn_mask in all attentions in BaseTransformerLayer 
+  warnings.warn(f'Use same attn_mask in all attentions in '
+/usr/local/lib/python3.8/site-packages/torch/nn/functional.py:4999: UserWarning: Support for mismatched key_padding_mask and attn_mask is deprecated. Use same type for both instead.
+  warnings.warn(
+
+0: 640x640 1 Gauge Needle, 47.7ms
+Speed: 0.4ms preprocess, 47.7ms inference, 1.5ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 640x640 1 Gauge Face, 36.8ms
+Speed: 0.3ms preprocess, 36.8ms inference, 0.8ms postprocess per image at shape (1, 3, 640, 640)
+-------------------
+Segmentation
+-------------------
+Projection
+Final reading is: 1.5818136983988431 None
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+-------------------
+Ellipse Fitting
+-------------------
+OCR
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textdet/dbnet/dbnet_resnet18_fpnc_1200e_icdar2015/dbnet_resnet18_fpnc_1200e_icdar2015_20220825_221614-7c0e94f2.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textrecog/abinet/abinet_20e_st-an_mj/abinet_20e_st-an_mj_20221005_012617-ead8c139.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Inference ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   
+Using cache found in /root/.cache/torch/hub/facebookresearch_dinov2_main
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/module_losses/ce_module_loss.py:101: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/postprocessors/base.py:60: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmcv/cnn/bricks/transformer.py:819: UserWarning: Use same attn_mask in all attentions in BaseTransformerLayer 
+  warnings.warn(f'Use same attn_mask in all attentions in '
+/usr/local/lib/python3.8/site-packages/torch/nn/functional.py:4999: UserWarning: Support for mismatched key_padding_mask and attn_mask is deprecated. Use same type for both instead.
+  warnings.warn(
+
+0: 640x640 2 Gauge Needles, 47.7ms
+Speed: 0.3ms preprocess, 47.7ms inference, 1.9ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 640x640 2 Gauge Faces, 32.7ms
+Speed: 0.3ms preprocess, 32.7ms inference, 0.5ms postprocess per image at shape (1, 3, 640, 640)
+-------------------
+Segmentation
+-------------------
+Projection
+Final reading is: 842.6970717456354 None
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+-------------------
+Ellipse Fitting
+-------------------
+OCR
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textdet/dbnet/dbnet_resnet18_fpnc_1200e_icdar2015/dbnet_resnet18_fpnc_1200e_icdar2015_20220825_221614-7c0e94f2.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textrecog/abinet/abinet_20e_st-an_mj/abinet_20e_st-an_mj_20221005_012617-ead8c139.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Inference ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   
+Using cache found in /root/.cache/torch/hub/facebookresearch_dinov2_main
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/module_losses/ce_module_loss.py:101: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/postprocessors/base.py:60: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmcv/cnn/bricks/transformer.py:819: UserWarning: Use same attn_mask in all attentions in BaseTransformerLayer 
+  warnings.warn(f'Use same attn_mask in all attentions in '
+/usr/local/lib/python3.8/site-packages/torch/nn/functional.py:4999: UserWarning: Support for mismatched key_padding_mask and attn_mask is deprecated. Use same type for both instead.
+  warnings.warn(
+
+0: 640x640 3 Gauge Needles, 48.4ms
+Speed: 0.3ms preprocess, 48.4ms inference, 2.7ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 448x640 2 Gauge Faces, 33.4ms
+Speed: 0.4ms preprocess, 33.4ms inference, 0.7ms postprocess per image at shape (1, 3, 640, 640)
+Using cache found in /root/.cache/torch/hub/facebookresearch_dinov2_main
+
+0: 640x416 1 Gauge Face, 37.8ms
+Speed: 0.3ms preprocess, 37.8ms inference, 0.7ms postprocess per image at shape (1, 3, 640, 640)
+Using cache found in /root/.cache/torch/hub/facebookresearch_dinov2_main
+
+0: 384x640 1 Gauge Face, 32.0ms
+Speed: 0.4ms preprocess, 32.0ms inference, 0.8ms postprocess per image at shape (1, 3, 640, 640)
+-------------------
+Segmentation
+-------------------
+Projection
+Didn't find any numbers with ocr
+Unexpected err=Exception('OCR failed, no numbers found'), type(err)=<class 'Exception'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+-------------------
+Ellipse Fitting
+Unexpected err=LinAlgError('Singular matrix'), type(err)=<class 'numpy.linalg.LinAlgError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+-------------------
+Ellipse Fitting
+Unexpected err=IndexError('index 0 is out of bounds for axis 0 with size 0'), type(err)=<class 'IndexError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+-------------------
+Ellipse Fitting
+-------------------
+OCR
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textdet/dbnet/dbnet_resnet18_fpnc_1200e_icdar2015/dbnet_resnet18_fpnc_1200e_icdar2015_20220825_221614-7c0e94f2.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textrecog/abinet/abinet_20e_st-an_mj/abinet_20e_st-an_mj_20221005_012617-ead8c139.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Inference ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   
+Using cache found in /root/.cache/torch/hub/facebookresearch_dinov2_main
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/module_losses/ce_module_loss.py:101: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/postprocessors/base.py:60: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmcv/cnn/bricks/transformer.py:819: UserWarning: Use same attn_mask in all attentions in BaseTransformerLayer 
+  warnings.warn(f'Use same attn_mask in all attentions in '
+/usr/local/lib/python3.8/site-packages/torch/nn/functional.py:4999: UserWarning: Support for mismatched key_padding_mask and attn_mask is deprecated. Use same type for both instead.
+  warnings.warn(
+
+0: 640x640 1 Gauge Needle, 45.8ms
+Speed: 0.4ms preprocess, 45.8ms inference, 1.6ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 384x640 1 Gauge Face, 27.9ms
+Speed: 0.3ms preprocess, 27.9ms inference, 0.8ms postprocess per image at shape (1, 3, 640, 640)
+-------------------
+Segmentation
+-------------------
+Projection
+Final reading is: 7.319074771156306 None
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+-------------------
+Ellipse Fitting
+-------------------
+OCR
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textdet/dbnet/dbnet_resnet18_fpnc_1200e_icdar2015/dbnet_resnet18_fpnc_1200e_icdar2015_20220825_221614-7c0e94f2.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textrecog/abinet/abinet_20e_st-an_mj/abinet_20e_st-an_mj_20221005_012617-ead8c139.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Inference ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   
+Using cache found in /root/.cache/torch/hub/facebookresearch_dinov2_main
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/module_losses/ce_module_loss.py:101: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/postprocessors/base.py:60: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmcv/cnn/bricks/transformer.py:819: UserWarning: Use same attn_mask in all attentions in BaseTransformerLayer 
+  warnings.warn(f'Use same attn_mask in all attentions in '
+/usr/local/lib/python3.8/site-packages/torch/nn/functional.py:4999: UserWarning: Support for mismatched key_padding_mask and attn_mask is deprecated. Use same type for both instead.
+  warnings.warn(
+
+0: 640x640 1 Gauge Needle, 46.0ms
+Speed: 0.2ms preprocess, 46.0ms inference, 1.8ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 640x544 1 Gauge Face, 45.0ms
+Speed: 0.3ms preprocess, 45.0ms inference, 0.6ms postprocess per image at shape (1, 3, 640, 640)
+-------------------
+Segmentation
+-------------------
+Projection
+Final reading is: 7.319074771156306 None
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+-------------------
+Ellipse Fitting
+-------------------
+OCR
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textdet/dbnet/dbnet_resnet18_fpnc_1200e_icdar2015/dbnet_resnet18_fpnc_1200e_icdar2015_20220825_221614-7c0e94f2.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textrecog/abinet/abinet_20e_st-an_mj/abinet_20e_st-an_mj_20221005_012617-ead8c139.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Inference ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   
+Using cache found in /root/.cache/torch/hub/facebookresearch_dinov2_main
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/module_losses/ce_module_loss.py:101: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/postprocessors/base.py:60: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmcv/cnn/bricks/transformer.py:819: UserWarning: Use same attn_mask in all attentions in BaseTransformerLayer 
+  warnings.warn(f'Use same attn_mask in all attentions in '
+/usr/local/lib/python3.8/site-packages/torch/nn/functional.py:4999: UserWarning: Support for mismatched key_padding_mask and attn_mask is deprecated. Use same type for both instead.
+  warnings.warn(
+
+0: 640x640 1 Gauge Needle, 49.4ms
+Speed: 0.5ms preprocess, 49.4ms inference, 2.1ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 416x640 1 Gauge Face, 29.6ms
+Speed: 0.3ms preprocess, 29.6ms inference, 0.5ms postprocess per image at shape (1, 3, 640, 640)
+-------------------
+Segmentation
+-------------------
+Projection
+Didn't find any numbers with ocr
+Unexpected err=Exception('OCR failed, no numbers found'), type(err)=<class 'Exception'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+-------------------
+Ellipse Fitting
+-------------------
+OCR
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textdet/dbnet/dbnet_resnet18_fpnc_1200e_icdar2015/dbnet_resnet18_fpnc_1200e_icdar2015_20220825_221614-7c0e94f2.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textrecog/abinet/abinet_20e_st-an_mj/abinet_20e_st-an_mj_20221005_012617-ead8c139.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Inference ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   
+Using cache found in /root/.cache/torch/hub/facebookresearch_dinov2_main
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/module_losses/ce_module_loss.py:101: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/postprocessors/base.py:60: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmcv/cnn/bricks/transformer.py:819: UserWarning: Use same attn_mask in all attentions in BaseTransformerLayer 
+  warnings.warn(f'Use same attn_mask in all attentions in '
+/usr/local/lib/python3.8/site-packages/torch/nn/functional.py:4999: UserWarning: Support for mismatched key_padding_mask and attn_mask is deprecated. Use same type for both instead.
+  warnings.warn(
+
+0: 640x640 1 Gauge Needle, 42.3ms
+Speed: 0.2ms preprocess, 42.3ms inference, 1.1ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 640x512 2 Gauge Faces, 43.5ms
+Speed: 0.3ms preprocess, 43.5ms inference, 0.7ms postprocess per image at shape (1, 3, 640, 640)
+-------------------
+Segmentation
+-------------------
+Projection
+Final reading is: 66.51431735876636 psi
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+-------------------
+Ellipse Fitting
+-------------------
+OCR
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textdet/dbnet/dbnet_resnet18_fpnc_1200e_icdar2015/dbnet_resnet18_fpnc_1200e_icdar2015_20220825_221614-7c0e94f2.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textrecog/abinet/abinet_20e_st-an_mj/abinet_20e_st-an_mj_20221005_012617-ead8c139.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Inference ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   
+Using cache found in /root/.cache/torch/hub/facebookresearch_dinov2_main
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/module_losses/ce_module_loss.py:101: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/postprocessors/base.py:60: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmcv/cnn/bricks/transformer.py:819: UserWarning: Use same attn_mask in all attentions in BaseTransformerLayer 
+  warnings.warn(f'Use same attn_mask in all attentions in '
+/usr/local/lib/python3.8/site-packages/torch/nn/functional.py:4999: UserWarning: Support for mismatched key_padding_mask and attn_mask is deprecated. Use same type for both instead.
+  warnings.warn(
+
+0: 640x640 1 Gauge Needle, 47.5ms
+Speed: 0.3ms preprocess, 47.5ms inference, 1.7ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 640x448 3 Gauge Faces, 29.1ms
+Speed: 0.3ms preprocess, 29.1ms inference, 0.6ms postprocess per image at shape (1, 3, 640, 640)
+-------------------
+Segmentation
+-------------------
+Projection
+Didn't find any numbers with ocr
+Unexpected err=Exception('OCR failed, no numbers found'), type(err)=<class 'Exception'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+-------------------
+Ellipse Fitting
+-------------------
+OCR
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textdet/dbnet/dbnet_resnet18_fpnc_1200e_icdar2015/dbnet_resnet18_fpnc_1200e_icdar2015_20220825_221614-7c0e94f2.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textrecog/abinet/abinet_20e_st-an_mj/abinet_20e_st-an_mj_20221005_012617-ead8c139.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Inference ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   
+Using cache found in /root/.cache/torch/hub/facebookresearch_dinov2_main
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/module_losses/ce_module_loss.py:101: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/postprocessors/base.py:60: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmcv/cnn/bricks/transformer.py:819: UserWarning: Use same attn_mask in all attentions in BaseTransformerLayer 
+  warnings.warn(f'Use same attn_mask in all attentions in '
+/usr/local/lib/python3.8/site-packages/torch/nn/functional.py:4999: UserWarning: Support for mismatched key_padding_mask and attn_mask is deprecated. Use same type for both instead.
+  warnings.warn(
+
+0: 640x640 2 Gauge Needles, 44.4ms
+Speed: 0.2ms preprocess, 44.4ms inference, 1.6ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 640x416 1 Gauge Face, 30.9ms
+Speed: 0.4ms preprocess, 30.9ms inference, 0.6ms postprocess per image at shape (1, 3, 640, 640)
+-------------------
+Segmentation
+-------------------
+Projection
+Final reading is: 11.55110129023442 None
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+-------------------
+Ellipse Fitting
+-------------------
+OCR
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textdet/dbnet/dbnet_resnet18_fpnc_1200e_icdar2015/dbnet_resnet18_fpnc_1200e_icdar2015_20220825_221614-7c0e94f2.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textrecog/abinet/abinet_20e_st-an_mj/abinet_20e_st-an_mj_20221005_012617-ead8c139.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Inference ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   
+Using cache found in /root/.cache/torch/hub/facebookresearch_dinov2_main
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/module_losses/ce_module_loss.py:101: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/postprocessors/base.py:60: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmcv/cnn/bricks/transformer.py:819: UserWarning: Use same attn_mask in all attentions in BaseTransformerLayer 
+  warnings.warn(f'Use same attn_mask in all attentions in '
+/usr/local/lib/python3.8/site-packages/torch/nn/functional.py:4999: UserWarning: Support for mismatched key_padding_mask and attn_mask is deprecated. Use same type for both instead.
+  warnings.warn(
+
+0: 640x640 1 Gauge Needle, 46.1ms
+Speed: 0.4ms preprocess, 46.1ms inference, 1.7ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 384x640 1 Gauge Face, 23.7ms
+Speed: 0.3ms preprocess, 23.7ms inference, 0.7ms postprocess per image at shape (1, 3, 640, 640)
+-------------------
+Segmentation
+-------------------
+Projection
+Final reading is: 50.38121427994679 None
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+-------------------
+Ellipse Fitting
+-------------------
+OCR
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textdet/dbnet/dbnet_resnet18_fpnc_1200e_icdar2015/dbnet_resnet18_fpnc_1200e_icdar2015_20220825_221614-7c0e94f2.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textrecog/abinet/abinet_20e_st-an_mj/abinet_20e_st-an_mj_20221005_012617-ead8c139.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Inference ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   
+Using cache found in /root/.cache/torch/hub/facebookresearch_dinov2_main
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/module_losses/ce_module_loss.py:101: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/postprocessors/base.py:60: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmcv/cnn/bricks/transformer.py:819: UserWarning: Use same attn_mask in all attentions in BaseTransformerLayer 
+  warnings.warn(f'Use same attn_mask in all attentions in '
+/usr/local/lib/python3.8/site-packages/torch/nn/functional.py:4999: UserWarning: Support for mismatched key_padding_mask and attn_mask is deprecated. Use same type for both instead.
+  warnings.warn(
+
+0: 640x640 1 Gauge Needle, 41.4ms
+Speed: 0.3ms preprocess, 41.4ms inference, 1.7ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 384x640 1 Gauge Face, 22.6ms
+Speed: 0.2ms preprocess, 22.6ms inference, 0.8ms postprocess per image at shape (1, 3, 640, 640)
+-------------------
+Segmentation
+-------------------
+Projection
+Final reading is: -48.2971975296704 None
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+-------------------
+Ellipse Fitting
+-------------------
+OCR
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textdet/dbnet/dbnet_resnet18_fpnc_1200e_icdar2015/dbnet_resnet18_fpnc_1200e_icdar2015_20220825_221614-7c0e94f2.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textrecog/abinet/abinet_20e_st-an_mj/abinet_20e_st-an_mj_20221005_012617-ead8c139.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Inference ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   
+Using cache found in /root/.cache/torch/hub/facebookresearch_dinov2_main
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/module_losses/ce_module_loss.py:101: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/postprocessors/base.py:60: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmcv/cnn/bricks/transformer.py:819: UserWarning: Use same attn_mask in all attentions in BaseTransformerLayer 
+  warnings.warn(f'Use same attn_mask in all attentions in '
+/usr/local/lib/python3.8/site-packages/torch/nn/functional.py:4999: UserWarning: Support for mismatched key_padding_mask and attn_mask is deprecated. Use same type for both instead.
+  warnings.warn(
+
+0: 640x640 2 Gauge Needles, 54.2ms
+Speed: 0.7ms preprocess, 54.2ms inference, 2.7ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 352x640 4 Gauge Faces, 35.9ms
+Speed: 0.3ms preprocess, 35.9ms inference, 0.7ms postprocess per image at shape (1, 3, 640, 640)
+-------------------
+Segmentation
+-------------------
+Projection
+Final reading is: 100.0 None
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+-------------------
+Ellipse Fitting
+-------------------
+OCR
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textdet/dbnet/dbnet_resnet18_fpnc_1200e_icdar2015/dbnet_resnet18_fpnc_1200e_icdar2015_20220825_221614-7c0e94f2.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textrecog/abinet/abinet_20e_st-an_mj/abinet_20e_st-an_mj_20221005_012617-ead8c139.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Inference ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   
+Using cache found in /root/.cache/torch/hub/facebookresearch_dinov2_main
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/module_losses/ce_module_loss.py:101: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/postprocessors/base.py:60: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmcv/cnn/bricks/transformer.py:819: UserWarning: Use same attn_mask in all attentions in BaseTransformerLayer 
+  warnings.warn(f'Use same attn_mask in all attentions in '
+/usr/local/lib/python3.8/site-packages/torch/nn/functional.py:4999: UserWarning: Support for mismatched key_padding_mask and attn_mask is deprecated. Use same type for both instead.
+  warnings.warn(
+
+0: 640x640 (no detections), 50.2ms
+Speed: 0.4ms preprocess, 50.2ms inference, 0.2ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 384x640 2 Gauge Faces, 26.7ms
+Speed: 0.3ms preprocess, 26.7ms inference, 0.8ms postprocess per image at shape (1, 3, 640, 640)
+-------------------
+Segmentation
+Unexpected err=Exception('Segmentation failed, no needle found'), type(err)=<class 'Exception'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+-------------------
+Ellipse Fitting
+-------------------
+OCR
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textdet/dbnet/dbnet_resnet18_fpnc_1200e_icdar2015/dbnet_resnet18_fpnc_1200e_icdar2015_20220825_221614-7c0e94f2.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textrecog/abinet/abinet_20e_st-an_mj/abinet_20e_st-an_mj_20221005_012617-ead8c139.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Inference ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   
+Using cache found in /root/.cache/torch/hub/facebookresearch_dinov2_main
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/module_losses/ce_module_loss.py:101: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/postprocessors/base.py:60: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmcv/cnn/bricks/transformer.py:819: UserWarning: Use same attn_mask in all attentions in BaseTransformerLayer 
+  warnings.warn(f'Use same attn_mask in all attentions in '
+/usr/local/lib/python3.8/site-packages/torch/nn/functional.py:4999: UserWarning: Support for mismatched key_padding_mask and attn_mask is deprecated. Use same type for both instead.
+  warnings.warn(
+
+0: 640x640 (no detections), 47.6ms
+Speed: 0.4ms preprocess, 47.6ms inference, 0.3ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 640x480 1 Gauge Face, 30.1ms
+Speed: 0.3ms preprocess, 30.1ms inference, 0.6ms postprocess per image at shape (1, 3, 640, 640)
+-------------------
+Segmentation
+Unexpected err=Exception('Segmentation failed, no needle found'), type(err)=<class 'Exception'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+-------------------
+Ellipse Fitting
+-------------------
+OCR
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textdet/dbnet/dbnet_resnet18_fpnc_1200e_icdar2015/dbnet_resnet18_fpnc_1200e_icdar2015_20220825_221614-7c0e94f2.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textrecog/abinet/abinet_20e_st-an_mj/abinet_20e_st-an_mj_20221005_012617-ead8c139.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Inference ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   
+Using cache found in /root/.cache/torch/hub/facebookresearch_dinov2_main
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/module_losses/ce_module_loss.py:101: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/postprocessors/base.py:60: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmcv/cnn/bricks/transformer.py:819: UserWarning: Use same attn_mask in all attentions in BaseTransformerLayer 
+  warnings.warn(f'Use same attn_mask in all attentions in '
+/usr/local/lib/python3.8/site-packages/torch/nn/functional.py:4999: UserWarning: Support for mismatched key_padding_mask and attn_mask is deprecated. Use same type for both instead.
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmengine/visualization/visualizer.py:812: UserWarning: Warning: The polygon is out of bounds, the drawn polygon may not be in the image
+  warnings.warn(
+
+0: 640x640 1 Gauge Needle, 46.4ms
+Speed: 0.3ms preprocess, 46.4ms inference, 1.9ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 416x640 1 Gauge Face, 28.0ms
+Speed: 0.3ms preprocess, 28.0ms inference, 0.8ms postprocess per image at shape (1, 3, 640, 640)
+-------------------
+Segmentation
+-------------------
+Projection
+Final reading is: -12.933425282026448 psi
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+-------------------
+Ellipse Fitting
+-------------------
+OCR
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textdet/dbnet/dbnet_resnet18_fpnc_1200e_icdar2015/dbnet_resnet18_fpnc_1200e_icdar2015_20220825_221614-7c0e94f2.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textrecog/abinet/abinet_20e_st-an_mj/abinet_20e_st-an_mj_20221005_012617-ead8c139.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Inference ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   
+Using cache found in /root/.cache/torch/hub/facebookresearch_dinov2_main
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/module_losses/ce_module_loss.py:101: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/postprocessors/base.py:60: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmcv/cnn/bricks/transformer.py:819: UserWarning: Use same attn_mask in all attentions in BaseTransformerLayer 
+  warnings.warn(f'Use same attn_mask in all attentions in '
+/usr/local/lib/python3.8/site-packages/torch/nn/functional.py:4999: UserWarning: Support for mismatched key_padding_mask and attn_mask is deprecated. Use same type for both instead.
+  warnings.warn(
+
+0: 640x640 1 Gauge Needle, 47.6ms
+Speed: 0.2ms preprocess, 47.6ms inference, 1.3ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 384x640 1 Gauge Face, 23.9ms
+Speed: 0.2ms preprocess, 23.9ms inference, 0.4ms postprocess per image at shape (1, 3, 640, 640)
+-------------------
+Segmentation
+-------------------
+Projection
+Final reading is: 53.58886854791591 psi
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+-------------------
+Ellipse Fitting
+-------------------
+OCR
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textdet/dbnet/dbnet_resnet18_fpnc_1200e_icdar2015/dbnet_resnet18_fpnc_1200e_icdar2015_20220825_221614-7c0e94f2.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textrecog/abinet/abinet_20e_st-an_mj/abinet_20e_st-an_mj_20221005_012617-ead8c139.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Inference ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   
+Using cache found in /root/.cache/torch/hub/facebookresearch_dinov2_main
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/module_losses/ce_module_loss.py:101: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/postprocessors/base.py:60: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmcv/cnn/bricks/transformer.py:819: UserWarning: Use same attn_mask in all attentions in BaseTransformerLayer 
+  warnings.warn(f'Use same attn_mask in all attentions in '
+/usr/local/lib/python3.8/site-packages/torch/nn/functional.py:4999: UserWarning: Support for mismatched key_padding_mask and attn_mask is deprecated. Use same type for both instead.
+  warnings.warn(
+
+0: 640x640 1 Gauge Needle, 43.1ms
+Speed: 0.2ms preprocess, 43.1ms inference, 1.5ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 384x640 2 Gauge Faces, 27.0ms
+Speed: 0.2ms preprocess, 27.0ms inference, 0.7ms postprocess per image at shape (1, 3, 640, 640)
+-------------------
+Segmentation
+-------------------
+Projection
+Final reading is: 53.16340360075897 psi
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+-------------------
+Ellipse Fitting
+-------------------
+OCR
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textdet/dbnet/dbnet_resnet18_fpnc_1200e_icdar2015/dbnet_resnet18_fpnc_1200e_icdar2015_20220825_221614-7c0e94f2.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textrecog/abinet/abinet_20e_st-an_mj/abinet_20e_st-an_mj_20221005_012617-ead8c139.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Inference ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   
+Using cache found in /root/.cache/torch/hub/facebookresearch_dinov2_main
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/module_losses/ce_module_loss.py:101: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/postprocessors/base.py:60: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+
+0: 640x640 1 Gauge Needle, 49.0ms
+Speed: 0.4ms preprocess, 49.0ms inference, 1.7ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 640x608 1 Gauge Face, 49.1ms
+Speed: 0.3ms preprocess, 49.1ms inference, 0.7ms postprocess per image at shape (1, 3, 640, 640)
+-------------------
+Segmentation
+-------------------
+Projection
+Didn't find any numbers with ocr
+Unexpected err=Exception('OCR failed, no numbers found'), type(err)=<class 'Exception'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+-------------------
+Ellipse Fitting
+-------------------
+OCR
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textdet/dbnet/dbnet_resnet18_fpnc_1200e_icdar2015/dbnet_resnet18_fpnc_1200e_icdar2015_20220825_221614-7c0e94f2.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textrecog/abinet/abinet_20e_st-an_mj/abinet_20e_st-an_mj_20221005_012617-ead8c139.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Inference ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   
+Using cache found in /root/.cache/torch/hub/facebookresearch_dinov2_main
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/module_losses/ce_module_loss.py:101: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/postprocessors/base.py:60: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmcv/cnn/bricks/transformer.py:819: UserWarning: Use same attn_mask in all attentions in BaseTransformerLayer 
+  warnings.warn(f'Use same attn_mask in all attentions in '
+/usr/local/lib/python3.8/site-packages/torch/nn/functional.py:4999: UserWarning: Support for mismatched key_padding_mask and attn_mask is deprecated. Use same type for both instead.
+  warnings.warn(
+
+0: 640x640 1 Gauge Needle, 45.5ms
+Speed: 0.3ms preprocess, 45.5ms inference, 1.8ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 416x640 3 Gauge Faces, 25.0ms
+Speed: 0.2ms preprocess, 25.0ms inference, 0.7ms postprocess per image at shape (1, 3, 640, 640)
+-------------------
+Segmentation
+-------------------
+Projection
+Final reading is: 15.234454926004958 None
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+-------------------
+Ellipse Fitting
+-------------------
+OCR
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textdet/dbnet/dbnet_resnet18_fpnc_1200e_icdar2015/dbnet_resnet18_fpnc_1200e_icdar2015_20220825_221614-7c0e94f2.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textrecog/abinet/abinet_20e_st-an_mj/abinet_20e_st-an_mj_20221005_012617-ead8c139.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Inference ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   
+Using cache found in /root/.cache/torch/hub/facebookresearch_dinov2_main
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/module_losses/ce_module_loss.py:101: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/postprocessors/base.py:60: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmcv/cnn/bricks/transformer.py:819: UserWarning: Use same attn_mask in all attentions in BaseTransformerLayer 
+  warnings.warn(f'Use same attn_mask in all attentions in '
+/usr/local/lib/python3.8/site-packages/torch/nn/functional.py:4999: UserWarning: Support for mismatched key_padding_mask and attn_mask is deprecated. Use same type for both instead.
+  warnings.warn(
+
+0: 640x640 1 Gauge Needle, 46.0ms
+Speed: 0.4ms preprocess, 46.0ms inference, 1.7ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 352x640 3 Gauge Faces, 24.4ms
+Speed: 0.3ms preprocess, 24.4ms inference, 0.7ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 384x640 2 Gauge Faces, 26.5ms
+Speed: 0.4ms preprocess, 26.5ms inference, 0.6ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 352x640 1 Gauge Face, 23.1ms
+Speed: 0.2ms preprocess, 23.1ms inference, 0.7ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 640x448 1 Gauge Face, 30.4ms
+Speed: 0.4ms preprocess, 30.4ms inference, 0.5ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 384x640 1 Gauge Face, 24.5ms
+Speed: 0.3ms preprocess, 24.5ms inference, 0.7ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 640x448 1 Gauge Face, 24.9ms
+Speed: 0.2ms preprocess, 24.9ms inference, 0.7ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 640x640 2 Gauge Faces, 36.0ms
+Speed: 0.3ms preprocess, 36.0ms inference, 0.6ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 640x416 2 Gauge Faces, 23.9ms
+Speed: 0.2ms preprocess, 23.9ms inference, 0.4ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 576x640 1 Gauge Face, 42.7ms
+Speed: 0.7ms preprocess, 42.7ms inference, 0.7ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 640x416 2 Gauge Faces, 22.8ms
+Speed: 0.2ms preprocess, 22.8ms inference, 0.4ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 384x640 2 Gauge Faces, 23.5ms
+Speed: 0.3ms preprocess, 23.5ms inference, 0.9ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 352x640 2 Gauge Faces, 20.3ms
+Speed: 0.3ms preprocess, 20.3ms inference, 0.4ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 640x416 1 Gauge Face, 22.0ms
+Speed: 0.2ms preprocess, 22.0ms inference, 0.4ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 640x480 2 Gauge Faces, 25.0ms
+Speed: 0.2ms preprocess, 25.0ms inference, 0.4ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 640x480 2 Gauge Faces, 26.5ms
+Speed: 0.3ms preprocess, 26.5ms inference, 0.4ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 384x640 2 Gauge Faces, 26.5ms
+Speed: 0.3ms preprocess, 26.5ms inference, 0.9ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 640x448 1 Gauge Face, 32.7ms
+Speed: 0.3ms preprocess, 32.7ms inference, 0.5ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 320x640 6 Gauge Faces, 38.7ms
+Speed: 0.3ms preprocess, 38.7ms inference, 0.6ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 480x640 1 Gauge Face, 56.4ms
+Speed: 0.4ms preprocess, 56.4ms inference, 0.4ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 416x640 1 Gauge Face, 22.1ms
+Speed: 0.2ms preprocess, 22.1ms inference, 0.7ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 448x640 1 Gauge Face, 45.3ms
+Speed: 0.3ms preprocess, 45.3ms inference, 0.8ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 416x640 1 Gauge Face, 22.7ms
+Speed: 0.3ms preprocess, 22.7ms inference, 0.4ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 384x640 1 Gauge Face, 23.6ms
+Speed: 0.2ms preprocess, 23.6ms inference, 0.4ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 352x640 2 Gauge Faces, 21.7ms
+Speed: 0.2ms preprocess, 21.7ms inference, 0.8ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 384x640 1 Gauge Face, 22.6ms
+Speed: 0.3ms preprocess, 22.6ms inference, 0.4ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 352x640 2 Gauge Faces, 22.4ms
+Speed: 0.2ms preprocess, 22.4ms inference, 0.4ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 448x640 1 Gauge Face, 25.5ms
+Speed: 0.3ms preprocess, 25.5ms inference, 0.4ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 384x640 1 Gauge Face, 21.1ms
+Speed: 0.3ms preprocess, 21.1ms inference, 0.4ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 352x640 2 Gauge Faces, 21.4ms
+Speed: 0.1ms preprocess, 21.4ms inference, 0.7ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 352x640 2 Gauge Faces, 20.3ms
+Speed: 0.2ms preprocess, 20.3ms inference, 0.4ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 640x448 3 Gauge Faces, 23.4ms
+Speed: 0.2ms preprocess, 23.4ms inference, 0.4ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 640x480 3 Gauge Faces, 21.0ms
+Speed: 0.2ms preprocess, 21.0ms inference, 0.4ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 640x448 1 Gauge Face, 27.5ms
+Speed: 0.3ms preprocess, 27.5ms inference, 0.5ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 576x640 9 Gauge Faces, 31.7ms
+Speed: 0.3ms preprocess, 31.7ms inference, 0.8ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 544x640 3 Gauge Faces, 48.3ms
+Speed: 0.2ms preprocess, 48.3ms inference, 0.4ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 320x640 2 Gauge Faces, 21.0ms
+Speed: 0.1ms preprocess, 21.0ms inference, 0.5ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 384x640 3 Gauge Faces, 23.2ms
+Speed: 0.4ms preprocess, 23.2ms inference, 0.6ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 640x416 4 Gauge Faces, 24.9ms
+Speed: 0.2ms preprocess, 24.9ms inference, 0.7ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 320x640 2 Gauge Faces, 21.2ms
+Speed: 0.2ms preprocess, 21.2ms inference, 0.7ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 352x640 1 Gauge Face, 24.6ms
+Speed: 0.2ms preprocess, 24.6ms inference, 0.7ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 256x640 2 Gauge Faces, 30.1ms
+Speed: 0.1ms preprocess, 30.1ms inference, 0.4ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 352x640 1 Gauge Face, 23.7ms
+Speed: 0.4ms preprocess, 23.7ms inference, 0.4ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 640x416 1 Gauge Face, 27.6ms
+Speed: 0.2ms preprocess, 27.6ms inference, 0.4ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 384x640 2 Gauge Faces, 24.5ms
+Speed: 0.2ms preprocess, 24.5ms inference, 0.4ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 352x640 1 Gauge Face, 21.9ms
+Speed: 0.2ms preprocess, 21.9ms inference, 0.7ms postprocess per image at shape (1, 3, 640, 640)
+-------------------
+Segmentation
+-------------------
+Projection
+Unexpected err=ValueError('`min_samples` may not be larger than number of samples: n_samples = 1.'), type(err)=<class 'ValueError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+-------------------
+Ellipse Fitting
+-------------------
+OCR
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textdet/dbnet/dbnet_resnet18_fpnc_1200e_icdar2015/dbnet_resnet18_fpnc_1200e_icdar2015_20220825_221614-7c0e94f2.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textrecog/abinet/abinet_20e_st-an_mj/abinet_20e_st-an_mj_20221005_012617-ead8c139.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Inference ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   
+Using cache found in /root/.cache/torch/hub/facebookresearch_dinov2_main
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/module_losses/ce_module_loss.py:101: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/postprocessors/base.py:60: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmcv/cnn/bricks/transformer.py:819: UserWarning: Use same attn_mask in all attentions in BaseTransformerLayer 
+  warnings.warn(f'Use same attn_mask in all attentions in '
+/usr/local/lib/python3.8/site-packages/torch/nn/functional.py:4999: UserWarning: Support for mismatched key_padding_mask and attn_mask is deprecated. Use same type for both instead.
+  warnings.warn(
+
+0: 640x640 1 Gauge Needle, 43.9ms
+Speed: 0.5ms preprocess, 43.9ms inference, 1.2ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 640x640 1 Gauge Face, 32.8ms
+Speed: 0.3ms preprocess, 32.8ms inference, 0.4ms postprocess per image at shape (1, 3, 640, 640)
+-------------------
+Segmentation
+-------------------
+Projection
+Final reading is: 34.74091552809136 None
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+-------------------
+Ellipse Fitting
+-------------------
+OCR
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textdet/dbnet/dbnet_resnet18_fpnc_1200e_icdar2015/dbnet_resnet18_fpnc_1200e_icdar2015_20220825_221614-7c0e94f2.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textrecog/abinet/abinet_20e_st-an_mj/abinet_20e_st-an_mj_20221005_012617-ead8c139.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Inference ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   
+Using cache found in /root/.cache/torch/hub/facebookresearch_dinov2_main
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/module_losses/ce_module_loss.py:101: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/postprocessors/base.py:60: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmcv/cnn/bricks/transformer.py:819: UserWarning: Use same attn_mask in all attentions in BaseTransformerLayer 
+  warnings.warn(f'Use same attn_mask in all attentions in '
+/usr/local/lib/python3.8/site-packages/torch/nn/functional.py:4999: UserWarning: Support for mismatched key_padding_mask and attn_mask is deprecated. Use same type for both instead.
+  warnings.warn(
+
+0: 640x640 1 Gauge Needle, 31.7ms
+Speed: 0.3ms preprocess, 31.7ms inference, 1.3ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 640x384 1 Gauge Face, 39.2ms
+Speed: 0.2ms preprocess, 39.2ms inference, 0.7ms postprocess per image at shape (1, 3, 640, 640)
+-------------------
+Segmentation
+-------------------
+Projection
+Didn't find any numbers with ocr
+Unexpected err=Exception('OCR failed, no numbers found'), type(err)=<class 'Exception'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+-------------------
+Ellipse Fitting
+-------------------
+OCR
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textdet/dbnet/dbnet_resnet18_fpnc_1200e_icdar2015/dbnet_resnet18_fpnc_1200e_icdar2015_20220825_221614-7c0e94f2.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textrecog/abinet/abinet_20e_st-an_mj/abinet_20e_st-an_mj_20221005_012617-ead8c139.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Inference ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   
+Using cache found in /root/.cache/torch/hub/facebookresearch_dinov2_main
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/module_losses/ce_module_loss.py:101: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/postprocessors/base.py:60: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmcv/cnn/bricks/transformer.py:819: UserWarning: Use same attn_mask in all attentions in BaseTransformerLayer 
+  warnings.warn(f'Use same attn_mask in all attentions in '
+/usr/local/lib/python3.8/site-packages/torch/nn/functional.py:4999: UserWarning: Support for mismatched key_padding_mask and attn_mask is deprecated. Use same type for both instead.
+  warnings.warn(
+
+0: 640x640 2 Gauge Needles, 48.4ms
+Speed: 0.3ms preprocess, 48.4ms inference, 2.2ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 640x576 1 Gauge Face, 52.2ms
+Speed: 0.3ms preprocess, 52.2ms inference, 0.5ms postprocess per image at shape (1, 3, 640, 640)
+-------------------
+Segmentation
+-------------------
+Projection
+Unexpected err=ValueError('`min_samples` may not be larger than number of samples: n_samples = 1.'), type(err)=<class 'ValueError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+-------------------
+Ellipse Fitting
+-------------------
+OCR
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textdet/dbnet/dbnet_resnet18_fpnc_1200e_icdar2015/dbnet_resnet18_fpnc_1200e_icdar2015_20220825_221614-7c0e94f2.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textrecog/abinet/abinet_20e_st-an_mj/abinet_20e_st-an_mj_20221005_012617-ead8c139.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Inference ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   
+Using cache found in /root/.cache/torch/hub/facebookresearch_dinov2_main
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/module_losses/ce_module_loss.py:101: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/postprocessors/base.py:60: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmcv/cnn/bricks/transformer.py:819: UserWarning: Use same attn_mask in all attentions in BaseTransformerLayer 
+  warnings.warn(f'Use same attn_mask in all attentions in '
+/usr/local/lib/python3.8/site-packages/torch/nn/functional.py:4999: UserWarning: Support for mismatched key_padding_mask and attn_mask is deprecated. Use same type for both instead.
+  warnings.warn(
+
+0: 640x640 1 Gauge Needle, 53.9ms
+Speed: 0.4ms preprocess, 53.9ms inference, 1.9ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 640x416 2 Gauge Faces, 29.1ms
+Speed: 0.3ms preprocess, 29.1ms inference, 0.9ms postprocess per image at shape (1, 3, 640, 640)
+-------------------
+Segmentation
+-------------------
+Projection
+Final reading is: 127.56456814756811 None
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+-------------------
+Ellipse Fitting
+-------------------
+OCR
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textdet/dbnet/dbnet_resnet18_fpnc_1200e_icdar2015/dbnet_resnet18_fpnc_1200e_icdar2015_20220825_221614-7c0e94f2.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textrecog/abinet/abinet_20e_st-an_mj/abinet_20e_st-an_mj_20221005_012617-ead8c139.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Inference ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   
+Using cache found in /root/.cache/torch/hub/facebookresearch_dinov2_main
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/module_losses/ce_module_loss.py:101: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/postprocessors/base.py:60: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmcv/cnn/bricks/transformer.py:819: UserWarning: Use same attn_mask in all attentions in BaseTransformerLayer 
+  warnings.warn(f'Use same attn_mask in all attentions in '
+/usr/local/lib/python3.8/site-packages/torch/nn/functional.py:4999: UserWarning: Support for mismatched key_padding_mask and attn_mask is deprecated. Use same type for both instead.
+  warnings.warn(
+
+0: 640x640 1 Gauge Needle, 48.7ms
+Speed: 0.4ms preprocess, 48.7ms inference, 1.7ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 320x640 2 Gauge Faces, 25.8ms
+Speed: 0.3ms preprocess, 25.8ms inference, 0.8ms postprocess per image at shape (1, 3, 640, 640)
+-------------------
+Segmentation
+-------------------
+Projection
+Unexpected err=Exception('Needle line and ellipse do not intersect'), type(err)=<class 'Exception'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+-------------------
+Ellipse Fitting
+-------------------
+OCR
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textdet/dbnet/dbnet_resnet18_fpnc_1200e_icdar2015/dbnet_resnet18_fpnc_1200e_icdar2015_20220825_221614-7c0e94f2.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textrecog/abinet/abinet_20e_st-an_mj/abinet_20e_st-an_mj_20221005_012617-ead8c139.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Inference ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   
+Using cache found in /root/.cache/torch/hub/facebookresearch_dinov2_main
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/module_losses/ce_module_loss.py:101: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/postprocessors/base.py:60: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmcv/cnn/bricks/transformer.py:819: UserWarning: Use same attn_mask in all attentions in BaseTransformerLayer 
+  warnings.warn(f'Use same attn_mask in all attentions in '
+/usr/local/lib/python3.8/site-packages/torch/nn/functional.py:4999: UserWarning: Support for mismatched key_padding_mask and attn_mask is deprecated. Use same type for both instead.
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmengine/visualization/visualizer.py:812: UserWarning: Warning: The polygon is out of bounds, the drawn polygon may not be in the image
+  warnings.warn(
+
+0: 640x640 1 Gauge Needle, 45.7ms
+Speed: 0.3ms preprocess, 45.7ms inference, 1.3ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 640x544 3 Gauge Faces, 59.4ms
+Speed: 0.3ms preprocess, 59.4ms inference, 0.8ms postprocess per image at shape (1, 3, 640, 640)
+-------------------
+Segmentation
+-------------------
+Projection
+Didn't find any numbers with ocr
+Unexpected err=Exception('OCR failed, no numbers found'), type(err)=<class 'Exception'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+-------------------
+Ellipse Fitting
+-------------------
+OCR
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textdet/dbnet/dbnet_resnet18_fpnc_1200e_icdar2015/dbnet_resnet18_fpnc_1200e_icdar2015_20220825_221614-7c0e94f2.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textrecog/abinet/abinet_20e_st-an_mj/abinet_20e_st-an_mj_20221005_012617-ead8c139.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Inference ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   
+Using cache found in /root/.cache/torch/hub/facebookresearch_dinov2_main
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/module_losses/ce_module_loss.py:101: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/postprocessors/base.py:60: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmcv/cnn/bricks/transformer.py:819: UserWarning: Use same attn_mask in all attentions in BaseTransformerLayer 
+  warnings.warn(f'Use same attn_mask in all attentions in '
+/usr/local/lib/python3.8/site-packages/torch/nn/functional.py:4999: UserWarning: Support for mismatched key_padding_mask and attn_mask is deprecated. Use same type for both instead.
+  warnings.warn(
+
+0: 640x640 1 Gauge Needle, 44.6ms
+Speed: 0.3ms preprocess, 44.6ms inference, 1.3ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 416x640 3 Gauge Faces, 50.1ms
+Speed: 0.4ms preprocess, 50.1ms inference, 0.7ms postprocess per image at shape (1, 3, 640, 640)
+-------------------
+Segmentation
+-------------------
+Projection
+Final reading is: 51.66870311231866 psi
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+-------------------
+Ellipse Fitting
+-------------------
+OCR
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textdet/dbnet/dbnet_resnet18_fpnc_1200e_icdar2015/dbnet_resnet18_fpnc_1200e_icdar2015_20220825_221614-7c0e94f2.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textrecog/abinet/abinet_20e_st-an_mj/abinet_20e_st-an_mj_20221005_012617-ead8c139.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Inference ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   
+Using cache found in /root/.cache/torch/hub/facebookresearch_dinov2_main
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/module_losses/ce_module_loss.py:101: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/postprocessors/base.py:60: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+
+0: 640x640 (no detections), 41.9ms
+Speed: 0.2ms preprocess, 41.9ms inference, 0.2ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 640x384 2 Gauge Faces, 22.6ms
+Speed: 0.2ms preprocess, 22.6ms inference, 0.8ms postprocess per image at shape (1, 3, 640, 640)
+-------------------
+Segmentation
+Unexpected err=Exception('Segmentation failed, no needle found'), type(err)=<class 'Exception'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+-------------------
+Ellipse Fitting
+-------------------
+OCR
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textdet/dbnet/dbnet_resnet18_fpnc_1200e_icdar2015/dbnet_resnet18_fpnc_1200e_icdar2015_20220825_221614-7c0e94f2.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textrecog/abinet/abinet_20e_st-an_mj/abinet_20e_st-an_mj_20221005_012617-ead8c139.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Inference ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   
+Using cache found in /root/.cache/torch/hub/facebookresearch_dinov2_main
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/module_losses/ce_module_loss.py:101: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/postprocessors/base.py:60: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmcv/cnn/bricks/transformer.py:819: UserWarning: Use same attn_mask in all attentions in BaseTransformerLayer 
+  warnings.warn(f'Use same attn_mask in all attentions in '
+/usr/local/lib/python3.8/site-packages/torch/nn/functional.py:4999: UserWarning: Support for mismatched key_padding_mask and attn_mask is deprecated. Use same type for both instead.
+  warnings.warn(
+
+0: 640x640 1 Gauge Needle, 63.2ms
+Speed: 0.3ms preprocess, 63.2ms inference, 2.1ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 352x640 3 Gauge Faces, 22.3ms
+Speed: 0.2ms preprocess, 22.3ms inference, 0.4ms postprocess per image at shape (1, 3, 640, 640)
+-------------------
+Segmentation
+-------------------
+Projection
+Final reading is: 129.7790764625941 psi
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+-------------------
+Ellipse Fitting
+-------------------
+OCR
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textdet/dbnet/dbnet_resnet18_fpnc_1200e_icdar2015/dbnet_resnet18_fpnc_1200e_icdar2015_20220825_221614-7c0e94f2.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textrecog/abinet/abinet_20e_st-an_mj/abinet_20e_st-an_mj_20221005_012617-ead8c139.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Inference ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   
+Using cache found in /root/.cache/torch/hub/facebookresearch_dinov2_main
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/module_losses/ce_module_loss.py:101: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/postprocessors/base.py:60: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmcv/cnn/bricks/transformer.py:819: UserWarning: Use same attn_mask in all attentions in BaseTransformerLayer 
+  warnings.warn(f'Use same attn_mask in all attentions in '
+/usr/local/lib/python3.8/site-packages/torch/nn/functional.py:4999: UserWarning: Support for mismatched key_padding_mask and attn_mask is deprecated. Use same type for both instead.
+  warnings.warn(
+
+0: 640x640 1 Gauge Needle, 44.2ms
+Speed: 0.3ms preprocess, 44.2ms inference, 1.2ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 352x640 1 Gauge Face, 23.9ms
+Speed: 0.5ms preprocess, 23.9ms inference, 0.8ms postprocess per image at shape (1, 3, 640, 640)
+-------------------
+Segmentation
+-------------------
+Projection
+Final reading is: 71.56497755165572 psi
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+-------------------
+Ellipse Fitting
+-------------------
+OCR
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textdet/dbnet/dbnet_resnet18_fpnc_1200e_icdar2015/dbnet_resnet18_fpnc_1200e_icdar2015_20220825_221614-7c0e94f2.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Loads checkpoint by http backend from path: https://download.openmmlab.com/mmocr/textrecog/abinet/abinet_20e_st-an_mj/abinet_20e_st-an_mj_20221005_012617-ead8c139.pth
+The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: data_preprocessor.mean, data_preprocessor.std
+
+Inference ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   
+Using cache found in /root/.cache/torch/hub/facebookresearch_dinov2_main
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/module_losses/ce_module_loss.py:101: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmocr/models/textrecog/postprocessors/base.py:60: UserWarning: padding does not exist in the dictionary
+  warnings.warn(
+/usr/local/lib/python3.8/site-packages/mmcv/cnn/bricks/transformer.py:819: UserWarning: Use same attn_mask in all attentions in BaseTransformerLayer 
+  warnings.warn(f'Use same attn_mask in all attentions in '
+/usr/local/lib/python3.8/site-packages/torch/nn/functional.py:4999: UserWarning: Support for mismatched key_padding_mask and attn_mask is deprecated. Use same type for both instead.
+  warnings.warn(
+
+0: 640x640 1 Gauge Needle, 47.4ms
+Speed: 0.3ms preprocess, 47.4ms inference, 1.3ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 640x416 2 Gauge Faces, 27.2ms
+Speed: 0.3ms preprocess, 27.2ms inference, 0.8ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 480x640 3 Gauge Faces, 48.6ms
+Speed: 0.3ms preprocess, 48.6ms inference, 0.8ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 320x640 1 Gauge Face, 20.1ms
+Speed: 0.2ms preprocess, 20.1ms inference, 0.7ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 640x640 1 Gauge Face, 31.1ms
+Speed: 0.3ms preprocess, 31.1ms inference, 0.5ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 640x416 1 Gauge Face, 25.0ms
+Speed: 0.2ms preprocess, 25.0ms inference, 0.4ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 352x640 1 Gauge Face, 22.8ms
+Speed: 0.2ms preprocess, 22.8ms inference, 0.4ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 640x384 1 Gauge Face, 28.2ms
+Speed: 0.2ms preprocess, 28.2ms inference, 0.4ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 352x640 1 Gauge Face, 24.4ms
+Speed: 0.2ms preprocess, 24.4ms inference, 0.7ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 352x640 3 Gauge Faces, 23.9ms
+Speed: 0.2ms preprocess, 23.9ms inference, 0.6ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 480x640 2 Gauge Faces, 31.2ms
+Speed: 0.2ms preprocess, 31.2ms inference, 0.6ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 352x640 1 Gauge Face, 26.0ms
+Speed: 0.3ms preprocess, 26.0ms inference, 0.6ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 352x640 1 Gauge Face, 23.9ms
+Speed: 0.3ms preprocess, 23.9ms inference, 0.7ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 352x640 1 Gauge Face, 31.5ms
+Speed: 0.4ms preprocess, 31.5ms inference, 0.8ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 320x640 1 Gauge Face, 20.1ms
+Speed: 0.3ms preprocess, 20.1ms inference, 0.4ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 352x640 (no detections), 31.4ms
+Speed: 0.3ms preprocess, 31.4ms inference, 0.3ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 352x640 3 Gauge Faces, 23.9ms
+Speed: 0.3ms preprocess, 23.9ms inference, 0.6ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 384x640 2 Gauge Faces, 25.2ms
+Speed: 0.3ms preprocess, 25.2ms inference, 0.7ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 320x640 1 Gauge Face, 19.5ms
+Speed: 0.1ms preprocess, 19.5ms inference, 0.4ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 640x512 1 Gauge Face, 71.6ms
+Speed: 0.4ms preprocess, 71.6ms inference, 0.5ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 352x640 1 Gauge Face, 23.0ms
+Speed: 0.2ms preprocess, 23.0ms inference, 0.4ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 640x416 2 Gauge Faces, 25.0ms
+Speed: 0.3ms preprocess, 25.0ms inference, 0.7ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 352x640 1 Gauge Face, 20.1ms
+Speed: 0.2ms preprocess, 20.1ms inference, 0.4ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 352x640 1 Gauge Face, 22.8ms
+Speed: 0.1ms preprocess, 22.8ms inference, 0.7ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 640x448 2 Gauge Faces, 44.1ms
+Speed: 0.3ms preprocess, 44.1ms inference, 0.4ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 640x512 2 Gauge Faces, 33.9ms
+Speed: 0.3ms preprocess, 33.9ms inference, 0.7ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 640x384 1 Gauge Face, 24.0ms
+Speed: 0.3ms preprocess, 24.0ms inference, 0.7ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 576x640 1 Gauge Face, 47.7ms
+Speed: 0.3ms preprocess, 47.7ms inference, 0.4ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 320x640 3 Gauge Faces, 23.2ms
+Speed: 0.2ms preprocess, 23.2ms inference, 0.7ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 640x416 1 Gauge Face, 23.2ms
+Speed: 0.2ms preprocess, 23.2ms inference, 0.7ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 480x640 1 Gauge Face, 25.0ms
+Speed: 0.3ms preprocess, 25.0ms inference, 0.4ms postprocess per image at shape (1, 3, 640, 640)
+
+0: 640x512 1 Gauge Face, 31.8ms
+Speed: 0.3ms preprocess, 31.8ms inference, 0.7ms postprocess per image at shape (1, 3, 640, 640)
+-------------------
+Segmentation
+-------------------
+Projection
+Final reading is: 46.971561187520564 psi
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+Unexpected err=Exception('No gauge detected in image'), type(err)=<class 'Exception'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>
+-------------------
+Gauge Detection
+-------------------
+Key Point Detection
+Unexpected err=<HTTPError 504: 'Gateway Time-out'>, type(err)=<class 'urllib.error.HTTPError'>

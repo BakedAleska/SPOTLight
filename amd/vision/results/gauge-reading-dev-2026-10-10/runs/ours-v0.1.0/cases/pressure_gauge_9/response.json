@@ -1,0 +1,141 @@
+{
+ "media_id": "pressure_gauge_9",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "200",
+   "bbox": [
+    284,
+    124,
+    314,
+    147
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "300",
+   "bbox": [
+    325,
+    160,
+    354,
+    182
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "100",
+   "bbox": [
+    238,
+    166,
+    263,
+    186
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "bar",
+   "bbox": [
+    276,
+    223,
+    294,
+    239
+   ],
+   "conf": 0.995
+  },
+  {
+   "text": "400",
+   "bbox": [
+    305,
+    224,
+    334,
+    246
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "X",
+   "bbox": [
+    221,
+    237,
+    243,
+    258
+   ],
+   "conf": 0.609
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "pressure",
+   "value": 535.0,
+   "unit": "bar",
+   "confidence": 0.3,
+   "method": "hough_ray_ransac_labels",
+   "flags": [
+    "NEEDLE_OUTSIDE_SCALE",
+    "AMBIGUOUS_NEEDLE"
+   ],
+   "point": [
+    342,
+    281
+   ],
+   "note": "two needle candidates: 159° -> 535 bar and -46° -> 135 bar (two-ended needle (opposite arm 0.40 r long)); do not trust this value"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "bar",
+   "value": 535.0
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 30
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": 159.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 400000.0
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.4
+  },
+  {
+   "name": "Full Scale",
+   "units": "bar",
+   "value": 300.0
+  },
+  {
+   "name": "Scale Labels Used",
+   "units": "",
+   "value": "3 of 3"
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 366,
+ "version": {
+  "service": "0.1.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

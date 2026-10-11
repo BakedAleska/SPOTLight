@@ -1,0 +1,147 @@
+{
+ "media_id": "pressure_gauge_47",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "0.2",
+   "bbox": [
+    461,
+    316,
+    487,
+    336
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "0.1",
+   "bbox": [
+    431,
+    333,
+    456,
+    353
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "0.3",
+   "bbox": [
+    488,
+    335,
+    515,
+    354
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "0.4",
+   "bbox": [
+    491,
+    368,
+    518,
+    387
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "MPa",
+   "bbox": [
+    457,
+    383,
+    487,
+    399
+   ],
+   "conf": 0.999
+  },
+  {
+   "text": "OSMC",
+   "bbox": [
+    453,
+    394,
+    492,
+    412
+   ],
+   "conf": 0.986
+  },
+  {
+   "text": "Coleman",
+   "bbox": [
+    356,
+    516,
+    493,
+    561
+   ],
+   "conf": 1.0
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "pressure",
+   "value": 0.1,
+   "unit": "MPa",
+   "confidence": 0.3,
+   "method": "hough_ray_default_sweep",
+   "flags": [
+    "DEFAULT_SWEEP",
+    "SHORT_NEEDLE",
+    "AMBIGUOUS_NEEDLE"
+   ],
+   "point": [
+    301,
+    229
+   ],
+   "note": "two needle candidates: -46° -> 0 MPa and -81° -> 0 MPa (peak ratio 0.83); do not trust this value"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "MPa",
+   "value": 0.1
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 30
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": -46.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 0.83
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.12
+  },
+  {
+   "name": "Full Scale",
+   "units": "MPa",
+   "value": 0.4
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 355,
+ "version": {
+  "service": "0.2.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

@@ -1,0 +1,190 @@
+{
+ "media_id": "pressure_gauge_50",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "0.04",
+   "bbox": [
+    175,
+    39,
+    294,
+    119
+   ],
+   "conf": 0.998
+  },
+  {
+   "text": "0.06",
+   "bbox": [
+    363,
+    34,
+    470,
+    112
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "PRESSIRE GAUGE",
+   "bbox": [
+    217,
+    154,
+    430,
+    202
+   ],
+   "conf": 0.948
+  },
+  {
+   "text": "0.08",
+   "bbox": [
+    477,
+    193,
+    581,
+    268
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "0.02",
+   "bbox": [
+    67,
+    205,
+    175,
+    281
+   ],
+   "conf": 0.999
+  },
+  {
+   "text": "16",
+   "bbox": [
+    405,
+    248,
+    435,
+    278
+   ],
+   "conf": 0.761
+  },
+  {
+   "text": "DAIICH",
+   "bbox": [
+    261,
+    332,
+    335,
+    370
+   ],
+   "conf": 0.977
+  },
+  {
+   "text": "0.1",
+   "bbox": [
+    442,
+    379,
+    510,
+    449
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "0",
+   "bbox": [
+    143,
+    391,
+    184,
+    454
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "HYOGO",
+   "bbox": [
+    294,
+    429,
+    362,
+    459
+   ],
+   "conf": 0.994
+  },
+  {
+   "text": "MPa",
+   "bbox": [
+    293,
+    473,
+    365,
+    524
+   ],
+   "conf": 1.0
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "pressure",
+   "value": 0.0,
+   "unit": "MPa",
+   "confidence": 0.3,
+   "method": "hough_ray_ransac_labels",
+   "flags": [
+    "AMBIGUOUS_NEEDLE"
+   ],
+   "point": [
+    256,
+    31
+   ],
+   "note": "two needle candidates: -18° -> 0 MPa and -178° -> -0 MPa (two-ended needle (opposite arm 0.48 r long)); do not trust this value"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "MPa",
+   "value": 0.0
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 30
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": -18.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 0.71
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.48
+  },
+  {
+   "name": "Full Scale",
+   "units": "MPa",
+   "value": 0.1
+  },
+  {
+   "name": "Scale Labels Used",
+   "units": "",
+   "value": "6 of 6"
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 427,
+ "version": {
+  "service": "0.1.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}
