@@ -53,11 +53,11 @@ function Tile({ label, value, tone }: { label: string; value: string; tone?: "ba
   );
 }
 
-export function LiveAnalytics({ captures, route }: { captures: LiveCapture[]; route: LiveRoute | null }) {
+export function LiveAnalytics({ className, captures, route }: { className?: string; captures: LiveCapture[]; route: LiveRoute | null }) {
   const t = liveTally(captures, route);
   const points = captures.map((c) => ({ stop: c.stop, battery: c.battery_pct, verdict: c.verdict }));
   return (
-    <Panel title="Live analytics" aside={t.total ? `${t.done} of ${t.total} stops` : undefined}>
+    <Panel title="Live analytics" className={className} aside={t.total ? `${t.done} of ${t.total} stops` : undefined}>
       <div className="flex flex-col gap-4">
         <div className="grid grid-cols-2 gap-2">
           <Tile label="Stops triaged" value={`${t.done}/${t.total || "—"}`} />

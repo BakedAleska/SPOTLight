@@ -193,13 +193,13 @@ export function LiveConsole({ initialRoutes }: { initialRoutes: LiveRoute[] }) {
       <p className="mt-1 text-sm text-muted">Every stop is triaged by the confidence model and the rules, photographed and explained by SPOTbot while you watch.</p>
     </header>
     <div className="panel-columns grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
-      <div className="panel-stack flex min-w-0 flex-col gap-4">
-        <Panel title="Facility map" aside={run ? `${run.run_id === 0 ? "MOCK" : `RUN #${run.run_id}`} · ${run.route_id} · ${run.status.toUpperCase()}` : "NO RUN YET"}>
+      <div className="panel-stack flex min-w-0 flex-col gap-4 xl:contents">
+        <Panel title="Facility map" className="min-w-0 xl:col-start-1 xl:row-start-1" aside={run ? `${run.run_id === 0 ? "MOCK" : `RUN #${run.run_id}`} · ${run.route_id} · ${run.status.toUpperCase()}` : "NO RUN YET"}>
           <LiveMap route={route} captures={captures} run={run} />
           <p className="mt-3 text-xs text-muted">Dashed: the route · <span className="text-bad">●</span> red ping: needs attention · <span className="text-ok">●</span> green ping: all good. Pings come from the live triage (confidence model ‖ rules), never from the photo.</p>
         </Panel>
         {/* Right under the map, so each stop's card rolls in where the eye already is. */}
-        <Panel title="Inspection feed" aside={`${captures.length} of ${route?.stops.length ?? 8} stops · newest first`} bodyClassName="p-4">
+        <Panel title="Inspection feed" className="min-w-0 xl:col-start-1 xl:row-start-2" aside={`${captures.length} of ${route?.stops.length ?? 8} stops · newest first`} bodyClassName="p-4">
           {captures.length === 0
             ? <p className="text-sm text-muted">{run && active(run) ? run.status === "pending" ? "Waiting for the robot runner to claim the run…" : "SPOT is heading to stop A…" : "Start a route to watch SPOT inspect the facility."}</p>
             : <ol className="flex flex-col gap-3">{[...captures].reverse().map(c => <li key={c.capture_id}><CaptureCard c={c} stop={route?.stops[c.stop_index]} /></li>)}</ol>}
@@ -208,10 +208,12 @@ export function LiveConsole({ initialRoutes }: { initialRoutes: LiveRoute[] }) {
         </Panel>
       </div>
       {/* Stacked (under xl), this column goes first and side by side, so
-          Start route is above the map rather than under the feed. */}
-      <div className="panel-stack order-first grid min-w-0 content-start gap-4 md:grid-cols-2 xl:order-none xl:flex xl:flex-col">
-        <RunPanel run={run} route={route} captures={captures} controls={controls} sources={sources} />
-        <LiveAnalytics captures={captures} route={route} />
+          Start route is above the map rather than under the feed. At xl both
+          stacks dissolve (display: contents) into one 2×2 grid, so Run shares
+          the map's row and Live analytics the feed's, and their edges line up. */}
+      <div className="panel-stack order-first grid min-w-0 content-start gap-4 md:grid-cols-2 xl:contents">
+        <RunPanel className="xl:col-start-2 xl:row-start-1" run={run} route={route} captures={captures} controls={controls} sources={sources} />
+        <LiveAnalytics className="xl:col-start-2 xl:row-start-2" captures={captures} route={route} />
       </div>
     </div>
     <Panel title="Earlier runs" aside={<span className="flex items-center gap-1"><History size={13} />{runs.length}</span>}>
@@ -280,15 +282,15 @@ function StopsAhead({ stops }: { stops: LiveStop[] }) {
   </div>;
 }
 
-function RunPanel({ run, route, captures, controls, sources }: {
-  run: LiveRun | null; route: LiveRoute | null; captures: LiveCapture[]; controls: React.ReactNode; sources: React.ReactNode;
+function RunPanel({ className, run, route, captures, controls, sources }: {
+  className?: string; run: LiveRun | null; route: LiveRoute | null; captures: LiveCapture[]; controls: React.ReactNode; sources: React.ReactNode;
 }) {
   const red = captures.filter(c => c.verdict === "red").length;
   const green = captures.filter(c => c.verdict === "green").length;
   const qwen = captures.filter(c => c.qwen_source === "system2").length;
   const template = captures.filter(c => c.qwen_source === "template").length;
   const latest = captures.at(-1);
-  return <Panel title="Run" aside={run ? run.status.toUpperCase() : "IDLE"} bodyClassName="divide-y divide-line [&>*]:p-4">
+  return <Panel title="Run" className={className} aside={run ? run.status.toUpperCase() : "IDLE"} bodyClassName="divide-y divide-line [&>*]:p-4">
     {controls}
     {!run ? <p className="text-sm text-muted">No run yet. Pick a route and start it to watch SPOT patrol.</p> : <div className="flex flex-col gap-3 text-sm">
       <p className="font-semibold text-ink">{run.run_id === 0 ? "Mock patrol" : `#${run.run_id}`} · {route?.name}</p>
