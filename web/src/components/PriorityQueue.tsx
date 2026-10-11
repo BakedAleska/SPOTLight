@@ -12,7 +12,7 @@ import type { Flag } from "@/lib/types";
 /* A flag carries every rule that fired — often eight or nine. A row can't show eight bullets
    and still be scannable, so it shows the heaviest few and says how many it
    is holding back. The backend score also accounts for priority and confidence. */
-const REASONS_SHOWN = 4;
+const REASONS_SHOWN = 2;
 
 function QueueRow({ flag, onSelect }: { flag: Flag; onSelect?: (flag: Flag) => void }) {
   const shown = flag.reasons.slice(0, REASONS_SHOWN);
@@ -104,8 +104,8 @@ export function PriorityQueue({
           No open escalated flags need attention.
         </p>
       ) : (
-        /* Fit exactly two complete rows, including wrapped text. The chart
-           stretches to this shared row height; remaining flags scroll here. */
+        /* Fit exactly two complete rows, including wrapped text; remaining
+           flags scroll here. */
         <div ref={list} className="max-h-96 overflow-y-auto" style={{ maxHeight: visibleHeight }}>
           {flags.map((flag) => (
             <QueueRow key={flag.id} flag={flag} onSelect={onSelect} />

@@ -1,13 +1,10 @@
 "use client";
 
 import useSWR from "swr";
-import { LiveModelBoard } from "./LiveModelBoard";
 import { useState } from "react";
 import { FlagDetails } from "@/components/FlagDetails";
 import type { Flag } from "@/lib/types";
-import { ActionSuccessChart } from "@/components/ActionSuccessChart";
 import { PriorityQueue } from "@/components/PriorityQueue";
-import { StatTile } from "@/components/StatTile";
 import { WelcomeBanner } from "@/components/WelcomeBanner";
 import { LoadingIndicator } from "@/components/LoadingIndicator";
 import type { DashboardData } from "@/lib/dashboard";
@@ -19,9 +16,7 @@ async function fetchDashboard(url: string): Promise<DashboardData> {
 }
 
 /* The load cascade lives here, not inside the panels, because it is a fact
-   about this page's reading order rather than about any one card. Six panels
-   at 55ms apart settle by ~780ms: long enough to read as deliberate, short
-   enough that an operator opening this at shift start is never waiting on it. */
+   about this page's reading order rather than about any one card. */
 const STAGGER = 55;
 export default function Dashboard({ initialData }: { initialData: DashboardData }) {
   const [selectedFlag, setSelectedFlag] = useState<Flag | null>(() => {
@@ -52,35 +47,28 @@ export default function Dashboard({ initialData }: { initialData: DashboardData 
       </div>
     );
   }
-  const { stats, flags, actionSuccess } = data;
+  const { stats, flags } = data;
   return (
     <div className="mx-auto flex max-w-[1600px] flex-col gap-4 p-4">
       <h1 className="sr-only">SPOT operator overview</h1>
 
       <WelcomeBanner hiddenFailures={data.hiddenFailures} />
 
-      <section aria-label="Headline metrics">
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {stats.map((stat, i) => (
-            <StatTile key={stat.label} {...stat} delay={STAGGER * i} />
-          ))}
-        </div>
-      </section>
+      {/* Overview is deliberately two things: the banner's question and the
+          list that answers it. Headline figures sit on one quiet line; the
+          fleet chart and the live model board live on /analytics. */}
+      <ul aria-label="Headline metrics" className="flex flex-wrap gap-x-6 gap-y-1 px-1 text-sm text-muted">
+        {stats.map((stat) => (
+          <li key={stat.label} title={stat.note}>
+            <span className="nums font-mono font-semibold text-ink">{stat.value}{stat.unit === "%" ? "%" : stat.unit ? ` ${stat.unit}` : ""}</span>{" "}
+            {stat.label.toLowerCase()}
+          </li>
+        ))}
+      </ul>
 
-      <div className="panel-columns grid gap-4 xl:grid-cols-5">
-        <div id="queue" className="scroll-mt-4 xl:col-span-3">
-          <PriorityQueue flags={flags} total={data.flagCount} delay={STAGGER * stats.length} onSelect={data.features.flagDetails ? selectFlag : undefined} />
-        </div>
-        <div className="xl:col-span-2">
-          <ActionSuccessChart
-            groups={actionSuccess.groups}
-            caption={actionSuccess.caption}
-            benchmark={actionSuccess.fleetRate}
-            delay={STAGGER * (stats.length + 1)}
-          />
-        </div>
+      <div id="queue" className="scroll-mt-4">
+        <PriorityQueue flags={flags} total={data.flagCount} delay={STAGGER} onSelect={data.features.flagDetails ? selectFlag : undefined} />
       </div>
-      <LiveModelBoard allowRun />
       {selectedFlag && data.features.flagDetails && <FlagDetails key={selectedFlag.id} flag={selectedFlag} features={data.features} onClose={() => selectFlag(null)} onChanged={() => void mutate()} />}
     </div>
   );
