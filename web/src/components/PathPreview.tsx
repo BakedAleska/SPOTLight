@@ -79,6 +79,7 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
   // Restarting (elapsed back to 0, paused) empties it again.
   const started = mode === "live" || playing || elapsed > 0;
   const events = mode === "replay" ? mission.events.slice(0, index + 1) : liveEvents;
+  const timelineOpen = started && events.length > 0;
   // Completion records can omit location; retain the action's last known waypoint.
   const located = events.map(e => ({ ...e, locationId: e.locationId ?? events.find(start => start.actionId && start.actionId === e.actionId && start.locationId)?.locationId }));
   const visited = located.flatMap(e => { const p = points.find(p => p.id === e.locationId); return p ? [p] : []; }).filter((p, i, list) => i === 0 || list[i - 1].id !== p.id);
@@ -154,11 +155,12 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
       </div>
     </div>
     <Panel title="Mission timeline" aside={started ? `${events.length} event${events.length === 1 ? "" : "s"}` : "Not started"}>
-      {/* 0fr → 1fr on a one-row grid is the height animation: the row grows
-          from nothing to the tiles' natural height without measuring them. */}
-      <div className={`grid transition-[grid-template-rows] duration-500 ease-(--ease-settle) ${started && events.length ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
-      <div className="min-h-0 overflow-hidden">
-      <ol ref={timeline} className="flex snap-x gap-2.5 overflow-x-auto pb-2">{(started ? events : []).map((e, i) => { const latest = i === events.length - 1; const place = e.locationId ? `${e.locationId}${e.assetName ? ` · ${e.assetName}` : ""}` : `Mission ${e.missionId}`; return <li key={e.id} className="aspect-square w-36 shrink-0 snap-end">
+      {/* The tiles are fixed-size, so the open height is known up front
+          (a 144px tile + 8px scrollbar room) and height can transition
+          directly — one line for the prompt, growing to one row of tiles. */}
+      <div className="relative overflow-hidden transition-[height] duration-700 ease-in-out" style={{ height: timelineOpen ? 152 : 20 }}>
+      <p className={`absolute inset-x-0 top-0 text-xs text-muted transition-opacity duration-300 ${timelineOpen ? "pointer-events-none opacity-0" : "opacity-100"}`}>{started ? "Waiting for mission events." : "Press play to start the mission timeline."}</p>
+      <ol ref={timeline} className={`flex snap-x gap-2.5 overflow-x-auto pb-2 transition-opacity duration-500 ${timelineOpen ? "opacity-100 delay-200" : "opacity-0"}`}>{(started ? events : []).map((e, i) => { const latest = i === events.length - 1; const place = e.locationId ? `${e.locationId}${e.assetName ? ` · ${e.assetName}` : ""}` : `Mission ${e.missionId}`; return <li key={e.id} className="aspect-square w-36 shrink-0 snap-end">
         {/* A fixed-size tile with a fixed skeleton — header, title, place, footer —
             so a sparse event and a busy one read as the same shape. */}
         <button onClick={() => setSelectedId(e.locationId ?? null)} title={`${eventLabel(e)} · ${place}`} className={`flex h-full w-full flex-col rounded border p-2.5 text-left transition-colors hover:bg-surface-2 ${latest ? "border-accent-ink bg-surface-2" : e.error ? "border-bad/40" : "border-line"}`}>
@@ -179,8 +181,6 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
         </button>
       </li>; })}</ol>
       </div>
-      </div>
-      {!started ? <p className="text-xs text-muted">Press play to start the mission timeline.</p> : !events.length && <p className="text-xs text-muted">Waiting for mission events.</p>}
     </Panel>
   </>;
 }
