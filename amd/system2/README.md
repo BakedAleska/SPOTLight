@@ -58,6 +58,37 @@ times out, the same attempt is re-sent text-only (`X-System2-Image: text_only`).
 fine-tune: [PROMPT_FORMAT.md](PROMPT_FORMAT.md); render it with `python scripts/prompt_example.py`. Stack wiring:
 [INTEGRATION-multimodal.md](INTEGRATION-multimodal.md). Tests: `tests/test_multimodal.py`.
 
+## Streaming drafts (`POST /v1/assess/stream`, added 2026-10-11)
+
+Same body, `X-API-Key` and validation as `/v1/assess` (401/422 stay plain JSON before the stream, and so does a
+`503 {"detail": ...}` when `STREAM_MAX_CONCURRENT` = 8 streams already run in the process). The reply is
+`text/event-stream`: `start` `{flag_id, request_id, model, mode}`, then `draft` `{call, tokens, fields}` at most once
+per 100 ms per model call while Qwen generates, then `final` `{response, cache, image}`, where `response` is exactly
+the `/v1/assess` body and `cache`/`image` are its `X-System2-Cache`/`X-System2-Image` values (null when that header
+is absent), or `error` `{detail}`. A `: keep-alive` comment is sent after 10 s without an event. Stub mode, cache
+hits and insufficient packets send only `start` and `final`. Contract: "Streaming Qwen drafts" in
+[backend-services-contract.md](../../docs/backend-services-contract.md).
+
+A draft is never an answer. `fields` (`analyst/drafts.py`) is the model's partial JSON before any check:
+`{evidence: [{claim, ids}], answer, recommended_action, confidence}` with only the keys whose value has started. The
+last string may stop mid-word, and `ids` holds complete IDs only. Each draft is a full snapshot. `call` increases on
+the pipeline retry and on an image request's text-only resend. The first draft of a call is sent at once (it may be
+`fields: {}`); a snapshot equal to the last one sent is skipped.
+
+How it works: `LiveAssessor.assess_image(body, on_draft=...)` runs the unchanged `run_pipeline` inside
+`LlamaGenerator.drafts(cb)`, a per-thread switch that sends each llama-server call with `stream: true` +
+`stream_options.include_usage` and an otherwise identical body. The SSE chunks are folded into a synthetic chat
+completion and judged by the same `parse_envelope` (same deadline watchdog, status handling, size caps, `finish_reason`,
+usage and timings), so the checked result, cache and recorder are those of a plain call. Outside the switch the
+request is byte-identical to before. If llama-server ignores `stream: true` and answers a plain completion (Content-Type
+not `text/event-stream`), it is read as one under the plain size cap, with no drafts. The endpoint runs the assessment
+in a worker thread, so a client that disconnects does not cancel it; the answer is still cached. Tests:
+`tests/test_stream.py`, `tests/test_drafts.py`.
+Measured on the W7900D (Qwen3.8-27B Q8_0; prompt processing comes before the first draft): a text request
+(`fixtures/backend/equipment.json`) gave its first draft at 3.9-5.6 s and `final` at 11.7-13.4 s, an image request
+3.7 s / 11.8 s, 47-48 drafts about 133 ms apart, and the final response equals `/v1/assess` apart from latency.
+Through the public tunnel Vercel uses: first text 2.7 s, final 10.2 s. Deploy and verify: [STREAMING.md](../../docs/STREAMING.md).
+
 ## Phase 2 offline generation and evaluation
 
 Everything here is offline: no new service, port, package or env var. Code lives in `analyst/` and is driven by

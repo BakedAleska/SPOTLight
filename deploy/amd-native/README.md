@@ -11,10 +11,33 @@ ssh spot-amd 'hostname; /opt/venv/bin/amd-smi static --asic | grep MARKET_NAME' 
 ssh spot-amd '/root/venv-gpu/bin/supervisorctl -c /root/supervisord.conf status'
 # 3. Fresh box only (~30 min + ~10 min):
 SPOT_REF=main deploy/amd-native/laptop/bootstrap.sh && deploy/amd-native/laptop/push_laya.sh
-# 4. Tunnel (own terminal): localhost:18080 llama-server, :18081 embed, :18082 Laya
+# 4. Tunnel (own terminal): localhost:18080 llama-server, :18081 embed, :18082 Laya, :18083 System 2
 deploy/amd-native/laptop/tunnel.sh
 # 5. .env as in docs/RUNNING.md "Mode 2", then: make up && curl -s localhost:8000/health | jq .system2
 ```
+
+## Connect the Vercel deployment
+Vercel (web, backend, MCP) runs in the cloud, so it can't use the laptop's localhost tunnel, and the box accepts
+nothing but SSH. Give Vercel public HTTPS URLs that forward to the tunnel. The laptop then relays the traffic; it
+needs `tunnel.sh` but no Docker.
+```bash
+deploy/amd-native/laptop/tunnel.sh                          # terminal 1 (keep running)
+brew install cloudflared
+cloudflared tunnel --url http://localhost:18082             # terminal 2: Laya     -> https://<a>.trycloudflare.com
+cloudflared tunnel --url http://localhost:18081             # terminal 3: embed    -> https://<b>.trycloudflare.com
+cloudflared tunnel --url http://localhost:18083             # terminal 4: System 2 -> https://<c>.trycloudflare.com
+deploy/amd-native/laptop/show_vercel_env.sh https://<a>... https://<b>... https://<c>...
+```
+`show_vercel_env.sh` checks the three URLs and prints the exact backend and MCP env vars. It copies the box's
+System 2 key to the clipboard. Set them in Vercel, redeploy both projects, then check:
+`curl -s https://spotlight-backend-tau.vercel.app/health | jq '{system1, embed, system2}'`
+(`system2.model_status: up` = the 27B answers).
+- **Leave `ORCHESTRATOR_URL` unset.** The orchestrator runs neither on Vercel nor on the box, so the backend
+  calls System 2 directly with context from Neon.
+- **Laya and embed check no API key** (`docs/AMD-K8S-PLAN.md` §6). A quick-tunnel URL is random but public, so
+  stop those tunnels after the demo. System 2 requires its key.
+- **The URLs change** whenever `cloudflared` restarts; update Vercel when they do.
+- **Neon needs embeddings from this embedder** for vector search (`docs/DEPLOY-status-2026-10-10.md`).
 
 ## What runs where
 The AMD SSH box (Radeon Pro W7900D, gfx1100, 48 GB; `docs/AMD-GPU.md`) is a locked-down Kubernetes pod. It has no
@@ -28,6 +51,7 @@ is the same as the containers', with the same env vars, run from a venv.
 | `llm` | 8080 | 18080 | llama-server (llama.cpp `23b0202`, HIP gfx1100), Qwen3.8-27B Q8_0 + mmproj-F16 |
 | `embed` | 8081 | 18081 | `amd/embed`, Qwen3-Embedding-0.6B, bf16 |
 | `system1` | 8082 | 18082 | `amd/system1/service`, fine-tuned Laya (base Laya until `push_laya.sh`) |
+| `system2` | 8083 | 18083 | `amd/system2` live, straight to `llm`; key in `/root/spot-secrets.env` (generated on the box) |
 
 Measured 2026-10-11: 22.5 tok/s and 188 tok/s prefill on the 27B (350 tokens ≈ 15.7 s); 33.5 of 48 GB VRAM with all
 three loaded; ~0.8 s per new tunnel connection.
@@ -49,6 +73,7 @@ steps). `SPOT_REFRESH=1` re-downloads a branch that moved. On the box: `/root/ve
 - `laptop/tunnel.sh` + `laptop/exec_tunnel.py`: listen on 127.0.0.1:18080-18082 and run `stdio_bridge.py` per
   connection over one multiplexed SSH connection.
 - `laptop/push_laya.sh` + `laya_patch.py`: send the fine-tuned Laya as a patch against base Laya.
+- `laptop/show_vercel_env.sh`: print the Vercel env vars for given public tunnel URLs.
 
 ## Why it looks like this (each one cost time on 2026-10-11)
 - **No `ssh -L`.** The platform sshd sets `AllowTcpForwarding no`, and Unix-socket forwarding fails too. Running a

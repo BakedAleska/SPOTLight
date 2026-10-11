@@ -1,14 +1,14 @@
 """Pipe stdin/stdout to one loopback SPOT service: `ssh spot-amd python3 /root/stdio_bridge.py <port>`.
 
 The platform sshd refuses TCP and Unix-socket forwarding (AllowTcpForwarding no; stream-local channels fail too),
-so ../laptop/exec_tunnel.py runs this once per TCP connection over a multiplexed SSH session. Only the three model
+so ../laptop/exec_tunnel.py runs this once per TCP connection over a multiplexed SSH session. Only the four service
 ports are allowed.
 """
 import socket
 import sys
 import threading
 
-ALLOWED = {8080, 8081, 8082}          # llama-server, embed, Laya
+ALLOWED = {8080, 8081, 8082, 8083}    # llama-server, embed, Laya, System 2
 port = int(sys.argv[1])
 if port not in ALLOWED:
     sys.exit("port not allowed")

@@ -1,14 +1,57 @@
 from __future__ import annotations
 
-from typing import Optional
+import logging
+from typing import Any, AsyncIterator, Dict, Optional, Tuple
 
+import anyio
 from fastapi import APIRouter, Body, Depends, Path, Query
+from fastapi.responses import StreamingResponse
 
 from ..deps import Services, current_request_id, get_services
+from ..schemas.common import ErrorResponse
 from ..schemas.flags import AckIn, AckOut, ContextPacket, ExplainIn, Explanation, FlagDetail, FlagList
+from ..services.chat.service import sse
+from ..services.flags import KEEPALIVE
+from ..services.http import short_error
 
 router = APIRouter(prefix="/flags", tags=["flags"])
 FlagId = Path(..., ge=1, description="flags.flag_id")
+log = logging.getLogger("backend.flags")
+LOG_DRAIN_S = 2.0      # = main.SERVERLESS_LOG_DRAIN_S: finish this stream's log/index writes before it ends
+EXPLAIN_SSE_EVENTS = """`text/event-stream`, events in this order (`: keep-alive` comments every 15 s):
+`start` {flag_id, request_id} · `stage` {stage: cached | context | system2 | storing} (0..n) ·
+`draft` {call, fields: {evidence: [{claim, ids}], answer, recommended_action, confidence}, reasoning} (0..n, Qwen's
+unchecked partial JSON relayed from System 2; show the newest `call` only; never an answer) ·
+`done` {explanation} (exactly the JSON `POST /flags/{id}/explain` returns for the same call) · or
+`error` {error, detail}."""
+
+
+def explanation_json(out: Dict[str, Any]) -> Dict[str, Any]:
+    """The explanation as `POST /explain` serializes it (response_model=Explanation, exclude_none)."""
+    return Explanation.model_validate(out).model_dump(mode="json", by_alias=True, exclude_none=True)
+
+
+async def _explain_sse(events: AsyncIterator[Tuple[str, Any]], svc: Services) -> AsyncIterator[str]:
+    try:
+        async for event, data in events:
+            if event == KEEPALIVE[0]:
+                yield ": keep-alive\n\n"
+                continue
+            if event == "done":
+                try:
+                    data = {"explanation": explanation_json(data["explanation"])}
+                except Exception as exc:  # noqa: BLE001 - same as a 500 from /explain, but as the last event
+                    log.exception("explanation could not be serialized")
+                    yield sse("error", {"error": "internal_error", "detail": short_error(exc)})
+                    break
+            yield sse(event, data)
+    finally:
+        with anyio.CancelScope(shield=True):     # a client disconnect must not interrupt the cleanup
+            await events.aclose()      # type: ignore[attr-defined]
+            if svc.settings.serverless:
+                # main.py drains the log sink when the response *starts*; this stream's model-call row and the
+                # explanation's RAG indexing are written later, so wait for them before the instance may freeze.
+                await svc.sink.drain(timeout_s=LOG_DRAIN_S)
 
 
 @router.get("", response_model=FlagList)
@@ -57,6 +100,22 @@ async def explain(flag_id: int = FlagId,
     `orchestrator`); an optional `image_b64` is forwarded to it and bypasses the cache."""
     image = body.model_dump(exclude_none=True) if body is not None and body.image_b64 else None
     return await svc.flags.explain(flag_id, current_request_id(), refresh=refresh, image=image)
+
+
+@router.post("/{flag_id}/explain/stream", responses={
+    200: {"content": {"text/event-stream": {}}, "description": EXPLAIN_SSE_EVENTS},
+    404: {"model": ErrorResponse}, 503: {"model": ErrorResponse}, 504: {"model": ErrorResponse}}, description=(
+    "`POST /flags/{id}/explain` as server-sent events (contract \"Streaming Qwen drafts\"): the same cache rules, "
+    "REQUEST_DEADLINE_S, fallbacks, storage and indexing, plus Qwen's partial answer while System 2 generates it "
+    "(`/v1/assess/stream`; an older System 2 without it is asked `/v1/assess`, without drafts). Cached rows and the "
+    "orchestrator path send no drafts. A missing flag (404) or the deadline passing while the flag is read (504) "
+    "are JSON errors before the stream starts.\n\n" + EXPLAIN_SSE_EVENTS))
+async def explain_stream(flag_id: int = FlagId,
+                         refresh: bool = Query(False, description="Regenerate even if an assessment is stored."),
+                         svc: Services = Depends(get_services)):
+    events = await svc.flags.explain_stream(flag_id, current_request_id(), refresh=refresh)
+    return StreamingResponse(_explain_sse(events, svc), media_type="text/event-stream",
+                             headers={"Cache-Control": "no-cache, no-transform", "X-Accel-Buffering": "no"})
 
 
 @router.get("/{flag_id}/explain", response_model=Explanation, response_model_exclude_none=True)

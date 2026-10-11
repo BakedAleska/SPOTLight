@@ -581,12 +581,16 @@ class Repo:
 
     # ════ ops ═══════════════════════════════════════════════════════════════════════════════════
     async def model_call_stats(self, since_minutes: int, system: Optional[str]) -> List[Dict[str, Any]]:
+        """Per (system, model, endpoint, device). System 2's streamed calls (/v1/assess/stream) count as /v1/assess:
+        the same assessment, so its latency is not split in two (the raw rows keep the real endpoint)."""
         where, params = ["m.ts >= now() - make_interval(mins => %s)"], [since_minutes]
         if system:
             where.append("m.system = %s")
             params.append(system)
         return await self.logs.fetch(
-            """SELECT m.system, m.model, m.endpoint, m.device, count(*)::int AS calls,
+            """SELECT m.system, m.model,
+                      CASE WHEN m.endpoint = '/v1/assess/stream' THEN '/v1/assess' ELSE m.endpoint END AS endpoint,
+                      m.device, count(*)::int AS calls,
                       count(*) FILTER (WHERE NOT m.ok)::int AS errors,
                       (percentile_cont(0.5)  WITHIN GROUP (ORDER BY m.latency_ms) FILTER (WHERE m.ok))::real AS p50_ms,
                       (percentile_cont(0.95) WITHIN GROUP (ORDER BY m.latency_ms) FILTER (WHERE m.ok))::real AS p95_ms,

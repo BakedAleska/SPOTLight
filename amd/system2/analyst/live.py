@@ -9,6 +9,11 @@ before any generation. to_response() maps an AssessmentRun to the flat BackendAs
 evaluation._public does, so the numbers the backend logs to app.model_calls (model, latency_ms, tokens_per_sec)
 are the same fields the eval measured.
 
+Streaming drafts: assess_image(..., on_draft=cb) runs the same pipeline inside generator.drafts(cb) when the
+generator has it (LlamaGenerator, also through RecordingGenerator), so cb(call, tokens, text) sees the model's text
+while it streams. Nothing else changes: the checked result, cache, recorder and probe are those of a plain call, and
+cache hits and insufficient packets never call the model, so they produce no drafts.
+
 Cache (SRV-02): one JSON file per key (flag_id, packet_hash, model, prompt_ver). packet_hash is
 evaluation.packet_hash, the same hash the eval harness gates on, so a changed fact regenerates; prompt_ver folds in
 the system prompt + few-shot pool hash, so a prompt change regenerates. File names are the sha256 of the canonical
@@ -24,6 +29,7 @@ message here ever contains the X-API-Key. This module does not print.
 """
 from __future__ import annotations
 
+from contextlib import nullcontext
 from dataclasses import replace
 from datetime import datetime, timezone
 import hashlib
@@ -282,8 +288,9 @@ class LiveAssessor:
 
     def __init__(self, generator, model: str, config: Optional[PipelineConfig] = None,
                  cache: Optional[ExplanationCache] = None, image_deadline_s: float = IMAGE_DEADLINE_S,
-                 probe: Optional[ModelProbe] = None):
-        self.generator, self.model, self.cache, self.probe = generator, model, cache, probe
+                 recorder: Optional[RunRecorder] = None, probe: Optional[ModelProbe] = None):
+        self.generator, self.model, self.cache, self.recorder = generator, model, cache, recorder
+        self.probe = probe
         self.vision_model = getattr(generator, 'vision_model', None) or model
         self.config = config if config is not None else PipelineConfig(deadline_s=DEADLINE_S, catalog=default_catalog())
         self.image_config = replace(self.config, deadline_s=float(image_deadline_s))   # only requests with an image
@@ -301,8 +308,17 @@ class LiveAssessor:
         return {'flag_id': prepared.flag_id, 'packet_hash': packet_hash(prepared), 'model': model,
                 'prompt_ver': self.prompt_ver}
 
-    def assess_image(self, body, refresh: bool = False) -> Tuple[BackendAssessResponse, str, bool, Optional[str]]:
-        """(response, 'hit'|'miss'|'off', stored, image status or None when the request had no image)."""
+    @property
+    def streams_drafts(self) -> bool:
+        """True when on_draft can receive the model's text while it streams (the generator has drafts())."""
+        return callable(getattr(self.generator, 'drafts', None))
+
+    def assess_image(self, body, refresh: bool = False, on_draft: Optional[Callable[[int, int, str], None]] = None
+                     ) -> Tuple[BackendAssessResponse, str, bool, Optional[str]]:
+        """(response, 'hit'|'miss'|'off', stored, image status or None when the request had no image).
+
+        on_draft(call, tokens, text), when given and the generator streams, receives the accumulated completion text
+        after each streamed chunk (display only; the result is checked exactly as without it)."""
         body = body if isinstance(body, BackendAssessRequest) else BackendAssessRequest.model_validate(body)
         prepared = normalize_packet(body)
         has_image = prepared.image is not None
@@ -310,12 +326,20 @@ class LiveAssessor:
         if key is not None and not refresh:
             cached = self.cache.get(key, prepared, self.config.catalog)
             if cached is not None:   # image requests only ever store answers that saw the image
-                return cached, 'hit', True, IMAGE_USED if has_image else None
+                image = IMAGE_USED if has_image else None
+                self._record(body, prepared, 'hit', False, image, cached, None, [])
+                return cached, 'hit', True, image
+        recording = self.recorder is not None and isinstance(self.generator, RecordingGenerator)
+        if recording:
+            self.generator.start()
+        config = self.image_config if has_image else self.config
         if self.probe is not None:
             self.probe.begin()
         answered = False
+        drafts = getattr(self.generator, 'drafts', None) if on_draft is not None else None
         try:
-            run = run_pipeline(body, self.generator, self.image_config if has_image else self.config)
+            with drafts(on_draft) if callable(drafts) else nullcontext():
+                run = run_pipeline(body, self.generator, config)
             answered = any(a.status in ANSWERED for a in run.attempts)
         finally:
             if self.probe is not None:
@@ -400,7 +424,7 @@ def assessor_from_env(environ: Mapping[str, str] = os.environ) -> Optional[LiveA
         return LiveAssessor(RecordingGenerator(generator) if recorder else generator, model,
                             cache=ExplanationCache(cache_dir) if cache_dir is not None else None,
                             config=PipelineConfig(deadline_s=deadline, catalog=default_catalog()),
-                            image_deadline_s=image_deadline,
+                            image_deadline_s=image_deadline, recorder=recorder,
                             probe=ModelProbe(generator.probe, interval_s=probe_s, timeout_s=probe_timeout))
     except (ValueError, OSError) as exc:
         raise RuntimeError('live System 2 config unusable (%s %s): %s'

@@ -39,8 +39,11 @@ export interface LiveCapture {
   } | null;
   qwen: {
     source?: string; question?: string; answer?: string; reasoning?: string; recommended_action?: string;
-    confidence_label?: string; confidence?: number; model?: string; latency_ms?: number; latency_ms_total?: number;
+    confidence_label?: string; confidence?: number | string; model?: string; latency_ms?: number; latency_ms_total?: number;
     tokens_per_sec?: number; fallback_reason?: string; evidence?: { claim: string; ids: string[] }[]; image?: string;
+    // While qwen_source is "pending" the row may hold Qwen's unverified draft (contract "Streaming Qwen drafts"):
+    // {draft: true, call, tokens, answer, evidence, recommended_action, confidence (a partial label), reasoning, drafted_at}.
+    draft?: boolean; call?: number; tokens?: number; drafted_at?: string;
   } | null;
   qwen_source: "pending" | "system2" | "template" | "error" | null; doc_id: string | null;
   kg: { triage?: { nodes?: string[]; edges?: number }; explanation?: string };
@@ -66,3 +69,12 @@ export function liveFailure(error: unknown, message = "The live backend is unava
 }
 
 export const validRunId = (id: string) => /^[1-9]\d{0,9}$/.test(id);
+
+/** Selected-run poll: fast only while the run is live AND Qwen is still filling a card (drafts land ~every
+    0.5 s; each poll refetches the whole run detail, photos' overlays included), else every 2 s. */
+export const POLL_MS = 2000;
+export const DRAFT_POLL_MS = 750;
+export function detailPollMs(run: Pick<LiveRun, "status"> | null | undefined, captures: Pick<LiveCapture, "qwen_source">[]): number {
+  const live = run?.status === "pending" || run?.status === "running";
+  return live && captures.some((capture) => capture.qwen_source === "pending") ? DRAFT_POLL_MS : POLL_MS;
+}

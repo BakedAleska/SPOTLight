@@ -10,7 +10,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:flags": "tsx --test tests/flag-routes.test.ts",
+    "test:flags": "tsx --test tests/flag-*.test.ts",
     "test:chat": "tsx --test tests/chat-*.test.ts",
     "test:live": "tsx --test tests/live-routes.test.ts"
   },

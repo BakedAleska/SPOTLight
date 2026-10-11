@@ -3,9 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import useSWR from "swr";
 import { LoadingIndicator } from "./LoadingIndicator";
+import { LoadingDots } from "./LoadingDots";
+import { QwenDraftView } from "./QwenDraft";
 import type { Flag } from "@/lib/types";
 import type { DashboardData } from "@/lib/dashboard";
 import { explanationLabel, type FlagAction, type FlagDetailData, type FlagExplanation } from "@/lib/flag-detail";
+import { loadExplanation, stageLabel, type ExplainProgress } from "@/lib/explanation-stream";
 
 const BUTTON = "rounded border border-line px-3 py-2 text-sm hover:bg-surface-2 disabled:opacity-50";
 
@@ -17,6 +20,16 @@ async function read<T>(url: string): Promise<T> {
   }
   return response.json() as Promise<T>;
 }
+
+/* The explanation streams (lib/explanation-stream.ts): Qwen's unverified draft
+   while it writes, then the checked answer; any stream failure falls back to
+   the plain JSON route ("fallback"). */
+type ExplainView =
+  | { status: "idle" }
+  | ({ status: "streaming" } & ExplainProgress)
+  | { status: "fallback" }
+  | { status: "done"; data: FlagExplanation }
+  | { status: "error"; message: string };
 
 export function FlagDetails({ flag, features, onClose, onChanged }: {
   flag: Flag;
@@ -30,17 +43,33 @@ export function FlagDetails({ flag, features, onClose, onChanged }: {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [actionError, setActionError] = useState("");
-  const [showExplanation, setShowExplanation] = useState(false);
+  const [explain, setExplain] = useState<ExplainView>({ status: "idle" });
+  const explainRun = useRef<AbortController | null>(null);
   const { data, error, isValidating, mutate } = useSWR<FlagDetailData>(`/api/flags/${flag.id}`, read, { revalidateOnFocus: true, refreshInterval: 2500 });
-  const explanation = useSWR<FlagExplanation>(
-    features.flagExplanations && showExplanation ? `/api/flags/${flag.id}/explanation` : null,
-    read, { revalidateOnFocus: false, shouldRetryOnError: false },
-  );
+  const explaining = explain.status === "streaming" || explain.status === "fallback";
 
   useEffect(() => {
     const element = dialog.current;
     if (element && !element.open) element.showModal();
   }, []);
+
+  // Closing the dialog unmounts it: stop the stream (and the backend relay) with it.
+  useEffect(() => () => explainRun.current?.abort(), []);
+
+  function startExplanation() {
+    explainRun.current?.abort();
+    const run = new AbortController();
+    explainRun.current = run;
+    const live = () => !run.signal.aborted;
+    setExplain({ status: "streaming", stage: null, draft: null });
+    loadExplanation(flag.id, run.signal, {
+      onProgress: (progress) => { if (live()) setExplain({ status: "streaming", ...progress }); },
+      onFallback: () => { if (live()) setExplain({ status: "fallback" }); },
+    }).then(
+      (result) => { if (live()) setExplain({ status: "done", data: result }); },
+      (cause: unknown) => { if (live()) setExplain({ status: "error", message: cause instanceof Error ? cause.message : "Cannot load the explanation." }); },
+    );
+  }
 
   async function update(action: FlagAction) {
     if (saving) return;
@@ -94,16 +123,30 @@ export function FlagDetails({ flag, features, onClose, onChanged }: {
           {data.flag.reasons.filter((reason) => typeof reason.detail === "string").map((reason, index) => <li key={`${reason.rule}-${index}`}>{reason.detail}</li>)}
         </ul>
         {features.flagExplanations && <section className="mt-5" aria-label="Flag explanation">
-          <button type="button" disabled={explanation.isLoading} onClick={() => { setShowExplanation(true); if (showExplanation) void explanation.mutate(); }} className={BUTTON}>
-            {showExplanation ? "Reload explanation" : "Load explanation"}
+          <button type="button" disabled={explaining} onClick={startExplanation} className={BUTTON}>
+            {explain.status === "idle" ? "Load explanation" : "Reload explanation"}
           </button>
-          {explanation.isLoading && <LoadingIndicator compact label="Loading explanation…" />}
-          {explanation.error && <p role="alert" className="mt-2 text-bad">{explanation.error.message}</p>}
-          {explanation.data && <div className="mt-3 space-y-2 text-sm">
-            <p className="text-muted">{explanationLabel(explanation.data)}</p>
-            <p>{explanation.data.answer}</p>
-            <p>{explanation.data.reasoning}</p>
-            <p><strong>Recommended action: </strong>{explanation.data.recommended_action ?? "No recommendation available."}</p>
+          {/* One polite announcement per stage and on completion; the draft itself is aria-busy, never read token by token. */}
+          <p role="status" className="sr-only">
+            {explain.status === "streaming" ? stageLabel(explain.stage, !!explain.draft) : explain.status === "done" ? "Explanation loaded." : ""}
+          </p>
+          {/* One container from the first stage to the answer (or the fallback): its min-height keeps the dialog
+              from jumping when the draft is swapped for the checked answer. */}
+          {explain.status !== "idle" && <div className="mt-3 min-h-36 space-y-2 text-sm">
+            {explain.status === "streaming" && <>
+              {/* The draft box names its own stage, including the checks after Qwen stops writing. */}
+              {!explain.draft && <p aria-hidden="true" className="flex items-center gap-2 text-xs text-muted">{stageLabel(explain.stage, false)} <LoadingDots color="currentColor" /></p>}
+              {explain.draft && <QwenDraftView draft={explain.draft} catchUpMs={220} finished={explain.stage === "storing"}
+                label={explain.stage === "storing" ? "Checking and saving… · unverified draft" : "Qwen is writing · unverified draft"} />}
+            </>}
+            {explain.status === "fallback" && <LoadingIndicator compact label="Loading explanation…" />}
+            {explain.status === "error" && <p role="alert" className="text-bad">{explain.message}</p>}
+            {explain.status === "done" && <>
+              <p className="text-muted">{explanationLabel(explain.data)}</p>
+              <p>{explain.data.answer}</p>
+              <p>{explain.data.reasoning}</p>
+              <p><strong>Recommended action: </strong>{explain.data.recommended_action ?? "No recommendation available."}</p>
+            </>}
           </div>}
         </section>}
         {features.flagActions && <section className="mt-5 border-t border-line pt-4" aria-label="Flag actions">

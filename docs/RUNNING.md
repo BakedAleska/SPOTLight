@@ -12,8 +12,10 @@ with expected output and a troubleshooting table, is at the top of `docs/AMD-GPU
    `llm`, `embed` and `system1` RUNNING. If not (a relaunch wipes `/root`), run
    `SPOT_REF=main deploy/amd-native/laptop/bootstrap.sh` and then `deploy/amd-native/laptop/push_laya.sh`.
 4. **Tunnel:** `deploy/amd-native/laptop/tunnel.sh`, kept running in its own terminal. `ssh -L` is refused by the
-   box. It serves `localhost:18080` (llama-server), `:18081` (embed) and `:18082` (Laya).
-5. **Stack:** set `.env` as in "Mode 2: `hybrid`" below, run `make up`, then check
+   box. It serves `localhost:18080` (llama-server), `:18081` (embed), `:18082` (Laya) and `:18083` (System 2).
+5. **Vercel deployment:** expose 18082/18081/18083 with `cloudflared tunnel --url ...`, then run
+   `deploy/amd-native/laptop/show_vercel_env.sh <urls>` and set what it prints in Vercel (`deploy/amd-native/README.md`).
+   **Or a local stack:** set `.env` as in "Mode 2: `hybrid`" below, run `make up`, then check
    `curl -s localhost:8000/health | jq .system2`. `model_status: up` means the 27B is answering.
 
 Without the box, `COMPOSE_PROFILES=local` runs everything on CPU. System 2 is then its packet-grounded stub
@@ -241,7 +243,8 @@ The judges' demo: an operator starts one of five routes on the web console's `/l
 presenter laptop walks it, calling the AMD box through SSH tunnels and posting results to the backend (Vercel or
 local). The runner holds only `BACKEND_URL` + `ADMIN_TOKEN` (+ the box services' keys); the web needs
 `BACKEND_ADMIN_TOKEN` for the Start/Cancel buttons. Runbook (tunnels, smoke check, Laya dry run, restarts):
-`docs/LIVE-RUNBOOK.md`. Contract: `docs/backend-services-contract.md` "Live simulation".
+`docs/LIVE-RUNBOOK.md`. Contract: `docs/backend-services-contract.md` "Live simulation". Streaming Qwen's drafts
+(hops, measured latencies, deploy and verify): `docs/STREAMING.md`.
 ```bash
 python scripts/live_runner.py --tunnel spot-amd --check      # one real request to every box service
 python scripts/live_runner.py --tunnel spot-amd --dry-run    # Laya on all 40 stops vs the plan (no writes)

@@ -7,14 +7,15 @@ import {
 } from "lucide-react";
 import { Panel } from "./Panel";
 import { LoadingDots } from "./LoadingDots";
+import { QwenDraftView } from "./QwenDraft";
 import { RouteAhead } from "./RouteAhead";
 import { ModelCallsPanel, RunModelCharts } from "./LiveModelPanels";
 import { anchors } from "@/lib/waypoints";
 import { legsPath, routeLegs } from "@/lib/route-geometry";
-import type { LiveCapture, LiveKg, LiveRoute, LiveRun, LiveRunDetail, LiveStop } from "@/lib/live";
+import { detailPollMs, POLL_MS, type LiveCapture, type LiveKg, type LiveRoute, type LiveRun, type LiveRunDetail, type LiveStop } from "@/lib/live";
+import { draftFromCapture } from "@/lib/qwen-draft";
 
 const control = "flex min-h-11 items-center justify-center gap-2 rounded border border-line bg-surface px-3 text-sm text-ink hover:bg-surface-2 disabled:opacity-40";
-const POLL_MS = 2000;
 const active = (r?: LiveRun | null) => !!r && (r.status === "pending" || r.status === "running");
 const human = (s?: string | null) => (s ?? "").replaceAll("_", " ").toLowerCase();
 const ms = (v?: number | null) => (v == null ? "—" : v >= 1000 ? `${(v / 1000).toFixed(1)} s` : `${Math.round(v)} ms`);
@@ -62,28 +63,41 @@ export function LiveConsole({ initialRoutes }: { initialRoutes: LiveRoute[] }) {
     return () => { stop = true; clearInterval(t); };
   }, [follow]);
 
-  // the selected run: every 2 s while it is live or Qwen is still filling cards
+  // the selected run: while it is live or Qwen is still filling cards; every 750 ms while the run is live and
+  // a card is pending (Qwen's draft is typed out live), else every 2 s. Polls are chained, never overlapping;
+  // a restarted effect aborts the previous one's requests.
   const selected = runs.find(r => r.run_id === runId);
-  const settled = !!detail && detail.run.run_id === runId && !active(detail.run) &&
-    detail.captures.every(c => c.qwen_source !== "pending");
+  const ownDetail = !!detail && detail.run.run_id === runId;
+  const settled = ownDetail && !active(detail.run) && detail.captures.every(c => c.qwen_source !== "pending");
+  const pollMs = ownDetail ? detailPollMs(detail.run, detail.captures) : POLL_MS;
   useEffect(() => {
     if (runId == null) return;
-    let stop = false;
+    const abort = new AbortController();
+    const { signal } = abort;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let kgAt = -Infinity;
+    let kgBusy = false;
     async function poll() {
+      // the KG panel stays on the 2 s cadence even while drafts poll faster, one request at a time
+      if (!kgBusy && Date.now() - kgAt >= POLL_MS) {
+        kgAt = Date.now();
+        kgBusy = true;
+        getJson<LiveKg>(`/api/live/kg?run_id=${runId}`, { signal })
+          .then(g => { if (!signal.aborted) setKg(g); }, () => { /* optional panel */ })
+          .finally(() => { kgBusy = false; });
+      }
       try {
-        const d = await getJson<LiveRunDetail>(`/api/live/runs/${runId}`);
-        if (!stop) setDetail(d);
-      } catch { /* the list poll reports the connection */ }
-      try {
-        const g = await getJson<LiveKg>(`/api/live/kg?run_id=${runId}`);
-        if (!stop) setKg(g);
-      } catch { /* optional panel */ }
+        const d = await getJson<LiveRunDetail>(`/api/live/runs/${runId}`, { signal });
+        if (!signal.aborted) setDetail(d);
+      } catch { /* aborted, or the list poll reports the connection */ }
     }
-    void poll();
-    if (settled) return () => { stop = true; };
-    const t = setInterval(poll, POLL_MS);
-    return () => { stop = true; clearInterval(t); };
-  }, [runId, settled, selected?.status]);
+    async function loop() {
+      await poll();
+      if (!signal.aborted && !settled) timer = setTimeout(loop, pollMs);
+    }
+    void loop();
+    return () => { abort.abort(); clearTimeout(timer); };
+  }, [runId, settled, selected?.status, pollMs]);
 
   const run = detail?.run.run_id === runId ? detail.run : selected ?? null;
   const route = (detail?.run.run_id === runId ? detail.route : null) ?? routes.find(r => r.route_id === (run?.route_id ?? routeId)) ?? null;
@@ -253,6 +267,8 @@ function CaptureCard({ c, stop }: { c: LiveCapture; stop?: LiveStop }) {
   const [ack, setAck] = useState<"idle" | "busy" | "done" | string>("idle");
   const img = annotated && c.vision?.annotated_image_b64 ? `data:image/jpeg;base64,${c.vision.annotated_image_b64}` : c.photo?.path;
   const laya = c.laya;
+  // Qwen's unverified draft (only while qwen_source is "pending"; /analysis overwrites it with the checked result)
+  const draft = draftFromCapture(c.qwen);
   const acknowledge = async () => {
     if (!c.flag_id) return;
     setAck("busy");
@@ -306,8 +322,10 @@ function CaptureCard({ c, stop }: { c: LiveCapture; stop?: LiveStop }) {
       </div>
       <div className="flex min-w-0 flex-col gap-3 text-sm">
         <Section icon={<Brain size={14} />} title="Qwen explanation (System 2)">
-          {c.qwen_source === "pending" || (!c.qwen && c.verdict) ? <p className="flex items-center gap-2 text-accent-ink">Qwen analysing <LoadingDots color="currentColor" /></p>
-            : !c.qwen ? <p className="text-muted">—</p> : <>
+          {c.qwen_source === "pending" && draft ? <QwenDraftView draft={draft} label="Qwen writing · unverified draft" formatAction={human} catchUpMs={450} compact />
+            : c.qwen_source === "pending" || (!c.qwen && c.verdict && c.qwen_source !== "error") ? <p className="flex items-center gap-2 text-accent-ink">Qwen analysing <LoadingDots color="currentColor" /></p>
+            : !c.qwen ? <p className="text-muted">{c.qwen_source === "error" ? "The run ended before Qwen's answer was stored." : "—"}</p>
+            : draft ? <p className="text-muted">Qwen did not finish; its unverified draft was discarded.</p> : <>
               {c.qwen.source === "template" && <p className="rounded bg-warn/10 px-2 py-1 text-xs font-semibold text-warn">TEMPLATE · Qwen did not answer ({c.qwen.fallback_reason?.slice(0, 120)})</p>}
               {c.qwen.question && <p className="text-xs text-muted">Q: {c.qwen.question}</p>}
               <p className="text-ink">{c.qwen.answer}</p>

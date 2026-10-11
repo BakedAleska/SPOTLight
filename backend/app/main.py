@@ -128,7 +128,8 @@ def create_app(settings: Optional[Settings] = None, services: Optional[Services]
 
     @app.exception_handler(LiveError)
     async def _live(request: Request, exc: LiveError):
-        return _err(exc.status, "live_" + {404: "not_found", 409: "conflict"}.get(exc.status, "error"), exc.detail)
+        code = {404: "not_found", 409: "conflict", 413: "too_large"}.get(exc.status, "error")
+        return _err(exc.status, "live_" + code, exc.detail)
 
     @app.exception_handler(FlagNotFound)
     async def _no_flag(request: Request, exc: FlagNotFound):

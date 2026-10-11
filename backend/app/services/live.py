@@ -7,6 +7,9 @@ the only thing that can reach the AMD box) claims it and walks the route's 8 sto
   result    -> ACTION_COMPLETED/FAILED ingested with the runner's Laya answers (TRIAGE_MODE parallel: rules run
                here, either side can escalate); red/green = the combined decision; live_captures row, event
                document and live KG nodes; returns the System 2 request and the texts to embed
+  draft     -> (0..n, while Qwen generates) its unchecked partial JSON, shown in the Qwen box: stored in
+               capture.qwen with `draft: true` only while qwen_source is 'pending'; never stored, counted, indexed
+               or graphed as an answer, and /analysis overwrites it (contract "Streaming Qwen drafts")
   analysis  -> the runner's photo, vision readings and System 2 (Qwen) output; template if Qwen failed;
                assessment (red), explanation document, explanation KG node
   embeddings-> vectors the runner computed for those texts (checked against the stored text)
@@ -26,7 +29,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from .embed import vec_literal
-from .system2 import normalize_assessment, template_explanation
+from .system2 import evidence_reasoning, normalize_assessment, sanitize_draft_fields, template_explanation
 from . import validator as V
 from .triage import T_policy as P
 from .triage import T_questions as Q
@@ -35,6 +38,7 @@ log = logging.getLogger("backend.live")
 
 ROUTES_PATH = Path(__file__).resolve().parents[1] / "data" / "live_routes.json"
 LIVE_SOURCE = "live"
+DRAFT_MAX_BYTES = 16 * 1024         # a draft's `fields`, serialized (contract: at most 16 KB)
 LIVE_TRIAGE_MODE = "parallel"       # rules run beside Laya: either can escalate, rules set the priority floor
 SYSTEM2_TEMPLATE_PATHS = ("fallback", "insufficient_context")
 
@@ -199,8 +203,19 @@ class LiveService:
         run = await self._run(run_id)
         if run["status"] not in ("pending", "running"):
             return run
-        return await self.live.update_run(run_id, status="cancelled", error="cancelled by the operator",
-                                          finished=True)
+        out = await self.live.update_run(run_id, status="cancelled", error="cancelled by the operator",
+                                         finished=True)
+        await self._expire_pending(run_id)
+        return out
+
+    async def _expire_pending(self, run_id: int) -> None:
+        """Captures still `pending` when the run ends will never get /analysis: mark them `error` (contract)."""
+        try:
+            n = await self.live.expire_pending(run_id)
+            if n:
+                log.info("live run %s ended with %d stop(s) never analysed: qwen_source -> error", run_id, n)
+        except Exception as exc:  # noqa: BLE001 - cosmetic; never fails finishing or cancelling the run
+            log.warning("live run %s: pending captures not expired: %s", run_id, exc)
 
     async def _run(self, run_id: int, running: bool = False) -> Dict[str, Any]:
         run = await self.live.get_run(run_id)
@@ -398,6 +413,28 @@ class LiveService:
                 "photo": {"path": stop["photo"], "kind": stop["photo_kind"]},
                 "embed": [{"key": "doc:" + ev_doc, "text": ev_text}] + embed_nodes}
 
+    async def stop_draft(self, run_id: int, idx: int, call: int, fields: Dict[str, Any],
+                         tokens: Optional[int] = None) -> Dict[str, Any]:
+        """Qwen's newest draft for the stop (~2/s while it generates). One conditional UPDATE when it lands (run
+        running, stop pending); the run/stop checks run only when it did not, to tell "too late" ({updated: false})
+        from a wrong or ended run (404 / 409 when the run is not running) or an untriaged stop (409)."""
+        size = len(json.dumps(fields, separators=(",", ":"), ensure_ascii=False, default=str).encode("utf-8"))
+        if size > DRAFT_MAX_BYTES:
+            raise LiveError(413, "draft fields are %d bytes; at most %d" % (size, DRAFT_MAX_BYTES))
+        clean = sanitize_draft_fields(fields)
+        qwen = {"draft": True, "call": call, "tokens": tokens, "answer": clean.get("answer"),
+                "evidence": clean.get("evidence") or [], "recommended_action": clean.get("recommended_action"),
+                "confidence": clean.get("confidence"), "reasoning": evidence_reasoning(clean.get("evidence")) or None,
+                "drafted_at": _now().isoformat()}
+        if await self.live.set_draft(run_id, idx, qwen):
+            return {"updated": True}
+        run = await self._run(run_id, running=True)     # 404 unknown run; 409 cancelled / finished
+        stop = self._stop(run, idx)
+        cap = await self.live.get_capture(run_id, idx)
+        if cap is None or cap.get("verdict") is None:
+            raise LiveError(409, "stop %s of run %s has not been triaged yet" % (stop["stop"], run_id))
+        return {"updated": False}
+
     async def stop_analysis(self, run_id: int, idx: int, body: Dict[str, Any], request_id: str) -> Dict[str, Any]:
         run = await self._run(run_id)
         stop = self._stop(run, idx)
@@ -500,6 +537,7 @@ class LiveService:
         run = await self._run(run_id)
         if run["status"] not in ("running", "pending"):
             return run
+        await self._expire_pending(run_id)    # a stop whose /analysis never landed keeps no live-looking draft
         caps = await self.live.captures(run_id)
         counts = {"red": sum(1 for c in caps if c.get("verdict") == "red"),
                   "green": sum(1 for c in caps if c.get("verdict") == "green"),
@@ -606,6 +644,10 @@ class LiveService:
                 s1.append(_compact({"id": "s1:%s:%s" % (a_id, q), "when": "action", "q": q, "answer": a.get("answer"),
                                     "meaning": _meaning(q, a.get("answer")),
                                     "p": (a.get("probs") or {}).get(a.get("answer"))}))
+        # Provenance is an ordinary fact, never a `gaps` entry: System 2 treats ANY gap as insufficient context
+        # and answers its template without calling the model (so /live would get no Qwen answer and no drafts).
+        facts.append("Live run: the robot's log is kit row %s re-sent now; the photo is a simulated capture."
+                     % d["source_action_id"])
         packet: Dict[str, Any] = {"packet_version": "1-live", "source": LIVE_SOURCE, "flag": flag, "event": event}
         if s1:
             packet["system1"] = s1[:6]
@@ -613,8 +655,6 @@ class LiveService:
         packet["allowed_actions"] = dict(ALLOWED_ACTIONS[category])
         packet["suggested_action"] = sugg if sugg in ALLOWED_ACTIONS[category] else next(iter(ALLOWED_ACTIONS[category]))
         packet["insufficient_context"] = False
-        packet["gaps"] = ["live run: the robot's log is kit row %s re-sent now; the photo is a simulated capture"
-                          % d["source_action_id"]]
         ids = [packet["flag"]["id"], event["id"], event["asset"]["id"], event["location"]["id"]]
         ids += [r["id"] for r in readings] + [x["id"] for x in anomalies] + [x["id"] for x in s1]
         ids += [f["id"] for f in packet["facts"]]
