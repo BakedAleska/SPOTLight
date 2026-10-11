@@ -31,9 +31,12 @@ export class BackendError extends Error {
   constructor(public status: number) { super(`Backend returned ${status}`); }
 }
 
+export function backendUrl(path: string) {
+  return `${(process.env.BACKEND_URL || "http://127.0.0.1:8000/api/v1").replace(/\/$/, "")}${path}`;
+}
+
 export async function backendRequest<T>(path: string, init: RequestInit = {}, timeout = 10_000): Promise<T> {
-  const base = (process.env.BACKEND_URL || "http://127.0.0.1:8000/api/v1").replace(/\/$/, "");
-  const response = await fetch(`${base}${path}`, {
+  const response = await fetch(backendUrl(path), {
     ...init,
     cache: "no-store",
     signal: AbortSignal.timeout(timeout),

@@ -3,7 +3,8 @@
 # only; it never holds database credentials. Build context is the REPO ROOT (it ships the stop photos):
 #   docker build -f scripts/live_runner.Dockerfile -t spot-live-runner .
 # Configured only by env: BACKEND_URL, ADMIN_TOKEN, SYSTEM1_URL, EMBED_URL, SYSTEM2_URL, VISION_URL,
-# SYSTEM2_API_KEY, VISION_API_KEY, LIVE_TRAVEL_S, LIVE_WORK_S, RUNNER_NAME. Runbook: docs/LIVE-RUNBOOK.md.
+# SYSTEM2_API_KEY, VISION_API_KEY, LIVE_TRAVEL_S, LIVE_WORK_S, SYSTEM2_TIMEOUT_S, SYSTEM2_STREAM (compose sets it
+# from LIVE_SYSTEM2_STREAM), LIVE_DRAFT_INTERVAL_S, RUNNER_NAME. Runbook: docs/LIVE-RUNBOOK.md, docs/STREAMING.md.
 FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 LIVE_HEARTBEAT_FILE=/tmp/live-runner.heartbeat

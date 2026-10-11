@@ -10,7 +10,7 @@ Loads one Laya checkpoint (base `convaiinnovations/laya` or our fine-tune) and a
 | `POST /v1/predict` | answers for 1–64 events, all pairs batched together (one forward pass on GPU), temperature-calibrated |
 | `GET /v1/questions` | `{"questions": QUESTIONS, "question_sets": QUESTION_SETS}` |
 | `GET /v1/model` | checkpoint, `fine_tuned`, temperatures, `training_summary`, device, amp, `questions_match` |
-| `GET /health` | `{"ok": true, "model_loaded": true, "device": "cpu"}` |
+| `GET /health` | `{"ok": true, "model_loaded": true, "device": "cpu", "logging": false}` (`logging`: `LOGS_DATABASE_URL` is set) |
 
 ```http
 POST /v1/predict
@@ -33,7 +33,7 @@ POST /v1/predict
 | `LAYA_CHECKPOINT` | `convaiinnovations/laya` | HF repo id or local checkpoint dir (`/models/laya` in Docker) |
 | `LAYA_DEVICE` | `auto` | `auto` / `cpu` / `cuda` (ROCm also shows up as `cuda`) |
 | `SPOT_AMP` | `1` | fp16 autocast on GPU; `0` = fp32 (use it if ROCm GEMMs fail) |
-| `LOGS_DATABASE_URL` | unset | when set, every predict call is logged to `app.model_calls` (system=`system1`) |
+| `LOGS_DATABASE_URL` | unset | when set, every predict call is logged to `app.model_calls` (system=`system1`). Required on the AMD box (the `spot_mcp_user` pooled DSN, single-quoted in `/root/spot.env`; `deploy/amd-native/README.md` "System 1 call logging"). Unset: startup logs a WARNING and `/health` says `logging: false` |
 | `PORT` / `HOST` | `8082` / `0.0.0.0` | |
 | `LAYA_MAX_BATCH` | auto | (event, question) pairs per forward pass. Auto = 256 on GPU (any 64-event request is one pass), 16 on CPU (one 200-pair pass OOM-killed an 8 GB Docker VM; CPU throughput doesn't improve with batch size) |
 | `LAYA_WARMUP` | `1` | run one tiny prediction at startup so the first real call isn't cold |

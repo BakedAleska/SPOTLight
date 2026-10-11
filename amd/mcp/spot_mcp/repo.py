@@ -130,8 +130,10 @@ class PgRepo:
                           SELECT n.severity AS sev, count(*) AS n FROM anomalies n
                            WHERE n.mission_id = m.mission_id GROUP BY 1) y) AS anomalies_by_severity,
                       (SELECT json_build_object('anomaly_id', n.anomaly_id, 'anomaly_type', n.anomaly_type,
-                              'severity', n.severity, 'asset_id', n.asset_id, 'action_id', n.action_id)
-                         FROM anomalies n WHERE n.mission_id = m.mission_id
+                              'severity', n.severity, 'asset_id', n.asset_id, 'action_id', n.action_id,
+                              'asset_name', wa.asset_name, 'asset_criticality', wa.criticality)
+                         FROM anomalies n LEFT JOIN assets wa ON wa.asset_id = n.asset_id
+                        WHERE n.mission_id = m.mission_id
                         ORDER BY CASE n.severity WHEN 'CRITICAL' THEN 4 WHEN 'HIGH' THEN 3 WHEN 'MEDIUM' THEN 2
                                  ELSE 1 END DESC, n.timestamp LIMIT 1) AS worst_anomaly
                  FROM missions m WHERE m.mission_id = %s""", (mission_id,))
@@ -153,22 +155,50 @@ class PgRepo:
         return await self.db.fetch(sql, params)
 
     async def asset_profile(self, asset_id: str, exclude_flag_id: Optional[int]) -> Optional[Dict[str, Any]]:
+        """The asset's history as it stood when this flag's event happened (robot time: the event's ts, else the
+        action's timestamp, else the mission's end_time): anomalies, the last 5 readings and the 3 latest prior
+        flags strictly before that time, never the flag's own action or anomaly, and never a later flag (replays
+        create flags out of robot-time order, so created_at is not used). Without a flag (or a flag with no robot
+        time) nothing is time-bounded. Blank operator notes are skipped."""
         row = await self._one(
-            """SELECT row_to_json(s) AS asset,
-                      (SELECT count(*)::int FROM anomalies n WHERE n.asset_id = s.asset_id) AS anomaly_count,
+            """WITH me AS (   -- one row even when the flag is unknown (an aggregate without GROUP BY)
+                   SELECT max(f.action_id) AS action_id, max(coalesce(e.ts, a.timestamp, m.end_time)) AS ts
+                     FROM flags f
+                     LEFT JOIN events e ON e.event_id = f.event_id
+                     LEFT JOIN actions a ON a.action_id = f.action_id
+                     LEFT JOIN missions m ON m.mission_id = f.mission_id
+                    WHERE f.flag_id = %s)
+               SELECT row_to_json(s) AS asset, me.ts AS as_of,
+                      (SELECT count(*)::int FROM anomalies n
+                        WHERE n.asset_id = s.asset_id AND (me.ts IS NULL OR n.timestamp < me.ts)
+                          AND (me.action_id IS NULL OR n.action_id IS DISTINCT FROM me.action_id)) AS anomaly_count,
                       (SELECT coalesce(json_object_agg(t, c), '{}'::json) FROM (
                           SELECT n.anomaly_type AS t, count(*) AS c FROM anomalies n
-                           WHERE n.asset_id = s.asset_id GROUP BY 1) x) AS anomalies_by_type,
+                           WHERE n.asset_id = s.asset_id AND (me.ts IS NULL OR n.timestamp < me.ts)
+                             AND (me.action_id IS NULL OR n.action_id IS DISTINCT FROM me.action_id)
+                           GROUP BY 1) x) AS anomalies_by_type,
                       (SELECT coalesce(json_agg(r ORDER BY r.timestamp), '[]'::json) FROM (
-                          SELECT reading_id, action_id, timestamp, measurement_type, value, unit, quality
-                            FROM readings WHERE asset_id = s.asset_id ORDER BY timestamp DESC LIMIT 5) r) AS recent_readings,
-                      (SELECT coalesce(json_agg(p), '[]'::json) FROM (
-                          SELECT f.flag_id, f.title, f.severity, f.status, f.created_at,
-                                 (SELECT string_agg(k.note, ' | ' ORDER BY k.created_at) FROM acknowledgements k
-                                   WHERE k.flag_id = f.flag_id AND k.note IS NOT NULL) AS notes
-                            FROM flags f WHERE f.asset_id = s.asset_id AND f.flag_id <> coalesce(%s, -1)
-                           ORDER BY f.created_at DESC LIMIT 3) p) AS prior_flags
-                 FROM assets s WHERE s.asset_id = %s""", (exclude_flag_id, asset_id))
+                          SELECT rd.reading_id, rd.action_id, rd.timestamp, rd.measurement_type, rd.value, rd.unit,
+                                 rd.quality
+                            FROM readings rd
+                           WHERE rd.asset_id = s.asset_id AND (me.ts IS NULL OR rd.timestamp < me.ts)
+                             AND (me.action_id IS NULL OR rd.action_id IS DISTINCT FROM me.action_id)
+                           ORDER BY rd.timestamp DESC LIMIT 5) r) AS recent_readings,
+                      (SELECT coalesce(json_agg(p ORDER BY p.ts DESC NULLS LAST, p.flag_id DESC), '[]'::json) FROM (
+                          SELECT pf.flag_id, pf.title, pf.severity, pf.status, pf.created_at, pf.ts,
+                                 (SELECT string_agg(btrim(k.note), ' | ' ORDER BY k.created_at) FROM acknowledgements k
+                                   WHERE k.flag_id = pf.flag_id AND nullif(btrim(k.note), '') IS NOT NULL) AS notes
+                            FROM (SELECT f.flag_id, f.title, f.severity, f.status, f.created_at, f.action_id,
+                                         coalesce(e.ts, a.timestamp, mm.end_time) AS ts
+                                    FROM flags f
+                                    LEFT JOIN events e ON e.event_id = f.event_id
+                                    LEFT JOIN actions a ON a.action_id = f.action_id
+                                    LEFT JOIN missions mm ON mm.mission_id = f.mission_id
+                                   WHERE f.asset_id = s.asset_id AND f.flag_id <> coalesce(%s, -1)) pf
+                           WHERE (me.ts IS NULL OR pf.ts < me.ts)
+                             AND (me.action_id IS NULL OR pf.action_id IS DISTINCT FROM me.action_id)
+                           ORDER BY pf.ts DESC NULLS LAST, pf.flag_id DESC LIMIT 3) p) AS prior_flags
+                 FROM assets s CROSS JOIN me WHERE s.asset_id = %s""", (exclude_flag_id, exclude_flag_id, asset_id))
         return row if row and row.get("asset") else None
 
     async def documents_by_id(self, doc_ids: Sequence[str]) -> List[Dict[str, Any]]:
@@ -189,14 +219,20 @@ class PgRepo:
             (vec_literal(vec), text, kinds, asset, location, mission, k))
 
     async def raw_event_log(self, mission_id: str, around_ts: Optional[str], limit: int) -> List[Dict[str, Any]]:
+        """One row per event (contract §5): raw.* is append-only, and a streamed replay re-logs the seed's
+        replay.ndjson events under its own source (same payload), so copies are collapsed here. The replay.ndjson
+        row wins, else the first one logged: a later replay never changes the log:<id> an event is cited by.
+        Rows without an event_id are kept one by one. The limit applies after de-duplication."""
+        dedup = ("SELECT DISTINCT ON (coalesce(event_id, 'log:' || log_id)) "
+                 "log_id, source, event_id, event_type, event_ts, payload FROM raw.spot_event_log "
+                 "WHERE mission_id = %s "
+                 "ORDER BY coalesce(event_id, 'log:' || log_id), (source = 'replay.ndjson') DESC, log_id")
         if around_ts is None:
-            sql, p = ("SELECT log_id, source, event_id, event_type, event_ts, payload FROM raw.spot_event_log "
-                      "WHERE mission_id = %s ORDER BY event_ts, log_id LIMIT %s", (mission_id, limit))
+            sql, p = ("SELECT * FROM (%s) d ORDER BY event_ts, log_id LIMIT %%s" % dedup, (mission_id, limit))
         else:
-            sql, p = ("SELECT * FROM (SELECT log_id, source, event_id, event_type, event_ts, payload "
-                      "FROM raw.spot_event_log WHERE mission_id = %s "
-                      "ORDER BY abs(extract(epoch FROM (event_ts - %s::timestamp))), log_id LIMIT %s) x "
-                      "ORDER BY event_ts, log_id", (mission_id, around_ts, limit))
+            sql, p = ("SELECT * FROM (SELECT * FROM (%s) d "
+                      "ORDER BY abs(extract(epoch FROM (event_ts - %%s::timestamp))), log_id LIMIT %%s) x "
+                      "ORDER BY event_ts, log_id" % dedup, (mission_id, around_ts, limit))
         return await self.db.fetch(sql, p)
 
     # ── Graph RAG (contract §7): the three graph functions plus one by-id lookup ───────────────────
@@ -208,6 +244,11 @@ class PgRepo:
                 raise GraphUnavailable("knowledge graph not available in this database (%s; migration 009)"
                                        % type(exc).__name__) from exc
             raise
+
+    async def kg_has_nodes(self) -> bool:
+        """False when kg_nodes is empty (db/graph_build.py has not run). Optional in the Repo protocol."""
+        rows = await self._graph("SELECT EXISTS (SELECT 1 FROM kg_nodes) AS has_nodes", ())
+        return bool(rows and rows[0].get("has_nodes"))
 
     async def match_kg_nodes(self, vec, kinds, k, min_sim):
         return await self._graph(

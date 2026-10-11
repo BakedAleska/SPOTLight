@@ -1,11 +1,15 @@
-# SPOTbot chat: contract (2026-10-11, `chat.3`)
+# SPOTbot chat: contract (2026-10-11, `chat.4`)
+
+`chat.4` (§10) adds answer modes: a turn is **grounded** (retrieval, citations, grounding check, as below) only when it
+needs SPOTlight data; greetings and general questions get a **general** answer with no retrieval and no citation rule.
+Mission chats are always grounded.
 
 `chat.2` (after the cross-layer audit) is additive. It adds carry-over sources, history rules, one shared citation rule,
 the date/time number rule, `retrieval.gaps`, `error_code`, no Markdown images, and client send/stop rules, all marked
 (`chat.2`) below. `systemInstruction` is used for **every** model family, including Gemma 4 (verified to work).
 
 The "SPOTbot" tab (formerly "AI review", then "AI Assistance") is a ChatGPT-style chat. Operators ask about past problems and missions,
-and every answer is grounded in the project database: the RAG `documents` table, the knowledge graph
+and every answer about the plant is grounded in the project database (`chat.4`: greetings and general questions are not, §10): the RAG `documents` table, the knowledge graph
 (`kg_nodes`/`kg_edges`) and plain SQL over the kit tables. Gemini (Google AI Studio API key) writes the answer;
 the backend does all retrieval. Chats are stored in Postgres so history survives reloads and devices.
 
@@ -111,6 +115,11 @@ class ChatRepo:
     async def search_documents(self, q: str, vec: str | None, k: int = 8,
                                kinds: list[str] | None = None) -> tuple[list[dict], str]
         # vec (a pgvector literal) -> match_documents_hybrid, mode 'hybrid'; vec None -> full text, mode 'fulltext'.
+        # Hybrid keeps only rows with similarity >= 0.50 (CHAT_MIN_DOC_SIMILARITY; 0.40 with a mission filter,
+        # CHAT_MISSION_MIN_DOC_SIMILARITY, since the filter already scopes the rows) or text_match (every query term,
+        # or every id-like token, in the row); the function is asked for 2*k rows and at most k are kept; a row
+        # with no embedding needs text_match. The full-text path has no floor. An off-topic question can return
+        # no documents. (CHANGED 2026-10-11, vector-store audit VS-06; mission floor RE-06.)
         # Rows: doc_id, kind, title, content, asset_id, location_id, mission_id, action_id, ts, score
     async def match_graph_nodes(self, q: str, vec: str | None, k: int = 6) -> list[dict]
         # match_kg_nodes_text + (when vec) match_kg_nodes, merged by node_id, best first.
@@ -165,7 +174,9 @@ Per turn, before the Gemini call, within `CHAT_RETRIEVAL_BUDGET_S` (default 8 s)
    mission/asset/location/flag add to those ids.
 4. **In parallel:** `search_documents` (k 8), `match_graph_nodes` (k 6), `fleet_snapshot` (cached 60 s),
    `entity_digests`. Then `graph_neighborhood` from the top 4 entry nodes (2 hops, 25 nodes, instance kinds filtered out
-   when a seed is a hub).
+   when a seed is a hub). With a vector, vector-only graph entry nodes below cosine 0.50 (`MIN_VECTOR_SCORE`, was
+   0.35) and hybrid documents below 0.50 (0.40 when the chat has a mission filter) without a text match are dropped
+   (VS-06: off-topic 0.40-0.54, relevant 0.54-0.83). The snapshot is always kept, and the full-text passes have no floor.
 5. **Sources.** Each becomes a Source (§3) with a stable citation id: documents → `doc_id` (`incident:AN012`,
    `event:act-A0001`, `manual:p52-1`, `policy:battery_low`, `note:3`); graph nodes → `node_id` (`asset:HX-204`,
    `failure_type:LOCALIZATION_FAILURE`), with their neighbourhood as readable triples; digests → `mission:M007`,
@@ -227,7 +238,9 @@ no raw HTML; and never claim to have acknowledged, resolved or changed anything.
  "path": "action:A0061 -failed_with-> failure_type:LOCALIZATION_FAILURE"}   // graph only, optional
 // Grounding
 {"grounded": true, "cited_ids": ["incident:AN012"], "unknown_ids": [], "unverified_numbers": [],
- "source_count": 11, "retrieval_mode": "hybrid" | "fulltext", "graph_seeds": ["asset:HX-217"]}
+ "source_count": 11, "retrieval_mode": "hybrid" | "fulltext" | null, "graph_seeds": ["asset:HX-217"],
+ "mode": "grounded" | "general",          // chat.4 (§10); absent on older rows = grounded
+ "fleet_ids": ["M007"]}                     // chat.4, general mode only: plant ids the answer names anyway
 ```
 
 ## 4. HTTP API (backend, under `/api/v1/chat`, tag `chat`)
@@ -273,7 +286,8 @@ User messages have `sources: []`, `citations: []`, and `grounding`/`usage`/`thin
 SSE events (`event: <name>\ndata: <json>\n\n`), in this order; `: keep-alive` comments every 15 s:
 ```
 meta      {"conversation_id", "request_id", "model", "mode", "user_message": Message}
-sources   {"sources": [Source], "retrieval": {"mode", "graph_seeds", "latency_ms", "counts": {"rag", "graph", "sql"}, "gaps": [str]}}
+sources   {"sources": [Source], "retrieval": {"mode", "graph_seeds", "latency_ms", "counts": {"rag", "graph", "sql"}, "gaps": [str],
+           "answer_mode": "grounded" | "general", "route": str}}   // chat.4: general -> sources [] and mode null
 thinking  {"delta": "..."}            0..n, thinking mode only, before or between deltas
 delta     {"delta": "..."}            1..n
 done      {"message": Message, "conversation": Conversation}
@@ -331,7 +345,8 @@ error     {"code", "detail", "retry_after_s"?: int, "message": Message | null}
     snippet. A "Sources" button opens a panel listing every source (origin, kind, title, snippet, graph path);
     `refs.flag_id` links to `/?flag=<id>`.
   - **Grounding badge** per answer: "Grounded · N sources" (ok) / "N figures not found in sources" (warn) /
-    "Cited an unknown source" (bad) / "No sources cited" (muted).
+    "Cited an unknown source" (bad) / "No sources cited" (muted). (`chat.4`) A general answer shows "General answer"
+    (muted, no "unverified" wording), or "Mentions plant data without sources" (warn) when `fleet_ids` is not empty.
   - **Actions** per answer: copy and regenerate. Per user turn: edit and resend.
   - **Errors:** `rate_limited` shows a countdown and a one-click "Try with <other model>"; other errors show a Retry.
     A stopped answer shows "Stopped".
@@ -387,6 +402,7 @@ plus an index on `(mission_id, updated_at DESC)`. `ChatRepo` changes (all additi
 | Conversation / ConversationSummary | gain `"mission_id": "M007" \| null` and `"mission": {"mission_id", "mission_name", "mission_status"} \| null` |
 
 A conversation's mission can't be changed by PATCH: a mission chat stays about that mission, so start a new chat for another.
+(`chat.4`) **Every turn of a mission chat is grounded** (§10 rule 1), greetings included.
 
 ### Retrieval for a mission chat (on top of §2)
 - **Pinned digest.** The mission's digest (`mission:M007`) is always a source, ranked first and **never dropped** for
@@ -410,3 +426,37 @@ A conversation's mission can't be changed by PATCH: a mission chat stays about t
 - **Inside a mission chat** the header shows a mission chip that links to `/missions/replay?mission=<id>`. History
   rows show a small mission badge. Next routes: `/api/chat/missions`, plus `mission_id` passthrough on the
   suggestions, conversations-list and create routes.
+
+## 10. Answer modes (`chat.4`, 2026-10-11)
+Only questions about the plant are grounded. `backend/app/services/chat/routing.py` decides, before retrieval, with
+plain rules (no model call, so §0's one Gemini call per turn still holds). The first rule that matches wins; anything
+unsure is grounded:
+1. The conversation has a `mission_id` → **grounded**.
+2. The question names a plant id (`M007`, `HX-204`, `WP05`, `flag 14`, `#14`) → **grounded**.
+3. The question uses plant vocabulary (mission, flag, P1–P4, anomaly, asset, inspection, waypoint, failure, battery,
+   fleet, gauge, reading, robot/Spot, V1/V2, "how many", "worst", "latest", "our"/"we", ...) → **grounded**.
+4. It is not small talk and follows an answer that cited sources, or a question that named a plant id ("why?",
+   "and the second one?") → **grounded**.
+5. Small talk or a question about SPOTbot itself (hi, thanks, who are you, what can you do, help) → **general**.
+6. Anything else → **probe**: run retrieval; if it returns **plant context** — a source of kind mission, action,
+   anomaly, flag, asset, location, event, incident, operator_note or explanation that is not the `stat:*` snapshot or
+   carry-over — → **grounded**, else → **general**. Manual pages, policy text and hub nodes don't count: they match
+   general robot questions too (measured: "How does lidar work?" retrieved only Spot User Guide pages and the strict
+   prompt then refused to answer). A probe whose retrieval fails falls back to general (a grounded turn still fails
+   with `retrieval_failed`).
+
+**Grounded** turns are exactly §2. **General** turns:
+- skip retrieval (rule 5) or drop its sources (rule 6): the `sources` event carries `"sources": []`,
+  `retrieval.mode: null`, `answer_mode: "general"` and `route` (the rule that decided, e.g. `"small_talk"`);
+- send `GENERAL_PROMPT` as `systemInstruction` and the bare question as the user turn (no `<sources>` block). The
+  prompt keeps the persona and rules 5–8 of §2, answers from general knowledge with no `[id]` brackets, and forbids
+  stating anything about this plant's missions, robots, assets, waypoints, flags, readings or statistics: it says no
+  plant data is attached and suggests asking with a mission, asset or flag id;
+- store `sources: []`, `citations: []` and `grounding = {"mode": "general", "grounded": false, "cited_ids": [],
+  "unknown_ids": [], "unverified_numbers": [], "source_count": 0, "retrieval_mode": null, "graph_seeds": [],
+  "fleet_ids": [...]}` where `fleet_ids` are the plant ids (§2 entity regexes) the answer names anyway.
+- are skipped when the next turn looks for "the previous answer" (§2 entities, carry-over, rule 4), so "thanks"
+  between a grounded answer and "why?" doesn't drop the evidence the follow-up refers to.
+
+A general answer has no Sources button (it has no sources; a small-talk turn sends its empty `sources` event at
+once, so "Searching mission data…" only flashes), and its badge reads "General answer", or "Mentions plant data without sources" (warn) when `fleet_ids` is not empty.

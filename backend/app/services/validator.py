@@ -15,8 +15,12 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional
 
 from .triage import T_policy as P
+from .triage import T_titles as T
 
 PRIORITY_RANK = {"P1": 1, "P2": 2, "P3": 3, "P4": 4}
+# Stable text of the laya_unavailable reason. The raw error (connection text, "busy: ...") is not copied into
+# flags.reasons: System 2 reads reason details as evidence. It stays in app.model_calls and the /ingest response.
+LAYA_UNAVAILABLE_DETAIL = "System 1 (Laya) unavailable; rules-only verdict"
 SEVERITY_OF = {"P1": "CRITICAL", "P2": "HIGH", "P3": "MEDIUM", "P4": "LOW"}
 BASE_SCORE = {"P1": 90, "P2": 70, "P3": 45, "P4": 20}
 TIER_WEIGHT = {"P1": 3, "P2": 2, "P3": 1}
@@ -205,12 +209,12 @@ def combine(mode: str, laya: Optional[Dict[str, Any]], rules: Dict[str, Any], ki
 
 def build_reasons(mode: str, laya: Optional[Dict[str, Any]], laya_error: Optional[str], rules: Dict[str, Any],
                   decision: Dict[str, Any], model: Optional[str]) -> List[Dict[str, Any]]:
-    """flags.reasons: both verdicts first, then the fired policy rules ([{rule, detail, weight, ...}])."""
+    """flags.reasons: both verdicts first, then the fired policy rules ([{rule, detail, weight, ...}]).
+    `laya_error` is not stored here (see LAYA_UNAVAILABLE_DETAIL)."""
     reasons: List[Dict[str, Any]] = []
     if laya is None:
         reasons.append({"rule": "laya_unavailable", "source": "system1", "weight": 0,
-                        "detail": "System 1 (Laya) unavailable%s; rules-only verdict"
-                                  % (": " + laya_error if laya_error else "")})
+                        "detail": LAYA_UNAVAILABLE_DETAIL})
     else:
         reasons.append({"rule": "laya_verdict", "source": "system1", "weight": 0, "model": model,
                         "verdict": "escalate" if laya["escalate"] else "log",
@@ -231,29 +235,5 @@ def build_reasons(mode: str, laya: Optional[Dict[str, Any]], laya_error: Optiona
 
 def flag_title(kind: str, ev: dict, decision: Dict[str, Any],
                rules: Optional[List[Dict[str, Any]]] = None) -> str:
-    """One operator-readable line."""
-    if kind == "mission":
-        s = ev["anomalies_by_severity"]
-        serious = s["HIGH"] + s["CRITICAL"]
-        bits = []
-        if ev["actions_failed"]:
-            bits.append("%d of %d actions failed" % (ev["actions_failed"], ev["actions_total"]))
-        if serious:
-            bits.append("%d HIGH/CRITICAL anomal%s" % (serious, "y" if serious == 1 else "ies"))
-        tail = (" but " + " and ".join(bits)) if bits and ev["reported_status"] == "COMPLETED" else \
-            (": " + ", ".join(bits) if bits else "")
-        return "Mission %s reported %s%s" % (ev["mission_id"], ev["reported_status"], tail)
-    asset, loc = ev["asset"], ev["location"]
-    where = "%s (%s) at %s %s" % (asset["asset_name"], asset["asset_id"], loc["location_id"], loc["location_name"])
-    an = ev.get("anomaly")
-    if an:
-        head = "%s %s" % (an["severity"], _h(an["anomaly_type"]))
-    elif ev["status"] == "FAILED":
-        head = "%s failed (%s)" % (_h(ev["action_type"]).capitalize(), _h(ev.get("failure_type")) or "unknown")
-    elif decision["category"] == "robot_health":
-        head = "Low battery during %s" % _h(ev["action_type"])
-    elif rules:
-        head = rules[0]["detail"]
-    else:
-        head = "%s needs review" % _h(ev["action_type"]).capitalize()
-    return "%s: %s · battery %d%%" % (head[0].upper() + head[1:], where, ev["battery_pct"])
+    """One short line (triage/titles.py), the same one db/setup.py gives the seeded flags."""
+    return T.flag_title(ev, "mission" if kind == "mission" else decision.get("category"))

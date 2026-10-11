@@ -115,4 +115,5 @@ def test_reasons_carry_both_verdicts():
     assert [x["rule"] for x in r[:2]] == ["laya_verdict", "rules_verdict"]
     assert d["summary"] == "Laya: escalate (0.83) · rules: confirmed"
     r2 = V.build_reasons("serial", None, "boom", RULES_ESC, V.combine("serial", None, RULES_ESC, "action"), None)
-    assert r2[0]["rule"] == "laya_unavailable" and "boom" in r2[0]["detail"]
+    assert r2[0]["rule"] == "laya_unavailable" and r2[0]["detail"] == V.LAYA_UNAVAILABLE_DETAIL
+    assert "boom" not in r2[0]["detail"]                             # raw error stays in app.model_calls

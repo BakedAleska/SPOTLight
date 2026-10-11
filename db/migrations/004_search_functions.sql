@@ -42,11 +42,15 @@ $fn$;
 -- The lexical side ORs the query's terms (plainto_tsquery's ANDs become ORs), so a natural-language question
 -- still matches; docs containing EVERY term rank first, then by ts_rank_cd. An exact id such as 'HX-204' is
 -- indexed as the tokens 'hx' + '-204', so only HX-204 docs contain both and they rank on top.
+-- Exact ids inside a question (vector-store audit VS-07): id-like tokens in query_text (HX-204, PANEL-211, A0061,
+-- AN014, WP05, M014) are ANDed into tsq_ids. Rows containing every id rank first on the lexical side and get an
+-- extra 1/rrf_k in the fused score, so "What anomalies were found on PANEL-211 ...?" puts PANEL-211 docs above
+-- semantic-only neighbours such as PANEL-212.
 -- Each side contributes its top 4*match_count.
 -- Trailing columns (contract §3, requested by the MCP agent):
 --   similarity  1 - cosine distance for the row (same value match_documents returns; NULL without an embedding)
---   text_match  true if the row contains EVERY query term (plainto_tsquery), i.e. an exact-ID / exact-phrase-terms
---               hit such as 'HX-204'. Rows that only share some terms are false.
+--   text_match  true if the row contains EVERY query term (plainto_tsquery), or every id-like token of the query,
+--               i.e. an exact-ID / exact-phrase-terms hit such as 'HX-204'. Rows that only share some terms are false.
 -- The return type changed, so the old function is dropped first (CREATE OR REPLACE can't change OUT columns).
 DROP FUNCTION IF EXISTS match_documents_hybrid(vector, text, text[], text, text, text, int, int);
 CREATE FUNCTION match_documents_hybrid(
@@ -68,7 +72,12 @@ AS $fn$
     SELECT CASE WHEN query_text IS NULL OR btrim(query_text) = '' THEN NULL
                 ELSE replace(plainto_tsquery('english', query_text)::text, ' & ', ' | ')::tsquery
            END AS tsq,                                            -- any term
-           plainto_tsquery('english', coalesce(query_text, '')) AS tsq_all   -- every term
+           plainto_tsquery('english', coalesce(query_text, '')) AS tsq_all,  -- every term
+           (SELECT string_agg('(' || plainto_tsquery('english', m[1])::text || ')', ' & ')
+                     FILTER (WHERE plainto_tsquery('english', m[1])::text <> '')::tsquery
+              FROM regexp_matches(coalesce(query_text, ''),
+                   '(?:^|[^[:alnum:]-])([A-Za-z]{1,6}-[0-9]{2,4}|A[0-9]{4}|AN[0-9]{3}|WP[0-9]{2}|M[0-9]{3})(?![[:alnum:]-])',
+                   'g') AS m) AS tsq_ids                          -- every id-like token (NULL if none)
   ),
   semantic AS (
     SELECT d.doc_id, row_number() OVER (ORDER BY d.embedding <=> query_embedding::{{VEC_TYPE}}, d.doc_id) AS rnk
@@ -82,26 +91,30 @@ AS $fn$
     LIMIT greatest(match_count, 1) * 4
   ),
   lexical AS (
-    SELECT d.doc_id, row_number() OVER (ORDER BY (d.content_tsv @@ q.tsq_all) DESC,
-                                              ts_rank_cd(d.content_tsv, q.tsq) DESC, d.doc_id) AS rnk
+    SELECT d.doc_id, coalesce(d.content_tsv @@ q.tsq_ids, false) AS id_hit,
+           row_number() OVER (ORDER BY coalesce(d.content_tsv @@ q.tsq_ids, false) DESC,
+                                       (d.content_tsv @@ q.tsq_all) DESC,
+                                       ts_rank_cd(d.content_tsv, q.tsq) DESC, d.doc_id) AS rnk
     FROM documents d, q
     WHERE q.tsq IS NOT NULL AND d.content_tsv @@ q.tsq
       AND (kinds IS NULL OR d.kind = ANY (kinds))
       AND (filter_asset IS NULL OR d.asset_id = filter_asset)
       AND (filter_location IS NULL OR d.location_id = filter_location)
       AND (filter_mission IS NULL OR d.mission_id = filter_mission)
-    ORDER BY (d.content_tsv @@ q.tsq_all) DESC, ts_rank_cd(d.content_tsv, q.tsq) DESC, d.doc_id
+    ORDER BY coalesce(d.content_tsv @@ q.tsq_ids, false) DESC, (d.content_tsv @@ q.tsq_all) DESC,
+             ts_rank_cd(d.content_tsv, q.tsq) DESC, d.doc_id
     LIMIT greatest(match_count, 1) * 4
   ),
   fused AS (
     SELECT coalesce(s.doc_id, l.doc_id) AS doc_id,
-           (coalesce(1.0 / (rrf_k + s.rnk), 0) + coalesce(1.0 / (rrf_k + l.rnk), 0))::real AS rrf
+           (coalesce(1.0 / (rrf_k + s.rnk), 0) + coalesce(1.0 / (rrf_k + l.rnk), 0)
+            + CASE WHEN l.id_hit THEN 1.0 / greatest(rrf_k, 1) ELSE 0 END)::real AS rrf
     FROM semantic s FULL OUTER JOIN lexical l ON s.doc_id = l.doc_id
   )
   SELECT d.doc_id, d.kind, d.title, d.content, d.metadata, d.asset_id, d.location_id, d.mission_id,
          d.action_id, d.ts, f.rrf,
          (1 - (d.embedding <=> query_embedding::{{VEC_TYPE}}))::real,
-         coalesce(d.content_tsv @@ q.tsq_all, false)
+         coalesce(d.content_tsv @@ q.tsq_all, false) OR coalesce(d.content_tsv @@ q.tsq_ids, false)
   FROM fused f JOIN documents d ON d.doc_id = f.doc_id CROSS JOIN q
   ORDER BY f.rrf DESC, d.doc_id
   LIMIT greatest(match_count, 0);

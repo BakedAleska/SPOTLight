@@ -54,6 +54,17 @@ MSG_IGNORED = {"message_id", "seq", "created_at", "conversation_id"}            
 
 SEVERITY_ORDER = ["CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO"]
 MAX_IDS = 20          # entity_digests: ids considered per kind; the SQL returns the first 5 that exist
+# Hybrid document search keeps a row only if its cosine similarity reaches this floor OR it is a text match
+# (match_documents_hybrid's text_match: every query term, or every id-like token of the query, is in the row; that is
+# how an exact id such as 'HX-204' gets through whatever its cosine). Off-topic questions
+# score 0.40-0.54 against the generic manual chunks, relevant hits 0.54-0.83 (vector-store audit VS-06, 2026-10-11);
+# with no floor every question pulled in k manual passages. A document with no embedding (similarity NULL) needs
+# text_match. The full-text path (no vector) has no floor. Same value as retrieval.MIN_VECTOR_SCORE for graph nodes.
+CHAT_MIN_DOC_SIMILARITY = 0.50
+# With a mission filter the rows are already scoped to that mission, so the floor drops to 0.40 (the MCP's): at 0.50
+# 'why did this mission go wrong' on M024 lost the mission's own action events (0.45-0.49) (retrieval audit RE-06).
+CHAT_MISSION_MIN_DOC_SIMILARITY = 0.40
+DOC_OVERFETCH = 2     # hybrid: ask the function for k * this many rows, so the floor still leaves up to k
 
 
 # ── helpers ──────────────────────────────────────────────────────────────────────────────────────────
@@ -426,7 +437,10 @@ class ChatRepo:
     # ════ retrieval (read-only, bounded) ════════════════════════════════════════════════════════════
     async def search_documents(self, q: str, vec: Optional[str], k: int = 8, kinds: Optional[List[str]] = None,
                                mission_id: Optional[str] = None) -> Tuple[List[Dict[str, Any]], str]:
-        """RAG documents. `vec` (pgvector literal) -> match_documents_hybrid (RRF score), mode 'hybrid'.
+        """RAG documents. `vec` (pgvector literal) -> match_documents_hybrid (RRF score), mode 'hybrid', keeping only
+        rows with similarity >= CHAT_MIN_DOC_SIMILARITY (CHAT_MISSION_MIN_DOC_SIMILARITY with a mission filter) or
+        text_match (so an off-topic question can return no
+        documents; the function is asked for k * DOC_OVERFETCH rows, best RRF first, at most k kept).
         `vec` None -> full text (query terms ORed, ts_rank_cd score; if nothing matches, a literal ILIKE pass
         for ids such as 'HX-204', score 0), mode 'fulltext'. Same approach as Repo.search_fulltext.
         `mission_id` (chat.3): only documents of that mission (the hybrid function's filter_mission, and the same
@@ -437,9 +451,13 @@ class ChatRepo:
         mid = _mission_id(mission_id)
         cols = "doc_id, kind, title, content, asset_id, location_id, mission_id, action_id, ts"
         if vec:
+            # similarity / text_match are only filtered on, not returned: the row shape stays the contract's.
             rows = await self.db.fetch(
-                "SELECT %s, score::float8 AS score FROM match_documents_hybrid(%%s::vector, %%s, %%s::text[], "
-                "NULL, NULL, %%s, %%s)" % cols, (vec, q, kinds, mid, k))
+                "SELECT %s, h.score::float8 AS score FROM match_documents_hybrid(%%s::vector, %%s, %%s::text[], "
+                "NULL, NULL, %%s, %%s) h WHERE h.text_match OR h.similarity >= %%s "
+                "ORDER BY h.score DESC, h.doc_id LIMIT %%s" % ", ".join("h." + c.strip() for c in cols.split(",")),
+                (vec, q, kinds, mid, k * DOC_OVERFETCH,
+                 CHAT_MISSION_MIN_DOC_SIMILARITY if mid else CHAT_MIN_DOC_SIMILARITY, k))
             return rows, "hybrid"
         if not q:
             return [], "fulltext"

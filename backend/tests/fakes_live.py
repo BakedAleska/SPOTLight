@@ -84,6 +84,23 @@ class FakeLiveRepo:
         c = self.caps[(run_id, stop_index)]
         c[col] = {**(c.get(col) or {}), **patch}
 
+    async def set_draft(self, run_id, stop_index, qwen):
+        self.draft_calls = getattr(self, "draft_calls", 0) + 1
+        c = self.caps.get((run_id, stop_index))
+        r = self.runs.get(run_id)
+        if c is None or c.get("qwen_source") != "pending" or not r or r["status"] != "running":
+            return False
+        c.update(qwen=qwen, phase="analysing", updated_at=_now())
+        return True
+
+    async def expire_pending(self, run_id):
+        n = 0
+        for (rid, _), c in self.caps.items():
+            if rid == run_id and c.get("qwen_source") == "pending":
+                c.update(qwen_source="error", phase="error", updated_at=_now())
+                n += 1
+        return n
+
     async def get_capture(self, run_id, stop_index):
         c = self.caps.get((run_id, stop_index))
         return dict(c) if c else None

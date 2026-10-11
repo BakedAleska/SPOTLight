@@ -68,6 +68,7 @@ Other profiles: `local` runs everything in Docker on CPU (for testing: Laya take
    - **What System 2 receives:** `{flag_id, request_id, flag, event, reasons, context}`, where `context` is the MCP packet. It can also take `context.vision[]` (`V#` rows), `context.ocr[]` and `image_b64`. System 2 never retrieves context itself; tool loops would break its ≤15 s p95.
    - **What it returns:** cited `evidence[{claim, ids}]`, plus `answer`, `question`, `recommended_action` (a fixed enum), `confidence` (`high|medium|low`), `insufficient_context`, `model`, `latency_ms`, `tokens_per_sec` and `path`. That matches NextEra's Orbit format.
    - **Checks:** a deterministic post-check rejects any number not in the cited evidence. The whole call is bounded by `REQUEST_DEADLINE_S` (45 s).
+   - **Streaming:** `POST /api/v1/flags/{id}/explain/stream` (and `/live` cards) show Qwen's unverified draft while it writes, then the checked answer replaces it: `docs/STREAMING.md`.
 4. **Forecast (Laya Track A).** `GET /api/v1/system1/forecast` predicts `will_fail`, `failure_mode` and `anomaly_expected` before an action runs. It uses stored predictions first, then live Laya. It always shows the empirical baseline for that waypoint and action type, plus the actual outcome.
 5. **Ask and search.**
    - `POST /api/v1/ask` sends a free-text question to the orchestrator's `/v1/ask`. There, the System 2 model may call up to 4 read-only MCP tools within 30 s.

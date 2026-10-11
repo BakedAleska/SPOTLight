@@ -64,6 +64,17 @@ class FakeRepo:
         self.replay_runs: List[Dict[str, Any]] = []
         self.replay_advances = 0
         self.replay_clock_skew = dt.timedelta(0)    # tests move "now" forward to make paced events due
+        self.media: List[Dict[str, Any]] = []        # raw.inspection_media rows with stored bytes
+
+    # inspection media (Assets page gallery)
+    @_guard
+    async def list_media(self):
+        return [{k: v for k, v in m.items() if k != "content"} for m in self.media]
+
+    @_guard
+    async def media_content(self, media_id):
+        m = next((m for m in self.media if m["media_id"] == media_id), None)
+        return {"media_type": m["media_type"], "content": m["content"]} if m else None
 
     # ingest
     @_guard

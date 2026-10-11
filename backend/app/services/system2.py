@@ -2,6 +2,8 @@
 
 POST {SYSTEM2_URL}/v1/assess (docs/ARCHITECTURE.md §4) -> Orbit-style JSON:
 question / answer / reasoning / recommended_action (+ severity_assessment, confidence, model, latency, tokens/s).
+POST {SYSTEM2_URL}/v1/assess/stream -> the same answer as server-sent events, with `draft` snapshots of the model's
+partial JSON while it generates (contract "Streaming Qwen drafts"). A draft is never an answer: only `final` is.
 POST {SYSTEM2_URL}/v1/debrief -> a mission after-action summary.
 
 The templates build the same shape deterministically from the flag's stored reasons (both verdicts and the
@@ -9,15 +11,25 @@ fired policy rules), so the operator always gets an explanation, marked `source:
 """
 from __future__ import annotations
 
+import asyncio
 import json
+import logging
+import re
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import httpx
 
 from .calllog import LogSink
 from .http import Breaker, ServiceUnavailable, short_error
 from .triage import T_policy as P
+
+log = logging.getLogger("backend.system2")
+
+NO_STREAM_TTL_S = 300.0       # after a 404/405 on /v1/assess/stream (an older System 2), use /v1/assess this long
+STREAM_BUSY_STATUS = 503      # System 2's stream slots are all taken: use /v1/assess for this call only
+DRAFT_TEXT_KEYS = ("answer", "recommended_action", "confidence")
+_EOL = re.compile(r"\r\n|\r|\n")
 
 # Mirrors amd/mcp/spot_mcp/domain.py suggested_action (the allowed-action enum System 2 picks from).
 ACTION_TEXT = {
@@ -35,6 +47,51 @@ ACTION_TEXT = {
     "MONITOR": "no action now; keep watching the trend",
     "NO_ACTION": "routine event; log only",
 }
+
+# Mirrors amd/mcp/spot_mcp/domain.py ALLOWED_ACTIONS: the codes System 2 may pick for a flag category. The SQL
+# fallback packet sends the flag's set (System 2 answers MANUAL_REVIEW when a packet has none).
+ALLOWED_ACTIONS: Dict[str, Dict[str, str]] = {
+    "equipment": {
+        "DISPATCH_TECHNICIAN": "send a technician to inspect the equipment this shift",
+        "SCHEDULE_MAINTENANCE": "open a maintenance work order for the next maintenance window",
+        "REINSPECT_NEXT_ROUTE": "re-check this asset on SPOT's next route and compare",
+        "ESCALATE_TO_SUPERVISOR": "notify the shift supervisor now (critical asset or critical anomaly)",
+        "MONITOR": "no action now; keep watching the trend",
+    },
+    "data_quality": {
+        "REINSPECT_NOW": "send SPOT back to repeat the inspection now",
+        "MANUAL_READING": "have a technician take the reading by hand",
+        "CHECK_SENSOR_PAYLOAD": "inspect SPOT's sensor payload / camera for faults",
+        "REINSPECT_NEXT_ROUTE": "repeat the inspection on the next route",
+        "MONITOR": "no action now; keep watching",
+    },
+    "navigation": {
+        "REINSPECT_NOW": "retry the waypoint now",
+        "CLEAR_PATH": "have someone remove the obstacle blocking SPOT's path",
+        "ADJUST_WAYPOINT": "move or re-record the waypoint / add fiducials (noisy or low-light area)",
+        "UPDATE_AUTOWALK_MAP": "re-record the Autowalk route segment",
+        "MONITOR": "no action now; keep watching",
+    },
+    "robot_health": {
+        "RETURN_TO_DOCK": "send SPOT to the dock now",
+        "CHARGE_BEFORE_NEXT_MISSION": "fully charge SPOT before the next mission",
+        "CHECK_COMMS": "check radio / network coverage at this waypoint",
+        "ABORT_MISSION": "stop the current mission",
+        "MONITOR": "no action now; keep watching",
+    },
+    "mission": {
+        "REVIEW_MISSION": "review the mission's failed actions and anomalies before signing it off",
+        "RERUN_FAILED_ACTIONS": "schedule a mission that repeats only the failed actions",
+        "CHARGE_BEFORE_NEXT_MISSION": "fully charge SPOT before the next mission",
+        "MONITOR": "no action now",
+    },
+    "none": {
+        "NO_ACTION": "routine event; log only",
+        "MONITOR": "no action now; keep watching",
+    },
+}
+# HTTP statuses that say the service (not this request) is in trouble; any other 4xx never opens the breaker.
+BREAKER_4XX = (408, 429)
 
 
 def suggested_action(category: Optional[str], priority: Optional[str], facts: Dict[str, Any]) -> str:
@@ -151,6 +208,87 @@ def template_debrief(summary: Dict[str, Any]) -> Dict[str, Any]:
             "model": "template", "source": "template"}
 
 
+class StreamNotSupported(Exception):
+    """System 2 answered /v1/assess/stream with 404/405 (an older build) or 503 (every stream slot busy): the caller
+    uses /v1/assess instead."""
+
+
+class SSEParser:
+    """Incremental server-sent-events parser: feed text chunks, get (event, data) pairs.
+
+    Lines end in LF, CRLF or CR (a CR at the end of a chunk waits for the next chunk); `:` lines are comments;
+    several `data:` lines join with a newline; a blank line dispatches. `close()` flushes a last event that had no
+    trailing blank line (lenient: a server that closes right after its final event still counts)."""
+
+    def __init__(self):
+        self._buf = ""
+        self._event: Optional[str] = None
+        self._data: List[str] = []
+
+    def feed(self, text: str) -> List[Tuple[str, str]]:
+        self._buf += text
+        out: List[Tuple[str, str]] = []
+        while True:
+            m = _EOL.search(self._buf)
+            if m is None or (m.group() == "\r" and m.end() == len(self._buf)):
+                break
+            line, self._buf = self._buf[:m.start()], self._buf[m.end():]
+            ev = self._line(line)
+            if ev is not None:
+                out.append(ev)
+        return out
+
+    def close(self) -> List[Tuple[str, str]]:
+        out = self.feed("\n") if self._buf else []
+        ev = self._line("")
+        return out + ([ev] if ev is not None else [])
+
+    def _line(self, line: str) -> Optional[Tuple[str, str]]:
+        if line == "":
+            ev = (self._event or "message", "\n".join(self._data)) if self._data else None
+            self._event, self._data = None, []
+            return ev
+        if line.startswith(":"):
+            return None
+        name, _, value = line.partition(":")
+        if value.startswith(" "):
+            value = value[1:]
+        if name == "event":
+            self._event = value
+        elif name == "data":
+            self._data.append(value)
+        return None
+
+
+def evidence_reasoning(evidence: Any) -> str:
+    """The evidence claims joined the way `normalize_assessment` builds `reasoning`: "<claim> [<ids>]" ..."""
+    return " ".join("%s [%s]" % (e.get("claim"), ", ".join(e.get("ids") or []))
+                    for e in (evidence if isinstance(evidence, list) else []) if isinstance(e, dict))
+
+
+def sanitize_draft_fields(fields: Any) -> Dict[str, Any]:
+    """A draft snapshot reduced to {evidence: [{claim, ids}], answer, recommended_action, confidence}: only those
+    keys, only strings, `ids` only strings. Keys that are absent (not started yet) stay absent."""
+    out: Dict[str, Any] = {}
+    if not isinstance(fields, dict):
+        return out
+    ev = fields.get("evidence")
+    if isinstance(ev, list):
+        items = []
+        for e in ev:
+            if not isinstance(e, dict):
+                continue
+            claim = e.get("claim") if isinstance(e.get("claim"), str) else ""
+            ids = [i for i in e.get("ids") if isinstance(i, str)] if isinstance(e.get("ids"), list) else []
+            if claim or ids:
+                items.append({"claim": claim, "ids": ids})
+        out["evidence"] = items
+    for k in DRAFT_TEXT_KEYS:
+        if isinstance(fields.get(k), str):
+            out[k] = fields[k]
+    return out
+
+
 class System2Client:
     name = "system2"
 
@@ -162,59 +300,186 @@ class System2Client:
         self.api_key = api_key
         self.timeout_s = timeout_s
         self.breaker = breaker or Breaker()
+        self._no_stream_until = 0.0      # monotonic time until which /v1/assess/stream is known to be missing
+        # /v1/debrief has its own breaker: System 2 does not serve that route yet, and its 404 must never
+        # block /v1/assess (the explanations) for a cooldown.
+        self.debrief_breaker = Breaker(self.breaker.cooldown_s)
 
     @property
     def configured(self) -> bool:
         return bool(self.base_url)
 
     async def _post(self, path: str, body: Dict[str, Any], request_id: Optional[str],
-                    flag_id: Optional[int] = None, action_id: Optional[str] = None) -> Dict[str, Any]:
+                    flag_id: Optional[int] = None, action_id: Optional[str] = None,
+                    breaker: Optional[Breaker] = None) -> Dict[str, Any]:
+        breaker = breaker or self.breaker
         if not self.base_url:
             raise ServiceUnavailable(self.name, "SYSTEM2_URL is not set")
-        if not self.breaker.allow():
-            raise ServiceUnavailable(self.name, "circuit open after: %s" % self.breaker.last_error)
+        if not breaker.allow():
+            raise ServiceUnavailable(self.name, "circuit open after: %s" % breaker.last_error)
         headers = {"X-Request-ID": request_id or ""}
         if self.api_key:
             headers["X-API-Key"] = self.api_key
         t0 = time.perf_counter()
+        trip = True
         try:
             payload = json.loads(json.dumps(body, default=str))  # datetimes/decimals from DB rows -> strings
             r = await self.http.post(self.base_url + path, json=payload, headers=headers, timeout=self.timeout_s)
             if r.status_code != 200:
+                # A 4xx (422 packet, 404 route, 401 key) is this request's problem, not an outage: the caller
+                # still falls back, but the breaker stays closed for the next request.
+                trip = not 400 <= r.status_code < 500 or r.status_code in BREAKER_4XX
                 raise ServiceUnavailable(self.name, "HTTP %d: %s" % (r.status_code, r.text[:200]))
             out = r.json()
             if not isinstance(out, dict):
                 raise ServiceUnavailable(self.name, "response is not a JSON object")
         except ServiceUnavailable as exc:
             self._log(False, path, t0, request_id, flag_id, action_id, error=exc.reason)
-            self.breaker.failure(exc.reason)
+            if trip:
+                breaker.failure(exc.reason)
             raise
         except (httpx.HTTPError, ValueError) as exc:
             err = short_error(exc)
             self._log(False, path, t0, request_id, flag_id, action_id, error=err)
-            self.breaker.failure(err)
+            breaker.failure(err)
             raise ServiceUnavailable(self.name, err) from exc
-        self.breaker.success()
+        breaker.success()
         self._log(True, path, t0, request_id, flag_id, action_id, out=out)
         return out
 
-    def _log(self, ok: bool, path: str, t0: float, request_id, flag_id, action_id, error=None, out=None) -> None:
+    def _log(self, ok: bool, path: str, t0: float, request_id, flag_id, action_id, error=None, out=None,
+             extra: Optional[Dict[str, Any]] = None) -> None:
         out = out or {}
         usage = out.get("usage") or {}
+        metadata = {"service_latency_ms": out.get("latency_ms")} if out else {}
+        if extra:
+            metadata.update(extra)
         self.sink.model_call(
             system=self.name, ok=ok, endpoint=path, request_id=request_id, flag_id=flag_id, action_id=action_id,
             model=out.get("model"), latency_ms=int((time.perf_counter() - t0) * 1000), error=error,
             tokens_per_sec=out.get("tokens_per_sec"), device=out.get("device"),
             input_tokens=out.get("input_tokens") or usage.get("prompt_tokens"),
             output_tokens=out.get("output_tokens") or usage.get("completion_tokens"),
-            metadata={"service_latency_ms": out.get("latency_ms")} if out else {})
+            metadata=metadata)
 
     async def assess(self, body: Dict[str, Any], request_id: Optional[str], flag_id: Optional[int],
                      action_id: Optional[str]) -> Dict[str, Any]:
         return await self._post("/v1/assess", body, request_id, flag_id, action_id)
 
+    async def assess_stream(self, body: Dict[str, Any], request_id: Optional[str], flag_id: Optional[int],
+                            action_id: Optional[str],
+                            on_draft: Optional[Callable[[Dict[str, Any]], None]] = None
+                            ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        """POST /v1/assess/stream: calls `on_draft({call, tokens, fields})` per `draft` event and returns
+        (the `final` response, exactly the /v1/assess body; {stream, drafts, cache, image, mode}).
+
+        Same failure semantics as `assess` (breaker, one app.model_calls row, ServiceUnavailable on a transport or
+        HTTP error, an `error` event or a stream without `final`; a 4xx other than 408/429 does not trip the
+        breaker). A 404/405 raises StreamNotSupported (nothing
+        logged, breaker untouched) and is remembered for NO_STREAM_TTL_S, so the caller can use `assess`; a 503
+        (System 2's stream slots are busy) raises it too, for this call only. A 200
+        `application/json` reply (a proxy or build that does not stream) is read as the final response, no drafts.
+        Cancellation (client disconnect, the caller's deadline) logs an `ok=False, error="cancelled"` row without
+        touching the breaker, then propagates."""
+        path = "/v1/assess/stream"
+        if not self.base_url:
+            raise ServiceUnavailable(self.name, "SYSTEM2_URL is not set")
+        if time.monotonic() < self._no_stream_until:
+            raise StreamNotSupported("System 2 has no /v1/assess/stream (remembered)")
+        if not self.breaker.allow():
+            raise ServiceUnavailable(self.name, "circuit open after: %s" % self.breaker.last_error)
+        headers = {"X-Request-ID": request_id or "", "Accept": "text/event-stream"}
+        if self.api_key:
+            headers["X-API-Key"] = self.api_key
+        meta: Dict[str, Any] = {"stream": True, "drafts": 0, "cache": None, "image": None}
+        t0 = time.perf_counter()
+        trip = True
+        try:
+            payload = json.loads(json.dumps(body, default=str))  # datetimes/decimals from DB rows -> strings
+            async with self.http.stream("POST", self.base_url + path, json=payload, headers=headers,
+                                        timeout=self.timeout_s) as r:
+                if r.status_code in (404, 405):
+                    self._no_stream_until = time.monotonic() + NO_STREAM_TTL_S
+                    raise StreamNotSupported("System 2 answered /v1/assess/stream with HTTP %d" % r.status_code)
+                if r.status_code == STREAM_BUSY_STATUS:     # not remembered: the next call may get a slot
+                    raise StreamNotSupported("System 2 streams are busy (HTTP 503)")
+                if r.status_code != 200:
+                    await r.aread()
+                    # same rule as _post: a 4xx (422 packet, 401 key) is this request's problem, not an outage
+                    trip = not 400 <= r.status_code < 500 or r.status_code in BREAKER_4XX
+                    raise ServiceUnavailable(self.name, "HTTP %d: %s" % (r.status_code, r.text[:200]))
+                ctype = r.headers.get("content-type", "").split(";", 1)[0].strip().lower()
+                if ctype == "application/json":    # not streamed: the body is the /v1/assess answer itself
+                    await r.aread()
+                    out = r.json()
+                    if not isinstance(out, dict):
+                        raise ServiceUnavailable(self.name, "JSON reply is not an object")
+                    meta["stream"] = False
+                else:
+                    out = await self._read_stream(r, on_draft, meta)
+        except StreamNotSupported:
+            raise
+        except asyncio.CancelledError:
+            # the client left or the caller's deadline passed: not System 2's fault, so the breaker is untouched
+            self._log(False, path, t0, request_id, flag_id, action_id, error="cancelled", extra=meta)
+            raise
+        except ServiceUnavailable as exc:
+            self._log(False, path, t0, request_id, flag_id, action_id, error=exc.reason, extra=meta)
+            if trip:
+                self.breaker.failure(exc.reason)
+            raise
+        except (httpx.HTTPError, ValueError) as exc:
+            err = short_error(exc)
+            self._log(False, path, t0, request_id, flag_id, action_id, error=err, extra=meta)
+            self.breaker.failure(err)
+            raise ServiceUnavailable(self.name, err) from exc
+        self.breaker.success()
+        self._log(True, path, t0, request_id, flag_id, action_id, out=out, extra=meta)
+        return out, meta
+
+    async def _read_stream(self, r: httpx.Response, on_draft, meta: Dict[str, Any]) -> Dict[str, Any]:
+        parser = SSEParser()
+        async for chunk in r.aiter_text():
+            for event, data in parser.feed(chunk):
+                out = self._on_event(event, data, on_draft, meta)
+                if out is not None:
+                    return out          # `final` is the last event: stop reading, close the response
+        for event, data in parser.close():
+            out = self._on_event(event, data, on_draft, meta)
+            if out is not None:
+                return out
+        raise ServiceUnavailable(self.name, "stream ended without a final event")
+
+    def _on_event(self, event: str, data: str, on_draft, meta: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        try:
+            obj = json.loads(data)
+        except ValueError:
+            if event in ("final", "error"):
+                raise ServiceUnavailable(self.name, "%s event is not JSON" % event) from None
+            return None
+        if not isinstance(obj, dict):
+            obj = {}
+        if event == "start":
+            meta["mode"] = obj.get("mode")
+        elif event == "draft":
+            meta["drafts"] += 1
+            if on_draft is not None:
+                try:
+                    on_draft(obj)
+                except Exception:  # noqa: BLE001 - a draft is cosmetic; never fail the assessment over it
+                    log.exception("draft callback failed")
+        elif event == "final":
+            response = obj.get("response")
+            if not isinstance(response, dict):
+                raise ServiceUnavailable(self.name, "final event has no response object")
+            meta["cache"], meta["image"] = obj.get("cache"), obj.get("image")
+            return response
+        elif event == "error":
+            raise ServiceUnavailable(self.name, "stream error: %s" % str(obj.get("detail") or "no detail")[:200])
+        return None
+
     async def debrief(self, body: Dict[str, Any], request_id: Optional[str]) -> Dict[str, Any]:
-        return await self._post("/v1/debrief", body, request_id)
+        return await self._post("/v1/debrief", body, request_id, breaker=self.debrief_breaker)
 
     async def health(self) -> dict:
         if not self.base_url:
@@ -240,12 +505,15 @@ class System2Client:
         return out
 
 
-def normalize_assessment(out: Dict[str, Any]) -> Dict[str, Any]:
-    """Accept System 2's shape (incl. the R3 `evidence[{claim, ids}]` variant) -> the assessments columns."""
+def normalize_assessment(out: Dict[str, Any], default_severity: Optional[str] = None) -> Dict[str, Any]:
+    """Accept System 2's shape (incl. the R3 `evidence[{claim, ids}]` variant) -> the assessments columns.
+    System 2's response has no severity_assessment (it then defaults to `default_severity`, the flag's) and no
+    reasoning (built from the evidence, or the answer itself when there is no evidence, e.g. insufficient context)."""
     reasoning = out.get("reasoning")
     if not reasoning and isinstance(out.get("evidence"), list):
-        reasoning = " ".join("%s [%s]" % (e.get("claim"), ", ".join(e.get("ids") or []))
-                             for e in out["evidence"] if isinstance(e, dict))
+        reasoning = evidence_reasoning(out["evidence"])
+    if not reasoning:
+        reasoning = out.get("answer")
     rec = out.get("recommended_action")
     if isinstance(rec, dict):
         rec = "%s: %s" % (rec.get("action") or rec.get("code"), rec.get("detail") or rec.get("why") or "")
@@ -253,7 +521,7 @@ def normalize_assessment(out: Dict[str, Any]) -> Dict[str, Any]:
     if isinstance(conf, str):
         conf = {"high": 0.85, "medium": 0.6, "low": 0.35}.get(conf.lower())
     return {"question": out.get("question"), "answer": out.get("answer"), "reasoning": reasoning,
-            "recommended_action": rec, "severity_assessment": out.get("severity_assessment"),
+            "recommended_action": rec, "severity_assessment": out.get("severity_assessment") or default_severity,
             "confidence": conf, "model": out.get("model"), "latency_ms": out.get("latency_ms"),
             "tokens_per_sec": out.get("tokens_per_sec"), "insufficient_context": out.get("insufficient_context"),
             "evidence": out.get("evidence"), "source": "system2"}

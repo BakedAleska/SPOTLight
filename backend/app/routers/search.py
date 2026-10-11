@@ -31,6 +31,9 @@ async def search(q: str = Query(..., min_length=1, max_length=500, description="
     mission filters. If the embedding service is down or slower than SEARCH_EMBED_TIMEOUT_S (default 4 s; the CPU
     embedder needs ~2.3 s): Postgres full-text on `content_tsv` (`mode: fulltext`)."""
     t0 = time.perf_counter()
+    # '?asset_id=' arrives as '' (or blanks): no filter (match_documents_hybrid would compare against '' and match
+    # nothing)
+    asset_id, location_id, mission_id = ((v or "").strip() or None for v in (asset_id, location_id, mission_id))
     kinds = [x for k_ in (kinds or []) for x in k_.split(",") if x] or None
     if kinds:
         bad = [x for x in kinds if x not in KINDS]

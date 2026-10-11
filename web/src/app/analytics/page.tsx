@@ -34,6 +34,7 @@ export default function Analytics() {
           <h1 className="text-2xl font-semibold text-ink">Analytics</h1>
           <p className="nums text-xs text-muted">Challenge kit · {data.coverage}</p>
         </div>
+        <p className="text-xs text-muted">Click any bar, slice, point or cell to see the actions, missions, anomalies or readings behind it.</p>
         <nav aria-label="Analytics categories" className="flex flex-wrap gap-2">
           {SECTIONS.map((section) => (
             <a

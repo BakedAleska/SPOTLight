@@ -314,12 +314,27 @@ def _time_ok(claim_t, support_t) -> bool:
             and (claim_t[2] is None or claim_t[2] == support_t[2]))
 
 
-def _mask_cited(text: str, cited_ids) -> str:
-    """Blank exact, whole cited IDs written in the text (action:A0030, flag:14): a cited ID is already allowed
-    as a reference, but a namespaced one would otherwise split into an identifier (A0030) or a number (14).
-    Uncited IDs, partial IDs and every other token are still checked."""
-    spans = [m.span() for i in cited_ids
-             for m in re.finditer(r'(?<![\w:.-])%s(?![\w:-]|\.\d)' % re.escape(i), text)]
+def _mask_references(text: str, cited_ids, prepared, catalog: EntityCatalog) -> str:
+    """Blank the references a text may make without a supporting row:
+    - exact, whole cited IDs (action:A0030, flag:14): a cited ID is already allowed as a reference, but a
+      namespaced one would otherwise split into an identifier (A0030) or a number (14);
+    - the short form of a cited namespaced ID: mission:M001 -> M001, asset:HX-208 -> HX-208, and for a numeric
+      one the namespace word plus the number (flag:14 -> "flag 14", "Flag #14");
+    - the flag's own subject (prepared.subject: its asset, waypoint and mission IDs, plus the catalog names of the
+      asset and waypoint) and "flag <flag_id>": the question already names them, so they are not claims.
+    Uncited IDs, partial IDs and every number are still checked."""
+    pats = []
+    for i in cited_ids:
+        pats.append(re.escape(i))
+        ns, sep, local = i.partition(':')
+        if sep and local:
+            pats.append(r'%s\s*#?\s*%s' % (re.escape(ns), local) if local.isdigit() else re.escape(local))
+    aliases = {e.key: e.aliases for e in catalog.entities}
+    for s in getattr(prepared, 'subject', ()):
+        pats += [re.escape(a) for a in aliases.get(s, (s,))]
+    pats.append(r'flag\s*#?\s*%d' % prepared.flag_id)
+    spans = [m.span() for p in pats
+             for m in re.finditer(r'(?<![\w:.-])%s(?![\w:-]|\.\d)' % p, text, re.IGNORECASE)]
     return _mask(text, spans)
 
 
@@ -334,7 +349,7 @@ def _content_errors(text, support_ids, cited_ids, prepared, catalog, field, clai
         return any(pat.search(f) for f in folded)
 
     found = []
-    tok = _scan(_mask_cited(text, cited_ids), catalog)
+    tok = _scan(_mask_references(text, cited_ids, prepared, catalog), catalog)
     for a, _, raw in tok['nonfinite']:
         found.append((a, 'nonfinite_number', raw))
     for a, _, raw, date, time in tok['dt']:

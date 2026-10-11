@@ -130,6 +130,9 @@ async def test_qwen_answer_is_stored_indexed_and_graphed(lh):
     assert fin["run"]["counts"]["qwen"] == 8
     e_stop, e_res, e_an = next(x for x in stops if x[0]["stop"] == "E")
     assert e_an["qwen_source"] == "system2" and lh.repo.assessments[e_res["flag_id"]]["state"] == "DONE"
+    # System 2 sends no severity: the stored assessment defaults to the stop's, as /explain does with the flag's
+    assert e_an["capture"]["severity"]
+    assert e_an["capture"]["qwen"]["severity_assessment"] == e_an["capture"]["severity"]
     doc = e_an["capture"]["doc_id"]
     assert doc == "explanation:%s" % e_an["assessment_id"]
     kg = (await lh.client.get("/api/v1/live/kg", params={"run_id": run["run_id"]})).json()
@@ -158,6 +161,34 @@ async def test_one_active_run_and_admin_only(lh):
     r = await lh.client.post("/api/v1/live/claim", json={}, headers={"X-Admin-Token": "nope"})
     assert r.status_code == 401
     assert (await lh.client.get("/api/v1/live/runs")).status_code == 200
+
+
+def _system2_packet_module():
+    """System 2's own normalize_packet (amd/system2/analyst/packet.py: pure, pydantic only), imported for one check."""
+    import sys
+    root = str(REPO_ROOT / "amd" / "system2")
+    sys.path.insert(0, root)
+    try:
+        from analyst import backend_contract, packet
+    finally:
+        sys.path.remove(root)
+    return backend_contract, packet
+
+
+async def test_live_packet_has_no_gaps_so_system2_calls_the_model(lh):
+    """Any `gaps` entry makes System 2 answer insufficient_context with no model call (and no drafts): the live
+    provenance note is an ordinary, cited fact instead."""
+    _, stops, _ = await walk(lh, "R2")
+    contract, packet = _system2_packet_module()
+    for _, res, _ in stops:
+        req = res["system2_request"]
+        ctx = req["context"]
+        assert not ctx.get("gaps") and ctx["insufficient_context"] is False
+        notes = [f for f in ctx["facts"] if "re-sent now" in f["fact"]]
+        assert len(notes) == 1 and "simulated capture" in notes[0]["fact"]
+        assert notes[0]["id"] in ctx["citation_ids"]
+        prepared = packet.normalize_packet(contract.BackendAssessRequest.model_validate(req))
+        assert prepared.insufficient_context is False, res["capture"]["stop"]
 
 
 def test_allowed_actions_mirror_mcp_domain():

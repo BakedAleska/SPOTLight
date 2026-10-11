@@ -21,7 +21,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 import httpx
 
-from ..calllog import LogSink
+from ..calllog import LogSink, redact
 from ..http import short_error
 
 # finishReason values that mean the answer was withheld by a safety or policy filter.
@@ -71,7 +71,13 @@ class GeminiClient:
 
     def __init__(self, api_key: Optional[str], base_url: str, http: httpx.AsyncClient, sink: LogSink,
                  timeout_s: float = 120.0):
-        self._key = api_key or None
+        # Stripped: a trailing newline made the key an illegal header value and put it in the error text (DP-01).
+        self._key = (api_key or "").strip() or None
+        # Every form the key can take in an error string (raw, stripped, bytes repr, escaped), longest first. A
+        # whitespace-only value is no key: scrubbing " " or "\n" would mangle every error string.
+        forms = {f for k in (api_key or "", self._key or "") if k.strip()
+                 for f in (k, repr(k.encode())[2:-1], k.encode("unicode_escape").decode())}
+        self._secrets = sorted((f for f in forms if f), key=len, reverse=True)
         self.base_url = (base_url or "").rstrip("/")
         self.http = http
         self.sink = sink
@@ -86,7 +92,9 @@ class GeminiClient:
 
     def scrub(self, text: Any) -> str:
         s = "" if text is None else str(text)
-        return s.replace(self._key, "[redacted]") if self._key and self._key in s else s
+        for secret in self._secrets:
+            s = s.replace(secret, "[redacted]")
+        return redact(s) or ""
 
     def _headers(self) -> Dict[str, str]:
         return {"x-goog-api-key": self._key or "", "content-type": "application/json"}

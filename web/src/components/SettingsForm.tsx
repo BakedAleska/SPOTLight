@@ -218,7 +218,7 @@ function AiCard() {
     <Card
       id="ai"
       title="AI review"
-      description="Controls for the model that explains flags and suggests actions."
+      description="Controls for SPOTbot, which explains flags and suggests actions."
       badge="Beta"
       form={form}
     >

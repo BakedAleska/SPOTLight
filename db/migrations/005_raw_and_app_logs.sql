@@ -1,6 +1,6 @@
 -- target: logs
 -- Logs and raw SPOT data (contract §6). Runs against LOGS_DATABASE_URL (defaults to DATABASE_URL).
--- Both schemas are append-only: nothing UPDATEs or DELETEs them (enforced for the app roles in 006_roles.sql).
+-- Both schemas are append-only: nothing UPDATEs or DELETEs them (enforced for the app roles in 007_roles.sql).
 
 -- ── raw: SPOT data exactly as received (audit, replay, re-derivation) ──────────
 CREATE SCHEMA IF NOT EXISTS raw;

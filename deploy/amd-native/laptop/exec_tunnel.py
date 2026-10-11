@@ -1,4 +1,4 @@
-"""Laptop side of the AMD box tunnel: 127.0.0.1:18080/18081/18082 -> box llama-server/embed/Laya.
+"""Laptop side of the AMD box tunnel: 127.0.0.1:18080-18083 -> box llama-server/embed/Laya/System 2.
 
 The box's sshd refuses -L forwarding (TCP and Unix sockets), so each TCP connection accepted here runs
 `python3 /root/stdio_bridge.py <port>` on the box over one multiplexed SSH connection (ControlMaster, opened by
@@ -9,7 +9,7 @@ import os
 
 HOST = os.environ.get("SPOT_AMD_HOST", "spot-amd")
 CTL = os.path.expanduser(os.environ.get("SPOT_AMD_CTL", "~/.ssh/spot-amd-ctl"))
-ROUTES = {18080: 8080, 18081: 8081, 18082: 8082}      # llama-server, embed, Laya (docs/RUNNING.md Mode 2 ports)
+ROUTES = {18080: 8080, 18081: 8081, 18082: 8082, 18083: 8083}   # llama-server, embed, Laya, System 2
 
 
 async def pump(reader, writer):

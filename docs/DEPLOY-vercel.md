@@ -45,8 +45,10 @@ Set the AMD URLs when they exist, then redeploy.
    |---|---|
    | `DATABASE_URL` | Neon **pooled** URL as `spot_mcp_user` (from `DEPLOY-neon.md` step 5) |
    | `MCP_AUTH_TOKEN` | **required**; the app refuses to start without it |
-   | `EMBED_URL` | the AMD cluster's public embeddings URL (leave unset until it exists) |
+   | `EMBED_URL` | the AMD cluster's public embeddings URL (leave unset until it exists). Unset, it is `localhost:8081`, which fails on Vercel: every packet then has the gap `retrieval skipped` |
    | `EMBED_MODEL`, `EMBED_DIM` | `Qwen/Qwen3-Embedding-0.6B`, `1024` (must match what was ingested) |
+
+   Leave `EMBED_QUERY_PREFIX` unset on both projects: the default is the Qwen3 query instruction that matches how ingest embedded the documents (with no document prefix).
 
 3. **Deploy and verify:**
    ```bash
@@ -69,20 +71,31 @@ Set the AMD URLs when they exist, then redeploy.
    | `REPLAY_MODE` | `stepped` (the default when serverless; set it explicitly anyway) |
    | `ADMIN_TOKEN` | guards `/replay/*`, `/ops/*`, `POST /events` (header `X-Admin-Token`) |
    | `MCP_URL`, `MCP_AUTH_TOKEN` | `https://<mcp>.vercel.app/mcp` and the MCP token |
-   | `SYSTEM1_URL`, `EMBED_URL`, `SYSTEM2_URL`, `ORCHESTRATOR_URL` | the AMD cluster's public URLs (when ready) |
+   | `SYSTEM1_URL`, `EMBED_URL`, `SYSTEM2_URL`, `ORCHESTRATOR_URL` | the AMD cluster's public URLs (when ready). `EMBED_URL` must be the same URL the MCP project has |
+   | `EMBED_MODEL`, `EMBED_DIM` | `Qwen/Qwen3-Embedding-0.6B`, `1024`, the same as MCP and ingest (leave `EMBED_QUERY_PREFIX` unset) |
+   | `GEMINI_API_KEY` | the AI Assistance key, with **no trailing newline**: `printf %s "$KEY" \| vercel env add GEMINI_API_KEY production` (an `echo` adds one; it broke the header and leaked the key into an error log) |
    | `SYSTEM2_API_KEY`, `ORCHESTRATOR_API_KEY` | the same values the AMD services use |
    | `SYSTEM1_INGEST_TIMEOUT_S` | `10` |
    | `DB_POOL_MAX` | `5` |
    | `CORS_ORIGINS` | `https://<web>.vercel.app` |
 
-   Don't set `TRIAGE_DIR` or `KIT_DIR`; the defaults find the bundled copy.
+   Don't set `TRIAGE_DIR` or `KIT_DIR`; the defaults find the bundled copy. Leave `LOG_REQUESTS` unset: the default,
+   `writes`, logs writes, errors and slow requests to `app.request_log`, and skips the dashboard's polling reads.
 3. **Deploy and verify:**
    ```bash
    B=https://<backend>.vercel.app
    curl -s "$B/health?deep=false"            # instant liveness
    curl -s $B/health | jq                    # database: up; model URLs up or down (down is OK before AMD is live)
-   curl -s $B/api/v1/flags | jq '.items | length'    # 58 seeded flags
+   curl -s "$B/api/v1/flags?limit=500" | jq .page.total   # 58 seeded flags (51 after a full replay with reset: DEPLOY-neon.md §6)
+   curl -s $B/api/v1/flags/1/context | jq '{source, top_similarity, gaps, notes}'
+   #   source "mcp", top_similarity > 0.5, no "retrieval skipped" in gaps (empty searches are notes, not gaps)
    ```
+   Then confirm in Neon that the MCP's embedding call logged `ok = true` (`select ok, device, endpoint from
+   app.model_calls where system = 'embed' order by call_id desc limit 3`).
+   **Embedding URL after a tunnel relaunch.** A `cloudflared tunnel --url` quick tunnel gets a new random URL every
+   time it starts. After each relaunch, run `deploy/amd-native/laptop/show_vercel_env.sh <urls>`, set `EMBED_URL` on
+   **both** the backend and the MCP project, and redeploy both. Then repeat the two checks above. A named tunnel
+   keeps one URL; prefer it for judging.
 4. **Replay works differently on Vercel.** A function can freeze as soon as it responds, so the replay is **stepped**: its state lives in Neon (`replay_runs`), and it only advances while something keeps calling `POST /api/v1/replay/step`. The web app has no replay control, so drive it with this loop (also in `backend/README.md`):
    ```bash
    H=(-H "X-Admin-Token: $ADMIN_TOKEN" -H 'content-type: application/json')
@@ -110,7 +123,9 @@ Set the AMD URLs when they exist, then redeploy.
 | MCP context missing, backend shows `source: sql_fallback` | `MCP_URL` wrong (it must end in `/mcp`), a token mismatch, or the MCP project is down |
 | server-to-server call gets an HTML login page | a preview URL was used; use the production domain |
 | MCP vector search finds nothing | ingest hasn't run, or `EMBED_URL`, `EMBED_MODEL` or `EMBED_DIM` differ from what was ingested |
-| a few rows missing in `app.*` logs | expected: MCP logging writes don't wait for completion, so an instance can freeze first; tool calls are unaffected |
+| packets carry `retrieval skipped: ...` in `gaps` and explanations say "insufficient context" | the MCP project's `EMBED_URL` is unset or points at a dead tunnel; update it on both projects and redeploy |
+| chat fails with `gemini_auth`, or `app.model_calls` shows `Illegal header value [redacted]` | `GEMINI_API_KEY` was saved with a trailing newline or is wrong; re-add it with `printf %s` and redeploy (rotate it if it ever reached a log) |
+| a few rows missing in `app.*` logs | rare: on Vercel the MCP server waits up to 2 s for its log inserts before finishing each response, and the backend finishes its writes before responding; a row is lost only if the insert takes longer; tool calls are unaffected |
 
 ## What stays local
 Docker Compose (`docker-compose.yml`, `docs/RUNNING.md`) is unchanged and is still how you run everything on one machine. The Vercel files only affect Vercel: `vercel.json`, `.vercelignore`, `.python-version`, `backend/index.py`, `backend/vercel_build.py`, `amd/mcp/asgi.py`.

@@ -28,9 +28,10 @@ from ...schemas.chat import conversation_out, message_out
 from ..http import short_error
 from .catalog import MODE_INFO, MODES, catalog, family, show_thoughts
 from .gemini import GeminiClient, GeminiError
-from .grounding import check
-from .prompt import auto_title, build_body, clean_title, mission_line, title_body, user_turn
+from .grounding import check, general_check
+from .prompt import GENERAL_PROMPT, auto_title, build_body, clean_title, mission_line, title_body, user_turn
 from .retrieval import Prior, Retrieval, RetrievalFailed, Retriever, prior_answer
+from .routing import GENERAL, GROUNDED, PROBE, choose, fleet_ids, has_evidence
 
 log = logging.getLogger("backend.chat")
 
@@ -91,6 +92,8 @@ class TurnState:
     text: List[str] = field(default_factory=list)
     thinking: List[str] = field(default_factory=list)
     retrieval: Optional[Retrieval] = None
+    answer_mode: str = GROUNDED                # chat.4 (§10): grounded | general
+    route: str = ""                          # the routing rule that decided
     usage: Optional[Dict[str, Any]] = None
     t_call: Optional[float] = None
     t_end: Optional[float] = None
@@ -323,17 +326,42 @@ class ChatService:
         try:
             emit("meta", {"conversation_id": turn.conversation_id, "request_id": turn.request_id,
                           "model": turn.model, "mode": turn.mode, "user_message": message_out(turn.user_message)})
-            try:
-                st.retrieval = await self.retriever.retrieve(turn.question, turn.previous, turn.request_id,
-                                                             prior=turn.prior, mission_id=turn.mission_id)
-            except RetrievalFailed as exc:
-                await self._fail(turn, st, emit, "retrieval_failed", exc.detail)
-                return
-            r = st.retrieval
-            emit("sources", {"sources": r.sources, "retrieval": r.meta()})
-            body = build_body(turn.model, turn.mode, turn.history,
-                              user_turn(r.block, turn.question, self._mission_line(turn, r)),
-                              self.settings.chat_history_messages)
+            # chat.4 (§10): ground only questions about the plant; a probe lets retrieval decide.
+            route = choose(turn.question, turn.previous, turn.prior, turn.mission_id)
+            st.route = route.reason
+            r: Optional[Retrieval] = None
+            if route.mode != GENERAL:
+                try:
+                    r = await self.retriever.retrieve(turn.question, turn.previous, turn.request_id,
+                                                      prior=turn.prior, mission_id=turn.mission_id)
+                except RetrievalFailed as exc:
+                    if route.mode == GROUNDED:
+                        await self._fail(turn, st, emit, "retrieval_failed", exc.detail)
+                        return
+                    log.info("chat turn %s: probe retrieval failed, answering generally: %s", turn.request_id,
+                             exc.detail)
+                    st.route = "unsure_no_data"
+            if route.mode == PROBE and r is not None:
+                carried = [c.get("id") for c in (turn.prior.cited if turn.prior else [])]
+                grounded = has_evidence(r.sources, carried)
+                st.route = "unsure_found_data" if grounded else "unsure_no_data"
+            else:
+                grounded = route.mode == GROUNDED
+            st.answer_mode = GROUNDED if grounded else GENERAL
+            if grounded:
+                st.retrieval = r
+                emit("sources", {"sources": r.sources,
+                                 "retrieval": {**r.meta(), "answer_mode": GROUNDED, "route": st.route}})
+                body = build_body(turn.model, turn.mode, turn.history,
+                                  user_turn(r.block, turn.question, self._mission_line(turn, r)),
+                                  self.settings.chat_history_messages)
+            else:
+                emit("sources", {"sources": [], "retrieval": {
+                    "mode": None, "graph_seeds": [], "latency_ms": r.latency_ms if r else 0,
+                    "counts": {"rag": 0, "graph": 0, "sql": 0}, "gaps": list(r.gaps) if r else [],
+                    "mission_id": None, "answer_mode": GENERAL, "route": st.route}})
+                body = build_body(turn.model, turn.mode, turn.history, turn.question,
+                                  self.settings.chat_history_messages, system=GENERAL_PROMPT)
             show = show_thoughts(turn.mode)
 
             def on_part(is_thought: bool, text: str) -> None:
@@ -352,7 +380,9 @@ class ChatService:
                 res = await self.gemini.stream(
                     turn.model, body, on_part, request_id=turn.request_id,
                     metadata={"mode": turn.mode, "family": family(turn.model), "conversation_id": turn.conversation_id,
-                              "sources": len(r.sources), "retrieval_mode": r.mode})
+                              "sources": len(r.sources) if grounded else 0,
+                              "retrieval_mode": r.mode if grounded else None,
+                              "answer_mode": st.answer_mode, "route": st.route})
             except GeminiError as exc:
                 st.t_end = time.perf_counter()
                 await self._fail(turn, st, emit, exc.code, exc.detail, exc.retry_after_s)
@@ -411,7 +441,9 @@ class ChatService:
             r = st.retrieval
             content = "".join(st.text)
             grounding = None
-            if r is not None and (content.strip() or status == "stopped"):
+            if st.answer_mode == GENERAL and (content.strip() or status == "stopped"):
+                grounding = general_check(fleet_ids(content))          # chat.4 (§10): nothing to check against
+            elif r is not None and (content.strip() or status == "stopped"):
                 grounding = check(content, r.sources, r.texts, turn.question, r.mode, r.graph_seeds)
             thinking_ms = None
             if turn.mode == "thinking" and st.t_call is not None:

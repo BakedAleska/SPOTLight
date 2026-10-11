@@ -136,4 +136,10 @@ def check(answer: str, sources: Sequence[Dict[str, Any]], source_texts: Iterable
             unverified.append(tok)
     return {"grounded": len(cited) >= 1 and not unknown, "cited_ids": cited, "unknown_ids": unknown,
             "unverified_numbers": unverified, "source_count": len(ids), "retrieval_mode": retrieval_mode,
-            "graph_seeds": list(graph_seeds or [])}
+            "graph_seeds": list(graph_seeds or []), "mode": "grounded"}
+
+
+def general_check(fleet_ids: List[str]) -> Dict[str, Any]:
+    """chat.4 (§10): a general answer has nothing to check against; it records the plant ids it names anyway."""
+    return {"grounded": False, "cited_ids": [], "unknown_ids": [], "unverified_numbers": [], "source_count": 0,
+            "retrieval_mode": None, "graph_seeds": [], "mode": "general", "fleet_ids": list(fleet_ids)}

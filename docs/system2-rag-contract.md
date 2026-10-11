@@ -24,18 +24,44 @@ POST {EMBED_URL}/v1/embeddings
 | `EMBED_DIM` | vector dimension; must equal the `documents.embedding` column | `1024` |
 | `EMBED_QUERY_PREFIX` | text prepended to search queries | Qwen3: `Instruct: Given an operator question about a SPOT robot inspection, retrieve relevant inspection events, anomaly notes, operator notes, and Spot manual passages\nQuery:` (a real newline). Arctic fallback: `query: ` |
 | `EMBED_DOC_PREFIX` | text prepended to documents at ingestion | empty (both models take no document prefix) |
+| `EMBED_CLIENT_BATCH` | texts per request from `amd/embed/client.py` (ingest, graph build, smoke test) | `16` (the SSH bridge to the AMD box drops long requests) |
 | `DATABASE_URL` | Neon (or local) Postgres connection string | none |
 | `LOGS_DATABASE_URL` | where `raw.*` and `app.*` live | `DATABASE_URL` |
 
 Clients normalize nothing themselves: the search functions use cosine distance.
+**One query prefix everywhere (2026-10-11).** The backend, the MCP server and `amd/embed/client.py` (the smoke test's queries;
+ingest and the graph build embed documents, which take no prefix) all use the Qwen3 default above when `EMBED_QUERY_PREFIX` is unset, and no prefix when it is set but empty. The prefix is
+joined to the query with no separator (`...\nQuery:` + query, the Qwen3 model card format). Leave it unset in every
+deployment. Before writing, ingest and the graph build (when it has node summaries to embed; not with `--no-embed`)
+check the server's `/health`: if its `model` differs from
+`EMBED_MODEL` or its `dim` differs from `EMBED_DIM`, they exit before any write, so one `embed_model` label never
+holds vectors from two models.
 
 ## 2. Tables
 - **Core relational tables** are the draft at `git show 19dff30:web/db/schema.sql`: `locations, assets, missions,
   actions, readings, anomalies, events, flags, assessments, acknowledgements, risk_scores, mission_kpis,
-  anomaly_briefs, insights`. Keep those table and column names; adding columns or tables is fine.
+  insights`. Keep those table and column names; adding columns or tables is fine. (`anomaly_briefs` had no reader
+  or writer; it was a Databricks leftover and was dropped on 2026-10-11 by `014_schema_hygiene.sql`.)
   Added by the pgvector agent: `flags.triage_event_id` (unique, System 1 event id `act-A0001` / `mis-M001`),
   `flags.priority` (P1–P4), `flags.category`. Seeded flags' `reasons[].rule` names a `policy:<rule>` doc.
-  Databricks was dropped, so `risk_scores` / `mission_kpis` / `insights` are filled by our own jobs (Laya, SQL).
+  Added 2026-10-11 (014): `assessments.source` and `assessments.fallback_reason` (`docs/backend-services-contract.md`
+  "Stored explanations").
+  Databricks was dropped, so `db/setup.py seed` (`seed_analytics`) fills `risk_scores`, `mission_kpis` and
+  `insights` from the kit. `risk_scores` holds the action failure rate per waypoint, action type, battery band and
+  configuration (189 rows). `mission_kpis` has one row per kit mission (27). `insights` holds the 5 headline metrics
+  of the kit's `validation_results.json`, each recomputed in SQL (seed prints a warning on a mismatch). The step is
+  idempotent and runs on every `seed`, including after the demo baseline has already loaded.
+- **NULLs that are data, not gaps:** mission-level `events` (`MISSION_STARTED` / `MISSION_COMPLETED`) and mission
+  flags (`category = 'mission'`) have NULL `action_id` / `location_id` / `asset_id`. `actions.failure_type` is set
+  if and only if `status = 'FAILED'` (014 CHECK; the kit has only SUCCESS and FAILED, so NULL means SUCCESS). The 7 seeded flags whose event is not in `replay.ndjson` have NULL
+  `flags.event_id` (the file stops inside M023, at E00500, so M024–M027 and the actions after A0228 never replay).
+  Live events have NULL `mission_id`: `events.mission_id` references `missions`, and live missions are not kit
+  missions. The action, location and asset ids of `events` and `flags` have no foreign keys, so live ids
+  (`LIVE-<run>-<stop>`) can be stored there; do not add any.
+- **Where an inspection happened:** `actions` / `readings` / `anomalies.location_id` is the waypoint where the
+  inspection took place. `assets.location_id` is the asset's nominal home. They differ for 61 of 270 actions in the
+  kit itself (e.g. PANEL-218 lives at WP12 and is inspected at WP15). Flag titles and RAG text use the action's
+  location.
 - **Added: `system1_predictions`**: Laya's answers per event, one row per (event, question).
   ```sql
   CREATE TABLE system1_predictions (
@@ -103,16 +129,29 @@ server falls back to a second `match_documents` call plus an exact-ID check, so 
 (`plainto_tsquery('english', query_text)`), so `HX-204` (indexed as `hx` + `-204`) is true only on HX-204 rows, not on
 other heat exchangers. The lexical side of the RRF still ORs the terms (all-terms rows rank first). `similarity` is
 NULL only if the row has no embedding. Vector search is exact (no ANN index) unless `migrate --hnsw` is run.
+**Exact ids inside a question (CHANGED 2026-10-11, vector-store audit; same signature and columns).** Id-like tokens
+in `query_text` (`HX-204`, `PANEL-211`, `A0061`, `AN014`, `WP05`, `M014`; pattern `[A-Za-z]{1,6}-[0-9]{2,4}`,
+`A[0-9]{4}`, `AN[0-9]{3}`, `WP[0-9]{2}`, `M[0-9]{3}`) are ANDed into one id query. On the lexical side, rows that
+contain every one of those ids rank first. They also get an extra `1/rrf_k` in the fused `score`. `text_match` is
+true when the row contains every query term **or** every id in the query. So "What anomalies were found on PANEL-211
+last week?" returns the PANEL-211 rows with `text_match` true and ranks them above semantic neighbours such as
+PANEL-212. A query with no id-like token ranks exactly as before.
 
 ## 4. Corpora (`documents.kind`)
 | kind | Source | doc_id pattern |
 |---|---|---|
-| `event` | every kit action and mission event, as prose (reuse `amd/system1/triage/render.py` `render_prose`) | `event:<event_id>` |
-| `incident` | anomalies plus System 1 flags with outcome | `incident:<anomaly_id>` / `incident:flag-<flag_id>` |
-| `operator_note` | `acknowledgements` rows with notes | `note:<ack_id>` |
-| `explanation` | System 2 outputs (`assessments` with `state = 'DONE'`; template fallbacks, `state = 'TEMPLATE'` / `model = 'template'`, are excluded: audit M10) | `explanation:<assessment_id>` |
-| `manual` | chunks of the Spot User Guide PDFs in `SPOTDATA/SPOT_KnightHacks_Challenge_Kit Part Two/` | `manual:p<page>-<chunk>` |
+| `event` | every kit action and mission event, as prose (reuse `amd/system1/triage/render.py` `render_prose`). The title names the action id, so `A0061` is searchable | `event:act-<action_id>` / `event:mis-<mission_id>` (the System 1 triage event id, = `flags.triage_event_id`; not `events.event_id`, which is the replay id `E00001`). Live: `event:act-LIVE-<run>-<stop>` |
+| `incident` | anomalies plus System 1 flags with outcome. Flag incidents render only the fired policy rules (never the `laya_verdict` / `rules_verdict` / `laya_unavailable` rows); `metadata.laya_status` is `ok`, `unavailable` or `none` | `incident:<anomaly_id>` / `incident:flag-<flag_id>` |
+| `operator_note` | `acknowledgements` rows with a non-blank note | `note:<ack_id>` |
+| `explanation` | System 2 outputs (`assessments` with `state = 'DONE'`; template fallbacks, `state = 'TEMPLATE'` / `model = 'template'`, are excluded: audit M10) | `explanation:<assessment_id>` (live green stops: `explanation:live-<capture_id>`) |
+| `manual` | chunks of the Spot User Guide PDFs in `SPOTDATA/SPOT_KnightHacks_Challenge_Kit Part Two/`. The title cites the printed page and the PDF page; `metadata.printed_page` holds the printed one | `manual:p<PDF page>-<chunk>` |
 | `policy` | one doc per triage rule in `amd/system1/triage/policy.py` | `policy:<rule_name>` |
+
+Baseline corpus (2026-10-11): 503 documents, all embedded (event 297, incident 98 = 40 anomalies + 58 flags,
+manual 85, policy 23). `incident:flag-<flag_id>` docs are keyed by `flag_id`, and a replay or `reset-demo` creates
+new flag ids, so after either run `python amd/embed/ingest.py --kinds incident` and then `python db/graph_build.py`.
+Otherwise similar-incident search sees only the 40 anomaly incidents. The ingest prune (docs of a processed kind
+that the build no longer produces) never deletes live documents (`metadata.source = 'live'`).
 
 ## 5. MCP tools (MCP agent implements; see the tool list agreed in chat)
 Tier 1 `get_flag_context`. RAG tools: `search_similar_incidents`, `search_asset_history`, `search_spot_manual`,
@@ -120,6 +159,41 @@ Tier 1 `get_flag_context`. RAG tools: `search_similar_incidents`, `search_asset_
 `get_system1_forecast`, `get_action`, `get_mission_summary`, `get_reliability_stats`, `get_battery_risk`,
 `list_allowed_actions`, `get_raw_event_log` (verbatim `raw.spot_event_log` rows, id `log:<log_id>`). All read-only. No raw SQL from the model. Every returned row carries its `doc_id`
 or a short stable id the model can cite.
+
+**Packet completeness: `missing` and `gaps` block, `notes` inform (ADDED 2026-10-11).** System 2's rule is in
+`docs/backend-services-contract.md` ("Authoritative System 2 HTTP contract"): a non-empty `missing` or `gaps` list,
+or `insufficient_context: true`, makes it answer `insufficient_context` / `MANUAL_REVIEW` without calling the model.
+`notes` is not a consumed key, so System 2 ignores it. Both packet builders (MCP `get_flag_context` and the
+backend's SQL fallback packet) sort their messages this way:
+- **`missing`** (+ `insufficient_context: true`): core context is absent, e.g. the flag's action or mission row,
+  or the asset record.
+- **`gaps`** (blocking): a lookup failed or was skipped, so the packet may be wrong or incomplete. Examples:
+  `<x> lookup failed (...)`, `<x> search failed (...)`, `retrieval skipped: <embedding error>`, `graph unavailable
+  (...)`, `graph lookup failed (...)`, `packet is over the N-token budget even after trimming`, and in the SQL packet
+  `some SQL lookups failed: ...`, `some SQL lookups did not finish within the request deadline`, `action X not found`.
+- **`notes`** (informational, never blocking): the lookup worked and simply found nothing, or a degraded mode was
+  used on purpose. Examples: `no relevant <section> above similarity 0.40`, `no knowledge-graph facts linked to this
+  flag`, `category unknown; all actions allowed`, `trimmed to the N-token packet budget: asset_history 2->1, graph
+  6->4` (MCP: retrieved items the packet budget left out). In the backend's SQL packet, the first note says why it is SQL-only
+  (`MCP unavailable (...)` or `deadline: MCP did not answer ...`, then `SQL-only packet, no RAG retrieval`).
+  Before 2026-10-11 these went into `gaps`, so an empty search turned a complete packet into `insufficient_context`.
+
+**Other packet rules (2026-10-11).**
+- `flag.reasons` (up to 8), the exact `policy:<rule>` documents, the policy query text and the graph seeds use only
+  the fired policy rules. The verdict rows (`laya_verdict`, `rules_verdict`, `laya_unavailable`) go under a separate
+  compact `flag.verdicts` key and are never treated as rules. (The backend's SQL fallback packet has no
+  `flag.verdicts`: its `flag.reasons` is the first 8 `flags.reasons` rows, verdicts included, and only its `facts`
+  skip the verdict rows. A `laya_unavailable` row carries the fixed detail in both packets.)
+- Mission packets: `event.mission.worst_anomaly` carries `asset_name` and `asset_criticality`. The orchestrator
+  needs them to build the canonical mission event for System 1.
+- Asset history and prior flags are bounded to robot time before this flag's event. They exclude the flag's own
+  anomaly and action, and keep only non-blank operator notes.
+- Similar-incident and asset-history searches exclude the flag's own event document, `event:` +
+  `flags.triage_event_id`.
+- `get_raw_event_log` returns each `event_id` once. When the same event was logged under several sources (the seed's
+  `replay.ndjson` import and a later streamed `replay`), the `replay.ndjson` row wins.
+- Graph tools on a database whose `kg_nodes` is empty say `knowledge graph is empty (graph_build not run)`, not
+  "no graph node matches".
 
 ## 6. Logs and raw SPOT data (added 2026-10-10)
 Same Neon project and database, two extra Postgres schemas. `LOGS_DATABASE_URL` (defaults to `DATABASE_URL`) lets
@@ -164,18 +238,21 @@ CREATE TABLE raw.inspection_media (        -- metadata + pointer for images/audi
 ### `app`: application logs (append-only)
 ```sql
 CREATE SCHEMA IF NOT EXISTS app;
-CREATE TABLE app.model_calls (             -- every System 1 / System 2 / embedding call (the AMD latency evidence)
+CREATE TABLE app.model_calls (             -- every System 1 / System 2 / embedding / chat call (the AMD latency evidence)
   call_id bigserial PRIMARY KEY, ts timestamptz NOT NULL DEFAULT now(), request_id text,
-  system text NOT NULL CHECK (system IN ('system1','system2','embed')), model text, endpoint text,
+  system text NOT NULL,                    -- model_calls_system_check (012_chat_logs.sql replaces 005's inline CHECK):
+                                           --   CHECK (system IN ('system1','system2','embed','chat'))
+  model text, endpoint text,
   flag_id bigint, action_id text, input_tokens int, output_tokens int, latency_ms int, tokens_per_sec real,
   device text, ok boolean NOT NULL, error text, metadata jsonb NOT NULL DEFAULT '{}');
 CREATE TABLE app.mcp_tool_calls (          -- audit of every MCP tool call System 2 makes
   call_id bigserial PRIMARY KEY, ts timestamptz NOT NULL DEFAULT now(), request_id text, flag_id bigint,
   tool text NOT NULL, args jsonb NOT NULL, result_count int, result_bytes int, top_similarity real,
   latency_ms int, ok boolean NOT NULL, error text);
-CREATE TABLE app.request_log (             -- web/API requests
+CREATE TABLE app.request_log (             -- backend API writes, errors and slow requests (LOG_REQUESTS, backend contract)
   req_id bigserial PRIMARY KEY, ts timestamptz NOT NULL DEFAULT now(), request_id text, service text,
-  route text, method text, status int, latency_ms int, error text);
+  route text, method text, status int, latency_ms int,
+  error text);                             -- '<code>: <detail>' (<= 200 chars of detail) when status >= 400, else NULL
 CREATE TABLE app.job_runs (                -- seed / ingest / replay / fine-tune sync jobs
   run_id bigserial PRIMARY KEY, job text NOT NULL, started_at timestamptz NOT NULL DEFAULT now(),
   finished_at timestamptz, status text NOT NULL DEFAULT 'running', counts jsonb NOT NULL DEFAULT '{}',
@@ -183,6 +260,20 @@ CREATE TABLE app.job_runs (                -- seed / ingest / replay / fine-tune
 -- indexes: ts DESC on each; (system, ts) on model_calls; (tool, ts) on mcp_tool_calls; (request_id) everywhere
 ```
 `request_id` ties one flag's whole journey together across tables.
+
+**Row conventions (2026-10-11).**
+- `endpoint` is a path such as `/v1/embeddings`, never a URL with a host. The MCP server puts the host in
+  `metadata.base_host`.
+- No credential is ever written. The backend passes every `error` (model calls, requests, jobs) through
+  `calllog.redact()` before capping it at 500 characters: API keys (`AIza...`, `AQ....`, `?key=`), `Authorization` /
+  `x-goog-api-key` / `api_key` values, `Bearer` tokens and httpx's `Illegal header value b'...'` become `[redacted]`.
+  These tables are served by `GET /ops/model-calls`.
+- Embedding rows take `device` (`timing.gpu`, else `timing.device`), `tokens_per_sec` and `metadata.server_ms` from
+  the embedding server's `timing` block when it sends one.
+- The live runner has no database credentials, so the backend writes its rows with `metadata.via = 'live_runner'`:
+  System 1 at `/result`, System 2 at `/analysis` (`/v1/assess`; vision time in `metadata.vision_ms`) and one `embed`
+  row per `/embeddings` batch.
+- Owner-run one-off scripts (`db/smoke_test.py`) roll back or delete their own probe rows.
 
 ## 7. Graph RAG (added 2026-10-10)
 A knowledge graph in plain Neon Postgres: node/edge tables, pgvector on nodes, and multi-hop traversal with
@@ -218,6 +309,10 @@ CREATE TABLE kg_edges (
 ```
 Directed edges, traversed in both directions.
 
+`kg_edges.evidence` is NULL by design on structural and curated edges that no document backs: `located_at`,
+`has_environment` and `relates_to` (`db/graph_build.py`; production 2026-10-11: 20 + 15 + 25 = 60 edges). Every other
+relation carries evidence, and every non-NULL value resolves to a document or a `stat:` key.
+
 ### Relations
 | rel | src → dst | source |
 |---|---|---|
@@ -231,7 +326,7 @@ Directed edges, traversed in both directions.
 | `raised_on` | anomaly → asset | fk |
 | `during` | anomaly → action | fk |
 | `flags` | flag → action or mission | fk |
-| `triggered` | flag → policy_rule | fk, from `flags.reasons` (policy rules only, not `laya_verdict`/`rules_verdict`) |
+| `triggered` | flag → policy_rule | fk, from `flags.reasons` (policy rules only, not `laya_verdict`/`rules_verdict`/`laya_unavailable`) |
 | `annotates` | operator_note → flag | fk (ADDED 2026-10-10, pgvector agent: a note was otherwise only linked by its mentions) |
 | `explains` | explanation → flag | fk (ADDED 2026-10-10, pgvector agent) |
 | `common_at` | failure_type → location; anomaly_type → asset | stat: weight = rate, props n/rate, only if n ≥ 2 |
@@ -302,7 +397,7 @@ graph_neighborhood(seed_ids text[], max_hops int DEFAULT 2, rel_filter text[] DE
 - **Timing** (local Postgres, 577 nodes / 1,974 edges): `graph_neighborhood` 2 hops ≈ 2 ms (7 flag-context seeds ≈ 6 ms;
   worst case 4 hub seeds × 3 hops ≈ 90 ms); `match_kg_nodes_text` ≈ 12 ms (≈ 1 ms with `kinds`); `match_kg_nodes` ≈ 3 ms.
 
-### Build (`db/graph_build.py`; run by `db/job.sh graph`, which `db-init` runs after `ingest`)
+### Build (`db/graph_build.py`; run by `db/job.sh graph`, and by `db/job.sh refresh` after `ingest`, which `db-init` runs; with `--no-embed` if ingest failed)
 Idempotent:
 - upsert nodes;
 - delete and re-insert the edges with `props->>'source' IN ('fk','stat','extract','curated')` (CHANGED 2026-10-10:
@@ -314,6 +409,16 @@ Idempotent:
 All of it is one transaction (readers see the old or the new graph), logged to `app.job_runs` (job `graph`, counts per
 node kind and per rel) and each embedding batch to `app.model_calls`. ~1 s without embedding; ~20 s on CPU to embed the
 ~70 summary nodes the first time. Runtime nodes (new operator notes and explanations) are picked up on the next run.
+**2026-10-11:**
+- Flag summaries and `triggered` edges use only fired policy rules, never verdict rows.
+- A node whose stored `props.source` is `live` is never overwritten by the build.
+- Embedding runs batch by batch: if one batch fails, the vectors of the batches that succeeded are kept, and only the
+  failed nodes stay pending.
+- Baseline graph (seed + ingest): 574 nodes, all embedded (flag 58, manual 85, action 270, anomaly 40, mission 27,
+  policy_rule 23, asset 20, location 15, topic 11, ...), about 1,968 edges.
+- After a replay or `reset-demo`, run the build again (after `ingest --kinds incident`, §4). `reset-demo` deletes
+  the non-live `flag`, `operator_note` and `explanation` nodes in the same transaction as the flags; their edges
+  cascade. The rebuild links the new flags.
 
 ### Live rows (`props.source = 'live'`, ADDED 2026-10-11; `docs/backend-services-contract.md` "Live simulation")
 The live simulation writes graph rows **as each stop is processed**, not through `graph_build.py`. Every live node has
@@ -337,7 +442,7 @@ bundle (live actions are not kit actions), so its own packet reports the action 
 packet the backend built for that stop instead.
 
 ### MCP (`amd/mcp`)
-- `get_flag_context` gains a bounded `graph` section (≤ ~300 tokens): the 1–2-hop neighbourhood of the flag's action, asset, location, failure_type/anomaly_type and triggered rules, with manual/topic links ranked first. Each fact is a readable triple (`WP09 —has_environment→ HIGH_NOISE`) cited by `node_id`/`evidence`. The whole packet stays ≤ 1,500 tokens.
+- `get_flag_context` gains a bounded `graph` section (≤ ~300 tokens): the 1–2-hop neighbourhood of the flag's action, asset, location, failure_type/anomaly_type and triggered rules, with manual/topic links ranked first. Each fact is a readable triple (`WP09 —has_environment→ HIGH_NOISE`) cited by `node_id`/`evidence`. Every `id` in the section is unique and is not cited by another section: a lower-ranked fact citing an already-cited node is left out, because System 2 rejects a packet that repeats an id with different content (422 `conflicting content for duplicate id`). The whole packet stays ≤ 1,500 tokens.
 - New tool `graph_neighborhood(entity, hops=2, k=20)`: `entity` is a node_id, or a name/id resolved with `match_kg_nodes_text` (falling back to vector).
 - New tool `search_graph(query, k=5, hops=1)`: entry nodes by vector + text, then a 1-hop expansion.
 - Both tools are logged in `app.mcp_tool_calls` like the others.

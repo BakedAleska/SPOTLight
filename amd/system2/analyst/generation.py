@@ -9,14 +9,15 @@ Only keywords in SCHEMA_KEYWORDS are emitted (the subset scripts/smoke_serve.py 
 lengths). Property order follows GEN-01 for generation; validation never depends on key order.
 
 LlamaGenerator(url) implements the pipeline generator protocol over llama-server's OpenAI-compatible
-/v1/chat/completions: thinking off, temperature 0, max_tokens 350. Every transport or envelope problem (HTTP
+/v1/chat/completions: thinking off, temperature 0, max_tokens 512. Every transport or envelope problem (HTTP
 status, timeout, oversized body, non-JSON, NaN/Infinity, wrong types, fewer than three few-shots) raises
 GenerationError, so run_pipeline counts it as an attempt and retries once or falls back to the checked template.
 The time budget covers the whole call: a socket timeout only bounds each recv, so a watchdog shuts the socket at
 the deadline and a server or tunnel that trickles headers or body cannot hold the call open past it.
 The completion text itself is judged only by run_pipeline: finish_reason 'length' is truncation even when the
 text parses, and token counts are recorded as metadata, never used to infer validity. The recorded SRV-00 smoke
-needed 439 output tokens; the budget stays at 350 and long replies fall back rather than being assumed valid.
+needed 439 output tokens; the budget was 350 until 2026-10-11, when the 27B pretty-printed a valid reply past
+it (M001 run). It is 512 now; a reply that still hits it is truncation and falls back, never assumed valid.
 No model is loaded here and nothing is wired into the live API in this phase.
 
 Images (contract backend.2): when the packet carries an image, the request goes to `vision_model` (default: the
@@ -32,17 +33,30 @@ Image latency (audit A-6): an image request may use up to `image_timeout_s` (SYS
 instead of the text path's 15 s). The image call keeps TEXT_RESERVE_S back; when it times out (or there is less than
 MIN_IMAGE_CALL_S left for it), the same attempt is re-sent text-only in the reserved time (image_used False).
 Requests without an image behave exactly as before.
+
+Streaming drafts (docs/backend-services-contract.md, "Streaming Qwen drafts"): inside `with generator.drafts(cb):`
+(per thread, so concurrent requests never share it) every model call is sent with `stream: true` +
+`stream_options.include_usage` and an otherwise identical body, and cb(call, tokens, text) receives the accumulated
+content after each content chunk (`call` is 1-based across the block: the pipeline's retry and an image request's
+text-only resend each start a new call). The stream has the same connect/watchdog deadline, status handling and size
+limits as a plain call; its chunks are folded into a synthetic chat completion (content, last finish_reason, usage,
+timings, model) and judged by the same parse_envelope, so a streamed Generation means exactly what a plain one does.
+An upstream that ignores `stream: true` (a 2xx reply whose Content-Type is not text/event-stream) is read as a plain
+completion under the plain size cap, with no drafts.
+Outside the block the request body and behaviour are byte-identical to the non-streaming client.
 """
 from __future__ import annotations
 
+import contextlib
 import dataclasses
 import http.client
 import json
+import logging
 import math
 import socket
 import threading
 import time
-from typing import List, Literal, Optional, Sequence
+from typing import Callable, List, Literal, Optional, Sequence
 import urllib.parse
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, model_validator
@@ -52,7 +66,7 @@ from .pipeline import Generation, GenerationError
 from .prompts import (ANSWER_CHARS, CLAIM_CHARS, FEWSHOT_COUNT, MAX_EVIDENCE, Example, build_messages,
                       load_examples, prompt_identity, select_examples)
 
-MAX_TOKENS = 350            # GEN-03; see module docstring for the 439-token observation
+MAX_TOKENS = 512            # GEN-03; was 350 (module docstring: the 439-token smoke, the 2026-10-11 M001 run)
 TEMPERATURE = 0
 TIMEOUT_S = 15.0            # per call; run_pipeline passes its remaining deadline, the smaller one wins
 IMAGE_TIMEOUT_S = 25.0      # per call for packets with an image (SYSTEM2_IMAGE_DEADLINE_S)
@@ -69,6 +83,8 @@ IMAGE_REJECT_STATUS = frozenset({400, 404, 413, 415, 422, 500, 501})
 IMAGE_REJECT_WORDS = ('image', 'mmproj', 'multimodal', 'multi-modal', 'vision', 'modalit')
 # LiteLLM answers a wrong gateway key with 400 "No connected db." (no virtual-key DB): an auth failure, not an image one
 AUTH_ERROR_WORDS = ('no connected db', 'no_db_connection', 'authentication', 'api key', 'api_key', 'unauthorized')
+STREAM_RAW_FACTOR = 16     # a stream's raw SSE bytes may be this many times max_response_bytes (per-chunk framing)
+LOG = logging.getLogger('system2.generation')
 SCHEMA_KEYWORDS = frozenset({'type', 'properties', 'required', 'additionalProperties', 'items', 'enum',
                              'minItems', 'maxItems', 'minLength', 'maxLength'})
 
@@ -153,7 +169,8 @@ def response_schema(prepared: PreparedPacket) -> dict:
 
 
 def request_body(prepared: PreparedPacket, examples: Sequence[Example], errors: Sequence[str] = (),
-                 model: Optional[str] = None, max_tokens: int = MAX_TOKENS, include_image: bool = True) -> dict:
+                 model: Optional[str] = None, max_tokens: int = MAX_TOKENS, include_image: bool = True,
+                 stream: bool = False) -> dict:
     body = {}
     if model:
         body['model'] = model
@@ -162,6 +179,9 @@ def request_body(prepared: PreparedPacket, examples: Sequence[Example], errors: 
                  'response_format': {'type': 'json_schema',
                                      'json_schema': {'name': 'assessment', 'schema': response_schema(prepared)}},
                  'chat_template_kwargs': {'enable_thinking': False}})
+    if stream:   # drafts only; the plain body above is unchanged
+        body['stream'] = True
+        body['stream_options'] = {'include_usage': True}
     return body
 
 
@@ -199,6 +219,30 @@ def _rate(v) -> Optional[float]:
 
 def _first(*values):
     return next((v for v in values if v is not None), None)
+
+
+def _stream_error(err) -> HTTPStatusError:
+    """An `error` object sent inside a 200 stream, read like a non-2xx reply (so image rejection still applies)."""
+    code = err.get('code') if isinstance(err, dict) else None
+    status = code if type(code) is int and 400 <= code < 600 else 500
+    try:
+        excerpt = json.dumps(err, ensure_ascii=False)[:ERROR_BODY_BYTES]
+    except (TypeError, ValueError):
+        excerpt = ''
+    return HTTPStatusError(status, excerpt)
+
+
+class _DraftSink:
+    """Per-thread draft state inside LlamaGenerator.drafts(): the callback and the 1-based model-call counter."""
+
+    def __init__(self, callback: Callable[[int, int, str], None]):
+        self.callback, self.call = callback, 0
+
+    def notify(self, call: int, tokens: int, text: str) -> None:
+        try:
+            self.callback(call, tokens, text)
+        except Exception:   # a draft consumer can never fail or slow-fail the generation
+            LOG.debug('draft callback failed', exc_info=True)
 
 
 def parse_envelope(data: bytes, fallback_model: Optional[str]) -> Generation:
@@ -249,6 +293,7 @@ class LlamaGenerator:
         self.vision_model = vision_model or model     # model used when the packet carries an image
         self.image_timeout_s = float(image_timeout_s)
         self.examples = tuple(examples) if examples is not None else load_examples()
+        self._draft_local = threading.local()
 
     def __repr__(self):  # never shows the key
         return 'LlamaGenerator(%r, model=%r)' % (self.endpoint, self.model)
@@ -273,22 +318,41 @@ class LlamaGenerator:
         if self._api_key:
             headers['Authorization'] = 'Bearer %s' % self._api_key
         if packet.image is None:
-            return parse_envelope(self._post(self._body(packet, chosen, errors, self.model, True), headers, budget),
-                                  self.model)
+            return self._complete(packet, chosen, errors, self.model, True, headers, budget)
         deadline = time.monotonic() + budget
         image_budget = budget - TEXT_RESERVE_S
         if image_budget >= MIN_IMAGE_CALL_S:
             try:
-                data = self._post(self._body(packet, chosen, errors, self.vision_model, True), headers, image_budget)
-                return dataclasses.replace(parse_envelope(data, self.vision_model), image_used=True)
+                g = self._complete(packet, chosen, errors, self.vision_model, True, headers, image_budget)
+                return dataclasses.replace(g, image_used=True)
             except GenerationError as exc:
                 if exc.kind != 'timeout' and not image_rejected(exc, self.vision_model != self.model):
                     raise
         left = deadline - time.monotonic()      # one text-only resend inside the same budget
         if left <= 0:
             raise GenerationError('timeout', 'no time left for the text-only resend')
-        data = self._post(self._body(packet, chosen, errors, self.model, False), headers, left)
-        return dataclasses.replace(parse_envelope(data, self.model), image_used=False)
+        g = self._complete(packet, chosen, errors, self.model, False, headers, left)
+        return dataclasses.replace(g, image_used=False)
+
+    @contextlib.contextmanager
+    def drafts(self, callback: Callable[[int, int, str], None]):
+        """Within the block (this thread only) calls stream and callback(call, tokens, text) sees each content chunk."""
+        previous = getattr(self._draft_local, 'sink', None)
+        self._draft_local.sink = _DraftSink(callback)
+        try:
+            yield
+        finally:
+            self._draft_local.sink = previous
+
+    def _complete(self, packet, chosen, errors, model, include_image, headers, budget) -> Generation:
+        """One model call: the plain POST, or the streaming POST while drafts() is active on this thread."""
+        sink = getattr(self._draft_local, 'sink', None)
+        if sink is None:
+            return parse_envelope(self._post(self._body(packet, chosen, errors, model, include_image), headers, budget),
+                                  model)
+        sink.call += 1
+        body = self._body(packet, chosen, errors, model, include_image, stream=True)
+        return parse_envelope(self._post_stream(body, headers, budget, sink, sink.call), model)
 
     def probe(self, timeout_s: float) -> None:
         """One 1-token completion on the text model (same URL, model and key as an assessment); raises
@@ -308,9 +372,26 @@ class LlamaGenerator:
         if not ok:
             raise GenerationError('envelope', 'not a chat completion')
 
-    def _body(self, packet, chosen, errors, model, include_image) -> bytes:
-        return json.dumps(request_body(packet, chosen, errors, model, self.max_tokens, include_image),
+    def _body(self, packet, chosen, errors, model, include_image, stream: bool = False) -> bytes:
+        return json.dumps(request_body(packet, chosen, errors, model, self.max_tokens, include_image, stream),
                           ensure_ascii=False).encode('utf-8')
+
+    def _read_body(self, resp, deadline: float, expired: threading.Event, late: str) -> bytes:
+        """A whole non-stream body under the deadline and max_response_bytes (the caller maps OSError/timeouts)."""
+        chunks, size = [], 0
+        while True:
+            if expired.is_set() or time.monotonic() > deadline:
+                raise GenerationError('timeout', late)
+            chunk = resp.read(CHUNK)
+            if not chunk:
+                break
+            size += len(chunk)
+            if size > self.max_response_bytes:
+                raise GenerationError('oversized', 'response over %d bytes' % self.max_response_bytes)
+            chunks.append(chunk)
+        if expired.is_set():          # EOF caused by the watchdog is a timeout, not a complete body
+            raise GenerationError('timeout', late)
+        return b''.join(chunks)
 
     def _post(self, body: bytes, headers: dict, budget: float) -> bytes:
         """POST and read the whole body within `budget` s; the watchdog shuts the socket at the deadline."""
@@ -335,20 +416,126 @@ class LlamaGenerator:
                 except (OSError, http.client.HTTPException):
                     excerpt = ''
                 raise HTTPStatusError(resp.status, excerpt)
-            chunks, size = [], 0
-            while True:
+            return self._read_body(resp, deadline, expired, late)
+        except TimeoutError:
+            raise GenerationError('timeout', 'no response within %.1f s' % budget) from None
+        except (OSError, http.client.HTTPException) as exc:
+            if expired.is_set():
+                raise GenerationError('timeout', late) from None
+            raise GenerationError('transport', type(exc).__name__) from None
+        finally:
+            if timer is not None:
+                timer.cancel()
+            conn.close()
+
+
+    def _post_stream(self, body: bytes, headers: dict, budget: float, sink: _DraftSink, call: int) -> bytes:
+        """Streaming POST under _post's rules (deadline watchdog, non-2xx excerpt, size caps); reads the SSE chunks,
+        reports the growing text to `sink`, and returns a synthetic non-stream envelope for parse_envelope."""
+        deadline = time.monotonic() + budget
+        cls = http.client.HTTPSConnection if self._https else http.client.HTTPConnection
+        conn = cls(self._host, self._port, timeout=budget)    # bounds connect; the watchdog bounds the rest
+        expired, timer = threading.Event(), None
+        late = 'response not complete within %.1f s' % budget
+        raw_cap = STREAM_RAW_FACTOR * self.max_response_bytes
+        text, tokens, size, raw, buf = '', 0, 0, 0, b''
+        finish = usage = timings = model = None
+        saw_choices = done = False
+
+        def handle(line: bytes) -> bool:
+            """One SSE line; True at [DONE]."""
+            nonlocal text, tokens, size, finish, usage, timings, model, saw_choices
+            line = line.rstrip(b'\r')
+            if not line.startswith(b'data:'):
+                return False                   # blank separator, ': comment', event:/id:/retry: fields
+            payload = line[5:].strip()
+            if payload == b'[DONE]':
+                return True
+            if not payload:
+                return False
+            try:
+                chunk = json.loads(payload.decode('utf-8'), parse_constant=_reject_constant)
+            except (UnicodeDecodeError, ValueError) as exc:
+                raise GenerationError('protocol', 'stream chunk is not finite JSON: %s' % type(exc).__name__) from None
+            if not isinstance(chunk, dict):
+                raise GenerationError('protocol', 'stream chunk is not a JSON object')
+            if chunk.get('error') is not None:
+                raise _stream_error(chunk['error'])
+            choices = chunk.get('choices')
+            if choices is not None and not isinstance(choices, list):
+                raise GenerationError('protocol', 'stream chunk choices is not a list')
+            if choices:
+                first = choices[0]
+                if not isinstance(first, dict):
+                    raise GenerationError('protocol', 'stream chunk choice is not an object')
+                saw_choices = True
+                delta = first.get('delta')
+                piece = delta.get('content') if isinstance(delta, dict) else None
+                if piece is not None and not isinstance(piece, str):
+                    raise GenerationError('protocol', 'choice delta content is not a string')
+                if piece:
+                    size += len(piece.encode('utf-8', 'surrogatepass'))
+                    if size > self.max_response_bytes:
+                        raise GenerationError('oversized', 'response over %d bytes' % self.max_response_bytes)
+                    text, tokens = text + piece, tokens + 1
+                    sink.notify(call, tokens, text)
+                if first.get('finish_reason') is not None:
+                    finish = first['finish_reason']
+            if isinstance(chunk.get('usage'), dict):
+                usage = chunk['usage']
+            if isinstance(chunk.get('timings'), dict):
+                timings = chunk['timings']
+            if isinstance(chunk.get('model'), str) and chunk['model'].strip():
+                model = chunk['model']
+            return False
+
+        try:
+            conn.connect()
+            left = deadline - time.monotonic()
+            if left <= 0:
+                raise GenerationError('timeout', late)
+            timer = threading.Timer(left, _expire, (conn.sock, expired))
+            timer.daemon = True
+            timer.start()
+            conn.request('POST', self._target, body=body, headers=dict(headers, Connection='close'))
+            resp = conn.getresponse()
+            if not 200 <= resp.status < 300:
+                try:
+                    excerpt = resp.read(ERROR_BODY_BYTES).decode('utf-8', 'replace')
+                except (OSError, http.client.HTTPException):
+                    excerpt = ''
+                raise HTTPStatusError(resp.status, excerpt)
+            ctype = (resp.getheader('Content-Type') or '').split(';', 1)[0].strip().lower()
+            if ctype != 'text/event-stream':   # upstream ignored `stream: true`: a plain completion, no drafts
+                LOG.info('upstream answered a streamed call with %r, read as a plain completion', ctype or 'no type')
+                return self._read_body(resp, deadline, expired, late)
+            while not done:
                 if expired.is_set() or time.monotonic() > deadline:
                     raise GenerationError('timeout', late)
-                chunk = resp.read(CHUNK)
-                if not chunk:
+                data = resp.read1(CHUNK)       # returns as soon as some bytes arrive (chunked or not)
+                if not data:
                     break
-                size += len(chunk)
-                if size > self.max_response_bytes:
-                    raise GenerationError('oversized', 'response over %d bytes' % self.max_response_bytes)
-                chunks.append(chunk)
-            if expired.is_set():          # EOF caused by the watchdog is a timeout, not a complete body
+                raw += len(data)
+                if raw > raw_cap:
+                    raise GenerationError('oversized', 'stream over %d bytes' % raw_cap)
+                buf += data
+                while not done:
+                    cut = buf.find(b'\n')
+                    if cut < 0:
+                        break
+                    line, buf = buf[:cut], buf[cut + 1:]
+                    done = handle(line)
+            if expired.is_set():          # EOF caused by the watchdog is a timeout, not a complete stream
                 raise GenerationError('timeout', late)
-            return b''.join(chunks)
+            if not done and buf.strip():
+                done = handle(buf)        # last line without a trailing newline
+            if not done and finish is None:
+                raise GenerationError('protocol', 'stream ended before [DONE]')
+            if not saw_choices:
+                raise GenerationError('protocol', 'response has no choices')
+            envelope = {'choices': [{'message': {'content': text}, 'finish_reason': finish}],
+                        'usage': usage, 'timings': timings, 'model': model}
+            return json.dumps(envelope).encode('ascii')   # ASCII escapes keep any lone surrogate intact
         except TimeoutError:
             raise GenerationError('timeout', 'no response within %.1f s' % budget) from None
         except (OSError, http.client.HTTPException) as exc:

@@ -24,10 +24,15 @@ async def start(body: ReplayStart = ReplayStart(), svc: Services = Depends(get_s
         raise HTTPException(409, CONFLICT)
     reset_error = None
     if body.reset:
+        # Logged as a 'reset-demo' app.job_runs row with the deleted counts, like POST /ops/reset-demo.
+        job = await svc.sink.job_start("reset-demo", {"clear_predictions": False, "via": "replay/start"})
         try:
-            await svc.repo.reset_demo(clear_predictions=False)
+            deleted = await svc.repo.reset_demo(clear_predictions=False)
         except (DatabaseUnavailable, psycopg.Error) as exc:  # the replay still runs (verdicts without storage)
             reset_error = str(exc)
+            await svc.sink.job_finish(job, "error", {}, error=reset_error)
+        else:
+            await svc.sink.job_finish(job, "done", deleted)
         svc.ref.reset()
     try:
         out = await svc.replay.start(speed=body.speed, max_gap_s=body.max_gap_s, missions=body.missions,

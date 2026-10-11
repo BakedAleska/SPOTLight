@@ -10,10 +10,16 @@ Run after `setup.py migrate && setup.py seed && amd/embed/ingest.py` (db-init: `
 - Nodes are upserted (unchanged rows keep their updated_at); nodes this script made that no longer exist are deleted.
 - Edges with props->>'source' IN ('fk','stat','extract','curated') are deleted and re-inserted in the same
   transaction, so readers see either the old or the new graph. Edges with any other source are left alone.
+- Nodes and edges the live simulation wrote (props->>'source' = 'live', backend/app/services/live.py) are never
+  overwritten, re-embedded or deleted, even when a live flag also appears in `flags`.
+- Flag summaries list policy rules only (db/policy_rules.py), not the laya_verdict / laya_unavailable /
+  rules_verdict entries, whose text can carry connection errors.
 - Embeddings: document-backed nodes (mission, action, anomaly, flag, policy_rule, manual, operator_note,
   explanation) reuse documents.embedding. The others (asset, location, environment, action_type, failure_type,
   anomaly_type, topic) embed their `summary` over HTTP (no document prefix), in batches, and only when the summary
-  or EMBED_MODEL changed (props.embedded_hash). If the embedding service is down the graph is still written.
+  or EMBED_MODEL changed (props.embedded_hash), batch by batch: vectors of the batches that succeeded are kept and
+  the rest stay pending. If the embedding service is down the graph is still written. A server that reports another
+  model or dimension than EMBED_MODEL / EMBED_DIM stops the run before any write.
 - Logged to app.job_runs (job 'graph': nodes per kind, edges per rel) and each embedding batch to app.model_calls.
 
 Env: DATABASE_URL, LOGS_DATABASE_URL, EMBED_URL, EMBED_MODEL, EMBED_DIM; GRAPH_EMBED_WAIT_S (default 120).
@@ -508,7 +514,7 @@ def build(conn, d: dict) -> Graph:
                {"severity": an["severity"], "anomaly_type": an["anomaly_type"]}, doc_id="incident:" + an["anomaly_id"])
     for fl in d["flags"]:
         fid = fl["flag_id"]
-        rules = [r["rule"] for r in reasons(fl) if r.get("rule")]
+        rules = [r["rule"] for r in reasons(fl) if r.get("rule") in PR.BY_NAME]     # policy rules only
         head = clip((fl["title"] or "").split(": ", 1)[0], 90)
         g.node("flag", str(fid), "Flag #%d: %s" % (fid, head),
                "Flag #%d %s %s (%s, %s), score %g: %s. Rules: %s." % (
@@ -532,10 +538,12 @@ def build(conn, d: dict) -> Graph:
         g.node("topic", t, label, desc, {})          # summary completed after the edges exist (link counts)
     for m in d["manual"]:
         key = m["doc_id"].split(":", 1)[1]
-        page = (m["metadata"] or {}).get("page")
+        meta = m["metadata"] or {}
+        page, printed = meta.get("page"), meta.get("printed_page")
         g.node("manual", key, m["title"] or m["doc_id"],
-               "%s (Spot User Guide p.%s)" % (clip(m["content"], 200), page),
-               {"page": page, "chunk": (m["metadata"] or {}).get("chunk")}, doc_id=m["doc_id"])
+               "%s (Spot User Guide %s)" % (clip(m["content"], 200),
+                                            "p.%s, PDF p.%s" % (printed, page) if printed else "PDF p.%s" % page),
+               {"page": page, "printed_page": printed, "chunk": meta.get("chunk")}, doc_id=m["doc_id"])
     flag_title = {fl["flag_id"]: fl["title"] for fl in d["flags"]}
     for n in d["notes"]:
         g.node("operator_note", str(n["ack_id"]), "Operator note #%d on flag #%d" % (n["ack_id"], n["flag_id"]),
@@ -675,8 +683,9 @@ def build(conn, d: dict) -> Graph:
                 parts.append("%s %s" % (name, ", ".join(h(x) for x in sorted(set(linked[kind])))))
         if linked["manual"]:
             pages = sorted({g.nodes["manual:" + k]["props"].get("page") or 0 for k in linked["manual"]})
-            parts.append("%d Spot User Guide passages (pages %s)" % (len(linked["manual"]), ", ".join(map(str, pages[:8]))
-                                                                    + (", ..." if len(pages) > 8 else "")))
+            # PDF page numbers (props.page), labelled as such: manual titles cite the printed page too
+            parts.append("%d Spot User Guide passages (PDF pages %s)" % (
+                len(linked["manual"]), ", ".join(map(str, pages[:8])) + (", ..." if len(pages) > 8 else "")))
         if linked["policy_rule"]:
             parts.append("triage rules %s" % ", ".join(sorted(set(linked["policy_rule"]))))
         g.nodes[nid]["summary"] = "%s: %s%s" % (label, desc, (" Linked: " + "; ".join(parts) + ".") if parts else "")
@@ -700,7 +709,7 @@ def write(conn, g: Graph, vectors: Dict[str, Tuple[str, str, str]], counts: dict
                 "props = EXCLUDED.props, doc_id = EXCLUDED.doc_id, updated_at = now() "
                 "WHERE (kg_nodes.kind, kg_nodes.key, kg_nodes.label, kg_nodes.summary, kg_nodes.props, kg_nodes.doc_id) "
                 "IS DISTINCT FROM (EXCLUDED.kind, EXCLUDED.key, EXCLUDED.label, EXCLUDED.summary, EXCLUDED.props, "
-                "EXCLUDED.doc_id)",
+                "EXCLUDED.doc_id) AND coalesce(kg_nodes.props->>'source', '') <> 'live'",   # live nodes stay as written
                 [tuple(json.dumps(n[c], sort_keys=True, default=str) if c == "props" else n[c] for c in NODE_COLS)
                  for n in g.nodes.values()])
             counts["nodes_written"] = max(cur.rowcount, 0)
@@ -712,14 +721,15 @@ def write(conn, g: Graph, vectors: Dict[str, Tuple[str, str, str]], counts: dict
             cur.executemany(
                 "INSERT INTO kg_edges (src, rel, dst, weight, props, evidence) VALUES (%s, %s, %s, %s, %s::jsonb, %s) "
                 "ON CONFLICT (src, rel, dst) DO UPDATE SET weight = EXCLUDED.weight, props = EXCLUDED.props, "
-                "evidence = EXCLUDED.evidence",
+                "evidence = EXCLUDED.evidence WHERE coalesce(kg_edges.props->>'source', '') <> 'live'",
                 [(s, r, t, e["weight"], json.dumps(e["props"], sort_keys=True, default=str), e["evidence"])
                  for (s, r, t), e in sorted(g.edges.items())])
         if vectors:
             with conn.cursor() as cur:
                 cur.executemany(
                     "UPDATE kg_nodes SET embedding = %s::vector, embed_model = %s, "
-                    "props = props || jsonb_build_object('embedded_hash', %s::text) WHERE node_id = %s",
+                    "props = props || jsonb_build_object('embedded_hash', %s::text) WHERE node_id = %s "
+                    "AND coalesce(props->>'source', '') <> 'live'",
                     [(v, model, hsh, nid) for nid, (v, model, hsh) in sorted(vectors.items())])
         # document-backed nodes reuse documents.embedding (and lose a stale summary vector if the doc has none)
         counts["embed_from_documents"] = conn.execute("""
@@ -733,11 +743,15 @@ def write(conn, g: Graph, vectors: Dict[str, Tuple[str, str, str]], counts: dict
 
 def embed_todo(conn, g: Graph, model: str, force: bool) -> List[str]:
     """Summary-embedded nodes whose summary or model changed since their vector was made."""
-    have = {r[0]: r[1:] for r in conn.execute(
-        "SELECT node_id, props->>'embedded_hash', embed_model, embedding IS NOT NULL FROM kg_nodes")}
+    rows = conn.execute("SELECT node_id, props->>'embedded_hash', embed_model, embedding IS NOT NULL, "
+                        "coalesce(props->>'source', '') = 'live' FROM kg_nodes").fetchall()
+    have = {r[0]: r[1:4] for r in rows}
+    live = {r[0] for r in rows if r[4]}
     todo = []
     for nid, n in g.nodes.items():
         if n["doc_id"] and g.docs.get(n["doc_id"]):       # document-backed with a document vector
+            continue
+        if nid in live:                                   # the live simulation embeds its own nodes
             continue
         old = have.get(nid)
         if force or old is None or old != (md5(n["summary"]), model, True):
@@ -769,14 +783,17 @@ def main() -> None:
 
     from client import EmbedClient, to_pgvector
     client = EmbedClient()
-    meta = {"embed_model": client.model, "embed_url": client.url, "no_embed": args.no_embed,
+    meta = {"embed_model": client.model, "embed_url": spotdb.redact(client.url), "no_embed": args.no_embed,
             "force_embed": args.force_embed}
     with spotdb.job_run("graph", meta) as run:
         run.counts.update({"nodes": node_counts, "edges": edge_counts, "edges_by_source": source_counts,
                            "nodes_total": len(g.nodes), "edges_total": len(g.edges)})
+        ready = False
+        if not args.no_embed and (not client.model or embed_todo(conn, g, client.model, args.force_embed)):
+            ready = _ready(client, run)       # may adopt the server's model when EMBED_MODEL is set but empty
         todo = embed_todo(conn, g, client.model, args.force_embed)
         vectors: Dict[str, Tuple[str, str, str]] = {}
-        if todo and not args.no_embed:
+        if todo and ready:
             vectors = _embed(client, g, todo, run, to_pgvector)
         run.counts["embedded"] = len(vectors)
         run.counts["embed_pending"] = len(todo) - len(vectors)
@@ -790,8 +807,25 @@ def main() -> None:
     conn.close()
 
 
+def _ready(client, run) -> bool:
+    """Wait for the embedding service (GRAPH_EMBED_WAIT_S) and check its model and dimension. False (graph still
+    written, summaries pending) if it is down; SystemExit before any write if it runs another model or dimension."""
+    try:
+        health = client.wait_ready(timeout_s=float(os.environ.get("GRAPH_EMBED_WAIT_S", "120")))
+    except Exception as e:  # noqa: BLE001 - the graph is still useful without new vectors
+        run.counts["embed_error"] = repr(e)[:300]
+        print("warning: embedding service not ready (%s); node summaries stay pending for the next run" % e,
+              file=sys.stderr)
+        return False
+    run.metadata["embed_health"] = {k: health.get(k) for k in ("model", "dim", "device", "dtype", "gpu")}
+    client.check_health(health)
+    run.metadata["embed_model"] = client.model
+    return True
+
+
 def _embed(client, g: Graph, todo: List[str], run, to_pgvector) -> Dict[str, Tuple[str, str, str]]:
-    """Embed node summaries in batches. Never fails the build: on error the nodes stay pending for the next run."""
+    """Embed node summaries batch by batch (client.py retries each batch). Never fails the build: the vectors of the
+    batches that succeeded are kept; after a batch fails for good, it and the rest stay pending for the next run."""
     logs = None
     try:
         logs = spotdb.connect(spotdb.logs_database_url(), autocommit=True)
@@ -816,21 +850,22 @@ def _embed(client, g: Graph, todo: List[str], run, to_pgvector) -> Dict[str, Tup
 
     client.on_call = on_call
     out: Dict[str, Tuple[str, str, str]] = {}
+    print("embedding %d node summaries with %s" % (len(todo), client.model))
     try:
-        health = client.wait_ready(timeout_s=float(os.environ.get("GRAPH_EMBED_WAIT_S", "120")))
-        run.metadata["embed_health"] = {k: health.get(k) for k in ("model", "dim", "device", "dtype", "gpu")}
-        texts = [g.nodes[nid]["summary"] for nid in todo]
-        print("embedding %d node summaries with %s at %s" % (len(texts), client.model, client.url))
-        vecs = client.embed(texts, kind="doc")
-        for nid, v in zip(todo, vecs):
-            hsh = md5(g.nodes[nid]["summary"])
-            g.nodes[nid]["props"]["embedded_hash"] = hsh
-            out[nid] = (to_pgvector(v), client.model, hsh)
-    except Exception as e:  # noqa: BLE001 - the graph is still useful without new vectors
-        run.counts["embed_error"] = repr(e)[:300]
-        print("warning: embedding failed (%s); %d node summaries stay pending for the next run" % (e, len(todo)),
-              file=sys.stderr)
-        out = {}
+        step = max(1, client.batch_size)
+        for i in range(0, len(todo), step):
+            ids = todo[i:i + step]
+            try:
+                vecs = client.embed([g.nodes[nid]["summary"] for nid in ids], kind="doc")
+            except Exception as e:  # noqa: BLE001 - keep what we have; the rest stays pending
+                run.counts["embed_error"] = repr(e)[:300]
+                print("warning: embedding failed (%s); %d node summaries stay pending for the next run"
+                      % (e, len(todo) - len(out)), file=sys.stderr)
+                break
+            for nid, v in zip(ids, vecs):
+                hsh = md5(g.nodes[nid]["summary"])
+                g.nodes[nid]["props"]["embedded_hash"] = hsh
+                out[nid] = (to_pgvector(v), client.model, hsh)
     finally:
         if logs is not None:
             logs.close()

@@ -6,32 +6,39 @@ only `DATABASE_URL` (and optionally `LOGS_DATABASE_URL`) changes. Embedding/inge
 ## Files
 | Path | What |
 |---|---|
-| `migrations/001_core.sql` | Core tables from the original draft (`git show 19dff30:web/db/schema.sql`), `IF NOT EXISTS`. Added to `flags`: `triage_event_id` (unique; `act-A0001` / `mis-M001`), `priority` (P1–P4), `category`. |
+| `migrations/001_core.sql` | Core tables from the original draft (`git show 19dff30:web/db/schema.sql`), `IF NOT EXISTS`. Added to `flags`: `triage_event_id` (unique; `act-A0001` / `mis-M001`), `priority` (P1–P4), `category`. `anomaly_briefs` was removed on 2026-10-11 (014 drops it). |
 | `migrations/002_system1_predictions.sql` | Laya's per-event answers. |
 | `migrations/003_documents.sql` | `CREATE EXTENSION vector`, the `documents` RAG table. `vector(EMBED_DIM)` (`halfvec` above 2,000 dims), GIN on `content_tsv`, btree on the filter columns. **Exact search, no ANN index** by default. |
-| `migrations/004_search_functions.sql` | `match_documents` and `match_documents_hybrid` (RRF; returns `score`, `similarity`, `text_match`). |
+| `migrations/004_search_functions.sql` | `match_documents` and `match_documents_hybrid` (RRF; returns `score`, `similarity`, `text_match`; exact ids in the query rank first, contract §3). |
 | `migrations/005_raw_and_app_logs.sql` | `raw.*` (verbatim SPOT data) and `app.*` (model calls, MCP tool calls, requests, job runs). Runs on `LOGS_DATABASE_URL`. |
 | `migrations/006_log_helpers.sql` | `raw.get_mission_event_log(mission, source)` / view `raw.mission_event_log`; `app.get_model_call_stats(interval)` / view `app.model_call_stats` (p50/p95 latency and tokens/s per system+model+device); `app.get_mcp_tool_stats(interval)`. |
 | `migrations/007_roles.sql` | NOLOGIN group roles `spot_mcp_reader` and `spot_app` + grants (guarded; warns instead of failing). |
 | `migrations/008_spot_event_log_request_id.sql` | `raw.spot_event_log.request_id`. |
-| `migrations/009_graph.sql` | Graph RAG: `kg_nodes` (pgvector + pg_trgm GIN on label/key), `kg_edges`, `match_kg_nodes`, `match_kg_nodes_text`, `graph_neighborhood`; grants for `spot_mcp_reader` / `spot_app` (read). |
+| `migrations/009_graph.sql` | Graph RAG: `kg_nodes` (pgvector + pg_trgm GIN on label/key), `kg_edges`, `match_kg_nodes`, `match_kg_nodes_text`, `graph_neighborhood`. Grants: `spot_mcp_reader` SELECT + EXECUTE; `spot_app` read/write (SELECT + EXECUTE here, INSERT/UPDATE in `013_live.sql`, because live runs write `kg_*`; DELETE, used by `reset-demo`, from 007's grant on every `public` table). |
+| `migrations/010_replay_runs.sql` | Stepped replay state for Vercel (`replay_runs`: event ids, cursor, counts, lease; at most one `running`). CRUD for `spot_app`, SELECT for `spot_mcp_reader`. |
 | `migrations/011_chat.sql` | AI Assistance chat history (`docs/chat-contract.md` §1): `chat_conversations`, `chat_messages` (seq per conversation, jsonb sources/citations/grounding/usage, `error_code`), sidebar + trigram search indexes. CRUD for `spot_app`; **nothing** for `spot_mcp_reader`. |
 | `migrations/012_chat_logs.sql` | (logs) `app.model_calls.system` CHECK also allows `chat` (replaces the inline 005 CHECK idempotently). |
 | `migrations/013_chat_mission.sql` | Mission chats (`docs/chat-contract.md` §9, `chat.3`): `chat_conversations.mission_id` → `missions` (`ON DELETE SET NULL`, named FK added if missing; dangling ids detached first) + index `(mission_id, updated_at DESC)`. Grants unchanged. |
+| `migrations/013_live.sql` | Live simulation (backend contract "Live simulation"): `live_runs` (at most one pending/running), `live_captures` (one per stop). CRUD for `spot_app`, plus INSERT/UPDATE on `kg_nodes` / `kg_edges`; SELECT for `spot_mcp_reader`. Sorted after `013_chat_mission`; the two are independent. |
+| `migrations/014_schema_hygiene.sql` | 2026-10-11 data audit; additive. Indexes on `flags(event_id)`, `flags(mission_id)` and `live_captures(flag_id)`. `assessments.source` / `fallback_reason`. Corrected comments. `DROP TABLE IF EXISTS anomaly_briefs`. Enum CHECKs (flag status/severity/priority, assessment state, ack action, prediction kind, `actions.failure_type` set iff FAILED), added `NOT VALID` and then validated; a violating row only warns, so a deploy never fails on it. |
+| `migrations/015_kit_comments.sql` | The kit's data dictionary (`03_DATA_DICTIONARY/data_dictionary.csv`) as comments on the 56 kit columns, plus a "synthetic data" comment on each kit table. Metadata only. |
 | `graph_build.py` | Builds the knowledge graph from the core tables + `documents` (see "Knowledge graph" below). |
 | `tests/test_graph.py` | Graph build + functions on a throwaway DB (`make test-graph`). |
 | `tests/test_chat.py` | Chat migrations, grants and every `ChatRepo` method on a throwaway DB (`make test-chat-db`). |
 | `migrations/optional/hnsw.sql` | Optional HNSW index (`migrate --hnsw`). |
 | `reset.sql`, `reset_logs.sql` | Drops (only via `setup.py reset --yes`). |
-| `setup.py` | `migrate`, `seed`, `reset --yes`, `status`. |
+| `setup.py` | `migrate`, `seed`, `reset --yes`, `status` (row counts, including the analytics, replay/live run tables, documents per kind and graph per kind). |
 | `policy_rules.py` | `policy.py` as named rules: flag reasons + the `policy:<rule>` RAG docs. Asserted against `policy.py` on every kit event at seed time. |
 | `spotdb.py` | Connections (Neon TLS, pooler-safe), `job_run()` logging, paths. |
 | `smoke_test.py` | Embeds the 3 test queries, calls both search functions and (if built) the graph functions; `--roles` checks `spot_mcp_reader`. |
 | `local_pgvector.sh` | Local `pgvector/pgvector:pg17` container `spot-pgvector` on port 5433. |
-| `Dockerfile`, `job.sh` | One-shot db job container (migrate/seed/ingest/graph/status/smoke). CPU-only, no torch. |
+| `Dockerfile`, `job.sh` | One-shot db job container (migrate/seed/ingest/graph/refresh/status/smoke; `HEALTHCHECK NONE`). `refresh` = ingest -> graph (`--no-embed` if ingest failed; plus `DB_GRAPH_ARGS`) -> status. CPU-only, no torch. |
 
 Migrations are idempotent and all re-applied on every `migrate`. `EMBED_DIM` (default 1024) is substituted into
 003/004; if it no longer matches the existing column, `migrate` stops and tells you to use `--recreate-documents`.
+Production runs `migrate` before every deploy, so a dropped table needs its `CREATE` removed too, a `REVOKE` must
+come after `007_roles.sql`, and data fixes belong in a one-off owner script or a `seed` step
+(`docs/DEPLOY-neon.md` "Rules").
 
 ## Seed (`python db/setup.py seed`, idempotent and non-destructive)
 - **Non-destructive by default (audit M5).** db-init runs `seed` on every `docker compose up`, so every write is
@@ -41,22 +48,52 @@ Migrations are idempotent and all re-applied on every `migrate`. `EMBED_DIM` (de
   acknowledged flags and a reset demo stay as they are.
 - **`seed --force-reseed`** is the explicit destructive path: upserts the kit, events and seeded flags over existing
   rows (flag `status`/acks kept; `reasons`, `score`, `escalated` overwritten) and reloads the baseline. db-init never
-  uses it. After `setup.py reset --yes` (which keeps `app.job_runs`), use `seed --force-reseed`.
-- `public`: the 6 kit CSVs (upserts), `events` from `replay.ndjson` (500 rows; payload enriched with the action's
-  reading/anomaly; skip with `--no-events` if the live replay should insert them), and **58 flags**: every kit
-  action/mission event the policy escalates (P1 = 12, P2 = 46 of 297 triaged events). `flags.reasons` =
-  `[{rule, detail, weight, priority}]`; `rule` is the `policy:<rule>` doc. `--force-reseed` keeps `flag_id` and `status`.
+  uses it. Use it only to restore the baseline when `events` and `flags` are empty: after `setup.py reset --yes`
+  (which keeps `app.job_runs`) or after `POST /ops/reset-demo` (`docs/DEPLOY-neon.md` §6 "Baseline restore"; the
+  2026-10-11 cleanup restored it in its own transaction, see "Data cleanup 2026-10-11" there). Then run
+  `ingest --kinds incident` (a full `ingest` when `documents` is empty, as after `reset --yes`) and `graph_build`.
+- `public`: the 6 kit CSVs (upserts), `events` from `replay.ndjson` (500 rows; payload = the event's details + the
+  action's reading/anomaly + the same `enriched` block the runtime ingest adds for action events; skip with
+  `--no-events` if the live replay should insert them), and **58 flags**: every kit action/mission event the policy
+  escalates (P1 = 12, P2 = 46 of 297 triaged events). `flags.reasons` = `[{rule, detail, weight, priority}]`; `rule`
+  is the `policy:<rule>` doc. `--force-reseed` keeps `flag_id` and `status`. **The 58-flag seed is the production
+  baseline.** A full replay yields 51, because `replay.ndjson` stops inside M023 (contract §2).
+- **Analytics (`seed_analytics`, every seed, idempotent):** `mission_kpis` (27 missions: reported status vs true
+  health, failed/total actions, HIGH/CRITICAL anomalies, battery drop), `risk_scores` (189 rows: action failure rate
+  per waypoint, action type, battery band and configuration) and `insights` (5 headline metrics from the kit's
+  `validation_results.json`, each recomputed in SQL; a mismatch prints a warning). They run even when the demo
+  baseline is already loaded. Rows change only when the kit does.
 - `raw`: every CSV row verbatim (`raw.kit_files` with sha256 + `raw.kit_rows`), every replay line verbatim
   (`raw.spot_event_log`, `UNIQUE (source, sha256)`), and the 6 sample inspection images (`raw.inspection_media`,
-  repo-relative `uri`, sha256, bytes; they are synthetic and not linked to a kit action).
-- The seed and ingest jobs log themselves to `app.job_runs`.
+  repo-relative `uri`, sha256, bytes, `metadata.action_type` and plain-word hints; they are synthetic, reused across
+  stops and not linked to a kit action, so `action_id`, `mission_id` and `captured_at` stay NULL).
+- The seed and ingest jobs log themselves to `app.job_runs`. The first finished `seed` job that counted flags marks
+  the baseline as loaded; keep that row.
+- The seed functions write through the caller's connection and do not commit by themselves, so an owner script can
+  restore the baseline inside one transaction.
+
+## NULLs that are data (do not "fill" them)
+| Column | NULL means |
+|---|---|
+| `events.action_id` / `location_id` / `asset_id` | a mission-level event (`MISSION_STARTED`, `MISSION_COMPLETED`: 45 of 500) |
+| `flags.action_id` / `location_id` / `asset_id` | a mission flag (`category = 'mission'`) |
+| `flags.event_id` | the flag's event is not in `replay.ndjson` (7 seeded flags: M024–M027 and actions after A0228) |
+| `events.mission_id` | a live event (live missions are not kit missions; the live ids are in `payload.live`) |
+| `actions.failure_type` | the action succeeded (014 CHECK: set if and only if `status = 'FAILED'`; the kit has only SUCCESS and FAILED) |
+| `assessments.fallback_reason` | a System 2 answer (`DONE`) |
+| `system1_predictions` (empty table) | no replay has run with System 1 reachable since the baseline was loaded |
+
+`events` and `flags` entity ids have no foreign keys on purpose: live events use ids such as `LIVE-<run>-<stop>`.
+`actions` / `readings` / `anomalies.location_id` is where the inspection happened; `assets.location_id` is the
+asset's nominal home (they differ for 61 of 270 actions in the kit itself).
 
 ## Neon
 Neon supports pgvector (`CREATE EXTENSION vector`; Neon ships 0.8.0 on PG14–17, which has `hnsw.iterative_scan`):
 https://neon.com/docs/extensions/pgvector and https://neon.com/docs/extensions/pg-extensions.
 ```bash
 export DATABASE_URL='postgresql://neondb_owner:<pw>@ep-xxxx.us-east-2.aws.neon.tech/neondb?sslmode=require'
-python db/setup.py migrate && python db/setup.py seed && python amd/embed/ingest.py
+python db/setup.py migrate && python db/setup.py seed && python amd/embed/ingest.py && python db/graph_build.py \
+  && python db/setup.py status            # the order of docs/DEPLOY-neon.md §6 (then smoke_test.py)
 ```
 - `sslmode=require` is added automatically for `*.neon.tech` URLs. Pooled (`-pooler`) URLs work (no server-side
   prepared statements). Run migrations as the owner role.
@@ -82,7 +119,7 @@ python db/setup.py migrate && python db/setup.py seed && python db/setup.py stat
 docker build -f db/Dockerfile -t spot-db .
 docker run --rm -e DATABASE_URL=postgresql://postgres:postgres@host.docker.internal:5433/spot \
   -e EMBED_URL=http://host.docker.internal:8081 --env-file amd/embed/.env spot-db all   # migrate + seed + ingest + graph + status
-docker run --rm -e DATABASE_URL=... spot-db migrate        # or seed | ingest | graph | status | smoke | reset --yes
+docker run --rm -e DATABASE_URL=... spot-db migrate        # or seed | ingest | graph | refresh | status | smoke | reset --yes
 ```
 
 ## Search
@@ -91,18 +128,22 @@ SELECT * FROM match_documents('[...]'::vector, ARRAY['incident'], filter_asset =
 SELECT doc_id, score, similarity, text_match FROM match_documents_hybrid('[...]'::vector, 'HX-204');
 ```
 `text_match` is true when the row contains every query term (so `HX-204` matches only HX-204 rows, not other heat
-exchangers). Exact search over ~500 docs takes about 1–10 ms. If it ever gets slow: `python db/setup.py migrate --hnsw`
+exchangers), or every id-like token of a longer question (`PANEL-211`, `A0061`, `AN014`, `WP05`, `M014`); such rows
+also rank first (contract §3). Exact search over ~500 docs takes about 1–10 ms. If it ever gets slow: `python db/setup.py migrate --hnsw`
 (the functions already set `hnsw.iterative_scan = strict_order`, so filtered queries still return `match_count` rows).
 
 ## Knowledge graph (contract §7, `python db/graph_build.py` / `db/job.sh graph`)
 Plain SQL on Neon (no Apache AGE): `kg_nodes` + `kg_edges`, pgvector on nodes, `WITH RECURSIVE` traversal. db-init runs
-it after `ingest`. Idempotent: upserts nodes (unchanged rows keep `updated_at`), deletes nodes it built that no longer
+it after `ingest` (`db/job.sh refresh`); run it again after every replay or `reset-demo`, after `ingest --kinds
+incident`. Flag nodes use only fired policy rules, and nodes with `props.source = 'live'` are never overwritten.
+Idempotent: upserts nodes (unchanged rows keep `updated_at`), deletes nodes it built that no longer
 exist, and rewrites every edge with `props.source` in fk/stat/extract/curated in one transaction.
-- **Nodes** (~577): the 15 kinds of the contract. Summaries are short facts computed from the data, e.g.
+- **Nodes** (574 on the seed baseline, all embedded): the 15 kinds of the contract. Summaries are short facts
+  computed from the data, e.g.
   `Turbine Hall South (WP09): mechanical zone, floor 1, HIGH_NOISE environment; assets PANEL-211, PANEL-212; 22
   actions, 64% success, 8 failed (3 reading unreliable, 2 sensor timeout, ...)`. A manual node's summary is the first
   ~200 chars of its chunk plus its page.
-- **Edges** (~1,974): `fk` from the rows (weight 1/n of the dst's in-edges of that rel); `stat` in SQL
+- **Edges** (about 1,968): `fk` from the rows (weight 1/n of the dst's in-edges of that rel); `stat` in SQL
   (`common_at`: failure type at a location / anomaly type on an asset, n ≥ 2, weight = rate; `fails_more_in`: action
   type in an environment with ≥ 3 actions and success below its overall rate, weight = the drop); `curated`
   (`about`, `relates_to`: the maps at the top of `graph_build.py`, asserted against policy.py's enums and
@@ -110,7 +151,8 @@ exist, and rewrites every edge with `props.source` in fk/stat/extract/curated in
   manual chunks, anomaly descriptions, operator notes and explanations; weight = hit count).
 - **Embeddings**: document-backed nodes copy `documents.embedding`; the ~70 others embed their summary over HTTP, only
   when it changed (`props.embedded_hash`). `--no-embed` skips the HTTP calls; an unreachable embedder only leaves
-  those nodes pending. Logged to `app.job_runs` (job `graph`) and `app.model_calls`.
+  those nodes pending; when one batch fails, the vectors of the batches that succeeded are kept. Logged to
+  `app.job_runs` (job `graph`) and `app.model_calls`.
 - Flags: `--dry-run` (counts only), `--no-embed`, `--force-embed`. ~1 s without embedding, ~20 s on CPU the first time.
 ```sql
 SELECT node_id, score FROM match_kg_nodes_text('HX-204');                      -- asset:HX-204 1.0, then its actions 0.99
@@ -150,6 +192,9 @@ GRAPH_TEST_EMBED=1 EMBED_URL=http://localhost:8081 make test-graph   # + the inc
 make test-chat-db   # chat: 011/012/013 (re-run), grants, every ChatRepo method on spot_chattest_<hex>; ~4 s
                     # (make test-graph runs all of db/tests, so it includes this file too)
 make test-db        # seed is non-destructive (tests/test_seed_nondestructive.py)
+# Retrieval regression set (db/tests/retrieval_testset.json: document queries + graph checks G01-G05). Read-only
+# session, so it is safe on Neon; skips without DATABASE_URL + EMBED_URL or with an empty `documents`:
+DATABASE_URL=... EMBED_URL=http://localhost:18081 python -m pytest -q db/tests/test_retrieval.py
 make smoke          # RAG + graph queries and spot_mcp_reader permissions inside the stack
 ```
 

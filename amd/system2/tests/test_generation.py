@@ -123,7 +123,7 @@ def test_saved_packet_through_http_generation_and_checked_pipeline(server):
     sent = http.requests[0]
     assert sent['path'] == '/v1/chat/completions'
     body = sent['body']
-    assert body['max_tokens'] == 350 == g.MAX_TOKENS
+    assert body['max_tokens'] == 512 == g.MAX_TOKENS
     assert body['temperature'] == 0
     assert body['chat_template_kwargs'] == {'enable_thinking': False}
     assert body['response_format']['type'] == 'json_schema'
@@ -146,7 +146,7 @@ def test_tracer_identity_records_prompt_version_hash_and_examples(server):
     assert ident['prompt_version'] == p.PROMPT_VERSION
     assert len(ident['prompt_sha256']) == 64 and ident == client.identity(c.prepared)
     assert len(ident['example_case_ids']) == 3 and 'kit-equipment' not in ident['example_case_ids']
-    assert (ident['max_tokens'], ident['temperature'], ident['thinking']) == (350, 0, False)
+    assert (ident['max_tokens'], ident['temperature'], ident['thinking']) == (512, 0, False)
 
 
 # ── packet-scoped schema (GEN-01, GEN-02) ────────────────────────────────────────────────────
@@ -327,13 +327,13 @@ def test_prompt_declares_data_rules_and_hash_tracks_examples():
 
 # ── length, malformed, out-of-packet, transport (CHK-02 through HTTP) ────────────────────────
 
-def test_default_budget_is_350_and_439_token_smoke_is_not_assumed_valid(server):
+def test_default_budget_is_512_and_length_finish_is_not_assumed_valid(server):
     g = gen()
     http, url = server
     c = case('kit-equipment')
     script(http, reply(model_reply(c.prepared), finish='length', completion=439))
     run = run_pipeline(c.request, g.LlamaGenerator(url))
-    assert all(r['body']['max_tokens'] == 350 for r in http.requests)
+    assert all(r['body']['max_tokens'] == 512 for r in http.requests)
     assert run.path == 'fallback' and run.model == 'template'
     assert [a.status for a in run.attempts] == ['truncated', 'truncated']
 

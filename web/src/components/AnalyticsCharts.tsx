@@ -18,8 +18,11 @@ import {
   YAxis,
   ZAxis,
 } from "recharts";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Panel } from "./Panel";
 import type { FleetAnalytics } from "@/lib/fleet-analytics";
+import { breakdownHref, type BreakdownQuery } from "@/lib/breakdown-link";
 
 /* The Analytics page's chart catalogue, grouped by the question it answers:
    reliability, configuration, missions, failures & anomalies, waypoints.
@@ -73,9 +76,10 @@ function Section({ id, title, blurb, children }: { id: string; title: string; bl
   );
 }
 
+/** Every chart drills down: a click on a mark opens the rows behind it (/analytics/breakdown). */
 function Plot({ height = 240, children }: { height?: number; children: React.ReactElement }) {
   return (
-    <div className="my-auto w-full min-w-0" style={{ height }}>
+    <div className="my-auto w-full min-w-0 cursor-pointer" style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">{children}</ResponsiveContainer>
     </div>
   );
@@ -85,7 +89,15 @@ function Caption({ children }: { children: React.ReactNode }) {
   return <p className="mt-3 text-xs leading-snug text-muted">{children}</p>;
 }
 
+/** The row under a chart-level click (Recharts reports the hovered category's index). */
+function at<T>(rows: T[], state: unknown): T | undefined {
+  const i = Number((state as { activeTooltipIndex?: unknown } | null)?.activeTooltipIndex);
+  return Number.isInteger(i) ? rows[i] : undefined;
+}
+
 export function AnalyticsCharts({ data }: { data: FleetAnalytics }) {
+  const router = useRouter();
+  const go = (query: BreakdownQuery) => router.push(breakdownHref(query));
   const cliff = data.battery[0];
   const best = data.battery.reduce((a, b) => (b.rate > a.rate ? b : a), data.battery[0]);
   const v1 = data.drain.find((d) => d.version === "V1");
@@ -103,7 +115,8 @@ export function AnalyticsCharts({ data }: { data: FleetAnalytics }) {
       <Section id="reliability" title="Reliability" blurb="Where SPOT's actions succeed, and the conditions that break them.">
         <Panel collapsible title="Success rate by battery band" aside="95% interval shaded">
           <Plot>
-            <ComposedChart data={data.battery} margin={{ top: 8, right: 12, bottom: 0, left: -8 }}>
+            <ComposedChart data={data.battery} margin={{ top: 8, right: 12, bottom: 0, left: -8 }}
+              onClick={(s) => { const row = at(data.battery, s); if (row) go({ view: "actions", band: row.key }); }}>
               <CartesianGrid {...GRID} />
               <XAxis dataKey="band" tick={AXIS} tickLine={false} axisLine={{ stroke: "var(--c-line)" }} />
               <YAxis domain={[0, 100]} unit="%" tick={AXIS} tickLine={false} axisLine={false} width={44} />
@@ -126,7 +139,8 @@ export function AnalyticsCharts({ data }: { data: FleetAnalytics }) {
 
         <Panel collapsible title="Success rate by environment">
           <Plot height={Math.max(180, data.environments.length * 40)}>
-            <BarChart data={data.environments} layout="vertical" margin={{ top: 0, right: 40, bottom: 0, left: 8 }} barCategoryGap={8}>
+            <BarChart data={data.environments} layout="vertical" margin={{ top: 0, right: 40, bottom: 0, left: 8 }} barCategoryGap={8}
+              onClick={(s) => { const row = at(data.environments, s); if (row) go({ view: "actions", env: row.key }); }}>
               <CartesianGrid stroke="var(--c-line)" horizontal={false} />
               <XAxis type="number" domain={[0, 100]} unit="%" tick={AXIS} tickLine={false} axisLine={false} />
               <YAxis type="category" dataKey="environment" tick={AXIS} tickLine={false} axisLine={false} width={96} />
@@ -153,8 +167,8 @@ export function AnalyticsCharts({ data }: { data: FleetAnalytics }) {
                 {...TOOLTIP}
                 formatter={(value, name, item) => [`${value ?? "—"}% · n=${item.payload[`n${String(name)}`]}`, name]}
               />
-              <Bar dataKey="V1" fill="var(--c-series-1)" radius={[4, 4, 0, 0]} maxBarSize={22} animationDuration={700} animationEasing="ease-out" />
-              <Bar dataKey="V2" fill="var(--c-series-2)" radius={[4, 4, 0, 0]} maxBarSize={22} animationBegin={350} animationDuration={700} animationEasing="ease-out" />
+              <Bar dataKey="V1" fill="var(--c-series-1)" onClick={(_, i) => go({ view: "actions", type: data.config[i]?.key, version: "V1" })} radius={[4, 4, 0, 0]} maxBarSize={22} animationDuration={700} animationEasing="ease-out" />
+              <Bar dataKey="V2" fill="var(--c-series-2)" onClick={(_, i) => go({ view: "actions", type: data.config[i]?.key, version: "V2" })} radius={[4, 4, 0, 0]} maxBarSize={22} animationBegin={350} animationDuration={700} animationEasing="ease-out" />
             </BarChart>
           </Plot>
           <SeriesKey items={[{ label: "V1", color: VERSION_FILL.V1 }, { label: "V2", color: VERSION_FILL.V2 }]} />
@@ -163,7 +177,8 @@ export function AnalyticsCharts({ data }: { data: FleetAnalytics }) {
 
         <Panel collapsible title="Mean battery drain per mission">
           <Plot height={Math.max(160, data.drain.length * 56)}>
-            <BarChart data={data.drain} layout="vertical" margin={{ top: 0, right: 48, bottom: 0, left: 8 }} barCategoryGap={14}>
+            <BarChart data={data.drain} layout="vertical" margin={{ top: 0, right: 48, bottom: 0, left: 8 }} barCategoryGap={14}
+              onClick={(s) => { const row = at(data.drain, s); if (row) go({ view: "missions", version: row.version }); }}>
               <CartesianGrid stroke="var(--c-line)" horizontal={false} />
               <XAxis type="number" tickFormatter={(v: number) => `${v} pts`} tick={AXIS} tickLine={false} axisLine={false} />
               <YAxis type="category" dataKey="version" tick={AXIS} tickLine={false} axisLine={false} width={32} />
@@ -184,7 +199,8 @@ export function AnalyticsCharts({ data }: { data: FleetAnalytics }) {
       <Section id="missions" title="Missions" blurb="Every mission in time order, and what its reported status was worth.">
         <Panel collapsible title="Action outcomes per mission" className="lg:col-span-2">
           <Plot height={260}>
-            <BarChart data={data.missions} margin={{ top: 8, right: 12, bottom: 0, left: -16 }} barCategoryGap={3}>
+            <BarChart data={data.missions} margin={{ top: 8, right: 12, bottom: 0, left: -16 }} barCategoryGap={3}
+              onClick={(s) => { const row = at(data.missions, s); if (row) go({ view: "actions", mission: row.id }); }}>
               <CartesianGrid {...GRID} />
               <XAxis dataKey="id" tick={AXIS} tickLine={false} axisLine={{ stroke: "var(--c-line)" }} interval="preserveStartEnd" minTickGap={8} />
               <YAxis allowDecimals={false} tick={AXIS} tickLine={false} axisLine={false} width={40} />
@@ -203,7 +219,7 @@ export function AnalyticsCharts({ data }: { data: FleetAnalytics }) {
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Tooltip {...TOOLTIP} formatter={(value, name) => [`${value} missions`, name]} />
-                  <Pie data={data.truth} dataKey="count" nameKey="label" innerRadius="62%" outerRadius="100%" paddingAngle={2} stroke="var(--c-surface)" strokeWidth={2} startAngle={90} endAngle={-270} animationBegin={100} animationDuration={1100} animationEasing="ease-out">
+                  <Pie data={data.truth} onClick={(_, i) => go({ view: "missions", truth: data.truth[i]?.key })} className="cursor-pointer" dataKey="count" nameKey="label" innerRadius="62%" outerRadius="100%" paddingAngle={2} stroke="var(--c-surface)" strokeWidth={2} startAngle={90} endAngle={-270} animationBegin={100} animationDuration={1100} animationEasing="ease-out">
                     {data.truth.map((slice) => <Cell key={slice.key} fill={TRUTH_FILL[slice.key]} />)}
                   </Pie>
                 </PieChart>
@@ -215,10 +231,12 @@ export function AnalyticsCharts({ data }: { data: FleetAnalytics }) {
             </div>
             <ul className="flex flex-col gap-2 text-sm">
               {data.truth.map((slice) => (
-                <li key={slice.key} className="flex items-center gap-2">
-                  <span aria-hidden className="inline-block size-2.5 rounded-sm" style={{ background: TRUTH_FILL[slice.key] }} />
-                  <span className="text-ink">{slice.label}</span>
-                  <span className="nums ml-auto pl-4 font-mono text-muted">{slice.count}</span>
+                <li key={slice.key}>
+                  <Link href={breakdownHref({ view: "missions", truth: slice.key })} className="flex items-center gap-2 rounded hover:underline">
+                    <span aria-hidden className="inline-block size-2.5 rounded-sm" style={{ background: TRUTH_FILL[slice.key] }} />
+                    <span className="text-ink">{slice.label}</span>
+                    <span className="nums ml-auto pl-4 font-mono text-muted">{slice.count}</span>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -228,7 +246,8 @@ export function AnalyticsCharts({ data }: { data: FleetAnalytics }) {
 
         <Panel collapsible title="Battery spent per mission">
           <Plot height={220}>
-            <BarChart data={data.missions} margin={{ top: 8, right: 12, bottom: 0, left: -8 }} barCategoryGap={3}>
+            <BarChart data={data.missions} margin={{ top: 8, right: 12, bottom: 0, left: -8 }} barCategoryGap={3}
+              onClick={(s) => { const row = at(data.missions, s); if (row) go({ view: "actions", mission: row.id }); }}>
               <CartesianGrid {...GRID} />
               <XAxis dataKey="id" tick={AXIS} tickLine={false} axisLine={{ stroke: "var(--c-line)" }} interval="preserveStartEnd" minTickGap={8} />
               <YAxis domain={[0, 100]} unit="%" tick={AXIS} tickLine={false} axisLine={false} width={44} />
@@ -246,7 +265,8 @@ export function AnalyticsCharts({ data }: { data: FleetAnalytics }) {
       <Section id="failures" title="Failures & anomalies" blurb="What went wrong, how badly, and whether the measurement held up.">
         <Panel collapsible title="Failure modes">
           <Plot height={Math.max(180, data.failureModes.length * 36)}>
-            <BarChart data={data.failureModes} layout="vertical" margin={{ top: 0, right: 32, bottom: 0, left: 8 }} barCategoryGap={8}>
+            <BarChart data={data.failureModes} layout="vertical" margin={{ top: 0, right: 32, bottom: 0, left: 8 }} barCategoryGap={8}
+              onClick={(s) => { const row = at(data.failureModes, s); if (row) go({ view: "actions", failure: row.key }); }}>
               <CartesianGrid stroke="var(--c-line)" horizontal={false} />
               <XAxis type="number" allowDecimals={false} tick={AXIS} tickLine={false} axisLine={false} />
               <YAxis type="category" dataKey="mode" tick={AXIS} tickLine={false} axisLine={false} width={150} />
@@ -268,6 +288,7 @@ export function AnalyticsCharts({ data }: { data: FleetAnalytics }) {
                 <Bar
                   key={severity}
                   dataKey={severity}
+                  onClick={(_, row) => go({ view: "anomalies", anomaly: data.anomalies[row]?.key, severity })}
                   name={severity.charAt(0) + severity.slice(1).toLowerCase()}
                   stackId="s"
                   fill={SEVERITY_FILL[severity]}
@@ -293,8 +314,8 @@ export function AnalyticsCharts({ data }: { data: FleetAnalytics }) {
               <YAxis type="number" dataKey="duration" name="Duration" unit="s" tick={AXIS} tickLine={false} axisLine={false} width={48} />
               <ZAxis range={[36, 36]} />
               <Tooltip {...TOOLTIP} cursor={{ strokeDasharray: "3 3", stroke: "var(--c-line-strong)" }} />
-              <Scatter name="Succeeded" data={data.scatter.success} fill="var(--c-ok)" fillOpacity={0.55} shape="circle" animationDuration={700} animationEasing="ease-out" />
-              <Scatter name="Failed" data={data.scatter.failed} fill="var(--c-bad)" shape="cross" animationBegin={500} animationDuration={600} animationEasing="ease-out" />
+              <Scatter name="Succeeded" data={data.scatter.success} onClick={(_, i) => { const p = data.scatter.success[i]; if (p) go({ view: "actions", mission: p.mission, highlight: p.id }); }} fill="var(--c-ok)" fillOpacity={0.55} shape="circle" animationDuration={700} animationEasing="ease-out" />
+              <Scatter name="Failed" data={data.scatter.failed} onClick={(_, i) => { const p = data.scatter.failed[i]; if (p) go({ view: "actions", mission: p.mission, highlight: p.id }); }} fill="var(--c-bad)" shape="cross" animationBegin={500} animationDuration={600} animationEasing="ease-out" />
             </ScatterChart>
           </Plot>
           <SeriesKey items={[{ label: "Succeeded (●)", color: "var(--c-ok)" }, { label: "Failed (+)", color: "var(--c-bad)" }]} />
@@ -310,8 +331,8 @@ export function AnalyticsCharts({ data }: { data: FleetAnalytics }) {
               <XAxis type="number" tickFormatter={(v: number) => `${Math.round(v * 100)}%`} tick={AXIS} tickLine={false} axisLine={false} />
               <YAxis type="category" dataKey="measurement" tick={AXIS} tickLine={false} axisLine={false} width={130} />
               <Tooltip {...TOOLTIP} formatter={(value, name) => [`${value} readings`, name]} />
-              <Bar dataKey="good" name="Good" stackId="q" fill="var(--c-ok)" stroke="var(--c-surface)" strokeWidth={1} animationDuration={700} animationEasing="ease-out" />
-              <Bar dataKey="questionable" name="Questionable" stackId="q" fill="var(--c-accent)" stroke="var(--c-surface)" strokeWidth={1} radius={[0, 4, 4, 0]} animationBegin={700} animationDuration={500} animationEasing="ease-out" />
+              <Bar dataKey="good" name="Good" stackId="q" onClick={(_, i) => go({ view: "readings", measurement: data.readings[i]?.key, quality: "GOOD" })} fill="var(--c-ok)" stroke="var(--c-surface)" strokeWidth={1} animationDuration={700} animationEasing="ease-out" />
+              <Bar dataKey="questionable" name="Questionable" stackId="q" onClick={(_, i) => go({ view: "readings", measurement: data.readings[i]?.key, quality: "QUESTIONABLE" })} fill="var(--c-accent)" stroke="var(--c-surface)" strokeWidth={1} radius={[0, 4, 4, 0]} animationBegin={700} animationDuration={500} animationEasing="ease-out" />
             </BarChart>
           </Plot>
           <SeriesKey items={[{ label: "Good", color: "var(--c-ok)" }, { label: "Questionable", color: "var(--c-accent)" }]} />
@@ -370,23 +391,24 @@ function Heatmap({ heatmap }: { heatmap: FleetAnalytics["heatmap"] }) {
         </div>
         {heatmap.rows.map((row, r) => (
           <div key={row.id} role="row" className="contents">
-            <span role="rowheader" className="truncate px-2 py-1.5 text-ink" title={`${row.id} · ${row.environment}`}>
+            <Link role="rowheader" href={breakdownHref({ view: "actions", waypoint: row.id })} className="truncate px-2 py-1.5 text-ink hover:underline" title={`${row.id} · ${row.environment}`}>
               {row.name}
-            </span>
+            </Link>
             {row.cells.map((cell, i) => (
-              <span
+              <Link
                 key={heatmap.types[i].key}
+                href={breakdownHref({ view: "actions", waypoint: row.id, type: heatmap.types[i].key })}
                 role="cell"
                 title={cell ? `${row.name} · ${heatmap.types[i].label}: ${cell.rate}% failed, n=${cell.n}` : `${row.name} · ${heatmap.types[i].label}: no actions`}
-                className="heat-cell nums rounded-sm px-1 py-1.5 text-center font-mono text-ink"
+                className="heat-cell nums rounded-sm px-1 py-1.5 text-center font-mono text-ink hover:outline hover:outline-1 hover:outline-line-strong"
                 style={{ background: cell ? fill(cell.rate) : "transparent", animationDelay: `${(r + i) * 28}ms` }}
               >
                 {cell ? `${Math.round(cell.rate)}%` : ""}
-              </span>
+              </Link>
             ))}
-            <span role="cell" className="heat-cell nums rounded-sm px-1 py-1.5 text-center font-mono font-semibold text-ink" style={{ background: fill(row.rate), animationDelay: `${(r + heatmap.types.length) * 28}ms` }} title={`${row.name}: ${row.rate}% failed, n=${row.n}`}>
+            <Link role="cell" href={breakdownHref({ view: "actions", waypoint: row.id })} className="heat-cell nums rounded-sm px-1 py-1.5 text-center font-mono font-semibold text-ink hover:outline hover:outline-1 hover:outline-line-strong" style={{ background: fill(row.rate), animationDelay: `${(r + heatmap.types.length) * 28}ms` }} title={`${row.name}: ${row.rate}% failed, n=${row.n}`}>
               {Math.round(row.rate)}%
-            </span>
+            </Link>
           </div>
         ))}
       </div>

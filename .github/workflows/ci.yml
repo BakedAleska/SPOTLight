@@ -125,8 +125,15 @@ jobs:
         run: python -m pytest db/tests/test_chat.py -q -p no:cacheprovider -rs
       - name: Knowledge graph DB tests (make test-graph)
         run: python -m pytest db/tests/test_graph.py -q -p no:cacheprovider -rs
+      # The 0.50 similarity floor on hybrid document search, with synthetic vectors (skipped in the backend job).
+      - name: Chat retrieval floor (DB)
+        working-directory: backend
+        run: python -m pytest tests/test_chat_retrieval_floor.py -q -p no:cacheprovider -rs
       - name: Seed is non-destructive (make test-db)
         run: python -m pytest tests/test_seed_nondestructive.py -q -p no:cacheprovider -rs
+      # migrate twice + seed on a throwaway database: analytics, enriched events, 014/015, reset, login roles.
+      - name: Setup/migrations DB tests
+        run: python -m pytest db/tests/test_setup.py -q -p no:cacheprovider -rs
 
   mcp:
     name: mcp

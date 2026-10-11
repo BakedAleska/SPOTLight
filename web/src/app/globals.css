@@ -101,6 +101,7 @@
 
 /* LIGHT — the default, and the base every other state overrides. */
 :root {
+  color-scheme: light;      /* native controls (select menus, scrollbars) follow the theme */
   --c-canvas: #f4f5f5;       /* page behind the panels */
   --c-chrome: #ffffff;       /* sidebar + top bar */
   --c-surface: #ffffff;      /* panel body */
@@ -156,6 +157,7 @@
 /* DARK via the OS — skipped when the user has explicitly chosen light. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
+    color-scheme: dark;
     --c-canvas: #111217;
     --c-chrome: #111217;
     --c-surface: #181b1f;
@@ -179,9 +181,9 @@
     --c-bad: #f87171;
     --c-info: #60a5fa;
 
-  --c-series-1: #3987e5;
-  --c-series-2: #d95926;
-  --c-series-3: #199e70;
+    --c-series-1: #3987e5;
+    --c-series-2: #d95926;
+    --c-series-3: #199e70;
 
     --c-focus: #60a5fa;
     --c-shadow: 0 1px 2px rgb(0 0 0 / 0.45);
@@ -194,6 +196,7 @@
 /* DARK chosen explicitly — must repeat the table so the toggle wins over an
    OS set to light. */
 :root[data-theme="dark"] {
+  color-scheme: dark;
   --c-canvas: #111217;
   --c-chrome: #111217;
   --c-surface: #181b1f;
@@ -883,3 +886,20 @@ body {
 @keyframes route-flow { to { stroke-dashoffset: -14; } }
 .live-card-in { animation: float-in 0.45s ease-out both; }
 @media (prefers-reduced-motion: reduce) { .live-ping { animation: none; } .live-spot { transition: none; } .live-card-in { animation: none; } .route-ahead { animation: none; } }
+
+/* Qwen draft caret (components/QwenDraft.tsx): a thin bar blinking after the
+   text Qwen is still writing. It is removed when the checked answer replaces
+   the draft, so it never blinks on a settled card. Reduced motion: steady. */
+.qwen-caret {
+  display: inline-block;
+  width: 2px;
+  height: 0.95em;
+  margin-left: 0.15em;
+  vertical-align: -0.12em;
+  border-radius: 1px;
+  background: var(--c-accent-ink);
+  opacity: 0.75;
+  animation: qwen-caret-blink 1s steps(2, jump-none) infinite;
+}
+@keyframes qwen-caret-blink { 0% { opacity: 0.75; } 100% { opacity: 0.1; } }
+@media (prefers-reduced-motion: reduce) { .qwen-caret { animation: none; } }

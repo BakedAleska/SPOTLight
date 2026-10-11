@@ -7,9 +7,17 @@
 #   llm      127.0.0.1:8080  llama-server, Qwen3.8-27B Q8_0 + mmproj (docs/AMD-RUNS-2026-10-10.md)
 #   embed    127.0.0.1:8081  amd/embed, Qwen3-Embedding-0.6B
 #   system1  127.0.0.1:8082  amd/system1/service, Laya (base until ../laptop/push_laya.sh installs the fine-tune)
+#   system2  127.0.0.1:8083  amd/system2, live checked pipeline straight to llm (key: /root/spot-secrets.env)
 #
 # Env overrides: SPOT_REF (git ref of the repo to run, default main; SPOT_REFRESH=1 re-downloads the same ref, e.g.
 # a branch that moved), LLAMA_CPP_REF, SKIP_LLM=1 (no GGUF download or llama.cpp build).
+#
+# Secrets live only on the box, never in the repo or this log. Re-running setup keeps them:
+#   /root/spot.env          LOGS_DATABASE_URL=<Neon pooled DSN as spot_mcp_user>, added by hand (../README.md
+#                           "System 1 call logging"). Required: System 1 logs each call to app.model_calls with it,
+#                           and the backend logs only failed calls. spot_mcp_user can only INSERT into app.*.
+#                           Step 6 rewrites this file from the template but carries this one line over.
+#   /root/spot-secrets.env  SYSTEM2_API_KEY, generated in step 5.
 set -euo pipefail
 # curl: --http1.1 because the egress proxy breaks HTTP/2 streams (curl exit 92); -S keeps errors in the log
 
@@ -99,15 +107,41 @@ if [ ! -f /root/venv-gpu/.ok ]; then
   touch /root/venv-gpu/.ok
 fi
 
-# ── 5. services under supervisord (no systemd in the pod) ───────────────────────────────────────────
+# ── 5. System 2 (CPU; amd/system2): own venv, and an API key generated once on the box, never in the repo ───────
+step "system2"
+if [ ! -f /root/venv-s2/.ok ]; then
+  rm -rf /root/venv-s2 && /opt/venv/bin/python -m venv /root/venv-s2
+  /root/venv-s2/bin/pip install -q --retries 10 --timeout 120 -r /root/SpotTheDOT/amd/system2/requirements.txt
+  touch /root/venv-s2/.ok
+fi
+if ! grep -q '^SYSTEM2_API_KEY=' /root/spot-secrets.env 2>/dev/null; then
+  (umask 077; echo "SYSTEM2_API_KEY=s2-$(openssl rand -hex 24)" >> /root/spot-secrets.env)
+fi
+mkdir -p /root/s2cache
+
+# ── 6. services under supervisord (no systemd in the pod) ───────────────────────────────────────────
 step "supervisord"
 cp "$HERE/supervisord.conf" /root/supervisord.conf
 cp "$HERE/stdio_bridge.py" /root/stdio_bridge.py
-cp "$HERE/spot.env" /root/spot.env
+# /root/spot.env = the repo template + the hand-added LOGS_DATABASE_URL line (a secret: never echo it). Written to a
+# fresh mode-600 file and moved into place, so the secret is never world-readable and the file is never half-written.
+LOGS_DSN_LINE="$(grep -E '^[[:space:]]*(export[[:space:]]+)?LOGS_DATABASE_URL=' /root/spot.env 2>/dev/null | tail -n 1 || true)"
+rm -f /root/spot.env.new
+(umask 077; { cat "$HERE/spot.env"; [ -z "$LOGS_DSN_LINE" ] || printf '%s\n' "$LOGS_DSN_LINE"; } > /root/spot.env.new)
+mv /root/spot.env.new /root/spot.env
+unset LOGS_DSN_LINE
+# Check what supervisord's `bash -c "set -a; . /root/spot.env"` will see (output discarded: it could hold the value)
+if bash -c 'unset LOGS_DATABASE_URL; set -a; . /root/spot.env; [ -n "${LOGS_DATABASE_URL:-}" ]' >/dev/null 2>&1; then
+  echo "LOGS_DATABASE_URL kept: System 1 logs its calls to app.model_calls"
+else
+  echo "WARNING: LOGS_DATABASE_URL in /root/spot.env is missing, empty or unparseable (an unquoted '&'?):" \
+       "System 1 calls are not logged to app.model_calls. Set it single-quoted (deploy/amd-native/README.md" \
+       "\"System 1 call logging\"), then restart system1."
+fi
 [ -x /root/llama.cpp/build/bin/llama-server ] || sed -i 's/^autostart=true ; llm$/autostart=false ; llm/' /root/supervisord.conf
 if $SUPERVISORCTL pid >/dev/null 2>&1; then
   $SUPERVISORCTL reread && $SUPERVISORCTL update
-  [ "$REPO_CHANGED" = 1 ] && $SUPERVISORCTL restart embed system1
+  [ "$REPO_CHANGED" = 1 ] && $SUPERVISORCTL restart embed system1 system2
 else
   /root/venv-gpu/bin/supervisord -c /root/supervisord.conf
 fi

@@ -30,8 +30,12 @@ export interface Grounding {
   unknown_ids: string[];
   unverified_numbers: string[];
   source_count: number;
-  retrieval_mode: "hybrid" | "fulltext";
+  retrieval_mode: "hybrid" | "fulltext" | null;
   graph_seeds: string[];
+  /** chat.4 (§10): absent on older rows, which are grounded. */
+  mode?: "grounded" | "general";
+  /** chat.4, general answers only: plant ids the answer named although no plant data was attached. */
+  fleet_ids?: string[];
 }
 
 export interface Conversation {
@@ -111,7 +115,8 @@ export interface Message {
 
 /** The `retrieval` object of the `sources` event. */
 export interface RetrievalMeta {
-  mode: "hybrid" | "fulltext" | (string & {});
+  /** chat.4: null for a general answer (no retrieval). */
+  mode: "hybrid" | "fulltext" | (string & {}) | null;
   graph_seeds?: string[];
   latency_ms?: number;
   counts?: { rag: number; graph: number; sql: number };
@@ -119,6 +124,9 @@ export interface RetrievalMeta {
   gaps?: string[];
   /** chat.3: the mission a mission chat retrieved for; absent or null otherwise. */
   mission_id?: string | null;
+  /** chat.4 (§10): whether this answer is grounded in plant data or a general answer, and the rule that decided. */
+  answer_mode?: "grounded" | "general";
+  route?: string;
 }
 
 export interface ModelInfo {

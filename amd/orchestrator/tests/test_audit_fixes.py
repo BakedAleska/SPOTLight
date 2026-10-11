@@ -226,3 +226,13 @@ def test_vision_api_key_is_sent(make_client, world):
     make_client(VISION_API_KEY="vision-key-0123456789").post("/v1/assess", json={"flag_id": 42,
                                                                                  "image_b64": TINY_JPEG})
     assert world.of("vision")[0]["headers"]["x-api-key"] == "vision-key-0123456789"
+
+
+def test_template_reads_verdicts_from_the_mcp_flag_view():
+    """MCP (2026-10-11) moves laya_verdict / rules_verdict / laya_unavailable from flag.reasons to flag.verdicts."""
+    from orchestrator.template import reasons
+    flag = {"reasons": [{"rule": "battery_low", "detail": "battery 18%"}],
+            "verdicts": [{"rule": "laya_unavailable", "detail": "System 1 (Laya) unavailable; rules-only verdict"},
+                         {"rule": "rules_verdict", "detail": "rules: escalate"}, "junk"]}
+    assert [r["rule"] for r in reasons(flag)] == ["battery_low", "laya_unavailable", "rules_verdict"]
+    assert reasons({"reasons": flag["reasons"] + flag["verdicts"][:2]}) == reasons(flag)   # the old shape still works

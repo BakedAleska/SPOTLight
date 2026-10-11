@@ -12,11 +12,16 @@ Built on the official MCP Python SDK **2.x** (`mcp.server.mcpserver.MCPServer`).
 
 ## Tools
 
-The model should call `get_flag_context` first. That one call is usually enough. The other tools are for follow-ups, when the packet's `gaps` say something is missing.
+The model should call `get_flag_context` first. That one call is usually enough. The other tools are for follow-ups, when the packet's `gaps` or `notes` say something is missing.
+
+**`missing` / `gaps` block; `notes` inform** (contract §5, 2026-10-11). System 2 answers `insufficient_context` when `missing` or `gaps` is non-empty, and ignores `notes`:
+- **`missing`** (with `insufficient_context: true`): core rows are absent, e.g. the action, the mission or the asset record.
+- **`gaps`**: a lookup really failed or was skipped, so the packet may be incomplete. Examples: `<x> lookup failed`, `<x> search failed`, `retrieval skipped: <embedding error>`, `graph unavailable` / `graph lookup failed`, and `packet is over the budget even after trimming`.
+- **`notes`**: the lookup worked but found nothing worth citing, so the packet is still complete. Examples: `no relevant <section> above similarity 0.40`, `no knowledge-graph facts linked to this flag`, and `category unknown; all actions allowed`. Until 2026-10-11 these were `gaps`, so any empty search made System 2 refuse.
 
 | Tool | What it's for |
 |---|---|
-| `get_flag_context(flag_id)` | **Tier 1.** One packet (≤ ~1,500 tokens) holding:<br>• the flag and the rules that fired<br>• the event: the action with its reading vs the safe band, trust, anomaly, asset and waypoint, plus the validator's priority, category and suggested action. For a mission flag, the event is the mission instead.<br>• System 1 predictions<br>• derived facts `F1..Fn`<br>• `graph`: ≤ ~300 tokens of knowledge-graph triples around the flag (statistics and manual links first)<br>• similar incidents, asset history, manual passages and policy rules<br>• `allowed_actions`, `citation_ids`, `insufficient_context` + `missing`, `gaps`<br>• **the question, last** |
+| `get_flag_context(flag_id)` | **Tier 1.** One packet (≤ ~1,500 tokens) holding:<br>• the flag and the rules that fired<br>• the event: the action with its reading vs the safe band, trust, anomaly, asset and waypoint, plus the validator's priority, category and suggested action. For a mission flag, the event is the mission instead.<br>• System 1 predictions<br>• derived facts `F1..Fn`<br>• `graph`: ≤ ~300 tokens of knowledge-graph triples around the flag (statistics and manual links first)<br>• similar incidents, asset history, manual passages and policy rules<br>• `allowed_actions`, `citation_ids`, `insufficient_context` + `missing`, `gaps` (blocking), `notes` (informational)<br>• **the question, last** |
 | `search_similar_incidents(flag_id?, text?, asset_id?, location_id?, k=3)` | Past incidents like this one (hybrid search). The flag's own docs are excluded. |
 | `search_asset_history(asset_id, query?, k=5)` | Events, incidents and notes for one asset. With no query, no similarity cutoff is applied. |
 | `search_spot_manual(query, k=3)` | Spot User Guide passages (vector search). |
@@ -32,7 +37,7 @@ The model should call `get_flag_context` first. That one call is usually enough.
 | `get_reliability_stats(action_type?, location_id?, configuration_version?, battery_band?, group_by?)` | Success rate with n, a 95% CI and a small-sample warning (n < 20). |
 | `get_battery_risk(battery_pct, configuration_version?)` | Policy status (≤15 / ≤25 / ≤35) and the kit's success rate in that battery band vs the other bands. |
 | `list_allowed_actions(category)` | The fixed recommended-action enum for `equipment`, `data_quality`, `navigation`, `robot_health`, `mission`, `none` or `all`. |
-| `get_raw_event_log(mission_id, around_ts?, limit=20)` | Verbatim SPOT events from `raw.spot_event_log`, so the model can quote the robot. |
+| `get_raw_event_log(mission_id, around_ts?, limit=20)` | Verbatim SPOT events from `raw.spot_event_log`, so the model can quote the robot. Each `event_id` appears once; when an event was logged under several sources, the seed's `replay.ndjson` row wins. |
 
 **Citation ids.** Every item carries an `id` the model can cite:
 
@@ -49,8 +54,8 @@ The model should call `get_flag_context` first. That one call is usually enough.
 - **Facts:** they are the stored `kg_edges` among the reached nodes (one parameterized SELECT). This catches edges between two seeds, which the traversal's one-row-per-node output can't show.
 - **Ranking:** statistics (`common_at`, `fails_more_in`) come first, then manual links, topics and notes, then other structure. Facts touching this flag's own nodes come first within each tier.
 - **Dedup and merge:** FK facts that the flag/event sections already state are dropped. Facts sharing an endpoint are merged (`Docking —mentions→ battery, docking`).
-- **Budget:** the result is cut to `MCP_GRAPH_TOKEN_BUDGET` (300). When the packet is over 1,500 tokens, RAG tails are trimmed first, then the graph tail (never below 3 facts). flag, event, facts and question are never trimmed.
-- **Degradation:** on a database without migration 009, the packet's `gaps` say `graph unavailable` and the graph tools return `graph_unavailable: true`; neither errors. With the embedding service down, the packet's graph section still works (it needs no embedding) and `search_graph` falls back to name/id matches.
+- **Budget:** the result is cut to `MCP_GRAPH_TOKEN_BUDGET` (300). When the packet is over `MCP_PACKET_TOKEN_BUDGET` (1,500 tokens), RAG tails are trimmed first down to one item each, then snippets are shortened and the graph tail is cut to 4 facts, and only then do the last `asset_history` / `manual` items go (the graph never goes below 3 facts before the final pass). flag, event, facts and question are never trimmed. A `notes` entry (`trimmed to the N-token packet budget: asset_history 2->1, graph 6->4`) records every section the budget cut.
+- **Degradation:** on a database without migration 009, the packet's `gaps` say `graph unavailable` and the graph tools return `graph_unavailable: true`; neither errors. With 009 but an empty `kg_nodes` (`graph_build` not run yet), the graph tools say `knowledge graph is empty (graph_build not run)` and the packet gets the note `no knowledge-graph facts linked to this flag: knowledge graph is empty (graph_build not run)`. With the embedding service down, the packet's graph section still works (it needs no embedding) and `search_graph` falls back to name/id matches.
 
 **Safety.**
 - Every parameter is typed and range-checked: the JSON schema checks first, then the service checks again.
@@ -62,7 +67,7 @@ The model should call `get_flag_context` first. That one call is usually enough.
 
 **Logging.**
 - Every tool call writes one row to `app.mcp_tool_calls`: tool, args, result_count, result_bytes, top_similarity, latency_ms, ok, error, request_id, flag_id.
-- Every embedding call writes one row to `app.model_calls` (`system='embed'`).
+- Every embedding call writes one row to `app.model_calls` (`system='embed'`). `endpoint` is the path (`/v1/embeddings`), the host goes in `metadata.base_host`, and `device` / `tokens_per_sec` come from the embedder's `timing` block (`AMD Radeon Pro W7900D` on the box).
 - Logs go over a separate connection to `LOGS_DATABASE_URL` and are fire-and-forget: a logging failure only produces a warning.
 - `request_id` comes from the tool call's `_meta.request_id` or the `X-Request-Id` header.
 - `SELECT * FROM app.get_mcp_tool_stats()` gives p50/p95 latency and mean top similarity, which is how you tune the cutoff.
@@ -117,13 +122,13 @@ The same HTTP app as `python -m spot_mcp --http`, run as one Vercel Function. `a
 |---|---|
 | `DATABASE_URL` | Neon **pooled** URL (`ep-…-pooler…`) as `spot_mcp_user`. Pooling is safe: every query is one transaction with `SET TRANSACTION READ ONLY` and a transaction-local `statement_timeout`, and prepared statements are off. |
 | `MCP_AUTH_TOKEN` | **Required.** `asgi.py` refuses to start without it, because the URL is public. Callers send `Authorization: Bearer <token>`. |
-| `EMBED_URL` | the AMD cluster's public HTTPS embedding endpoint (OpenAI-compatible `/v1/embeddings`) |
-| `EMBED_MODEL` / `EMBED_DIM` | `Qwen/Qwen3-Embedding-0.6B` / `1024`. These must match what was ingested. |
+| `EMBED_URL` | the AMD cluster's public HTTPS embedding endpoint (OpenAI-compatible `/v1/embeddings`). A quick-tunnel URL changes on every relaunch: update it here **and** on the backend, then redeploy both. Unset, it defaults to `localhost:8081`, and every packet gets the gap `retrieval skipped`. |
+| `EMBED_MODEL` / `EMBED_DIM` | `Qwen/Qwen3-Embedding-0.6B` / `1024`. These must match what was ingested. Leave `EMBED_QUERY_PREFIX` unset (the Qwen3 query instruction, the same as the backend; ingest embeds documents with no prefix). |
 | `EMBED_TIMEOUT_S` / `MCP_STATEMENT_TIMEOUT_MS` | defaults `10` / `5000`. Keep them well under `maxDuration`. |
 | optional | `MCP_POOL_MAX` (default 4 per instance), `MCP_LOG_CALLS`, `LOGS_DATABASE_URL`, `MCP_MIN_SIMILARITY`, `LOG_LEVEL` |
 
 - **Callers:** the backend and the orchestrator set `MCP_URL=https://<project>.vercel.app/mcp` and the same `MCP_AUTH_TOKEN`. Use the production domain. Preview URLs sit behind Vercel's Deployment Protection by default, so server-to-server calls to them get a login page.
-- **Logging rows:** the `app.*` rows are fire-and-forget. After a response, Vercel may pause an idle instance before an insert finishes, so a few rows can be late or lost. Tool calls are not affected.
+- **Logging rows:** the `app.*` rows are written in the background. When serverless (`SERVERLESS=1`, or `SERVERLESS` unset and Vercel's `VERCEL` set), `asgi.py` waits up to 2 s for the request's pending inserts just before the last chunk of each HTTP response, because Vercel may pause an idle instance once the response is sent. A row is lost only if its insert takes longer than that. Tool calls are not affected.
 
 Verify:
 

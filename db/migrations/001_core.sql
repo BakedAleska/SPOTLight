@@ -2,7 +2,7 @@
 -- Core relational tables. Names and columns come from the original draft (git show 19dff30:web/db/schema.sql),
 -- minus its leading DROP (that lives in db/reset.sql). Idempotent: safe to re-run.
 -- Three layers: raw kit tables (seeded from CSV), the live pipeline (replay -> System 1 -> System 2 -> operator),
--- and analytics tables filled by our own jobs (Laya, SQL). Databricks was dropped (research/decisions.md).
+-- and analytics tables filled by db/setup.py seed (seed_analytics). Databricks was dropped (research/decisions.md).
 
 -- ── Raw kit tables (NextEra SPOT challenge data) ─────────────────────────────
 CREATE TABLE IF NOT EXISTS locations (
@@ -116,7 +116,7 @@ CREATE TABLE IF NOT EXISTS flags (
 -- Unique, so re-seeding upserts and flag_id stays stable. NULL is allowed for flags from other sources.
 ALTER TABLE flags ADD COLUMN IF NOT EXISTS triage_event_id text;
 ALTER TABLE flags ADD COLUMN IF NOT EXISTS priority text;      -- P1 | P2 | P3 | P4 (policy.py)
-ALTER TABLE flags ADD COLUMN IF NOT EXISTS category text;      -- equipment | navigation | data_quality | robot_health
+ALTER TABLE flags ADD COLUMN IF NOT EXISTS category text;      -- equipment | navigation | data_quality | robot_health | mission
 CREATE UNIQUE INDEX IF NOT EXISTS flags_triage_event_uidx ON flags (triage_event_id);
 CREATE INDEX IF NOT EXISTS flags_open_idx ON flags (status, score DESC);
 CREATE INDEX IF NOT EXISTS flags_escalation_idx ON flags (escalated, created_at);
@@ -127,7 +127,7 @@ CREATE INDEX IF NOT EXISTS flags_asset_idx ON flags (asset_id);
 CREATE TABLE IF NOT EXISTS assessments (
   assessment_id      bigserial PRIMARY KEY,
   flag_id            bigint UNIQUE REFERENCES flags ON DELETE CASCADE,
-  state              text NOT NULL DEFAULT 'PENDING',  -- PENDING | DONE | ERROR
+  state              text NOT NULL DEFAULT 'PENDING',  -- PENDING | DONE | ERROR | TEMPLATE
   question           text,
   answer             text,
   reasoning          text,
@@ -153,7 +153,7 @@ CREATE TABLE IF NOT EXISTS acknowledgements (
 );
 CREATE INDEX IF NOT EXISTS acknowledgements_flag_idx ON acknowledgements (flag_id);
 
--- ── Analytics (filled by our own jobs: Laya, SQL) ──────────────────────────────
+-- ── Analytics (filled by db/setup.py seed (seed_analytics)) ─────────────────────
 CREATE TABLE IF NOT EXISTS risk_scores (    -- P(action fails | waypoint, action type, battery band, config)
   location_id    text,
   action_type    text,
@@ -173,12 +173,6 @@ CREATE TABLE IF NOT EXISTS mission_kpis (
   high_anomalies    int,
   battery_drop      int,
   synced_at         timestamptz DEFAULT now()
-);
-
-CREATE TABLE IF NOT EXISTS anomaly_briefs (
-  anomaly_id text PRIMARY KEY,
-  brief      text,
-  synced_at  timestamptz DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS insights (        -- named headline metrics shown on the Overview page

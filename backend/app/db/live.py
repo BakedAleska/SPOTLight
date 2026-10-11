@@ -22,6 +22,7 @@ CAPTURE_FIELDS = ("action_id", "source_action_id", "location_id", "asset_id", "a
                   "severity", "category", "laya", "rules", "decision", "photo", "vision", "qwen", "qwen_source",
                   "doc_id", "kg", "timings")
 STALE_MINUTES = 10      # a pending/running run with no progress for this long no longer blocks a new run
+LIVE_SOURCE = "live"    # props.source on every live kg row (services/live.py LIVE_SOURCE)
 
 
 def _val(col: str, v: Any) -> Any:
@@ -119,6 +120,24 @@ class LiveRepo:
                               "WHERE run_id = %%s AND stop_index = %%s" % (col, col),
                               (json.dumps(patch, default=str), run_id, stop_index))
 
+    async def set_draft(self, run_id: int, stop_index: int, qwen: Dict[str, Any]) -> bool:
+        """One conditional UPDATE: store a Qwen draft only while the run is running and the stop's analysis is
+        pending (once /analysis has written the checked result, qwen_source is no longer 'pending' and nothing
+        changes). True if updated."""
+        n = await self.db.execute(
+            "UPDATE live_captures c SET qwen = %s, phase = 'analysing', updated_at = now() FROM live_runs r "
+            "WHERE r.run_id = c.run_id AND r.status = 'running' AND c.run_id = %s AND c.stop_index = %s "
+            "AND c.qwen_source = 'pending'", (Jsonb(qwen), run_id, stop_index))
+        return bool(n)
+
+    async def expire_pending(self, run_id: int) -> int:
+        """When a run ends: captures still waiting for /analysis (the runner's post failed or it stopped) become
+        qwen_source 'error', so /live stops showing an analysing card or an unverified draft as if still live.
+        A leftover draft stays in `qwen` (the console labels it discarded). Returns the rows changed."""
+        return await self.db.execute(
+            "UPDATE live_captures SET qwen_source = 'error', phase = 'error', updated_at = now() "
+            "WHERE run_id = %s AND qwen_source = 'pending'", (run_id,)) or 0
+
     async def get_capture(self, run_id: int, stop_index: int) -> Optional[Dict[str, Any]]:
         return await self.db.fetchone("SELECT * FROM live_captures WHERE run_id = %s AND stop_index = %s",
                                       (run_id, stop_index))
@@ -131,8 +150,10 @@ class LiveRepo:
 
     # ── knowledge graph (props.source = 'live') ───────────────────────────────────────────────────
     async def kg_upsert(self, nodes: Iterable[Dict[str, Any]], edges: Iterable[Dict[str, Any]]) -> Dict[str, int]:
-        """Upsert live nodes, then edges whose two ends exist (an edge to a missing kit node is skipped)."""
-        nodes, edges = list(nodes), list(edges)
+        """Upsert live nodes, then edges whose two ends exist (an edge to a missing kit node is skipped).
+        Every row gets props.source = 'live': db/graph_build.py and amd/embed/ingest.py keep live rows on that."""
+        nodes = [{**n, "props": {**(n.get("props") or {}), "source": LIVE_SOURCE}} for n in nodes]
+        edges = [{**e, "props": {**(e.get("props") or {}), "source": LIVE_SOURCE}} for e in edges]
         n_edges = 0
         async with self.db.transaction() as cur:
             for n in nodes:

@@ -7,6 +7,10 @@
 3. Entities: regex ids in the question, the previous user turn and (`chat.2`) the previous answer (at most 5 ids
    from it, its cited sources' refs counting too); graph entry nodes of kind mission/asset/location/flag add more.
 4. In parallel: search_documents (k 8), match_graph_nodes (k 6), fleet_snapshot (cached 60 s), entity_digests.
+   With a vector, documents and vector-only graph nodes below cosine 0.50 are dropped (a document is still kept when
+   it contains every query term, or every id in the question), so an off-topic question gets no documents and no
+   vector-matched graph nodes. The snapshot still comes along, and the full-text passes (the follow-up pass, and
+   everything when the embedder is down) have no floor.
    Then graph_neighborhood from the top 4 entry nodes (2 hops, 25 nodes; instance kinds filtered for hub seeds).
 5. Sources with stable citation ids, merged by id; total context <= MAX_CONTEXT_CHARS, lowest-ranked dropped
    first, the snapshot always kept.
@@ -44,8 +48,11 @@ MISSION_DOCS_K = 6       # chat.3: the mission-filtered document search
 PRIOR_ENTITY_CAP = 5     # ids taken from the previous answer (its text, then its cited sources' refs)
 CARRY_MAX = 6            # sources the previous answer cited, carried into this turn
 # match_graph_nodes returns raw cosine similarity for vector-only hits, with no threshold: below this they are
-# noise (text-match scores are >= 0.3 by construction and always kept).
-MIN_VECTOR_SCORE = 0.35
+# noise (text-match scores are >= 0.3 by construction and always kept). Measured with Qwen3-Embedding-0.6B and the
+# query instruction (vector-store audit VS-06, 2026-10-11): off-topic questions score 0.40-0.54, relevant hits
+# 0.54-0.83, so the floor sits above most of the noise. Documents get the same floor in ChatRepo.search_documents
+# (db/chat.py CHAT_MIN_DOC_SIMILARITY).
+MIN_VECTOR_SCORE = 0.50
 
 MISSION_RE = re.compile(r"\bM\d{3}\b", re.I)
 ASSET_RE = re.compile(r"\b[A-Z]{2,6}-\d{3}\b", re.I)
@@ -100,9 +107,12 @@ class Prior:
 
 
 def prior_answer(history: List[Dict[str, Any]]) -> Optional[Prior]:
-    """The latest assistant answer with text that is not an error, from stored messages (oldest first)."""
+    """The latest assistant answer with text that is not an error, from stored messages (oldest first). chat.4: a
+    general answer (§10, e.g. "you're welcome") is skipped, so it doesn't reset the evidence a follow-up refers to."""
     for m in reversed(history or []):
         if m.get("role") != "assistant" or m.get("status") == "error" or not (m.get("content") or "").strip():
+            continue
+        if (m.get("grounding") or {}).get("mode") == "general":
             continue
         by_id = {s.get("id"): s for s in m.get("sources") or [] if isinstance(s, dict) and s.get("id")}
         cited = [by_id[c] for c in dict.fromkeys(m.get("citations") or []) if c in by_id][:CARRY_MAX]

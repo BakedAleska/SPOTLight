@@ -61,9 +61,11 @@ def test_backend_equipment_request():
     # Execute the actual pure backend normalizer without importing its DB client dependencies.
     source = Path(__file__).resolve().parents[3] / "backend/app/services/system2.py"
     tree = ast.parse(source.read_text(encoding="utf-8"))
-    function = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == "normalize_assessment")
+    functions = [n for n in tree.body if isinstance(n, ast.FunctionDef)
+                 and n.name in ("evidence_reasoning", "normalize_assessment")]
+    assert len(functions) == 2
     namespace = {}
-    exec("from __future__ import annotations\n" + ast.unparse(function), namespace)
+    exec("from __future__ import annotations\n" + "\n\n".join(ast.unparse(f) for f in functions), namespace)
     stored = namespace["normalize_assessment"](out)
     assert stored["answer"] == out["answer"]
     assert "F1" in stored["reasoning"]

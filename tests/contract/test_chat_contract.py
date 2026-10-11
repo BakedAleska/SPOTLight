@@ -150,6 +150,12 @@ def _title(mock):
     fakes.gemini_title(mock, text='"HX-217 Gauge Reading."')
 
 
+def _general(mock):
+    # chat.4 (§10): small talk is answered without retrieval: no sources, the general badge
+    fakes.gemini_stream(mock, chunks=fakes.answer_chunks(parts=[
+        "Hi! I'm SPOTbot. ", "Ask me about a mission, an asset or a flag and I'll look it up."]))
+
+
 def _ungrounded(mock):
     # an unknown id ([incident:AN999]) and a figure in no source (12.3%): the "bad" badge, with both lists filled
     fakes.gemini_stream(mock, chunks=fakes.answer_chunks(parts=[
@@ -164,6 +170,7 @@ SCENARIOS = [
              title_model="gemini-3.1-flash-lite"),
     Scenario("ungrounded", model="gemini-3.5-flash-lite", mode="fast", setup=_ungrounded,
              question="How is the fleet doing?"),
+    Scenario("general", model="gemini-3.8-flash", mode="fast", setup=_general, question="hi"),   # chat.4
 ]
 
 
@@ -237,9 +244,11 @@ SOURCE = {"id", "n", "origin", "kind", "title", "snippet", "score", "refs"}
 SOURCE_OPTIONAL = {"path"}
 REFS = {"mission_id", "asset_id", "location_id", "action_id", "flag_id"}
 GROUNDING = {"grounded", "cited_ids", "unknown_ids", "unverified_numbers", "source_count", "retrieval_mode",
-             "graph_seeds"}
+             "graph_seeds", "mode"}                     # chat.4: mode
+GROUNDING_GENERAL = GROUNDING | {"fleet_ids"}            # chat.4 (§10): a general answer adds the plant ids it names
 USAGE = {"prompt_tokens", "output_tokens", "thoughts_tokens"}
-RETRIEVAL = {"mode", "graph_seeds", "latency_ms", "counts", "gaps", "mission_id"}   # chat.3: mission_id
+RETRIEVAL = {"mode", "graph_seeds", "latency_ms", "counts", "gaps", "mission_id",   # chat.3: mission_id
+             "answer_mode", "route"}                                            # chat.4 (§10)
 ERROR_CODES = {"rate_limited", "model_unavailable", "gemini_auth", "blocked", "upstream_error", "retrieval_failed",
                "internal_error"}
 EVENT_KEYS = {"meta": {"conversation_id", "request_id", "model", "mode", "user_message"},
@@ -265,7 +274,9 @@ def check_message(m: Dict[str, Any], role: str) -> None:
         assert m["thinking"] is None
         return
     if m["grounding"] is not None:
-        assert set(m["grounding"]) == GROUNDING, set(m["grounding"]) ^ GROUNDING
+        want = GROUNDING_GENERAL if m["grounding"].get("mode") == "general" else GROUNDING
+        assert set(m["grounding"]) == want, set(m["grounding"]) ^ want
+        assert m["grounding"]["mode"] in ("grounded", "general")
         assert m["citations"] == m["grounding"]["cited_ids"]
     if m["usage"] is not None:
         assert set(m["usage"]) == USAGE
@@ -282,6 +293,9 @@ def check_events(evs: List[Tuple[str, Any]]) -> None:
             check_message(data["user_message"], "user")
         elif name == "sources":
             assert set(data["retrieval"]) == RETRIEVAL and set(data["retrieval"]["counts"]) == {"rag", "graph", "sql"}
+            assert data["retrieval"]["answer_mode"] in ("grounded", "general")
+            if data["retrieval"]["answer_mode"] == "general":        # chat.4: no retrieval reaches the model
+                assert data["sources"] == [] and data["retrieval"]["mode"] is None
             for s in data["sources"]:
                 check_source(s)
         elif name in ("thinking", "delta"):
@@ -370,6 +384,12 @@ def test_golden_semantics():
     assert dict(ev["first_exchange_title"])["title"]["title"] == "HX-217 Gauge Reading"
     g = dict(ev["ungrounded"])["done"]["message"]["grounding"]
     assert g["unknown_ids"] == ["incident:AN999"] and g["unverified_numbers"] == ["12.3%"] and not g["grounded"]
+    general = dict(ev["general"])
+    assert general["sources"]["sources"] == [] and general["sources"]["retrieval"]["answer_mode"] == "general"
+    assert general["sources"]["retrieval"]["route"] == "small_talk"
+    gm = general["done"]["message"]
+    assert gm["sources"] == [] and gm["citations"] == [] and gm["grounding"]["mode"] == "general"
+    assert gm["grounding"]["fleet_ids"] == [] and gm["grounding"]["grounded"] is False
 
 
 # ── shared citation fixtures (contract §2, chat.2) ────────────────────────────────────────────────

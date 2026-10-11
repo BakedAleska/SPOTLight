@@ -22,6 +22,7 @@ Binding contracts: `docs/backend-services-contract.md` (routes, pipeline, env) a
 | `GET /api/v1/flags/{id}` | Flag + event + acks + assessment + Laya's stored answers |
 | `GET /api/v1/flags/{id}/context` | System 2's context packet (MCP `get_flag_context`, else a SQL-built packet) |
 | `POST/GET /api/v1/flags/{id}/explain` | Orbit-style question/answer/reasoning/recommended action (System 2, else a template); cached in `assessments` (System 2 answers are final; a template is stored as `state=TEMPLATE` and System 2 is retried when configured), `?refresh=true` regenerates. Bounded by `REQUEST_DEADLINE_S` |
+| `POST /api/v1/flags/{id}/explain/stream` | The same explanation as SSE, with Qwen's unchecked drafts while it writes (see "Streaming Qwen drafts" below) |
 | `POST /api/v1/flags/{id}/ack` | ACKNOWLEDGE / RESOLVE / ESCALATE / NOTE; a note is embedded as RAG doc `note:<ack_id>` |
 | `GET /api/v1/missions` | Missions with reported status vs True Mission Health (`status_misleading`, `?misleading_only=true`) |
 | `GET /api/v1/missions/{id}` | Mission, every action (reading, anomaly, flags), and its flags |
@@ -36,7 +37,7 @@ Binding contracts: `docs/backend-services-contract.md` (routes, pipeline, env) a
 | `GET /api/v1/search` | RAG: `EMBED_QUERY_PREFIX` + q → `match_documents_hybrid`; full-text fallback |
 | `GET /api/v1/ops/model-calls` | p50/p95/mean latency and tokens/s per system/model from `app.model_calls`, plus System 1 routing |
 | `GET /api/v1/ops/jobs` | `app.job_runs` + replay status |
-| `POST /api/v1/ops/reset-demo` | `{"confirm": true}`: clears events, flags, assessments, acks and demo docs (kit tables and raw/app logs stay) |
+| `POST /api/v1/ops/reset-demo` | `{"confirm": true}`: clears events, flags, assessments, acks, demo docs and the graph's non-live flag/note/explanation nodes in one transaction (live events, flags and explanation docs too; kit tables, raw/app logs, `live_runs`/`live_captures` and the live graph rows stay); logged as an `app.job_runs` row `reset-demo`. Afterwards run `ingest --kinds incident` + `graph_build` (`docs/DEPLOY-neon.md` "Refresh order") |
 | `GET /api/v1/chat/models`, `/chat/suggestions?mission_id=` | AI Assistance model picker (`CHAT_MODELS`, `configured` = key set) and 4 starter prompts from live facts (no LLM); with `mission_id`, 4 prompts from that mission's digest (unknown → 422 `unknown_mission`) |
 | `GET /api/v1/chat/missions?q=` | Mission picker for mission chats (`chat.3`): one row per mission with failed actions, anomalies, open flags, `hidden_failure`, `chats` |
 | `GET/POST /api/v1/chat/conversations`, `GET/PATCH/DELETE /chat/conversations/{id}` | Stored chats (search `q`, filter `mission_id`, pin, rename = `title_source: user`); `POST` takes `mission_id` (case-insensitive, stored canonical; unknown → 422 `unknown_mission`; PATCH can't change it); malformed ids are 404 |
@@ -79,7 +80,7 @@ Try it: `curl -X POST localhost:8000/api/v1/replay/start -H "X-Admin-Token: $ADM
 | `SYSTEM1_INGEST_TIMEOUT_S` | per-event System 1 timeout on ingest/replay (fail fast to rules-only) | `SYSTEM1_TIMEOUT_S` |
 | `EMBED_URL`, `EMBED_MODEL`, `EMBED_DIM` | embedding service (OpenAI-compatible) | `:8081`, `Qwen/Qwen3-Embedding-0.6B`, `1024` |
 | `EMBED_TIMEOUT_S`, `SEARCH_EMBED_TIMEOUT_S` | embed timeout for notes / for `/search` before full-text fallback (CPU embedder ~2.3 s) | `10`, `4` |
-| `EMBED_QUERY_PREFIX`, `EMBED_DOC_PREFIX` | prepended to search queries / note documents (`\n` allowed) | Qwen3 instruction / empty |
+| `EMBED_QUERY_PREFIX`, `EMBED_DOC_PREFIX` | prepended to search queries (no separator) / note documents (`\n` allowed). Leave unset: unset = the Qwen3 query instruction, the same as the MCP server (ingest embeds documents with no prefix); set but empty = none | Qwen3 instruction / empty |
 | `MCP_URL`, `MCP_AUTH_TOKEN`, `MCP_TIMEOUT_S` | MCP server (streamable HTTP) | `http://localhost:8090/mcp`, unset, `15` |
 | `SYSTEM2_URL`, `SYSTEM2_API_KEY`, `SYSTEM2_TIMEOUT_S` | System 2 (`/v1/assess`, `/v1/debrief`) | unset → templates, unset, `60` |
 | `KIT_DIR`, `TRIAGE_DIR` | kit CSVs + replay.ndjson; folder holding `triage/` (relative = repo root; when the repo copy is absent, as on Vercel, `backend/_shared/<same path>`) | `amd/system1/data/kit`, `amd/system1` |
@@ -88,11 +89,12 @@ Try it: `curl -X POST localhost:8000/api/v1/replay/start -H "X-Admin-Token: $ADM
 | `ADMIN_TOKEN` | `X-Admin-Token` for `/ops/*`, `/replay/*`, `POST /events*` (audit H3); unset → those endpoints answer 503 | unset |
 | `REQUEST_DEADLINE_S` | overall deadline for `/flags/{id}/context` and `/explain` (audit M4) | `45` |
 | `CORS_ORIGINS` | allowed browser origins, comma-separated (audit H3) | `http://localhost:3000` |
-| `DB_POOL_MAX`, `DB_CONNECT_TIMEOUT_S`, `LOG_REQUESTS` | | `10`, `3`, `1` |
+| `DB_POOL_MAX`, `DB_CONNECT_TIMEOUT_S` | | `10`, `3` |
+| `LOG_REQUESTS`, `LOG_SLOW_MS` | `app.request_log`: `writes` = non-GET requests, status >= 400 and reads slower than `LOG_SLOW_MS`; `all`; `off` (`1`/`true` = `writes`, `0`/`false` = `off`). `writes` also skips 404s that matched no route; `/health` and the docs are never logged; `error` is set for status >= 400 (contract "Request log") | `writes`, `1000` |
 | `DB_POOL_MIN` | pool connections kept open | `1` (`0` when serverless) |
 | `SERVERLESS` | no per-process assumptions: pool `min_size` 0 + connection check on checkout, log writes finished before each response | auto: on when `VERCEL` is set |
 | `REPLAY_MODE`, `REPLAY_STEP_BUDGET_S` | `background` (asyncio task) or `stepped` (`replay_runs` + `/replay/step`); default step budget | `background` (`stepped` when serverless), `10` |
-| `GEMINI_API_KEY` | AI Assistance (Google AI Studio). Header `x-goog-api-key` only, never logged; unset → chat answers 503 `gemini_unset` | unset |
+| `GEMINI_API_KEY` | AI Assistance (Google AI Studio). Header `x-goog-api-key` only, never logged; unset → chat answers 503 `gemini_unset`. Stripped on read (a trailing newline once leaked the key into `app.model_calls`), but set it without one: `printf %s "$KEY" \| vercel env add GEMINI_API_KEY production` | unset |
 | `GEMINI_BASE_URL`, `CHAT_MODELS`, `CHAT_DEFAULT_MODEL` | Gemini root; picker models in order (append `gemma-4-31b-it` to opt in); default model | Google v1beta, `gemini-3.8-flash,gemini-3.5-flash,gemini-3.5-flash-lite`, `gemini-3.8-flash` |
 | `CHAT_TITLE_MODEL` | title call after the first answer (`none` = auto titles only) | `gemini-3.1-flash-lite` |
 | `CHAT_TIMEOUT_S`, `CHAT_RETRIEVAL_BUDGET_S`, `CHAT_HISTORY_MESSAGES` | Gemini call cap; retrieval deadline; history turns | `120`, `8`, `12` |
@@ -150,7 +152,7 @@ while :; do s=$(curl -s "${H[@]}" -XPOST $B/api/v1/replay/step -d '{}'); echo "$
 ```
 
 **Verify.** `curl $B/health` (`ok`, `database: up`, each model URL `up`), `curl $B/health?deep=false` (instant),
-`$B/docs`, `curl $B/api/v1/flags | jq '.items | length'`, then the replay loop above and `GET
+`$B/docs`, `curl "$B/api/v1/flags?limit=500" | jq .page.total`, then the replay loop above and `GET
 $B/api/v1/replay/status`. Function logs: Vercel dashboard → Logs. Lifespan startup runs per instance; shutdown gets
 ~500 ms, so pending log writes are finished before each response instead.
 
@@ -173,13 +175,32 @@ Ingest (`POST /events`, and every replay event): (1) raw → `raw.spot_event_log
 (7) upsert `flags` when escalated. One `request_id` ties the event's rows in `raw.spot_event_log`,
 `app.model_calls`, `app.request_log` and `events.payload.triage` together.
 
+## Streaming Qwen drafts
+Contract: `docs/backend-services-contract.md` "Streaming Qwen drafts". A draft is Qwen's partial JSON before any
+check: it is shown, never stored, cached, indexed or counted; the checked result always replaces it.
+- `POST /flags/{id}/explain/stream?refresh=false` (SSE): `start` · `stage` (cached / context / system2 / storing) ·
+  `draft` {call, fields, reasoning} relayed from System 2's `/v1/assess/stream` · `done` {explanation} or
+  `error` {error, detail}; `: keep-alive` every 15 s. It runs the same code as `/explain` (`FlagService._explain` with
+  an `emit` hook), so `done.explanation` is exactly what `/explain` returns. 404 / 503 / 504 are JSON before the
+  stream. An older System 2 (404/405 on the stream) is asked `/v1/assess` within the same deadline (remembered for
+  5 min); a busy 503 or a 200 JSON reply also works, without drafts. A cancelled stream logs `error="cancelled"`
+  without touching the breaker.
+  Cached rows and the orchestrator path send no drafts. On a client disconnect the explanation is abandoned unless it
+  is already being stored. On serverless the stream drains the log sink (2 s) before it ends.
+- `POST /live/runs/{id}/stops/{i}/draft` (admin): `{call, fields, tokens?}`, fields at most 16 KB (413
+  `live_too_large`). One conditional UPDATE: while `qwen_source = 'pending'` it sets `capture.qwen = {draft: true,
+  ...}` and `phase = analysing` (`{updated: true}`), afterwards it changes nothing (`{updated: false}`); 404, and 409
+  when the run is not running or the stop not triaged. Only strings and `evidence[{claim, ids}]` are kept. `finish`
+  and `cancel` turn captures still `pending` into `qwen_source = 'error'`. Live packets carry no `gaps` (System 2
+  would skip the model); the provenance note is an ordinary fact. Runbook: `docs/STREAMING.md`.
+
 ## Resilience (the demo never 500s)
 | Down | Behavior |
 |---|---|
-| System 1 | rules-only verdict, `system1.status = laya_unavailable`, a `laya_unavailable` reason on the flag; `/system1/predict` returns the validator's answers; `/forecast` serves stored answers, then the empirical baseline |
-| MCP | `/context` returns a SQL-built packet (`source: sql_fallback`): flag, event, reading trust, Laya's answers, waypoint and battery reliability, asset history |
+| System 1 | rules-only verdict, `system1.status = laya_unavailable` (the raw error in `system1.error` and `app.model_calls`), and a `laya_unavailable` reason on the flag with the fixed detail `System 1 (Laya) unavailable; rules-only verdict` (never the exception text, which System 2 would read as evidence); `/system1/predict` returns the validator's answers; `/forecast` serves stored answers, then the empirical baseline |
+| MCP | `/context` returns a SQL-built packet (`source: sql_fallback`, MCP packet shape): flag, event, reading trust, Laya's answers, waypoint and battery reliability, asset history (citable list), the category's `allowed_actions` and `suggested_action`. "MCP unavailable" is a `notes` entry, not a `gaps` entry, so System 2 still answers from it |
 | System 2 (unset or down) | `/explain` returns a templated Orbit-style explanation from the flag's reasons (`source: template`); `/debrief` is templated |
-| Embedding service | `/search` switches to Postgres full-text on `content_tsv` (`mode: fulltext`); acks are stored without the RAG note |
+| Embedding service | `/search` switches to Postgres full-text on `content_tsv` (`mode: fulltext`); the ack's note document is stored without a vector (`doc_id` returned, `rag_indexed: false`; full-text search finds it, and `amd/embed/ingest.py --kinds operator_note` adds the vector later) |
 | Gemini (chat) | no retries and no model swap (free tier: 5 req/min/model): the stream ends with an `error` event (`rate_limited` + `retry_after_s`, `model_unavailable` (also a 503 / in-stream `UNAVAILABLE`), `gemini_auth`, `blocked`, `upstream_error`) and an assistant message with `status: error` and that `error_code` is stored; embed down or a slow/failed query → chat retrieval continues and lists the step in `retrieval.gaps` (logged at WARNING) |
 | Database | ingest still returns the verdict (`persisted: false`); reads return 503 `database_unavailable`; a 5 s cooldown makes repeated calls fail fast |
 

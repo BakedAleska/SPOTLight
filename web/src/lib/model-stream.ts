@@ -15,7 +15,7 @@ export function predictionSamples(data: ModelStream): ModelSample[] {
     const value = probability(row(prediction.probs).A);
     if (!["escalate", "will_fail", "anomaly_expected"].includes(question) || value === null) continue;
     const id = String(prediction.prediction_id ?? `${prediction.action_id}:${question}:${prediction.created_at}`);
-    samples.set(id, { id, time: String(prediction.created_at ?? ""), model: String(prediction.model ?? "Laya"),
+    samples.set(id, { id, time: String(prediction.created_at ?? ""), model: String(prediction.model ?? "Confidence model"),
       metric: question, value, action: String(prediction.action_id ?? prediction.mission_id ?? "") });
   }
   // Forecasts are model probabilities only when their source identifies System 1.
@@ -25,11 +25,11 @@ export function predictionSamples(data: ModelStream): ModelSample[] {
       const value = probability(forecast[key]);
       const id = `forecast:${forecast.action_id}:${metric}`;
       if (value !== null && ![...samples.values()].some(s => s.action === forecast.action_id && s.metric === metric))
-        samples.set(id, { id, time: String(forecast.timestamp ?? ""), model: String(forecast.model ?? "Laya"), metric, value, action: String(forecast.action_id) });
+        samples.set(id, { id, time: String(forecast.timestamp ?? ""), model: String(forecast.model ?? "Confidence model"), metric, value, action: String(forecast.action_id) });
     }
   }
   return [...samples.values()].sort((a, b) => a.time.localeCompare(b.time));
 }
 export function assessmentSource(assessment: JsonRow) {
-  return assessment.state === "DONE" && assessment.model !== "template" && assessment.model !== "stub" ? "Model result" : "Fallback / evidence summary";
+  return assessment.state === "DONE" && assessment.model !== "template" && assessment.model !== "stub" ? "SPOTbot result" : "Fallback / evidence summary";
 }

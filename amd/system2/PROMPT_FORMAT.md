@@ -21,7 +21,7 @@ byte-identical pre-multimodal prompt.
 ```json
 {"model": "system2-vision",
  "messages": [ <system>, <few-shot user>, <few-shot assistant>, x3, <current user> ],
- "temperature": 0, "max_tokens": 350, "stream": false,
+ "temperature": 0, "max_tokens": 512, "stream": false,
  "response_format": {"type": "json_schema", "json_schema": {"name": "assessment", "schema": <per-packet schema>}},
  "chat_template_kwargs": {"enable_thinking": false}}
 ```

@@ -11,7 +11,7 @@ PY_VISION  ?= amd/vision/.venv/bin/python
 PY_ORCH    ?= amd/orchestrator/.venv/bin/python
 LOCAL_DB   ?= postgresql://postgres:postgres@localhost:$(DB_PORT)/spot
 
-.PHONY: help up down wipe ps logs test test-policy test-compose test-contract test-backend test-backend-integration test-system1 \
+.PHONY: help up down wipe ps logs test test-policy test-compose test-live-runner test-contract test-backend test-backend-integration test-system1 \
         test-system1-fast test-mcp test-system2 test-gateway test-vision test-vision-fast test-orchestrator test-db test-graph \
         test-chat-db test-chat-contract test-web \
         smoke e2e e2e-serial e2e-parallel venvs
@@ -34,13 +34,16 @@ ps:
 logs:
 	docker compose logs -f --tail 50
 
-test: test-policy test-compose test-backend test-system1 test-mcp test-system2 test-gateway test-vision test-contract test-orchestrator test-chat-contract test-web ## all unit suites + drift guards + contracts + web tests (DB: test-chat-db, test-graph, test-db)
+test: test-policy test-compose test-live-runner test-backend test-system1 test-mcp test-system2 test-gateway test-vision test-contract test-orchestrator test-chat-contract test-web ## all unit suites + drift guards + contracts + web tests (DB: test-chat-db, test-graph, test-db)
 
 test-policy: ## policy.py vs db/policy_rules.py vs backend validator vs MCP vendored copy, on all 297 kit events
 	$(PY_BACKEND) -m pytest tests/test_policy_consistency.py -q -p no:cacheprovider
 
 test-compose: ## docker-compose.yml vs its header, contract + RUNNING.md port tables; healthchecks, depends_on, BIND_ADDR
 	$(PY_BACKEND) -m pytest tests/test_compose_consistency.py -q -p no:cacheprovider
+
+test-live-runner: ## scripts/live_runner.py streaming: drafts to /draft, fallbacks, whole-call deadline (fake servers, ~10 s)
+	$(PY_BACKEND) -m pytest tests/test_live_runner_stream.py -q -p no:cacheprovider
 
 test-backend: ## backend unit tests (integration test skipped; see test-backend-integration)
 	cd backend && SKIP_INTEGRATION=1 .venv/bin/python -m pytest -q
