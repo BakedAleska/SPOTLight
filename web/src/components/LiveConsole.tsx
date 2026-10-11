@@ -196,7 +196,7 @@ export function LiveConsole({ initialRoutes }: { initialRoutes: LiveRoute[] }) {
       <div className="panel-stack flex min-w-0 flex-col gap-4 xl:contents">
         <Panel title="Facility map" className="min-w-0 xl:col-start-1 xl:row-start-1" aside={run ? `${run.run_id === 0 ? "MOCK" : `RUN #${run.run_id}`} · ${run.route_id} · ${run.status.toUpperCase()}` : "NO RUN YET"}>
           <LiveMap route={route} captures={captures} run={run} />
-          <p className="mt-3 text-xs text-muted">Dashed: the route · <span className="text-bad">●</span> red ping: needs attention · <span className="text-ok">●</span> green ping: all good. Pings come from the live triage (confidence model ‖ rules), never from the photo.</p>
+          <p className="mt-3 text-xs text-muted">Dashed: route to the next stop · Solid: visited route · <span className="text-bad">!</span>: needs attention · <span className="text-ok">✓</span>: all good. Verdicts come from the live triage (confidence model ‖ rules), never from the photo.</p>
         </Panel>
         {/* Right under the map, so each stop's card rolls in where the eye already is. */}
         <Panel title="Inspection feed" className="min-w-0 xl:col-start-1 xl:row-start-2" aside={`${captures.length} of ${route?.stops.length ?? 8} stops · newest first`} bodyClassName="p-4">
@@ -244,27 +244,36 @@ function LiveMap({ route, captures, run }: { route: LiveRoute | null; captures: 
   // Travel k leads to stop k + 1: every travel before the latest captured stop has been walked, and only the next one
   // is drawn ahead of SPOT.
   const walked = latest ? legsPath(legs.filter(l => l.travel < latest.stop_index)) : "";
+  const issue = latest?.verdict === "red";
+  // Drawn like the Replay's map: the blueprint's beacons already mark every waypoint, so a stop only gets a marker of
+  // its own once it has a verdict, and not while SPOT is standing on it (SPOT's own marker says it then).
   return <svg viewBox="0 0 1095 595" className="w-full rounded border border-line bg-surface-2" role="img" aria-label={`Facility map: ${captures.length} stops inspected${latest ? `, SPOT at ${latest.location_id}` : ""}`}>
-    <defs><filter id="live-spot-shadow" x="-25%" y="-25%" width="150%" height="150%"><feDropShadow dx="0" dy="1" stdDeviation="1.5" floodColor="black" floodOpacity="0.9" /></filter></defs>
+    <defs><filter id="live-spot-contrast" x="-25%" y="-25%" width="150%" height="150%"><feComponentTransfer><feFuncA type="linear" slope="2" /></feComponentTransfer><feDropShadow dx="0" dy="1" stdDeviation="1.5" floodColor="black" floodOpacity="0.9" /></filter></defs>
     <image href="/spot-blueprint.svg" width="1095" height="595" />
     <path d={walked} fill="none" stroke="var(--c-accent-ink)" strokeWidth="5" strokeLinejoin="round" strokeLinecap="round" />
     <RouteAhead d={legsPath(legs.filter(l => l.travel === (latest?.stop_index ?? 0)))} />
     {stops.map((s, i) => {
       const [x, y] = pt(s.location_id);
       const c = captures.find(c => c.stop_index === i);
-      const color = c?.verdict === "red" ? "var(--c-bad)" : c?.verdict === "green" ? "var(--c-ok)" : "var(--c-surface)";
+      if (!c?.verdict || s.location_id === latest?.location_id) return null;
+      const red = c.verdict === "red";
       return <g key={s.stop}>
-        {c?.verdict && c === latest && <circle cx={x} cy={y} r="14" fill="none" stroke={color} strokeWidth="4" className="live-ping" />}
-        <circle cx={x} cy={y} r={c?.verdict ? 13 : 9} fill={color} stroke="white" strokeWidth="3" />
-        <text x={x} y={y + 5} textAnchor="middle" fontSize="13" fontWeight="bold" fill={c?.verdict ? "white" : "var(--c-ink)"}>{c?.verdict === "red" ? "!" : s.stop}</text>
-        <text x={x + 16} y={y - 12} fontSize="13" fontWeight="bold" fill="white" stroke="black" strokeWidth="3" paintOrder="stroke">{s.stop}</text>
+        <title>{`Stop ${s.stop} · ${s.location_id} · ${red ? "needs attention" : "all good"}`}</title>
+        <circle cx={x} cy={y} r="7" fill={red ? "var(--c-bad)" : "var(--c-ok)"} stroke="white" strokeWidth="3" />
+        {red
+          ? <text x={x} y={y + 5} textAnchor="middle" fill="white" fontSize="15" fontWeight="bold">!</text>
+          : <path d={`M ${x - 3} ${y} l 2 2.2 l 4 -4.4`} fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />}
       </g>;
     })}
     {pos && <g className="live-spot" style={{ transform: `translate(${pos[0]}px, ${pos[1]}px)` }} aria-hidden="true">
+      {latest?.verdict && <circle r="16" fill="none" stroke={issue ? "var(--c-bad)" : "var(--c-ok)"} strokeWidth="3" className="live-ping" />}
       {working && <foreignObject x="-15" y="-31" width="30" height="12" transform="scale(2)"><div className="spot-working-dots flex h-full items-center justify-center"><LoadingDots color="white" /></div></foreignObject>}
-      <circle cx="0" cy="-30" r="24" fill="black" opacity="0.55" />
-      <image href="/spotlight-logo-small.svg" x="-20" y="-52" width="40" height="44" filter="url(#live-spot-shadow)" />
-      <text y="-62" textAnchor="middle" fill="white" stroke="black" strokeWidth="3" paintOrder="stroke" fontSize="14" fontWeight="bold">{run && active(run) ? "SPOT" : "SPOT · parked"}</text>
+      {issue && !working && <g className={run && active(run) ? "spot-issue spot-issue-flash" : "spot-issue"}>
+        <path d="M 0 -64 L 14 -39 L -14 -39 Z" fill="var(--c-bad)" stroke="white" strokeWidth="2.5" strokeLinejoin="round" />
+        <path d="M 0 -57 V -49" stroke="white" strokeWidth="3.5" strokeLinecap="round" /><circle cy="-43.5" r="2" fill="white" />
+      </g>}
+      <image href="/spotlight-logo-small.svg" x="-30" y="-34" width="60" height="68" filter="url(#live-spot-contrast)" />
+      <text y="65" textAnchor="middle" fill="white" stroke="black" strokeWidth="3" paintOrder="stroke" fontSize="15" fontWeight="bold">{run && active(run) ? "SPOT" : "SPOT · parked"}</text>
     </g>}
   </svg>;
 }
