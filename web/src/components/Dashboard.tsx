@@ -88,7 +88,7 @@ export default function Dashboard({ initialData }: { initialData: DashboardData 
           />
         </div>
       </div>
-      <LiveModelBoard />
+      <LiveModelBoard allowRun />
       {selectedFlag && data.features.flagDetails && <FlagDetails key={selectedFlag.id} flag={selectedFlag} features={data.features} onClose={() => selectFlag(null)} onChanged={() => void mutate()} />}
     </div>
   );

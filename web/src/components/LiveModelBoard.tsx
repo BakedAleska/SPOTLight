@@ -1,4 +1,5 @@
 "use client";
+import { AIRunControls } from "./AIRunControls";
 import { useState } from "react";
 import useSWR from "swr";
 import { Activity, Radio, RefreshCw, TriangleAlert } from "lucide-react";
@@ -16,7 +17,7 @@ function RawOutput({ value, label = "View complete returned output" }: { value: 
   return <details className="mt-3 text-xs"><summary className="cursor-pointer text-accent-ink">{label}</summary><pre className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap break-words rounded border border-line bg-canvas p-3 font-mono text-muted">{JSON.stringify(value, null, 2)}</pre></details>;
 }
 function assessmentConfidence(value: JsonRow) { return assessmentSource(value) === "Model result" ? probability(value.confidence) : null; }
-export function LiveModelBoard() {
+export function LiveModelBoard({ allowRun = false }: { allowRun?: boolean }) {
   const [mission, setMission] = useState("");
   const { data, error, isValidating, mutate } = useSWR<ModelStream>(`/api/model-stream${mission ? `?mission_id=${encodeURIComponent(mission)}` : ""}`, fetchStream,
     { refreshInterval: 2500, dedupingInterval: 1500, keepPreviousData: false, revalidateOnFocus: true, shouldRetryOnError: false });
@@ -34,6 +35,7 @@ export function LiveModelBoard() {
       <div><h2 className="flex items-center gap-2 text-base font-semibold text-ink"><Radio size={18} className="text-accent-ink" />Live model results</h2><p className="mt-1 text-xs text-muted" role="status">{error ? data ? "Connection interrupted · retaining last received results" : "Waiting for backend · no model results received" : data ? "Polling model outputs every 2.5 seconds" : "Connecting to model outputs…"}</p></div>
       <div className="flex items-center gap-2"><label className="text-xs text-muted">Mission<select aria-label="Model results mission" value={mission} onChange={e => setMission(e.target.value)} className="ml-2 min-h-10 rounded border border-line bg-surface px-2 text-ink"><option value="">Latest across missions</option>{[...new Set([...missions, mission].filter(Boolean))].map(m => <option key={m}>{m}</option>)}</select></label><button onClick={() => void mutate()} disabled={isValidating} aria-label="Refresh model outputs" className="grid size-10 place-items-center rounded border border-line text-muted disabled:opacity-50"><RefreshCw size={16} /></button></div>
     </header>
+    {allowRun && <AIRunControls mission={mission || undefined} />}
     <div className="grid gap-4 lg:grid-cols-2">
       <Panel title="Laya risk over time" aside={latest ? `${latest.value.toFixed(1)}% latest ${LABELS[latest.metric]?.toLowerCase()}` : "WAITING FOR MODEL"}>
         {graph.length ? <div className="h-64 w-full min-w-0"><ResponsiveContainer width="100%" height="100%"><LineChart data={graph} margin={{ top: 10, right: 12, bottom: 8, left: 0 }}><CartesianGrid stroke="var(--c-line)" strokeDasharray="3 3" /><XAxis dataKey="index" tick={{ fill: "var(--c-muted)", fontSize: 11 }} /><YAxis domain={[0, 100]} unit="%" width={48} tick={{ fill: "var(--c-muted)", fontSize: 11 }} /><Tooltip labelFormatter={(_, payload) => payload[0]?.payload.label ?? ""} contentStyle={{ background: "var(--c-surface)", borderColor: "var(--c-line)", color: "var(--c-ink)" }} />{Object.keys(LABELS).map((metric, i) => <Line key={metric} name={LABELS[metric]} dataKey={metric} type="linear" connectNulls stroke={["var(--c-bad)", "var(--c-accent-ink)", "var(--c-ok)"][i]} strokeWidth={2} dot={{ r: 3 }} isAnimationActive={false} />)}</LineChart></ResponsiveContainer></div> : <div className="flex min-h-52 flex-col items-center justify-center gap-3 text-center text-muted"><Activity size={28} /><p className="text-sm">Awaiting Laya predictions</p><p className="max-w-sm text-xs">This chart changes when the backend stores model probabilities. Historical baselines and rule scores are excluded.</p></div>}

@@ -54,3 +54,29 @@ From `web/`: `npx tsx --test tests/model-stream.test.ts`, `npm run test:flags`,
 HTTP fixture to verify changed probabilities, baseline exclusion, actual zero, read-only
 requests, optional admin authorization and token non-disclosure. Fixture values are
 never committed as dashboard data or presented as actual model runs.
+
+## Explicit AI run
+
+Overview shows **Run data through AI** below the model-results header. Opening
+Overview or Analytics only reads stored results; it never starts replay or model
+inference. Clicking Run calls `/api/ai-run` (POST, same-origin only), using the
+existing backend replay and flag-explanation routes. It requires server
+`BACKEND_ADMIN_TOKEN` and a reachable `BACKEND_URL`.
+
+The selected mission is used when set, otherwise the backend's complete kit
+replay runs. `/replay/start` uses `reset: false`, preserving existing results.
+The client monitors background mode, or drives `/replay/step` in stepped mode.
+Each follow-up checks the run number and start timestamp to avoid driving another
+run. When finished, scoped flags (up to the existing 500 limit) are explained
+sequentially through `POST /flags/{id}/explain`; cached assessments can be reused.
+Fallbacks and failed explanations are counted, not presented as successful model
+inference. Stop calls the existing `/replay/stop` and stops further explanation
+requests. An already-running model request can finish.
+
+Keep the page open to monitor and drive the run. Background replay can continue
+on the backend if the page is closed; stepped replay and explanation requests
+advance only while this page is driving them. The frontend does not add a backend
+job service or change model deployment.
+
+Validation includes `npx tsx --test tests/ai-run.test.ts` for explicit start,
+no reset, same-origin protection, run identity, stepped replay and scoped inference.
