@@ -67,7 +67,7 @@ is the repo root, so the image can COPY `amd/system1/triage/`. Laya is pinned to
 ## Backend API (FastAPI), port 8000
 The route tree agreed with the user (versioned under `/api/v1`):
 `events` (POST ingest, batch, GET feed) · `replay` (start/stop/status, + step in stepped mode) · `flags` (list, get, context, explain, ack) ·
-`missions` (list, get, timeline, debrief) · `system1` (predict proxy, forecast) · `assets` · `locations` ·
+`missions` (list, get, timeline, debrief) · `system1` (predict proxy, forecast) · `assets` (+ `media`) · `locations` ·
 `insights` (overview, reliability) · `search` (RAG) · `ops` (model-call stats, jobs, reset-demo) · `ask` (orchestrator proxy) ·
 `chat` (SPOTbot: conversations CRUD, models, suggestions, missions picker and mission chats (`chat.3`), SSE messages; `docs/chat-contract.md`) · `/health`.
 
@@ -506,6 +506,20 @@ Research basis: `research/tech-spot-vision-cv-2026-10-10.md` §3 and §7 (code m
   auth error, never an image rejection: no text-only resend.
 - **Cache:** `packet_hash` also covers the kept OCR lines and the image's sha256 (only when present, so old hashes
   are unchanged); image requests key on the vision model; text-only answers to image requests are not cached.
+
+### Inspection media (ADDED 2026-10-11; additive)
+The Assets page gallery reads images stored in the database instead of the repo.
+- `GET /api/v1/assets/media`: every `raw.inspection_media` row with stored bytes (`content IS NOT NULL`, migration
+  `016`), as `{media_id, action_id, mission_id, media_type, bytes, captured_at, metadata}` without the bytes, ordered by
+  `metadata.inspection_type` then newest capture. `metadata` holds `inspection_type` (thermal | gauge | acoustic |
+  visual), `asset_id`/`asset_name`, `location_id`/`location_name`, `condition` (normal | anomaly), `finding`, optional
+  `reading {value, unit}`, `source {dataset, url, licence, credit}` and `mock: true` for demo imagery.
+- `GET /api/v1/assets/media/{media_id}`: the bytes with their `media_type`; `Cache-Control: public, max-age=86400`
+  (immutable per id); 404 when the id has no stored bytes. Both are public reads, like `/assets`.
+- Kit sample images keep `content` NULL (their `uri` points at the repo) and stay out of the list.
+- Loaded with `scripts/load_inspection_media.py` (owner URL): upserts the manifest's mock `assets` and inserts each
+  image (`ON CONFLICT DO NOTHING`, raw.* is append-only). The web passes the bytes through
+  `/api/assets/media/[id]`, so the browser never calls the backend.
 
 ### Streaming Qwen drafts (ADDED 2026-10-11; additive: every existing endpoint is unchanged)
 Goal: the boxes Qwen fills (flag detail "Load explanation", the `/live` "Qwen explanation (System 2)" card) show the
