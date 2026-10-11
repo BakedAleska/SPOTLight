@@ -1,8 +1,22 @@
 import { Suspense } from "react";
 import { connection } from "next/server";
 import { ActionSuccessChart } from "@/components/ActionSuccessChart";
+import { AnalyticsCharts } from "@/components/AnalyticsCharts";
 import { LiveModelBoard } from "@/components/LiveModelBoard";
 import { getDashboard } from "@/lib/dashboard-loader";
+import { fleetAnalytics } from "@/lib/fleet-analytics";
+
+/* Kept here rather than in AnalyticsCharts: that module is a Client
+   Component, and a plain array exported from one arrives on the server as a
+   client reference, not as data. */
+const SECTIONS = [
+  { id: "reliability", label: "Reliability" },
+  { id: "configuration", label: "Configuration" },
+  { id: "missions", label: "Missions" },
+  { id: "failures", label: "Failures & anomalies" },
+  { id: "waypoints", label: "Waypoints" },
+  { id: "models", label: "Models" },
+];
 
 /* The fleet-wide success chart lives here rather than on the Overview, which
    keeps to the banner and the queue so an operator at shift start reads one
@@ -14,11 +28,31 @@ async function FleetSuccess() {
 }
 
 export default function Analytics() {
+  const data = fleetAnalytics();
   return (
-    <div className="mx-auto flex max-w-[1600px] flex-col gap-4 p-4">
-      <h1 className="text-2xl font-semibold text-ink">Analytics</h1>
+    <div className="mx-auto flex max-w-[1600px] flex-col gap-6 p-4">
+      <header className="flex flex-col gap-3">
+        <div className="flex flex-wrap items-baseline gap-x-3">
+          <h1 className="text-2xl font-semibold text-ink">Analytics</h1>
+          <p className="nums text-xs text-muted">Challenge kit · {data.coverage}</p>
+        </div>
+        <nav aria-label="Analytics categories" className="flex flex-wrap gap-2">
+          {SECTIONS.map((section) => (
+            <a
+              key={section.id}
+              href={`#${section.id}`}
+              className="rounded-full border border-line bg-surface px-3 py-1 text-xs text-muted transition-colors hover:border-line-strong hover:text-ink"
+            >
+              {section.label}
+            </a>
+          ))}
+        </nav>
+      </header>
       <Suspense fallback={null}><FleetSuccess /></Suspense>
-      <LiveModelBoard allowRun />
+      <AnalyticsCharts data={data} />
+      <section id="models" className="scroll-mt-4">
+        <LiveModelBoard allowRun />
+      </section>
     </div>
   );
 }
