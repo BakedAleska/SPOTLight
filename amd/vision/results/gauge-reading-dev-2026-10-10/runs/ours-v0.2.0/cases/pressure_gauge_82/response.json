@@ -1,0 +1,240 @@
+{
+ "media_id": "pressure_gauge_82",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "©2005",
+   "bbox": [
+    298,
+    297,
+    347,
+    339
+   ],
+   "conf": 0.926
+  },
+  {
+   "text": "40",
+   "bbox": [
+    175,
+    347,
+    214,
+    389
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "60",
+   "bbox": [
+    259,
+    341,
+    299,
+    382
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "OUTSIDE",
+   "bbox": [
+    194,
+    398,
+    241,
+    413
+   ],
+   "conf": 0.999
+  },
+  {
+   "text": "MUST BE",
+   "bbox": [
+    196,
+    387,
+    244,
+    404
+   ],
+   "conf": 0.943
+  },
+  {
+   "text": "OUNTED",
+   "bbox": [
+    237,
+    389,
+    288,
+    401
+   ],
+   "conf": 0.925
+  },
+  {
+   "text": "VEHICLE",
+   "bbox": [
+    246,
+    396,
+    293,
+    412
+   ],
+   "conf": 0.992
+  },
+  {
+   "text": "80",
+   "bbox": [
+    314,
+    407,
+    352,
+    449
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "20",
+   "bbox": [
+    131,
+    421,
+    171,
+    464
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "10",
+   "bbox": [
+    144,
+    480,
+    164,
+    501
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "FUL",
+   "bbox": [
+    198,
+    474,
+    292,
+    513
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "0",
+   "bbox": [
+    171,
+    502,
+    187,
+    525
+   ],
+   "conf": 0.999
+  },
+  {
+   "text": "PRESS",
+   "bbox": [
+    219,
+    507,
+    272,
+    527
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "100",
+   "bbox": [
+    293,
+    497,
+    329,
+    525
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "PSI",
+   "bbox": [
+    233,
+    523,
+    261,
+    541
+   ],
+   "conf": 0.999
+  },
+  {
+   "text": "Auto Meter",
+   "bbox": [
+    204,
+    560,
+    292,
+    582
+   ],
+   "conf": 0.998
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "pressure",
+   "value": 97.0,
+   "unit": "psi",
+   "confidence": 0.3,
+   "method": "hough_ray_ransac_labels",
+   "flags": [
+    "AMBIGUOUS_NEEDLE"
+   ],
+   "point": [
+    384,
+    535
+   ],
+   "note": "two needle candidates: 127° -> 97 psi and 38° -> 65 psi (peak ratio 0.85); do not trust this value"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "psi",
+   "value": 97.0
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 30
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": 127.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 0.85
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.0
+  },
+  {
+   "name": "Full Scale",
+   "units": "psi",
+   "value": 100.0
+  },
+  {
+   "name": "Scale Labels Used",
+   "units": "",
+   "value": "7 of 7"
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 527,
+ "version": {
+  "service": "0.2.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

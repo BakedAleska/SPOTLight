@@ -1,0 +1,180 @@
+{
+ "media_id": "pressure_gauge_0",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "4",
+   "bbox": [
+    199,
+    147,
+    229,
+    192
+   ],
+   "conf": 0.999
+  },
+  {
+   "text": "6",
+   "bbox": [
+    350,
+    144,
+    377,
+    185
+   ],
+   "conf": 0.983
+  },
+  {
+   "text": "2",
+   "bbox": [
+    124,
+    262,
+    150,
+    303
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "8",
+   "bbox": [
+    438,
+    253,
+    462,
+    291
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "bar",
+   "bbox": [
+    266,
+    360,
+    320,
+    403
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "0",
+   "bbox": [
+    161,
+    376,
+    192,
+    418
+   ],
+   "conf": 0.999
+  },
+  {
+   "text": "10",
+   "bbox": [
+    377,
+    377,
+    423,
+    426
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "X",
+   "bbox": [
+    121,
+    406,
+    181,
+    459
+   ],
+   "conf": 0.824
+  },
+  {
+   "text": "KG",
+   "bbox": [
+    254,
+    435,
+    338,
+    520
+   ],
+   "conf": 0.529
+  },
+  {
+   "text": "Cl.2.5",
+   "bbox": [
+    352,
+    437,
+    421,
+    473
+   ],
+   "conf": 0.987
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "pressure",
+   "value": 3.4,
+   "unit": "bar",
+   "confidence": 0.3,
+   "method": "hough_ray_ransac_labels",
+   "flags": [
+    "AMBIGUOUS_NEEDLE"
+   ],
+   "point": [
+    159,
+    160
+   ],
+   "note": "two needle candidates: -44° -> 3 bar and 114° -> 9 bar (two-ended needle (opposite arm 0.32 r long)); do not trust this value"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "bar",
+   "value": 3.4
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 30
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": -44.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 0.53
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.32
+  },
+  {
+   "name": "Full Scale",
+   "units": "bar",
+   "value": 10.0
+  },
+  {
+   "name": "Scale Labels Used",
+   "units": "",
+   "value": "6 of 6"
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 882,
+ "version": {
+  "service": "0.1.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

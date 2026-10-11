@@ -615,6 +615,54 @@ class Repo:
                         AS rules_only
                  FROM events""") or {}
 
+    # ════ stepped replay (REPLAY_MODE=stepped; db/migrations/010_replay_runs.sql) ═══════════════════════════════
+    # At most one row is 'running' (partial unique index). Only the holder of the lease token writes progress.
+    _RUN = "*, now() AS db_now"
+
+    async def replay_create(self, params: Dict[str, Any], event_ids: List[str],
+                            job_run_id: Optional[int]) -> Optional[Dict[str, Any]]:
+        """New running run, or None when one is already running."""
+        return await self.db.fetchone(
+            "INSERT INTO replay_runs (params, event_ids, job_run_id) VALUES (%%s, %%s, %%s) "
+            "ON CONFLICT DO NOTHING RETURNING %s" % self._RUN, (Jsonb(params), list(event_ids), job_run_id))
+
+    async def replay_latest(self) -> Optional[Dict[str, Any]]:
+        return await self.db.fetchone("SELECT %s FROM replay_runs ORDER BY run_id DESC LIMIT 1" % self._RUN)
+
+    async def replay_claim(self, token: str, lease_s: float, run_id: Optional[int] = None) -> Optional[Dict[str, Any]]:
+        """Take the running run's lease if it is free or expired; None if there is no such run or it is held."""
+        return await self.db.fetchone(
+            "UPDATE replay_runs SET lease_token = %%s, lease_until = now() + make_interval(secs => %%s), "
+            "updated_at = now() WHERE state = 'running' AND (lease_until IS NULL OR lease_until < now()) "
+            "AND (%%s::bigint IS NULL OR run_id = %%s::bigint) RETURNING %s" % self._RUN,
+            (token, float(lease_s), run_id, run_id))
+
+    async def replay_advance(self, run_id: int, token: str, next_index: int, counts: Dict[str, Any],
+                             last_event: Optional[Dict[str, Any]]) -> bool:
+        """Record progress after one event; False if this step no longer holds the lease (stopped, expired)."""
+        row = await self.db.fetchone(
+            "UPDATE replay_runs SET next_index = %s, counts = %s, last_event = %s, updated_at = now(), "
+            "lease_until = greatest(lease_until, now() + interval '30 seconds') "
+            "WHERE run_id = %s AND lease_token = %s AND state = 'running' RETURNING run_id",
+            (next_index, Jsonb(counts), Jsonb(last_event) if last_event is not None else None, run_id, token))
+        return row is not None
+
+    async def replay_release(self, run_id: int, token: str, state: Optional[str] = None,
+                             error: Optional[str] = None) -> Optional[Dict[str, Any]]:
+        """Give the lease back; with `state` ('finished' | 'error') also end the run."""
+        return await self.db.fetchone(
+            "UPDATE replay_runs SET lease_token = NULL, lease_until = NULL, updated_at = now(), "
+            "state = COALESCE(%%s::text, state), error = COALESCE(%%s::text, error), "
+            "finished_at = CASE WHEN %%s::text IS NULL THEN finished_at ELSE now() END "
+            "WHERE run_id = %%s AND lease_token = %%s AND state = 'running' RETURNING %s" % self._RUN,
+            (state, error, state, run_id, token))
+
+    async def replay_stop(self) -> Optional[Dict[str, Any]]:
+        """Stop the running run (whoever holds its lease stops at its next event). None if none is running."""
+        return await self.db.fetchone(
+            "UPDATE replay_runs SET state = 'stopped', finished_at = now(), lease_token = NULL, lease_until = NULL, "
+            "updated_at = now() WHERE state = 'running' RETURNING %s" % self._RUN)
+
     async def reset_demo(self, clear_predictions: bool) -> Dict[str, int]:
         """Clear the live pipeline (events, flags, assessments, acknowledgements, demo-generated documents).
         Kit tables, raw.* and app.* (append-only) are untouched."""

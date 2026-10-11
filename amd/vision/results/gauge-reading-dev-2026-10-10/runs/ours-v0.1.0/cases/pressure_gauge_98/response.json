@@ -1,0 +1,180 @@
+{
+ "media_id": "pressure_gauge_98",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "30",
+   "bbox": [
+    559,
+    232,
+    596,
+    260
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "20",
+   "bbox": [
+    494,
+    246,
+    528,
+    273
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "RACH",
+   "bbox": [
+    524,
+    269,
+    594,
+    303
+   ],
+   "conf": 0.898
+  },
+  {
+   "text": "40",
+   "bbox": [
+    613,
+    263,
+    649,
+    293
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "10",
+   "bbox": [
+    463,
+    293,
+    497,
+    322
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "50",
+   "bbox": [
+    636,
+    318,
+    673,
+    348
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "60",
+   "bbox": [
+    616,
+    374,
+    654,
+    406
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "psi",
+   "bbox": [
+    446,
+    394,
+    499,
+    445
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "bar",
+   "bbox": [
+    626,
+    415,
+    676,
+    463
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "1bar=100kPa",
+   "bbox": [
+    480,
+    455,
+    626,
+    494
+   ],
+   "conf": 1.0
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "pressure",
+   "value": 69.2,
+   "unit": "psi",
+   "confidence": 0.3,
+   "method": "hough_ray_ransac_labels",
+   "flags": [
+    "AMBIGUOUS_NEEDLE"
+   ],
+   "point": [
+    573,
+    486
+   ],
+   "note": "two needle candidates: 173° -> 69 psi and 38° -> 37 psi (peak ratio 0.69); do not trust this value"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "psi",
+   "value": 69.2
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 30
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": 173.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 0.69
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.0
+  },
+  {
+   "name": "Full Scale",
+   "units": "psi",
+   "value": 60.0
+  },
+  {
+   "name": "Scale Labels Used",
+   "units": "",
+   "value": "6 of 6"
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 328,
+ "version": {
+  "service": "0.1.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

@@ -2,12 +2,17 @@
   "name": "web",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": "24.x"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:flags": "tsx --test tests/flag-routes.test.ts"
+    "test:flags": "tsx --test tests/flag-routes.test.ts",
+    "test:chat": "tsx --test tests/chat-*.test.ts",
+    "test:live": "tsx --test tests/live-routes.test.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.2.0",
@@ -16,7 +21,9 @@
     "next": "16.4.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
+    "react-markdown": "^10.1.0",
     "recharts": "^3.10.1",
+    "remark-gfm": "^4.0.1",
     "swr": "^2.5.1"
   },
   "devDependencies": {

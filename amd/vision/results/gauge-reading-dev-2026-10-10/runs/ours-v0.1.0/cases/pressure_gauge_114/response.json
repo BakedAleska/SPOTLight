@@ -1,0 +1,260 @@
+{
+ "media_id": "pressure_gauge_114",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "35",
+   "bbox": [
+    616,
+    44,
+    681,
+    104
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "40",
+   "bbox": [
+    670,
+    45,
+    736,
+    106
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "TUTTI",
+   "bbox": [
+    509,
+    57,
+    580,
+    127
+   ],
+   "conf": 0.654
+  },
+  {
+   "text": "30",
+   "bbox": [
+    567,
+    72,
+    631,
+    130
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "45",
+   "bbox": [
+    707,
+    68,
+    772,
+    129
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "50",
+   "bbox": [
+    746,
+    94,
+    812,
+    155
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "25",
+   "bbox": [
+    523,
+    105,
+    588,
+    166
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "55",
+   "bbox": [
+    772,
+    138,
+    840,
+    202
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "20",
+   "bbox": [
+    500,
+    155,
+    566,
+    215
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "15",
+   "bbox": [
+    502,
+    205,
+    560,
+    260
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "60",
+   "bbox": [
+    788,
+    192,
+    852,
+    251
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "psi",
+   "bbox": [
+    818,
+    239,
+    856,
+    274
+   ],
+   "conf": 0.999
+  },
+  {
+   "text": "10",
+   "bbox": [
+    517,
+    256,
+    567,
+    303
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "5",
+   "bbox": [
+    543,
+    300,
+    588,
+    348
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "ZERO",
+   "bbox": [
+    556,
+    353,
+    626,
+    408
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "Longacre",
+   "bbox": [
+    699,
+    287,
+    796,
+    362
+   ],
+   "conf": 0.981
+  },
+  {
+   "text": "PRODUCTS",
+   "bbox": [
+    736,
+    327,
+    799,
+    376
+   ],
+   "conf": 0.999
+  },
+  {
+   "text": "RACING",
+   "bbox": [
+    738,
+    321,
+    786,
+    361
+   ],
+   "conf": 1.0
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "pressure",
+   "value": 11.4,
+   "unit": "psi",
+   "confidence": 0.3,
+   "method": "hough_ray_ransac_labels",
+   "flags": [
+    "AMBIGUOUS_NEEDLE"
+   ],
+   "point": [
+    536,
+    268
+   ],
+   "note": "two needle candidates: -108° -> 11 psi and 61° -> 53 psi (two-ended needle (opposite arm 0.26 r long)); do not trust this value"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "psi",
+   "value": 11.4
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 30
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": -108.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 0.43
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.26
+  },
+  {
+   "name": "Full Scale",
+   "units": "psi",
+   "value": 60.0
+  },
+  {
+   "name": "Scale Labels Used",
+   "units": "",
+   "value": "12 of 12"
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 549,
+ "version": {
+  "service": "0.1.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

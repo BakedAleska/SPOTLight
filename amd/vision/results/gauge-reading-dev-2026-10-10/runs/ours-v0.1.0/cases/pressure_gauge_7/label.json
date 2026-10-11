@@ -1,0 +1,18 @@
+{
+ "question_id": "pressure_gauge_7",
+ "question": "What is the reading of the instrument (boiler pressure)?",
+ "evaluator": "interval_matching",
+ "evaluator_kwargs": {
+  "interval": [
+   5,
+   6
+  ],
+  "units": [
+   "bar"
+  ]
+ },
+ "meta_info": {
+  "source": "Self-collected",
+  "uploader": "Miguel"
+ }
+}

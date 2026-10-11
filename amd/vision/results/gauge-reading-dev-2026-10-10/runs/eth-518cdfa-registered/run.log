@@ -1,0 +1,1119 @@
+root - INFO - Start processing image at path /run/in/mb_000.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - WARNING - xFormers not available
+dinov2 - WARNING - xFormers not available
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by 0.050642283913845176 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_002.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by -98.19740724285883 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_003.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by -41.17383679593961 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_004.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by -1.6352392994989344 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_009.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by 7.309535380177181 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_011.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by -0.8570904880714068 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_014.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - ERROR - Unexpected err=IndexError('index 0 is out of bounds for axis 0 with size 0'), type(err)=<class 'IndexError'>
+root - INFO - Start processing image at path /run/in/mb_015.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by -192.30016354292735 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_017.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by 3.5514067580920994 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_018.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by 38.36203292562607 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_019.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by -61.84862072437964 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_020.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by 1.6421460229732077 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_021.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by -0.747561571945198 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_022.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by -176.26238733205574 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_023.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by 2.810828965436002 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_024.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by -92.56901487825013 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - ERROR - Segmentation failed, no needle found
+root - ERROR - Unexpected err=Exception('Segmentation failed, no needle found'), type(err)=<class 'Exception'>
+root - INFO - Start processing image at path /run/in/mb_025.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by -181.4779773056307 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - ERROR - Segmentation failed, no needle found
+root - ERROR - Unexpected err=Exception('Segmentation failed, no needle found'), type(err)=<class 'Exception'>
+root - INFO - Start processing image at path /run/in/mb_026.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by -5.767769172088691 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_027.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by -2.2780425959887793 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_028.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by -6.792423269073666 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_029.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by -145.5745632870294 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_031.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by -30.963135276114436 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_032.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by -175.15713925295017 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - ERROR - Segmentation failed, no needle found
+root - ERROR - Unexpected err=Exception('Segmentation failed, no needle found'), type(err)=<class 'Exception'>
+root - INFO - Start processing image at path /run/in/mb_033.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by -67.67476040325087 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_034.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by -185.1774035010252 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_035.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by -13.975161464926387 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_036.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by -3.0397431916958055 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_038.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by 2.580999045566756 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_039.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by 76.90987306076886 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_041.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by 2.199085098892283 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_042.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by -6.544246419409532 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_043.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - ERROR - Ellipse parameters not an ellipse.
+root - ERROR - Unexpected err=Exception('Ellipse parameters not an ellipse'), type(err)=<class 'Exception'>
+root - INFO - Start processing image at path /run/in/mb_044.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - ERROR - Ellipse parameters not an ellipse.
+root - ERROR - Unexpected err=Exception('Ellipse parameters not an ellipse'), type(err)=<class 'Exception'>
+root - INFO - Start processing image at path /run/in/mb_047.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by -47.63410564302341 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - ERROR - Segmentation failed, no needle found
+root - ERROR - Unexpected err=Exception('Segmentation failed, no needle found'), type(err)=<class 'Exception'>
+root - INFO - Start processing image at path /run/in/mb_048.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by 2.3571903512220445 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_050.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by -1.507842970445651 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_051.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by -35.94620714634197 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_052.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by 12.618253949232141 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_053.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by 33.26272335329148 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_054.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by 0.9483728997245464 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_055.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - ERROR - Unexpected err=LinAlgError('Singular matrix'), type(err)=<class 'numpy.linalg.LinAlgError'>
+root - INFO - Start processing image at path /run/in/mb_056.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by 1.6968282415332823 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_057.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by 5.284467672055044 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_058.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by -0.4521571600507457 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_059.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by -242.91517383036967 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_060.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by -174.49931643537258 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_062.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by 0.7142553240069844 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_064.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by -0.8852237271622982 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_067.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by -14.522395513706883 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_071.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by -254.21309569315173 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - ERROR - Segmentation failed, no needle found
+root - ERROR - Unexpected err=Exception('Segmentation failed, no needle found'), type(err)=<class 'Exception'>
+root - INFO - Start processing image at path /run/in/mb_072.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by -2.6458188535462597 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_073.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by -1.9516201371218642 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_075.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by 12.561443955748047 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - ERROR - Segmentation failed, no needle found
+root - ERROR - Unexpected err=Exception('Segmentation failed, no needle found'), type(err)=<class 'Exception'>
+root - INFO - Start processing image at path /run/in/mb_076.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by -42.724979795730455 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_077.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by -116.32634045151661 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_078.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by -91.55703716231497 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_079.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by -1.477051192211377 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_080.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by 3.028942502329002 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - ERROR - Unexpected err=Exception('Needle line and ellipse do not intersect'), type(err)=<class 'Exception'>
+root - INFO - Start processing image at path /run/in/mb_081.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by -127.91226796984722 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - ERROR - Unexpected err=Exception('Needle line and ellipse do not intersect'), type(err)=<class 'Exception'>
+root - INFO - Start processing image at path /run/in/mb_082.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by -0.8032634963563083 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_084.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by 3.6884151330003334 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_085.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by -3.611192250463631 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_086.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by -4.817094243870542 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_087.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by 5.0651136131437795 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_089.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by -113.10757645088097 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_090.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by -12.216982950669106 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_091.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by -2.1321030242387735 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_093.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by 6.171788916470149 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_094.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by -15.145143543837875 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_096.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by -151.03352106324465 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_098.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by 1.0778608966622443 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_099.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by 2.693686827034867 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_100.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by -38.62397257229995 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_102.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by 7.60168391694333 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_103.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by -12.748118718395446 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_105.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by 0.17594300126688722 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_106.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by -9.069918510017843 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_107.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by -29.51066976294681 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_108.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by -8.637491620638741 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_109.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by 1.8056295826217053 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_110.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by -73.31252878415899 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - ERROR - Segmentation failed, no needle found
+root - ERROR - Unexpected err=Exception('Segmentation failed, no needle found'), type(err)=<class 'Exception'>
+root - INFO - Start processing image at path /run/in/mb_112.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by -86.46694018805455 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_113.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by 3.220207674609341 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_114.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by -38.26726590789578 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_115.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by 5.347679312766786 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_116.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - INFO - Finish ellipse fitting
+root - INFO - Start OCR
+root - INFO - Rotate image by 8.828795423308208 degrees
+root - INFO - Finish OCR
+root - INFO - Start segmentation
+root - INFO - Finish segmentation
+root - INFO - Start processing image at path /run/in/mb_117.jpg
+root - INFO - Start Gauge Detection
+root - INFO - Finish Gauge Detection
+root - INFO - Start key point detection
+dinov2 - INFO - using MLP layer as FFN
+root - INFO - Finish key point detection
+root - INFO - Start ellipse fitting
+root - ERROR - Unexpected err=IndexError('index 0 is out of bounds for axis 0 with size 0'), type(err)=<class 'IndexError'>

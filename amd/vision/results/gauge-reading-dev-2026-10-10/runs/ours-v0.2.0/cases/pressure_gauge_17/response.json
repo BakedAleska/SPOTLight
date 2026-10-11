@@ -1,0 +1,182 @@
+{
+ "media_id": "pressure_gauge_17",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "100",
+   "bbox": [
+    250,
+    44,
+    273,
+    62
+   ],
+   "conf": 0.968
+  },
+  {
+   "text": "6",
+   "bbox": [
+    237,
+    100,
+    249,
+    116
+   ],
+   "conf": 0.869
+  },
+  {
+   "text": "SE",
+   "bbox": [
+    158,
+    117,
+    178,
+    138
+   ],
+   "conf": 0.525
+  },
+  {
+   "text": "RESSURE GAUGE",
+   "bbox": [
+    239,
+    125,
+    318,
+    148
+   ],
+   "conf": 0.93
+  },
+  {
+   "text": "12",
+   "bbox": [
+    327,
+    147,
+    349,
+    167
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "kg/cm",
+   "bbox": [
+    247,
+    178,
+    296,
+    202
+   ],
+   "conf": 0.981
+  },
+  {
+   "text": "0",
+   "bbox": [
+    215,
+    194,
+    227,
+    211
+   ],
+   "conf": 0.981
+  },
+  {
+   "text": "5",
+   "bbox": [
+    319,
+    201,
+    333,
+    217
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "ps:",
+   "bbox": [
+    259,
+    216,
+    285,
+    233
+   ],
+   "conf": 0.812
+  },
+  {
+   "text": "JANLONG",
+   "bbox": [
+    243,
+    267,
+    297,
+    285
+   ],
+   "conf": 0.879
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "pressure",
+   "value": 4.3,
+   "unit": "psi",
+   "confidence": 0.3,
+   "method": "hough_ray_ransac_labels",
+   "flags": [
+    "LABEL_OUTLIER",
+    "UNIT_UNKNOWN",
+    "AMBIGUOUS_NEEDLE"
+   ],
+   "point": [
+    191,
+    100
+   ],
+   "note": "two needle candidates: -55° -> 4 psi and 136° -> 15 psi (two-ended needle (opposite arm 0.46 r long)); do not trust this value"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "psi",
+   "value": 4.3
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 30
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": -55.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 0.68
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.46
+  },
+  {
+   "name": "Full Scale",
+   "units": "psi",
+   "value": 12.0
+  },
+  {
+   "name": "Scale Labels Used",
+   "units": "",
+   "value": "3 of 5"
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 497,
+ "version": {
+  "service": "0.2.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

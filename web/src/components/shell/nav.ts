@@ -2,6 +2,7 @@ import {
   Boxes,
   ChartColumn,
   LayoutDashboard,
+  Radio,
   Route,
   Settings,
   Sparkles,
@@ -22,25 +23,18 @@ export interface NavItem {
    the trends across missions. */
 export const nav: NavItem[] = [
   { label: "Overview", icon: LayoutDashboard, href: "/" },
+  { label: "Live patrol", icon: Radio, href: "/live" },
   {
     label: "Missions",
     icon: Route,
     children: [
-      { label: "All missions" },
-      { label: "Flagged" },
-      { label: "Replay" },
+      { label: "All missions", href: "/missions" },
+      { label: "Flagged", href: "/missions/flagged" },
+      { label: "Replay", href: "/missions/replay" },
     ],
   },
-  {
-    label: "Analytics",
-    icon: ChartColumn,
-    children: [
-      { label: "Battery cliff" },
-      { label: "V1 vs V2" },
-      { label: "Failure patterns" },
-    ],
-  },
-  { label: "Assets", icon: Boxes },
-  { label: "AI review", icon: Sparkles },
-  { label: "Settings", icon: Settings },
+  { label: "Analytics", icon: ChartColumn, href: "/analytics" },
+  { label: "Assets", icon: Boxes, href: "/assets" },
+  { label: "AI Assistance", icon: Sparkles, href: "/assistant" },
+  { label: "Settings", icon: Settings, href: "/settings" },
 ];

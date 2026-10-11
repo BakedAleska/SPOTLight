@@ -1,0 +1,172 @@
+{
+ "media_id": "pressure_gauge_99",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "30",
+   "bbox": [
+    457,
+    190,
+    487,
+    215
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "20",
+   "bbox": [
+    384,
+    231,
+    419,
+    257
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "40",
+   "bbox": [
+    537,
+    222,
+    566,
+    245
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "5",
+   "bbox": [
+    573,
+    295,
+    591,
+    316
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "10",
+   "bbox": [
+    364,
+    312,
+    398,
+    339
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "Tire",
+   "bbox": [
+    441,
+    340,
+    486,
+    364
+   ],
+   "conf": 0.925
+  },
+  {
+   "text": "auge",
+   "bbox": [
+    484,
+    343,
+    530,
+    366
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "TiRTek",
+   "bbox": [
+    435,
+    372,
+    540,
+    405
+   ],
+   "conf": 0.893
+  },
+  {
+   "text": "60",
+   "bbox": [
+    547,
+    369,
+    576,
+    394
+   ],
+   "conf": 1.0
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "pressure",
+   "value": -3.8,
+   "unit": "psi",
+   "confidence": 0.3,
+   "method": "hough_ray_ransac_labels",
+   "flags": [
+    "LABEL_OUTLIER",
+    "UNIT_UNKNOWN",
+    "AMBIGUOUS_NEEDLE"
+   ],
+   "point": [
+    472,
+    414
+   ],
+   "note": "two needle candidates: -171° -> -4 psi and 5° -> 33 psi (two-ended needle (opposite arm 0.88 r long)); do not trust this value"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "psi",
+   "value": -3.8
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 30
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": -171.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 1.42
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.88
+  },
+  {
+   "name": "Full Scale",
+   "units": "psi",
+   "value": 60.0
+  },
+  {
+   "name": "Scale Labels Used",
+   "units": "",
+   "value": "5 of 6"
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 420,
+ "version": {
+  "service": "0.2.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

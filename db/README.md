@@ -15,8 +15,12 @@ only `DATABASE_URL` (and optionally `LOGS_DATABASE_URL`) changes. Embedding/inge
 | `migrations/007_roles.sql` | NOLOGIN group roles `spot_mcp_reader` and `spot_app` + grants (guarded; warns instead of failing). |
 | `migrations/008_spot_event_log_request_id.sql` | `raw.spot_event_log.request_id`. |
 | `migrations/009_graph.sql` | Graph RAG: `kg_nodes` (pgvector + pg_trgm GIN on label/key), `kg_edges`, `match_kg_nodes`, `match_kg_nodes_text`, `graph_neighborhood`; grants for `spot_mcp_reader` / `spot_app` (read). |
+| `migrations/011_chat.sql` | AI Assistance chat history (`docs/chat-contract.md` §1): `chat_conversations`, `chat_messages` (seq per conversation, jsonb sources/citations/grounding/usage, `error_code`), sidebar + trigram search indexes. CRUD for `spot_app`; **nothing** for `spot_mcp_reader`. |
+| `migrations/012_chat_logs.sql` | (logs) `app.model_calls.system` CHECK also allows `chat` (replaces the inline 005 CHECK idempotently). |
+| `migrations/013_chat_mission.sql` | Mission chats (`docs/chat-contract.md` §9, `chat.3`): `chat_conversations.mission_id` → `missions` (`ON DELETE SET NULL`, named FK added if missing; dangling ids detached first) + index `(mission_id, updated_at DESC)`. Grants unchanged. |
 | `graph_build.py` | Builds the knowledge graph from the core tables + `documents` (see "Knowledge graph" below). |
 | `tests/test_graph.py` | Graph build + functions on a throwaway DB (`make test-graph`). |
+| `tests/test_chat.py` | Chat migrations, grants and every `ChatRepo` method on a throwaway DB (`make test-chat-db`). |
 | `migrations/optional/hnsw.sql` | Optional HNSW index (`migrate --hnsw`). |
 | `reset.sql`, `reset_logs.sql` | Drops (only via `setup.py reset --yes`). |
 | `setup.py` | `migrate`, `seed`, `reset --yes`, `status`. |
@@ -118,11 +122,41 @@ FROM graph_neighborhood(ARRAY['action:A0061'], 2, kind_filter => ARRAY['manual',
 `weight` in `graph_neighborhood` is the path's strength (product of edge weights). Full behaviour (NULLs, score
 scales, ordering): contract §7 "Implemented".
 
+## AI Assistance chat (`docs/chat-contract.md` §1)
+- **Storage.** `chat_conversations` (title, `title_source` default/auto/model/user, model, mode fast/thinking, pinned)
+  and `chat_messages` (`seq` 1, 2, 3 ... per conversation, `UNIQUE (conversation_id, seq)`, `ON DELETE CASCADE`).
+  Edit/regenerate delete the tail (`seq >= n`). Search is `ILIKE` on titles and message content (pg_trgm GIN).
+  `chat.2`: `chat_messages.error_code` holds the §4 code of an error answer (011 adds it with
+  `ADD COLUMN IF NOT EXISTS` to databases created earlier), and `list_conversations` skips conversations with no
+  messages (also in `total`). `chat.3` (013): a conversation can be about one mission (`mission_id`, set at
+  creation, never changed; a deleted mission sets it NULL). Conversation rows carry `mission_id` and
+  `mission {mission_id, mission_name, mission_status}`; `list_conversations(mission_id=)` filters,
+  `search_documents(mission_id=)` filters (hybrid `filter_mission` and full text), and `list_missions(q, limit)` feeds
+  the mission picker (counts, `hidden_failure`, `chats`).
+- **Access.** Only through `backend/app/db/chat.py` (`ChatRepo`): uuids as `str`, timestamps as `datetime`, jsonb as
+  lists/dicts. `add_message` locks the conversation row and assigns `max(seq)+1` in one transaction. The same class
+  holds the chat's read-only retrieval: `search_documents` (hybrid with a vector, else full text), `match_graph_nodes`
+  (text + vector entry nodes), `graph_neighborhood`, `fleet_snapshot`, `entity_digests`, `suggestion_facts`
+  (each ~5–30 ms locally).
+- **Not evidence.** Chats are never embedded into `documents`, never graph nodes, and `spot_mcp_reader` gets no
+  privilege on them (011 revokes what 007's "all tables" grant would give; it runs after 007 on every `migrate`).
+  `db/reset.sql` drops both tables; `/ops/reset-demo` leaves them alone.
+
 ## Tests
 ```bash
 make test-graph     # db/tests: extractor unit tests + build/functions on a throwaway DB spot_graphtest_<hex>
                     # in the compose Postgres (DB_PORT from .env); skips without Postgres. ~5 s.
 GRAPH_TEST_EMBED=1 EMBED_URL=http://localhost:8081 make test-graph   # + the incremental-embedding check (~25 s CPU)
+make test-chat-db   # chat: 011/012/013 (re-run), grants, every ChatRepo method on spot_chattest_<hex>; ~4 s
+                    # (make test-graph runs all of db/tests, so it includes this file too)
 make test-db        # seed is non-destructive (tests/test_seed_nondestructive.py)
 make smoke          # RAG + graph queries and spot_mcp_reader permissions inside the stack
 ```
+
+### Repeated migrations on Neon
+
+The migration renderer initializes pgvector in each connection before adding
+`SET hnsw.iterative_scan` to search functions. An existing extension does not
+automatically load its configuration definitions in a fresh session; without
+initialization, repeated migrations can fail with an insufficient-privilege error
+even for `neondb_owner`. No extra role grants are required.

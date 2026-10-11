@@ -1,0 +1,137 @@
+{
+ "media_id": "pressure_gauge_115",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "100",
+   "bbox": [
+    320,
+    283,
+    361,
+    329
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "120",
+   "bbox": [
+    349,
+    364,
+    370,
+    399
+   ],
+   "conf": 0.966
+  },
+  {
+   "text": "CONACT",
+   "bbox": [
+    191,
+    418,
+    290,
+    443
+   ],
+   "conf": 0.997
+  },
+  {
+   "text": "kg/cm²",
+   "bbox": [
+    184,
+    468,
+    241,
+    501
+   ],
+   "conf": 0.917
+  },
+  {
+   "text": "140",
+   "bbox": [
+    310,
+    430,
+    351,
+    475
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "psi",
+   "bbox": [
+    258,
+    472,
+    292,
+    503
+   ],
+   "conf": 0.999
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "pressure",
+   "value": 59.0,
+   "unit": "psi",
+   "confidence": 0.3,
+   "method": "hough_ray_default_sweep",
+   "flags": [
+    "DEFAULT_SWEEP",
+    "SHORT_NEEDLE",
+    "AMBIGUOUS_NEEDLE"
+   ],
+   "point": [
+    421,
+    388
+   ],
+   "note": "two needle candidates: -22° -> 59 psi and -60° -> 39 psi (peak ratio 0.77); do not trust this value"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "psi",
+   "value": 59.0
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 30
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": -22.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 0.77
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.08
+  },
+  {
+   "name": "Full Scale",
+   "units": "psi",
+   "value": 140.0
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 430,
+ "version": {
+  "service": "0.2.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

@@ -1,0 +1,46 @@
+# Real kit photos, pass 1, ~21:04-21:06 UTC. Box checkout edae3db (clean). Script: box/scripts/realimg.py.
+# Vision service amd/vision (scripts/serve.py, defaults) on :8084; rows built with orchestrator.assess
+# demo_image / vision_rows(trust_min 0.5) / ocr_lines(top 8) / system2_image, pairing "demo" (no `logged`), as
+# with DEMO_IMAGES=1. System 2 was started WITHOUT SYSTEM2_CACHE_DIR; serve.py then defaults to
+# amd/system2/cache in the checkout, so the cache was ON (gauge run 2 below is a cache hit, not a generation).
+# Fallbacks are never cached, so both thermal runs are generations. Request bodies sent to System 2:
+# box/smoke-real/realimg-*-body.json (written by the last run of each case; deterministic for a given photo).
+{"status":"ok","mode":"live","contract_version":"2026-10-10.backend.2","model":"qwen3.8-27b-q8_0"}
+== gauge run 1 | photo gauge_pressure_01.jpg | vision 1281 ms | kind gauge | router {'label': 'gauge', 'method': 'kind', 'confidence': 1.0}
+   row {"id": "V1", "tool": "hough_ray_ransac_labels", "kind": "gauge", "quantity": "pressure", "value": 1.0, "unit": "psi", "confidence": 0.3, "trust": "LOW", "flags": ["LABEL_OUTLIER", "AMBIGUOUS_NEEDLE"], "pairing": "demo"}
+   ocr ['100', '200', '50', '300', '290', '150', 'psi', '8']
+   alert None | image to System 2: image sent 40380 b64 chars
+   SYSTEM2 10378 ms wall | cache miss | image used | path llm | latency_ms 10374 | action REINSPECT_NOW
+   cited [['action:A0030'], ['reading:R0053'], ['flag:14']] | V# cited: []
+   claim ['action:A0030'] | action_type=GAUGE_READING; battery_pct=17; status=FAILED; failure_type=SENSOR_TIMEOUT
+   claim ['reading:R0053'] | measurement_type=PRESSURE_PSI; value=114.2; unit=psi; quality=QUESTIONABLE
+   claim ['flag:14'] | category=data_quality; escalated=true; priority=P2; status=OPEN
+   answer: action_type=GAUGE_READING; battery_pct=17; status=FAILED; failure_type=SENSOR_TIMEOUT; measurement_type=PRESSURE_PSI; value=114.2; unit=psi; quality=QUESTIONABLE; category=data_quality; escalated=true; priority=P2; status=OPEN
+== gauge run 2 | photo gauge_pressure_01.jpg | vision 8 ms | kind gauge | router {'label': 'gauge', 'method': 'kind', 'confidence': 1.0}
+   row {"id": "V1", "tool": "hough_ray_ransac_labels", "kind": "gauge", "quantity": "pressure", "value": 1.0, "unit": "psi", "confidence": 0.3, "trust": "LOW", "flags": ["LABEL_OUTLIER", "AMBIGUOUS_NEEDLE"], "pairing": "demo"}
+   ocr ['100', '200', '50', '300', '290', '150', 'psi', '8']
+   alert None | image to System 2: image sent 40380 b64 chars
+   SYSTEM2 3 ms wall | cache hit | image used | path llm | latency_ms 10374 | action REINSPECT_NOW
+   cited [['action:A0030'], ['reading:R0053'], ['flag:14']] | V# cited: []
+   claim ['action:A0030'] | action_type=GAUGE_READING; battery_pct=17; status=FAILED; failure_type=SENSOR_TIMEOUT
+   claim ['reading:R0053'] | measurement_type=PRESSURE_PSI; value=114.2; unit=psi; quality=QUESTIONABLE
+   claim ['flag:14'] | category=data_quality; escalated=true; priority=P2; status=OPEN
+   answer: action_type=GAUGE_READING; battery_pct=17; status=FAILED; failure_type=SENSOR_TIMEOUT; measurement_type=PRESSURE_PSI; value=114.2; unit=psi; quality=QUESTIONABLE; category=data_quality; escalated=true; priority=P2; status=OPEN
+== thermal run 1 | photo thermal_pump_bearing_01.jpg | vision 1238 ms | kind thermal | router {'label': 'thermal', 'method': 'kind', 'confidence': 1.0}
+   row {"id": "V1", "tool": "colorbar_lut", "kind": "thermal", "quantity": "max_temperature", "value": 100.0, "unit": "°C", "confidence": 0.8, "trust": "HIGH", "flags": ["CLIPPED"], "bound": "lower", "pairing": "demo"}
+   row {"id": "V2", "tool": "colorbar_lut", "kind": "thermal", "quantity": "p95_temperature", "value": 81.5, "unit": "°C", "confidence": 0.9, "trust": "HIGH", "pairing": "demo"}
+   row {"id": "V3", "tool": "colorbar_lut", "kind": "thermal", "quantity": "median_temperature", "value": 41.6, "unit": "°C", "confidence": 0.9, "trust": "HIGH", "pairing": "demo"}
+   row {"id": "V4", "tool": "scene_median_outside_hotspot", "kind": "thermal", "quantity": "reference_temperature", "value": 41.0, "unit": "°C", "confidence": 0.75, "trust": "HIGH", "pairing": "demo"}
+   row {"id": "V5", "tool": "hotspot_minus_reference", "kind": "thermal", "quantity": "delta_t", "value": 59.0, "unit": "°C", "confidence": 0.75, "trust": "HIGH", "flags": ["CLIPPED"], "bound": "lower", "pairing": "demo"}
+   ocr ['100', '75', '25', '℃', 'SO']
+   alert {'title': 'Thermal hotspot ≥100.0 °C (ΔT 59 °C over reference)', 'severity': 4, 'source': 'vision.thermal'} | image to System 2: image sent 28096 b64 chars
+   SYSTEM2 25006 ms wall | cache miss | image not_used | path fallback | latency_ms 25003 | action SCHEDULE_MAINTENANCE
+   cited [['F1'], ['F2']] | V# cited: []
+   claim ['F1'] | action_id=A0118; mission_id=M012; timestamp=2026-09-05T10:21:36; action_type=THERMAL_INSPECTION; location_id=WP15; asset_id=PANEL-218; battery_pct=24; status=FAILED; failure_type=SENSOR_TIMEOUT; duration_sec=18
+   claim ['F2'] | reading_id=R0183; action_id=A0118; mission_id=M012; timestamp=2026-09-05T10:21:36; asset_id=PANEL-218; location_id=WP15; measurement_type=TEMPERATURE_C; value=63.0; unit=C; quality=QUESTIONABLE
+   answer: action_id=A0118; mission_id=M012; timestamp=2026-09-05T10:21:36; action_type=THERMAL_INSPECTION; location_id=WP15; asset_id=PANEL-218; battery_pct=24; status=FAILED; failure_type=SENSOR_TIMEOUT; duration_sec=18 reading_id=R0183; action_id=A0118; mission_id=M012; timestamp=2026-09-05T10:21:36; asset_id=PANEL-218; location_id=WP15; measurement_type=TEMPERATURE_C; value=63.0; unit=C; quality=QUESTIONABLE
+== thermal run 2 | photo thermal_pump_bearing_01.jpg | vision 7 ms | kind thermal | router {'label': 'thermal', 'method': 'kind', 'confidence': 1.0}
+   [rows, ocr, alert, claims and answer were printed identical to thermal run 1; elided here, not re-typed]
+   SYSTEM2 25006 ms wall | cache miss | image not_used | path fallback | latency_ms 25003 | action SCHEDULE_MAINTENANCE
+   cited [['F1'], ['F2']] | V# cited: []
+# Note: "vision 7-8 ms" on the second run is the vision service's own result cache, not a new analysis.

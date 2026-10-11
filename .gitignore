@@ -10,3 +10,6 @@ __pycache__/
 # ignored directory, so the negation below would not work against .claude/.
 .claude/*
 !.claude/settings.json
+
+# Large local evidence (images/overlays derived from CC BY-SA datasets); not published
+local-artifacts/

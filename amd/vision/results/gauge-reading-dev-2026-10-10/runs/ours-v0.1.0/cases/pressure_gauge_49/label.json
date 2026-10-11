@@ -1,0 +1,18 @@
+{
+ "question_id": "pressure_gauge_49",
+ "question": "What is the reading on the instrument in the middle?",
+ "evaluator": "interval_matching",
+ "evaluator_kwargs": {
+  "interval": [
+   0.24,
+   0.24
+  ],
+  "units": [
+   "MPa"
+  ]
+ },
+ "meta_info": {
+  "source": "https://www.youtube.com/watch?v=rUxznILwXdY",
+  "uploader": ""
+ }
+}

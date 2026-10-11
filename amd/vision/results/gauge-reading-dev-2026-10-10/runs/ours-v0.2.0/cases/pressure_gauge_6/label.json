@@ -1,0 +1,19 @@
+{
+ "question_id": "pressure_gauge_6",
+ "question": "What is the reading of the instrument(temperature)?",
+ "evaluator": "interval_matching",
+ "evaluator_kwargs": {
+  "interval": [
+   21,
+   21
+  ],
+  "units": [
+   "°C",
+   "Celsius"
+  ]
+ },
+ "meta_info": {
+  "source": "https://pxhere.com/en/photo/142911",
+  "uploader": "Unknown"
+ }
+}

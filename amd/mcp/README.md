@@ -71,7 +71,7 @@ The model should call `get_flag_context` first. That one call is usually enough.
 
 ```bash
 cd amd/mcp
-python -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt
+python -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt pytest anyio
 cp .env.example .env            # fill in DATABASE_URL etc.
 set -a && . ./.env && set +a
 
@@ -103,6 +103,38 @@ docker run -i --rm --env-file amd/mcp/.env spot-mcp python -m spot_mcp --stdio  
 2. Use that role's connection string as `DATABASE_URL`. The pooled `-pooler` endpoint is fine: the server issues no session-level SETs and uses no prepared statements.
 3. Leave `LOGS_DATABASE_URL` unset unless logs move to another database.
 4. For `get_raw_event_log`, the role also needs `USAGE ON SCHEMA raw` and `SELECT ON raw.spot_event_log`. This is requested in contract §6.
+
+## Deploy on Vercel
+
+The same HTTP app as `python -m spot_mcp --http`, run as one Vercel Function. `asgi.py` exposes the top-level `app` (via `create_app()` in `spot_mcp/server.py`, the factory `main()` uses too), so auth, the open `/healthz` and the stateless JSON `/mcp` behave the same. Vercel's Python runtime runs the ASGI lifespan, which starts the SDK's session manager. Without it every `/mcp` request answers 500.
+
+- **Project:** import the repo with **Root Directory `amd/mcp`**. The framework preset is "Python", detected from `requirements.txt`. No build command is needed.
+- **Files:** `vercel.json` sets region `cle1`, `maxDuration` 60 s and `excludeFiles`. `.python-version` pins 3.12, the same as the Docker image. `.vercelignore` keeps any `.env`, keys, venvs, tests and `client_example.py` out of CLI uploads (a denylist, so it cannot drop needed files whichever directory Vercel anchors it to).
+- **Region:** `cle1` (Cleveland) sits next to Neon's `aws-us-east-2`. If the Neon project moves, change `regions` to match. Put the backend project in the same region.
+- **Env vars** (Project → Settings → Environment Variables; nothing is committed):
+
+| Var | Value |
+|---|---|
+| `DATABASE_URL` | Neon **pooled** URL (`ep-…-pooler…`) as `spot_mcp_user`. Pooling is safe: every query is one transaction with `SET TRANSACTION READ ONLY` and a transaction-local `statement_timeout`, and prepared statements are off. |
+| `MCP_AUTH_TOKEN` | **Required.** `asgi.py` refuses to start without it, because the URL is public. Callers send `Authorization: Bearer <token>`. |
+| `EMBED_URL` | the AMD cluster's public HTTPS embedding endpoint (OpenAI-compatible `/v1/embeddings`) |
+| `EMBED_MODEL` / `EMBED_DIM` | `Qwen/Qwen3-Embedding-0.6B` / `1024`. These must match what was ingested. |
+| `EMBED_TIMEOUT_S` / `MCP_STATEMENT_TIMEOUT_MS` | defaults `10` / `5000`. Keep them well under `maxDuration`. |
+| optional | `MCP_POOL_MAX` (default 4 per instance), `MCP_LOG_CALLS`, `LOGS_DATABASE_URL`, `MCP_MIN_SIMILARITY`, `LOG_LEVEL` |
+
+- **Callers:** the backend and the orchestrator set `MCP_URL=https://<project>.vercel.app/mcp` and the same `MCP_AUTH_TOKEN`. Use the production domain. Preview URLs sit behind Vercel's Deployment Protection by default, so server-to-server calls to them get a login page.
+- **Logging rows:** the `app.*` rows are fire-and-forget. After a response, Vercel may pause an idle instance before an insert finishes, so a few rows can be late or lost. Tool calls are not affected.
+
+Verify:
+
+```bash
+curl -s https://<project>.vercel.app/healthz                    # {"ok":true,"server":"spot-context",...}, no token needed
+curl -s https://<project>.vercel.app/mcp -H "Authorization: Bearer $MCP_AUTH_TOKEN" \
+  -H 'Content-Type: application/json' -H 'Accept: application/json, text/event-stream' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | python -c 'import json,sys; print(len(json.load(sys.stdin)["result"]["tools"]), "tools")'   # 17 tools
+```
+
+A missing or wrong token gets `401 {"error":"unauthorized"}`. To try it locally the way Vercel runs it: `DATABASE_URL=... MCP_AUTH_TOKEN=x uvicorn asgi:app --port 8090`.
 
 ## On the AMD VM, next to llama-server
 

@@ -1,0 +1,231 @@
+{
+ "media_id": "pressure_gauge_25",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "RAIN",
+   "bbox": [
+    423,
+    306,
+    479,
+    324
+   ],
+   "conf": 0.957
+  },
+  {
+   "text": "BIRD",
+   "bbox": [
+    469,
+    307,
+    508,
+    322
+   ],
+   "conf": 0.887
+  },
+  {
+   "text": "2",
+   "bbox": [
+    436,
+    323,
+    460,
+    339
+   ],
+   "conf": 0.694
+  },
+  {
+   "text": "psi",
+   "bbox": [
+    453,
+    323,
+    476,
+    337
+   ],
+   "conf": 0.894
+  },
+  {
+   "text": "TTH",
+   "bbox": [
+    564,
+    328,
+    595,
+    349
+   ],
+   "conf": 0.578
+  },
+  {
+   "text": "200",
+   "bbox": [
+    401,
+    341,
+    426,
+    358
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "20",
+   "bbox": [
+    518,
+    359,
+    534,
+    373
+   ],
+   "conf": 0.999
+  },
+  {
+   "text": "180",
+   "bbox": [
+    387,
+    371,
+    409,
+    385
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "40",
+   "bbox": [
+    526,
+    396,
+    540,
+    406
+   ],
+   "conf": 0.997
+  },
+  {
+   "text": "160",
+   "bbox": [
+    383,
+    404,
+    404,
+    418
+   ],
+   "conf": 0.996
+  },
+  {
+   "text": "11",
+   "bbox": [
+    418,
+    401,
+    431,
+    415
+   ],
+   "conf": 0.992
+  },
+  {
+   "text": "140",
+   "bbox": [
+    393,
+    435,
+    413,
+    448
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "B",
+   "bbox": [
+    479,
+    448,
+    506,
+    476
+   ],
+   "conf": 0.668
+  },
+  {
+   "text": "120",
+   "bbox": [
+    415,
+    458,
+    437,
+    473
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "105",
+   "bbox": [
+    449,
+    466,
+    471,
+    481
+   ],
+   "conf": 0.937
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "pressure",
+   "value": 325.0,
+   "unit": "psi",
+   "confidence": 0.3,
+   "method": "hough_ray_ransac_labels",
+   "flags": [
+    "LABEL_OUTLIER",
+    "NEEDLE_OUTSIDE_SCALE"
+   ],
+   "point": [
+    542,
+    447
+   ],
+   "note": "needle at 123° reads 325.4 psi"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "psi",
+   "value": 325.0
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 30
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": 123.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 0.22
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.0
+  },
+  {
+   "name": "Full Scale",
+   "units": "psi",
+   "value": 200.0
+  },
+  {
+   "name": "Scale Labels Used",
+   "units": "",
+   "value": "6 of 10"
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 558,
+ "version": {
+  "service": "0.1.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

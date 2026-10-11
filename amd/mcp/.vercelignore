@@ -1,0 +1,14 @@
+# Vercel project with Root Directory `amd/mcp` (README "Deploy on Vercel"). Keeps secrets and dev files out of
+# CLI uploads (git deploys never contain them: they are git-ignored). A denylist, not a `/*` allowlist, so it means
+# the same whether Vercel anchors it at amd/mcp or at the repo root. vercel.json `excludeFiles` also keeps tests
+# and tooling out of the function bundle.
+.env
+.env.*
+*.pem
+*.key
+.venv
+venv
+.pytest_cache
+__pycache__
+tests
+client_example.py

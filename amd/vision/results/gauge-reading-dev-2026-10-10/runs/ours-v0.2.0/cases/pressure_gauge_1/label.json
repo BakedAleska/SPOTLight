@@ -1,0 +1,21 @@
+{
+ "question_id": "pressure_gauge_1",
+ "question": "What is the reading of red pointer on the pressure gauge?",
+ "evaluator": "interval_matching",
+ "evaluator_kwargs": {
+  "interval": [
+   2200,
+   2200
+  ],
+  "units": [
+   "psi",
+   "pounds per square inch",
+   "pound-force per square inch",
+   "lb/in²"
+  ]
+ },
+ "meta_info": {
+  "source": "https://www.publicdomainpictures.net/jp/view-image.php?image=298116&picture=",
+  "uploader": "N/A"
+ }
+}

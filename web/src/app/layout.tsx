@@ -19,6 +19,7 @@ const firaCode = Fira_Code({
 });
 
 export const metadata: Metadata = {
+  icons: { icon: "/spotlight-logo-small.svg", apple: "/spotlight-logo-small.svg" },
   title: "SPOTlight — SPOT Operator Console",
   description:
     "Turns SPOT inspection missions into a ranked list of what an operator should check next.",

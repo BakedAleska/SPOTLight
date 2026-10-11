@@ -1,0 +1,182 @@
+{
+ "media_id": "pressure_gauge_34",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "1.6",
+   "bbox": [
+    380,
+    149,
+    444,
+    198
+   ],
+   "conf": 0.91
+  },
+  {
+   "text": "psd",
+   "bbox": [
+    480,
+    139,
+    533,
+    178
+   ],
+   "conf": 0.925
+  },
+  {
+   "text": "0",
+   "bbox": [
+    608,
+    155,
+    635,
+    196
+   ],
+   "conf": 0.999
+  },
+  {
+   "text": "MPpa",
+   "bbox": [
+    476,
+    173,
+    538,
+    207
+   ],
+   "conf": 0.69
+  },
+  {
+   "text": "02",
+   "bbox": [
+    606,
+    213,
+    670,
+    258
+   ],
+   "conf": 0.898
+  },
+  {
+   "text": "12",
+   "bbox": [
+    359,
+    298,
+    421,
+    345
+   ],
+   "conf": 0.794
+  },
+  {
+   "text": "9.0",
+   "bbox": [
+    553,
+    349,
+    617,
+    397
+   ],
+   "conf": 0.913
+  },
+  {
+   "text": "1",
+   "bbox": [
+    422,
+    364,
+    449,
+    402
+   ],
+   "conf": 0.937
+  },
+  {
+   "text": "0.0",
+   "bbox": [
+    482,
+    378,
+    544,
+    426
+   ],
+   "conf": 0.869
+  },
+  {
+   "text": "08",
+   "bbox": [
+    650,
+    417,
+    713,
+    475
+   ],
+   "conf": 1.0
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "pressure",
+   "value": 1.4,
+   "unit": "psi",
+   "confidence": 0.3,
+   "method": "hough_ray_ransac_labels",
+   "flags": [
+    "LABEL_OUTLIER",
+    "UNIT_UNKNOWN",
+    "AMBIGUOUS_NEEDLE"
+   ],
+   "point": [
+    360,
+    233
+   ],
+   "note": "two needle candidates: -79° -> 1 psi and 106° -> 2 psi (two-ended needle (opposite arm 0.88 r long)); do not trust this value"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "psi",
+   "value": 1.4
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 30
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": -79.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 1.19
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.88
+  },
+  {
+   "name": "Full Scale",
+   "units": "psi",
+   "value": 2.0
+  },
+  {
+   "name": "Scale Labels Used",
+   "units": "",
+   "value": "3 of 7"
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 389,
+ "version": {
+  "service": "0.2.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

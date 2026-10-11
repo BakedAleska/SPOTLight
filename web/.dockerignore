@@ -1,0 +1,9 @@
+# Build context is web/ itself (docker build -t spot-web web), so these are plain paths.
+node_modules
+.next
+.git
+.env*
+npm-debug.log*
+tsconfig.tsbuildinfo
+next-env.d.ts
+**/.DS_Store

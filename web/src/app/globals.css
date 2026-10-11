@@ -219,8 +219,8 @@
 
    The scrim is per-preset and not a style choice. White body text needs
    4.5:1 against the lightest stop of whichever ramp is showing, and these
-   ramps differ by nearly a stop of luminance — Noon's gold needs 42% to clear
-   it where Midnight's indigo clears at 24%. Pinning one scrim across all of
+   ramps differ by nearly a stop of luminance — Noon's gold needs 41% to clear
+   it where Midnight's near-black needs none. Pinning one scrim across all of
    them would mean either illegible text on the bright ramps or a Midnight so
    muddy it stops being a gradient. Each value below is the solved minimum
    plus a few points of margin; re-solve if a stop is ever re-tuned.
@@ -231,40 +231,71 @@
    is one of the ramp's own colours at partial alpha, so it can never be
    brighter than the stop the scrim was solved against.
 
-   Named presets are deliberately theme-independent: "Dusk" should look like
-   dusk whether the console is in light or dark. Only the theme-aware default
+   Named presets are deliberately theme-independent: "Dawn" should look like
+   dawn whether the console is in light or dark. Only the theme-aware default
    in the tables above follows the theme, and it is what Auto falls back to
    when the sweep is suppressed. */
+/* One preset per waypoint of the sweep below, with the same stops and scrims,
+   so the menu offers exactly the eight moods Auto tours and picking one pins
+   the frame you just saw go by. Keep the two lists in step. */
+:root[data-hero="midnight"] {
+  --c-hero-from: #070b24;
+  --c-hero-via: #16215c;
+  --c-hero-to: #3a3785;
+  --c-hero-scrim: 0;
+}
+
 :root[data-hero="dawn"] {
   --c-hero-from: #3a2a7a;
   --c-hero-via: #c0417a;
   --c-hero-to: #e8923a;
-  --c-hero-scrim: 0.38;
+  --c-hero-scrim: 0.39;
 }
 
 :root[data-hero="noon"] {
-  --c-hero-from: #1565c0;
-  --c-hero-via: #2a9fd6;
+  --c-hero-from: #0a5fc8;
+  --c-hero-via: #1b9ad8;
   --c-hero-to: #d9a520;
+  --c-hero-scrim: 0.41;
+}
+
+:root[data-hero="ember"] {
+  --c-hero-from: #6b1f4d;
+  --c-hero-via: #c9352b;
+  --c-hero-to: #e8661f;
+  --c-hero-scrim: 0.3;
+}
+
+:root[data-hero="aurora"] {
+  --c-hero-from: #053530;
+  --c-hero-via: #0d8c6b;
+  --c-hero-to: #35c48a;
   --c-hero-scrim: 0.42;
 }
 
-:root[data-hero="dusk"] {
-  --c-hero-from: #3b5bd9;
-  --c-hero-via: #8b4fd4;
-  --c-hero-to: #e8761f;
-  --c-hero-scrim: 0.32;
+:root[data-hero="storm"] {
+  --c-hero-from: #1a0b3d;
+  --c-hero-via: #6b2fb5;
+  --c-hero-to: #b73fd4;
+  --c-hero-scrim: 0.17;
 }
 
-:root[data-hero="midnight"] {
-  --c-hero-from: #0f1b3d;
-  --c-hero-via: #26306e;
-  --c-hero-to: #4a4a8f;
-  --c-hero-scrim: 0.24;
+:root[data-hero="glacier"] {
+  --c-hero-from: #08233f;
+  --c-hero-via: #1f6ea8;
+  --c-hero-to: #4aa8cc;
+  --c-hero-scrim: 0.36;
+}
+
+:root[data-hero="solar"] {
+  --c-hero-from: #6b1a08;
+  --c-hero-via: #d4480f;
+  --c-hero-to: #e8a21f;
+  --c-hero-scrim: 0.42;
 }
 
 /* ── Auto: the sweep ────────────────────────────────────────────────────────
-   Auto is not a fifth ramp, it is the absence of a choice — so instead of
+   Auto is not another ramp, it is the absence of a choice — so instead of
    picking one mood it tours all of them, and does it hard enough to be the
    point of the card rather than an ambience you stop noticing. Eight moods,
    six seconds apart, no holds: the ramp is always mid-change.
@@ -691,11 +722,63 @@ body {
   animation: caret 600ms linear 2 both;
 }
 
+/* Chart bars growing up from the baseline. Only a `from` keyframe: the
+   animation runs to the bar's own inline height, so one class serves every
+   bar. Height rather than scaleY, so the value label riding the cap moves up
+   with it instead of being squashed. */
+@keyframes grow {
+  from {
+    height: 0;
+  }
+}
+
+.anim-grow {
+  animation: grow 800ms var(--ease-settle) both;
+}
+
 /* One visible focus style everywhere, so keyboard users are never lost. */
 :focus-visible {
   outline: 2px solid var(--c-focus);
   outline-offset: 2px;
   border-radius: 2px;
+}
+
+/* Shared desktop panel rows: columns stretch together; the last panel in a
+   stack absorbs the remainder rather than leaving a blank column footer. */
+@media (min-width: 80rem) {
+  .panel-columns { align-items: stretch; }
+  .panel-columns > * { min-width: 0; min-height: 0; }
+  .panel-stack > section:last-child { flex: 1 1 auto; }
+}
+
+.spotlight-radar-sweep {
+  transform-box: view-box;
+  transform-origin: 0 0;
+  animation: spotlight-radar-sweep 12s linear infinite;
+}
+
+@keyframes spotlight-radar-sweep {
+  to { transform: rotate(360deg); }
+}
+
+.spotlight-loading .spotlight-radar-sweep {
+  animation-duration: 2.4s;
+}
+
+.spotlight-radar-blip {
+  opacity: 0;
+  animation: spotlight-radar-return 12s linear var(--blip-delay) infinite;
+}
+
+.spotlight-radar-caution {
+  filter: drop-shadow(0 0 2px #ffca44);
+}
+
+/* The 90-degree trail takes three seconds to pass a return. Fade throughout
+   that interval, reaching transparency at the tail rather than after it. */
+@keyframes spotlight-radar-return {
+  0% { opacity: 0.8; }
+  25%, 100% { opacity: 0; }
 }
 
 /* Reduced motion. Zeroing duration alone is not enough, and each extra line
@@ -711,6 +794,11 @@ body {
    - scroll-behavior: smooth scrolling is motion the duration overrides never
      touch, because it isn't an animation or a transition. */
 @media (prefers-reduced-motion: reduce) {
+  .spotlight-radar-blip, .spotlight-radar-trail { display: none; }
+  .spotlight-radar-sweep {
+    animation: none !important;
+  }
+
   html {
     scroll-behavior: auto !important;
   }
@@ -746,3 +834,39 @@ body {
     animation: none !important;
   }
 }
+
+/* A small scanner around SPOT only while an action is underway. */
+.spot-activity-ring { animation: spot-scan 2.4s linear infinite; transform-box: fill-box; transform-origin: center; }
+.spot-activity-icon { animation: spot-reading 1.4s ease-in-out infinite; }
+@keyframes spot-scan { to { transform: rotate(360deg); } }
+@keyframes spot-reading { 50% { opacity: 0.45; } }
+@media (prefers-reduced-motion: reduce) {
+  .spot-activity-ring, .spot-activity-icon { animation: none; }
+}
+
+/* Vercel LoadingDots (see components/LoadingDots.tsx). */
+.loading-dots { display: inline-flex; align-items: center; }
+.loading-dots span {
+  animation: loading-dots-blink 1.4s infinite both;
+  width: 5px; height: 5px; border-radius: 50%; display: inline-block; margin: 0 1px;
+}
+.loading-dots span:nth-of-type(2) { animation-delay: 0.2s; }
+.loading-dots span:nth-of-type(3) { animation-delay: 0.4s; }
+@keyframes loading-dots-blink { 0% { opacity: 0.2; } 20% { opacity: 1; } 100% { opacity: 0.2; } }
+@media (prefers-reduced-motion: reduce) { .loading-dots span { animation: none; } }
+.spot-working-dots { filter: drop-shadow(0 1px 2px black); }
+.spot-issue { filter: drop-shadow(0 1px 2px black); }
+.spot-issue-flash { animation: spot-issue-flash 0.9s ease-in-out infinite; }
+@keyframes spot-issue-flash { 50% { opacity: 0.25; } }
+@media (prefers-reduced-motion: reduce) { .spot-issue-flash { animation: none; } }
+
+.spot-floor-arrow { animation: spot-floor-step 1s ease-in-out infinite; filter: drop-shadow(0 1px 2px black); }
+@keyframes spot-floor-step { 50% { transform: translateY(calc(var(--floor-direction) * 8px)); opacity: 0.6; } }
+@media (prefers-reduced-motion: reduce) { .spot-floor-arrow { animation: none; } }
+
+/* Live patrol (/live): a ping ring on the newest stop, and SPOT gliding between stops. */
+.live-ping { animation: live-ping 1.6s ease-out infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes live-ping { 0% { transform: scale(0.6); opacity: 0.9; } 100% { transform: scale(2.6); opacity: 0; } }
+.live-spot { transition: transform 1.6s ease-in-out; }
+.live-card-in { animation: float-in 0.45s ease-out both; }
+@media (prefers-reduced-motion: reduce) { .live-ping { animation: none; } .live-spot { transition: none; } .live-card-in { animation: none; } }

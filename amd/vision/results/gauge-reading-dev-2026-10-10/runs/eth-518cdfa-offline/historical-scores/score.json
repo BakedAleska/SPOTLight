@@ -1,0 +1,2080 @@
+{
+ "summary": {
+  "n": 118,
+  "with_reading": 60,
+  "unit_correct": 25,
+  "strict_correct_all": 6,
+  "tolerant_correct_all": 15,
+  "number_correct_ignoring_unit_all": 27,
+  "accepted": 24,
+  "coverage": 0.203,
+  "accepted_tolerant_correct": 15,
+  "accepted_strict_correct": 6,
+  "accepted_wrong": 9,
+  "abstained": 94,
+  "abstained_but_reading_was_tolerant_correct": 0
+ },
+ "tol_frac": 0.03,
+ "cases": [
+  {
+   "label_units": [
+    "bar"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_0",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "psi"
+   ],
+   "has_reading": true,
+   "unit_correct": true,
+   "strict_correct": false,
+   "tolerant_correct": true,
+   "value_correct_any_unit": true,
+   "number_correct_ignoring_unit": true,
+   "rel_error": 0.006002248226404018,
+   "question_id": "pressure_gauge_1",
+   "accepted": true,
+   "value": 2213.204946098089,
+   "unit": "psi",
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "bar",
+    "kpa"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_2",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "kpa",
+    "psi"
+   ],
+   "has_reading": true,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_3",
+   "accepted": false,
+   "value": 747.968902918567,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "bar",
+    "psi"
+   ],
+   "has_reading": true,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": true,
+   "rel_error": null,
+   "question_id": "pressure_gauge_4",
+   "accepted": false,
+   "value": 836.4123444146835,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "hpa",
+    "mmhg"
+   ],
+   "has_reading": true,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_5",
+   "accepted": false,
+   "value": -1365.5052076683235,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "celsius",
+    "°c"
+   ],
+   "has_reading": true,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_6",
+   "accepted": false,
+   "value": 683.2833148777577,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "bar"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_7",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "bar"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_8",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "bar"
+   ],
+   "has_reading": true,
+   "unit_correct": true,
+   "strict_correct": false,
+   "tolerant_correct": true,
+   "value_correct_any_unit": true,
+   "number_correct_ignoring_unit": true,
+   "rel_error": 0.0044230278892375095,
+   "question_id": "pressure_gauge_9",
+   "accepted": true,
+   "value": 256.8411666930198,
+   "unit": "bar",
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "mpa"
+   ],
+   "has_reading": true,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_10",
+   "accepted": false,
+   "value": 1.5818136983988431,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "bar",
+    "psi"
+   ],
+   "has_reading": true,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": true,
+   "rel_error": null,
+   "question_id": "pressure_gauge_11",
+   "accepted": false,
+   "value": 834.8404044110725,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "hpa",
+    "mba",
+    "millibars",
+    "millimetre of mercury",
+    "mmhg"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_12",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "hpa",
+    "inches",
+    "inhg",
+    "mba",
+    "millibars"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_13",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "kgf/cm2",
+    "kilogram per square centimeter"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_14",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "psi"
+   ],
+   "has_reading": true,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_15",
+   "accepted": false,
+   "value": 8.227605085116654,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "psi"
+   ],
+   "has_reading": true,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_16",
+   "accepted": false,
+   "value": 36.523634646085654,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "kgf/cm2",
+    "kilogram per square centimeter",
+    "psi"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_17",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "psi"
+   ],
+   "has_reading": true,
+   "unit_correct": true,
+   "strict_correct": true,
+   "tolerant_correct": true,
+   "value_correct_any_unit": true,
+   "number_correct_ignoring_unit": true,
+   "rel_error": 0.0,
+   "question_id": "pressure_gauge_18",
+   "accepted": true,
+   "value": 66.51431735876636,
+   "unit": "psi",
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "kgf/cm2",
+    "pound per square centimeter"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_19",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "psi"
+   ],
+   "has_reading": true,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": true,
+   "rel_error": null,
+   "question_id": "pressure_gauge_20",
+   "accepted": false,
+   "value": 11.55110129023442,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "psi"
+   ],
+   "has_reading": true,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": true,
+   "rel_error": null,
+   "question_id": "pressure_gauge_21",
+   "accepted": false,
+   "value": 50.38121427994679,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "psi"
+   ],
+   "has_reading": true,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_22",
+   "accepted": false,
+   "value": -48.2971975296704,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "bar",
+    "kpa",
+    "psi"
+   ],
+   "has_reading": true,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_23",
+   "accepted": false,
+   "value": 100.0,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "psi"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_24",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "kgf/cm2",
+    "pound per square centimeter",
+    "psi"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_25",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "kgf/cm2",
+    "kilogram per square centimeter",
+    "psi"
+   ],
+   "has_reading": true,
+   "unit_correct": true,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": 1.1762983396005877,
+   "question_id": "pressure_gauge_26",
+   "accepted": true,
+   "value": -12.933425282026448,
+   "unit": "psi",
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "psi"
+   ],
+   "has_reading": true,
+   "unit_correct": true,
+   "strict_correct": true,
+   "tolerant_correct": true,
+   "value_correct_any_unit": true,
+   "number_correct_ignoring_unit": true,
+   "rel_error": 0.0,
+   "question_id": "pressure_gauge_27",
+   "accepted": true,
+   "value": 53.58886854791591,
+   "unit": "psi",
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "psi"
+   ],
+   "has_reading": true,
+   "unit_correct": true,
+   "strict_correct": true,
+   "tolerant_correct": true,
+   "value_correct_any_unit": true,
+   "number_correct_ignoring_unit": true,
+   "rel_error": 0.0,
+   "question_id": "pressure_gauge_28",
+   "accepted": true,
+   "value": 53.16340360075897,
+   "unit": "psi",
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "bar",
+    "psi"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_29",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [],
+   "has_reading": true,
+   "unit_correct": true,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": 2.0468909852009913,
+   "question_id": "pressure_gauge_30",
+   "accepted": false,
+   "value": 15.234454926004958,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "bar",
+    "psi"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_31",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "inh2o"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_32",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "kpa",
+    "psi"
+   ],
+   "has_reading": true,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": true,
+   "rel_error": null,
+   "question_id": "pressure_gauge_33",
+   "accepted": false,
+   "value": 211.805536745631,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "mpa",
+    "psi"
+   ],
+   "has_reading": true,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_34",
+   "accepted": false,
+   "value": 3.6744877201909283,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "bar",
+    "psi"
+   ],
+   "has_reading": true,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_35",
+   "accepted": false,
+   "value": 133.92913038983977,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "kgf/cm2"
+   ],
+   "has_reading": true,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_36",
+   "accepted": false,
+   "value": 5.805744227102623,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "bar"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_37",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "mpa"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_38",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "mmhg"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_39",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "kgf/cm2"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_40",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "kgf/cm2"
+   ],
+   "has_reading": true,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_41",
+   "accepted": false,
+   "value": 3.1396715936270283,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "bar",
+    "kgf/cm2",
+    "psi"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_42",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "kgf/cm2",
+    "lbs/in^2",
+    "lbs/in²"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_43",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "mpa"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_44",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "kpa"
+   ],
+   "has_reading": true,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_45",
+   "accepted": false,
+   "value": 111.17084190661063,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "kpa"
+   ],
+   "has_reading": true,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_46",
+   "accepted": false,
+   "value": 111.17084190661063,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "mpa"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_47",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "kgf/cm2"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_48",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "mpa"
+   ],
+   "has_reading": true,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_49",
+   "accepted": false,
+   "value": 2.343357994283009,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "mpa"
+   ],
+   "has_reading": true,
+   "unit_correct": true,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": 99.92621793840812,
+   "question_id": "pressure_gauge_50",
+   "accepted": true,
+   "value": 4.642606025166773,
+   "unit": "mpa",
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "mpa"
+   ],
+   "has_reading": true,
+   "unit_correct": true,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": 8.385222538711224,
+   "question_id": "pressure_gauge_51",
+   "accepted": true,
+   "value": 5.44342907245251,
+   "unit": "mpa",
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "kgf/cm2",
+    "mpa"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_52",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "mpa"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_53",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "mpa"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_54",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "mpa"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_55",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "mpa"
+   ],
+   "has_reading": true,
+   "unit_correct": true,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": 8.91236692309265,
+   "question_id": "pressure_gauge_56",
+   "accepted": true,
+   "value": 3.568452092313354,
+   "unit": "mpa",
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "mpa"
+   ],
+   "has_reading": true,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_57",
+   "accepted": false,
+   "value": 2.5534902733463753,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "mpa"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_58",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "mpa"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_59",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "mpa"
+   ],
+   "has_reading": true,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_60",
+   "accepted": false,
+   "value": 4.657712240177688,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "atm",
+    "psi"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_61",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "kgf/cm2"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_62",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "kgf/cm2",
+    "lb/in^2",
+    "psi"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_63",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "mpa"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_64",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "kpa"
+   ],
+   "has_reading": true,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_65",
+   "accepted": false,
+   "value": 408.2586904277713,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "mpa"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_66",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "mpa"
+   ],
+   "has_reading": true,
+   "unit_correct": true,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": 134782.60510030057,
+   "question_id": "pressure_gauge_67",
+   "accepted": true,
+   "value": -20217.250765045086,
+   "unit": "mpa",
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "mpa"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_68",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "bar",
+    "kpa"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_69",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "kgf/cm2"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_70",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "psi"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_71",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "psi"
+   ],
+   "has_reading": true,
+   "unit_correct": true,
+   "strict_correct": false,
+   "tolerant_correct": true,
+   "value_correct_any_unit": true,
+   "number_correct_ignoring_unit": true,
+   "rel_error": 0.013954960660112408,
+   "question_id": "pressure_gauge_72",
+   "accepted": true,
+   "value": 2070.694582613764,
+   "unit": "psi",
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "psi"
+   ],
+   "has_reading": true,
+   "unit_correct": true,
+   "strict_correct": true,
+   "tolerant_correct": true,
+   "value_correct_any_unit": true,
+   "number_correct_ignoring_unit": true,
+   "rel_error": 0.0,
+   "question_id": "pressure_gauge_73",
+   "accepted": true,
+   "value": 11.446661467859403,
+   "unit": "psi",
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "kgf/cm2",
+    "psi"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_74",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "psi"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_75",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "psi"
+   ],
+   "has_reading": true,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": true,
+   "rel_error": null,
+   "question_id": "pressure_gauge_76",
+   "accepted": false,
+   "value": 34.74091552809136,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "psi"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_77",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "psi"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_78",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "kgf/cm2",
+    "psi"
+   ],
+   "has_reading": true,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": true,
+   "rel_error": null,
+   "question_id": "pressure_gauge_79",
+   "accepted": false,
+   "value": 127.56456814756811,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "bar",
+    "psi"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_80",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "bar",
+    "psi"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_81",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "psi"
+   ],
+   "has_reading": true,
+   "unit_correct": true,
+   "strict_correct": false,
+   "tolerant_correct": true,
+   "value_correct_any_unit": true,
+   "number_correct_ignoring_unit": true,
+   "rel_error": 0.01311182573173843,
+   "question_id": "pressure_gauge_82",
+   "accepted": true,
+   "value": 51.66870311231866,
+   "unit": "psi",
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "psi"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_83",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "psi"
+   ],
+   "has_reading": true,
+   "unit_correct": true,
+   "strict_correct": false,
+   "tolerant_correct": true,
+   "value_correct_any_unit": true,
+   "number_correct_ignoring_unit": true,
+   "rel_error": 0.017875109510542,
+   "question_id": "pressure_gauge_84",
+   "accepted": true,
+   "value": 129.7790764625941,
+   "unit": "psi",
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "psi"
+   ],
+   "has_reading": true,
+   "unit_correct": true,
+   "strict_correct": true,
+   "tolerant_correct": true,
+   "value_correct_any_unit": true,
+   "number_correct_ignoring_unit": true,
+   "rel_error": 0.0,
+   "question_id": "pressure_gauge_85",
+   "accepted": true,
+   "value": 71.56497755165572,
+   "unit": "psi",
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "psi"
+   ],
+   "has_reading": true,
+   "unit_correct": true,
+   "strict_correct": false,
+   "tolerant_correct": true,
+   "value_correct_any_unit": true,
+   "number_correct_ignoring_unit": true,
+   "rel_error": 0.0006050811165837476,
+   "question_id": "pressure_gauge_86",
+   "accepted": true,
+   "value": 46.971561187520564,
+   "unit": "psi",
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "mpa"
+   ],
+   "has_reading": true,
+   "unit_correct": true,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": 8.845220404966597,
+   "question_id": "pressure_gauge_87",
+   "accepted": true,
+   "value": 7.876176323973278,
+   "unit": "mpa",
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "inh2o",
+    "inh₂o"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_88",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "psi"
+   ],
+   "has_reading": true,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_89",
+   "accepted": false,
+   "value": 38.143591620050444,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "inhg",
+    "mmhg"
+   ],
+   "has_reading": true,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_90",
+   "accepted": false,
+   "value": 17.435255530903333,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "kpa",
+    "psi"
+   ],
+   "has_reading": true,
+   "unit_correct": true,
+   "strict_correct": false,
+   "tolerant_correct": true,
+   "value_correct_any_unit": true,
+   "number_correct_ignoring_unit": true,
+   "rel_error": 0.014665614744511824,
+   "question_id": "pressure_gauge_91",
+   "accepted": true,
+   "value": 71.91474450890613,
+   "unit": "psi",
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "psi"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_92",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "bar",
+    "psi"
+   ],
+   "has_reading": true,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_93",
+   "accepted": false,
+   "value": 228.72214032087908,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "psi"
+   ],
+   "has_reading": true,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": true,
+   "rel_error": null,
+   "question_id": "pressure_gauge_94",
+   "accepted": false,
+   "value": 89.68929901291949,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "psi"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_95",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "psi"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_96",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "bar",
+    "psi"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_97",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "bar",
+    "psi"
+   ],
+   "has_reading": true,
+   "unit_correct": true,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": true,
+   "rel_error": 13.19786914147386,
+   "question_id": "pressure_gauge_98",
+   "accepted": true,
+   "value": 34.07488593953726,
+   "unit": "bar",
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "psi"
+   ],
+   "has_reading": true,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": true,
+   "rel_error": null,
+   "question_id": "pressure_gauge_99",
+   "accepted": false,
+   "value": 32.69582206606574,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "bar",
+    "psi"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_100",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "psi"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_101",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "psi"
+   ],
+   "has_reading": true,
+   "unit_correct": true,
+   "strict_correct": true,
+   "tolerant_correct": true,
+   "value_correct_any_unit": true,
+   "number_correct_ignoring_unit": true,
+   "rel_error": 0.0,
+   "question_id": "pressure_gauge_102",
+   "accepted": true,
+   "value": 34.15141537960112,
+   "unit": "psi",
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "psi"
+   ],
+   "has_reading": true,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": true,
+   "rel_error": null,
+   "question_id": "pressure_gauge_103",
+   "accepted": false,
+   "value": 28.12223735106958,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "psi"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_104",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "kgf/cm2"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_105",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "psi"
+   ],
+   "has_reading": true,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": true,
+   "rel_error": null,
+   "question_id": "pressure_gauge_106",
+   "accepted": false,
+   "value": 34.49447031531247,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "bar",
+    "psi"
+   ],
+   "has_reading": true,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_107",
+   "accepted": false,
+   "value": 72.52079946931202,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "mbar",
+    "mmh2o"
+   ],
+   "has_reading": true,
+   "unit_correct": true,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": 360.96570340592586,
+   "question_id": "pressure_gauge_108",
+   "accepted": true,
+   "value": -21355.976500949626,
+   "unit": "mbar",
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "psi"
+   ],
+   "has_reading": true,
+   "unit_correct": true,
+   "strict_correct": false,
+   "tolerant_correct": true,
+   "value_correct_any_unit": true,
+   "number_correct_ignoring_unit": true,
+   "rel_error": 0.017234048861172857,
+   "question_id": "pressure_gauge_109",
+   "accepted": true,
+   "value": 16.275744781778766,
+   "unit": "psi",
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "kgf/cm2",
+    "psi"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_110",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "psi"
+   ],
+   "has_reading": true,
+   "unit_correct": true,
+   "strict_correct": false,
+   "tolerant_correct": true,
+   "value_correct_any_unit": true,
+   "number_correct_ignoring_unit": true,
+   "rel_error": 0.003551375747436017,
+   "question_id": "pressure_gauge_111",
+   "accepted": true,
+   "value": 82.29121281128975,
+   "unit": "psi",
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "bar",
+    "psi"
+   ],
+   "has_reading": true,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_112",
+   "accepted": false,
+   "value": 57.85728960115526,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "kgf/cm2"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_113",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "psi"
+   ],
+   "has_reading": true,
+   "unit_correct": true,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": 0.051193653937178174,
+   "question_id": "pressure_gauge_114",
+   "accepted": true,
+   "value": 12.088727020277549,
+   "unit": "psi",
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "kgf/cm2",
+    "psi"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_115",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "bar",
+    "psi"
+   ],
+   "has_reading": true,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_116",
+   "accepted": false,
+   "value": 74.10539239121489,
+   "unit": null,
+   "latency_ms": null
+  },
+  {
+   "label_units": [
+    "kgf/cm2",
+    "psi"
+   ],
+   "has_reading": false,
+   "unit_correct": false,
+   "strict_correct": false,
+   "tolerant_correct": false,
+   "value_correct_any_unit": false,
+   "number_correct_ignoring_unit": false,
+   "rel_error": null,
+   "question_id": "pressure_gauge_117",
+   "accepted": false,
+   "value": null,
+   "unit": null,
+   "latency_ms": null
+  }
+ ]
+}

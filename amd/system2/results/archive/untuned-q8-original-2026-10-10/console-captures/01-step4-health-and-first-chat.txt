@@ -1,0 +1,7 @@
+# Step 4, 2026-10-10 ~20:20 UTC, repo df63f64 (clean). llama-server launch flags: box/env/llama-server-cmdline.txt
+== health
+{"status":"ok"}
+== chat
+                "content": "ok"
+        "predicted_per_second": 21.215657154980377
+# VRAM check right after (torch.cuda.mem_get_info): VRAM used GB 30.0 of 51.5

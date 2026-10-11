@@ -1,0 +1,138 @@
+{
+ "media_id": "pressure_gauge_111",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "80",
+   "bbox": [
+    319,
+    140,
+    350,
+    165
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "10",
+   "bbox": [
+    178,
+    157,
+    208,
+    184
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "Tire Gauge",
+   "bbox": [
+    222,
+    164,
+    290,
+    199
+   ],
+   "conf": 0.999
+  },
+  {
+   "text": "90",
+   "bbox": [
+    309,
+    175,
+    338,
+    200
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "100",
+   "bbox": [
+    280,
+    196,
+    321,
+    225
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "RHNO",
+   "bbox": [
+    212,
+    208,
+    281,
+    245
+   ],
+   "conf": 0.888
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "pressure",
+   "value": 13.3,
+   "unit": "psi",
+   "confidence": 0.3,
+   "method": "hough_ray_default_sweep",
+   "flags": [
+    "DEFAULT_SWEEP",
+    "UNIT_UNKNOWN",
+    "SHORT_NEEDLE",
+    "AMBIGUOUS_NEEDLE"
+   ],
+   "point": [
+    228,
+    383
+   ],
+   "note": "two needle candidates: -99° -> 13 psi and -134° -> 0 psi (peak ratio 0.84); do not trust this value"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "psi",
+   "value": 13.3
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 30
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": -99.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 0.84
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.08
+  },
+  {
+   "name": "Full Scale",
+   "units": "psi",
+   "value": 100.0
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 337,
+ "version": {
+  "service": "0.2.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

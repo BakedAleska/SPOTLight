@@ -1,0 +1,186 @@
+{
+ "media_id": "pressure_gauge_87",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "08",
+   "bbox": [
+    367,
+    152,
+    412,
+    195
+   ],
+   "conf": 0.749
+  },
+  {
+   "text": "压力表",
+   "bbox": [
+    342,
+    185,
+    447,
+    246
+   ],
+   "conf": 0.982
+  },
+  {
+   "text": "0.4",
+   "bbox": [
+    275,
+    218,
+    323,
+    261
+   ],
+   "conf": 0.997
+  },
+  {
+   "text": "1.2",
+   "bbox": [
+    467,
+    234,
+    510,
+    276
+   ],
+   "conf": 0.993
+  },
+  {
+   "text": "PA",
+   "bbox": [
+    326,
+    287,
+    367,
+    316
+   ],
+   "conf": 0.769
+  },
+  {
+   "text": "MPa",
+   "bbox": [
+    415,
+    297,
+    474,
+    337
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "0",
+   "bbox": [
+    301,
+    333,
+    321,
+    366
+   ],
+   "conf": 0.999
+  },
+  {
+   "text": "1.6",
+   "bbox": [
+    464,
+    358,
+    508,
+    400
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "16F230-31",
+   "bbox": [
+    364,
+    369,
+    449,
+    408
+   ],
+   "conf": 0.999
+  },
+  {
+   "text": "仪表有限公司",
+   "bbox": [
+    384,
+    400,
+    488,
+    442
+   ],
+   "conf": 0.955
+  },
+  {
+   "text": "1500",
+   "bbox": [
+    383,
+    425,
+    434,
+    454
+   ],
+   "conf": 0.968
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "pressure",
+   "value": -233.0,
+   "unit": "MPa",
+   "confidence": 0.3,
+   "method": "hough_ray_default_sweep",
+   "flags": [
+    "DEFAULT_SWEEP",
+    "NEEDLE_OUTSIDE_SCALE"
+   ],
+   "point": [
+    315,
+    535
+   ],
+   "note": "needle at -177° reads -233.3 MPa"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "MPa",
+   "value": -233.0
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 30
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": -177.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 0.52
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.16
+  },
+  {
+   "name": "Full Scale",
+   "units": "MPa",
+   "value": 1500.0
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 397,
+ "version": {
+  "service": "0.1.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

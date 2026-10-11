@@ -1,0 +1,13 @@
+# Vercel project with Root Directory `backend` (README "Deploy on Vercel"). Keeps secrets and dev files out of
+# CLI uploads (git deploys never contain them: they are git-ignored). A denylist on purpose, not a `/*` allowlist:
+# the build step reads ../amd/system1 (vercel_build.py), so nothing outside backend/ may be ignored by accident.
+# vercel.json `excludeFiles` keeps tests and tooling out of the function bundle as well.
+.env
+.env.*
+*.pem
+*.key
+.venv
+venv
+.pytest_cache
+__pycache__
+tests

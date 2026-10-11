@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import useSWR from "swr";
+import { LoadingIndicator } from "./LoadingIndicator";
 import type { Flag } from "@/lib/types";
 import type { DashboardData } from "@/lib/dashboard";
 import { explanationLabel, type FlagAction, type FlagDetailData, type FlagExplanation } from "@/lib/flag-detail";
@@ -30,7 +31,7 @@ export function FlagDetails({ flag, features, onClose, onChanged }: {
   const [message, setMessage] = useState("");
   const [actionError, setActionError] = useState("");
   const [showExplanation, setShowExplanation] = useState(false);
-  const { data, error, isValidating, mutate } = useSWR<FlagDetailData>(`/api/flags/${flag.id}`, read, { revalidateOnFocus: true });
+  const { data, error, isValidating, mutate } = useSWR<FlagDetailData>(`/api/flags/${flag.id}`, read, { revalidateOnFocus: true, refreshInterval: 2500 });
   const explanation = useSWR<FlagExplanation>(
     features.flagExplanations && showExplanation ? `/api/flags/${flag.id}/explanation` : null,
     read, { revalidateOnFocus: false, shouldRetryOnError: false },
@@ -78,19 +79,25 @@ export function FlagDetails({ flag, features, onClose, onChanged }: {
       </div>
       <p className="mt-2 text-sm text-muted">{flag.assetName || data?.flag.asset_id || "No asset"} · {flag.locationName || data?.flag.location_id || "No waypoint"}</p>
       {error && <p role="alert" className="mt-4 text-bad">{error.message}</p>}
-      {!data && !error && <p role="status" className="mt-4">Loading flag details…</p>}
+      {!data && !error && <LoadingIndicator compact label="Loading flag details…" />}
       <button type="button" disabled={saving || isValidating} onClick={() => void mutate()} className={`${BUTTON} mt-3`}>Refresh flag</button>
       {data && <>
         <p className="mt-4 text-sm">Status: <strong>{data.flag.status}</strong> · {data.flag.severity} · score {data.flag.score}</p>
         <p className="mt-1 text-sm text-muted">Mission {data.flag.mission_id ?? "unassigned"}{data.flag.action_id ? ` · Action ${data.flag.action_id}` : ""}</p>
+        {(data.assessment || data.system1?.length) && <section className="mt-5" aria-label="Stored model outputs">
+          <h3 className="font-semibold">Live stored model outputs</h3>
+          {data.assessment && <div className="mt-2 space-y-2 text-sm"><p className="text-muted">{String(data.assessment.model ?? "unknown")} · {String(data.assessment.state ?? "pending")}</p><p>{String(data.assessment.answer ?? "")}</p><p className="text-muted">{String(data.assessment.reasoning ?? "")}</p><p><strong>Recommended action: </strong>{String(data.assessment.recommended_action ?? "Pending")}</p></div>}
+          <details className="mt-3 text-xs"><summary className="cursor-pointer text-accent-ink">All prediction and assessment fields</summary><pre className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap break-words rounded border border-line bg-canvas p-3">{JSON.stringify({ system1: data.system1, assessment: data.assessment }, null, 2)}</pre></details>
+        </section>}
         <h3 className="mt-5 font-semibold">Evidence</h3>
         <ul className="mt-2 list-disc space-y-2 pl-5 text-sm">
           {data.flag.reasons.filter((reason) => typeof reason.detail === "string").map((reason, index) => <li key={`${reason.rule}-${index}`}>{reason.detail}</li>)}
         </ul>
         {features.flagExplanations && <section className="mt-5" aria-label="Flag explanation">
           <button type="button" disabled={explanation.isLoading} onClick={() => { setShowExplanation(true); if (showExplanation) void explanation.mutate(); }} className={BUTTON}>
-            {explanation.isLoading ? "Loading explanation…" : showExplanation ? "Reload explanation" : "Load explanation"}
+            {showExplanation ? "Reload explanation" : "Load explanation"}
           </button>
+          {explanation.isLoading && <LoadingIndicator compact label="Loading explanation…" />}
           {explanation.error && <p role="alert" className="mt-2 text-bad">{explanation.error.message}</p>}
           {explanation.data && <div className="mt-3 space-y-2 text-sm">
             <p className="text-muted">{explanationLabel(explanation.data)}</p>
@@ -121,7 +128,7 @@ export function FlagDetails({ flag, features, onClose, onChanged }: {
           </li>)}</ul>
         </section>}
       </>}
-      <p role="status" className="mt-3 text-sm">{saving ? "Saving…" : message}</p>
+      {saving ? <LoadingIndicator compact label="Saving flag…" /> : <p role="status" className="mt-3 text-sm">{message}</p>}
       {actionError && <p role="alert" className="mt-2 text-bad">{actionError}</p>}
     </dialog>
   );

@@ -1,6 +1,9 @@
 export type FlagAction = "ACKNOWLEDGE" | "RESOLVE" | "ESCALATE";
 
 export interface FlagDetailData {
+  assessment?: Record<string, unknown> | null;
+  system1?: Record<string, unknown>[];
+  event?: Record<string, unknown> | null;
   flag: {
     flag_id: number;
     title: string;

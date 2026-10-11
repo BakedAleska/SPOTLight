@@ -1,0 +1,437 @@
+{
+ "mb_000.jpg": {
+  "min": 0,
+  "max": 10,
+  "unit": "bar"
+ },
+ "mb_002.jpg": {
+  "min": -100,
+  "max": 500,
+  "unit": "kPa"
+ },
+ "mb_003.jpg": {
+  "min": 0,
+  "max": 28000,
+  "unit": "kPa"
+ },
+ "mb_004.jpg": {
+  "min": 0,
+  "max": 2500,
+  "unit": "bar"
+ },
+ "mb_009.jpg": {
+  "min": 0,
+  "max": 400,
+  "unit": "bar"
+ },
+ "mb_011.jpg": {
+  "min": 0,
+  "max": 2500,
+  "unit": "bar"
+ },
+ "mb_014.jpg": {
+  "min": 0,
+  "max": 10,
+  "unit": "kg/cm²"
+ },
+ "mb_015.jpg": {
+  "min": 0,
+  "max": 160,
+  "unit": "psi"
+ },
+ "mb_017.jpg": {
+  "min": 0,
+  "max": 15,
+  "unit": "kg/cm²"
+ },
+ "mb_018.jpg": {
+  "min": 0,
+  "max": 200,
+  "unit": "psi"
+ },
+ "mb_019.jpg": {
+  "min": 0,
+  "max": 10,
+  "unit": "kg/cm²"
+ },
+ "mb_020.jpg": {
+  "min": 0,
+  "max": 100,
+  "unit": "psi"
+ },
+ "mb_021.jpg": {
+  "min": 0,
+  "max": 60,
+  "unit": "psi"
+ },
+ "mb_022.jpg": {
+  "min": 0,
+  "max": 160,
+  "unit": "psi"
+ },
+ "mb_023.jpg": {
+  "min": 0,
+  "max": 100,
+  "unit": "psi"
+ },
+ "mb_024.jpg": {
+  "min": 0,
+  "max": 160,
+  "unit": "psi"
+ },
+ "mb_025.jpg": {
+  "min": 0,
+  "max": 200,
+  "unit": "psi"
+ },
+ "mb_026.jpg": {
+  "min": 0,
+  "max": 28,
+  "unit": "kg/cm²"
+ },
+ "mb_027.jpg": {
+  "min": 0,
+  "max": 120,
+  "unit": "psi"
+ },
+ "mb_028.jpg": {
+  "min": 0,
+  "max": 100,
+  "unit": "psi"
+ },
+ "mb_029.jpg": {
+  "min": 0,
+  "max": 4,
+  "unit": "bar"
+ },
+ "mb_031.jpg": {
+  "min": 0,
+  "max": 140,
+  "unit": "psi"
+ },
+ "mb_032.jpg": {
+  "min": 0,
+  "max": 50,
+  "unit": "inH2O"
+ },
+ "mb_033.jpg": {
+  "min": 0,
+  "max": 100,
+  "unit": "psi"
+ },
+ "mb_034.jpg": {
+  "min": 0,
+  "max": 1.6,
+  "unit": "MPa"
+ },
+ "mb_035.jpg": {
+  "min": 0,
+  "max": 16,
+  "unit": "bar"
+ },
+ "mb_036.jpg": {
+  "min": 0,
+  "max": 25,
+  "unit": "kgf/cm²"
+ },
+ "mb_038.jpg": {
+  "min": 0,
+  "max": 1.0,
+  "unit": "MPa"
+ },
+ "mb_039.jpg": {
+  "min": 0,
+  "max": 300,
+  "unit": "mmHg"
+ },
+ "mb_041.jpg": {
+  "min": 0,
+  "max": 1.0,
+  "unit": "kgf/cm²"
+ },
+ "mb_042.jpg": {
+  "min": 0,
+  "max": 60,
+  "unit": "psi"
+ },
+ "mb_043.jpg": {
+  "min": 0,
+  "max": 50,
+  "unit": "psi"
+ },
+ "mb_044.jpg": {
+  "min": 0,
+  "max": 1.5,
+  "unit": "MPa"
+ },
+ "mb_047.jpg": {
+  "min": 0,
+  "max": 0.4,
+  "unit": "MPa"
+ },
+ "mb_048.jpg": {
+  "min": 0,
+  "max": 10,
+  "unit": "kg/cm²"
+ },
+ "mb_050.jpg": {
+  "min": 0,
+  "max": 0.1,
+  "unit": "MPa"
+ },
+ "mb_051.jpg": {
+  "min": 0,
+  "max": 0.6,
+  "unit": "MPa"
+ },
+ "mb_052.jpg": {
+  "min": 0,
+  "max": 10,
+  "unit": "kgf/cm²"
+ },
+ "mb_053.jpg": {
+  "min": 0,
+  "max": 2.5,
+  "unit": "MPa"
+ },
+ "mb_054.jpg": {
+  "min": 0,
+  "max": 2.5,
+  "unit": "MPa"
+ },
+ "mb_055.jpg": {
+  "min": 0,
+  "max": 1,
+  "unit": "MPa"
+ },
+ "mb_056.jpg": {
+  "min": 0,
+  "max": 1,
+  "unit": "MPa"
+ },
+ "mb_057.jpg": {
+  "min": 0,
+  "max": 0.6,
+  "unit": "MPa"
+ },
+ "mb_058.jpg": {
+  "min": 0,
+  "max": 25,
+  "unit": "MPa"
+ },
+ "mb_059.jpg": {
+  "min": 0,
+  "max": 0.2,
+  "unit": "MPa"
+ },
+ "mb_060.jpg": {
+  "min": 0,
+  "max": 1,
+  "unit": "MPa"
+ },
+ "mb_062.jpg": {
+  "min": 0,
+  "max": 10,
+  "unit": "kg/cm²"
+ },
+ "mb_064.jpg": {
+  "min": 0,
+  "max": 1.5,
+  "unit": "MPa"
+ },
+ "mb_067.jpg": {
+  "min": 0,
+  "max": 0.2,
+  "unit": "MPa"
+ },
+ "mb_071.jpg": {
+  "min": 0,
+  "max": 60,
+  "unit": "psi"
+ },
+ "mb_072.jpg": {
+  "min": 0,
+  "max": 5000,
+  "unit": "psi"
+ },
+ "mb_073.jpg": {
+  "min": 0,
+  "max": 30,
+  "unit": "psi"
+ },
+ "mb_075.jpg": {
+  "min": 0,
+  "max": 60,
+  "unit": "psi"
+ },
+ "mb_076.jpg": {
+  "min": 0,
+  "max": 60,
+  "unit": "psi"
+ },
+ "mb_077.jpg": {
+  "min": 0,
+  "max": 600,
+  "unit": "psi"
+ },
+ "mb_078.jpg": {
+  "min": 0,
+  "max": 150,
+  "unit": "psi"
+ },
+ "mb_079.jpg": {
+  "min": 0,
+  "max": 225,
+  "unit": "psi"
+ },
+ "mb_080.jpg": {
+  "min": -1,
+  "max": 15,
+  "unit": "bar"
+ },
+ "mb_081.jpg": {
+  "min": 0,
+  "max": 60,
+  "unit": "psi"
+ },
+ "mb_082.jpg": {
+  "min": 0,
+  "max": 100,
+  "unit": "psi"
+ },
+ "mb_084.jpg": {
+  "min": 0,
+  "max": 200,
+  "unit": "psi"
+ },
+ "mb_085.jpg": {
+  "min": 0,
+  "max": 100,
+  "unit": "psi"
+ },
+ "mb_086.jpg": {
+  "min": 0,
+  "max": 60,
+  "unit": "psi"
+ },
+ "mb_087.jpg": {
+  "min": 0,
+  "max": 1.6,
+  "unit": "MPa"
+ },
+ "mb_089.jpg": {
+  "min": 0,
+  "max": 200,
+  "unit": "psi"
+ },
+ "mb_090.jpg": {
+  "min": -30,
+  "max": 0,
+  "unit": "inHg"
+ },
+ "mb_091.jpg": {
+  "min": 0,
+  "max": 200,
+  "unit": "psi"
+ },
+ "mb_093.jpg": {
+  "min": 0,
+  "max": 80,
+  "unit": "bar"
+ },
+ "mb_094.jpg": {
+  "min": 0,
+  "max": 160,
+  "unit": "psi"
+ },
+ "mb_096.jpg": {
+  "min": 0,
+  "max": 60,
+  "unit": "psi"
+ },
+ "mb_098.jpg": {
+  "min": 0,
+  "max": 60,
+  "unit": "psi"
+ },
+ "mb_099.jpg": {
+  "min": 0,
+  "max": 60,
+  "unit": "psi"
+ },
+ "mb_100.jpg": {
+  "min": 0,
+  "max": 100,
+  "unit": "psi"
+ },
+ "mb_102.jpg": {
+  "min": 0,
+  "max": 100,
+  "unit": "psi"
+ },
+ "mb_103.jpg": {
+  "min": 0,
+  "max": 60,
+  "unit": "psi"
+ },
+ "mb_105.jpg": {
+  "min": 0,
+  "max": 16,
+  "unit": "kg/cm²"
+ },
+ "mb_106.jpg": {
+  "min": 0,
+  "max": 60,
+  "unit": "psi"
+ },
+ "mb_107.jpg": {
+  "min": 0,
+  "max": 10,
+  "unit": "bar"
+ },
+ "mb_108.jpg": {
+  "min": -100,
+  "max": 0,
+  "unit": "mbar"
+ },
+ "mb_109.jpg": {
+  "min": 0,
+  "max": 60,
+  "unit": "psi"
+ },
+ "mb_110.jpg": {
+  "min": 0,
+  "max": 500,
+  "unit": "psi"
+ },
+ "mb_112.jpg": {
+  "min": 0,
+  "max": 11,
+  "unit": "bar"
+ },
+ "mb_113.jpg": {
+  "min": 0,
+  "max": 25,
+  "unit": "kgf/cm²"
+ },
+ "mb_114.jpg": {
+  "min": 0,
+  "max": 60,
+  "unit": "psi"
+ },
+ "mb_115.jpg": {
+  "min": 0,
+  "max": 140,
+  "unit": "psi"
+ },
+ "mb_116.jpg": {
+  "min": 0,
+  "max": 400,
+  "unit": "psi"
+ },
+ "mb_117.jpg": {
+  "min": 0,
+  "max": 55,
+  "unit": "psi"
+ }
+}

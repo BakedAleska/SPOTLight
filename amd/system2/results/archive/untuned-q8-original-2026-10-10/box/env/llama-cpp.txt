@@ -1,0 +1,16 @@
+commit: 23b0202a189c44a54625aadcb37a946dd1d6278d
+Sat Oct 10 21:25:38 2026 +0200 server: leave a busy slot untouched when a request pins it (#30295)
+dirty: 0 files
+CMAKE_BUILD_TYPE:STRING=Release
+CMAKE_HIP_COMPILER:FILEPATH=/opt/venv/lib/python3.14/site-packages/_rocm_sdk_devel/lib/llvm/bin/clang
+CMAKE_PREFIX_PATH:UNINITIALIZED=/opt/venv/lib/python3.14/site-packages/_rocm_sdk_devel
+GGML_HIP:BOOL=ON
+GGML_HIP_EXPORT_METRICS:BOOL=OFF
+GGML_HIP_GRAPHS:BOOL=ON
+GGML_HIP_MMQ_MFMA:BOOL=ON
+GGML_HIP_NO_VMM:BOOL=ON
+GGML_HIP_RCCL:BOOL=OFF
+GPU_TARGETS:UNINITIALIZED=gfx1100
+
+version: 0.6.0-dev (build 11552, commit 23b0202a1)
+built with GNU 15.2.0 for Linux x86_64

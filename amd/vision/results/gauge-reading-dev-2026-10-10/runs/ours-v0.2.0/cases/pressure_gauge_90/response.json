@@ -1,0 +1,148 @@
+{
+ "media_id": "pressure_gauge_90",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "15",
+   "bbox": [
+    279,
+    217,
+    308,
+    250
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "-20",
+   "bbox": [
+    180,
+    246,
+    219,
+    281
+   ],
+   "conf": 0.999
+  },
+  {
+   "text": "-10",
+   "bbox": [
+    351,
+    268,
+    390,
+    300
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "-30",
+   "bbox": [
+    189,
+    424,
+    221,
+    454
+   ],
+   "conf": 0.969
+  },
+  {
+   "text": "inHg",
+   "bbox": [
+    251,
+    447,
+    301,
+    483
+   ],
+   "conf": 0.999
+  },
+  {
+   "text": "mmHg",
+   "bbox": [
+    246,
+    480,
+    310,
+    514
+   ],
+   "conf": 0.999
+  },
+  {
+   "text": "0",
+   "bbox": [
+    397,
+    480,
+    412,
+    499
+   ],
+   "conf": 0.996
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "dial_value",
+   "value": 33.2,
+   "unit": "inHg",
+   "confidence": 0.3,
+   "method": "hough_ray_default_sweep",
+   "flags": [
+    "DEFAULT_SWEEP",
+    "NEEDLE_OUTSIDE_SCALE",
+    "SHORT_NEEDLE",
+    "AMBIGUOUS_NEEDLE"
+   ],
+   "point": [
+    313,
+    463
+   ],
+   "note": "two needle candidates: 164° -> 33 inHg and -19° -> 13 inHg (two-ended needle (opposite arm 0.88 r long)); do not trust this value"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "inHg",
+   "value": 33.2
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 30
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": 164.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 1.57
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.88
+  },
+  {
+   "name": "Full Scale",
+   "units": "inHg",
+   "value": 30.0
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 312,
+ "version": {
+  "service": "0.2.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

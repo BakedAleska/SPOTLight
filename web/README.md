@@ -13,12 +13,14 @@ To start just the dashboard against the existing Docker backend:
 docker compose up -d web
 ```
 
-The overview fetches `/api/dashboard` immediately and every 10 seconds while visible. This Next.js server
+The overview fetches `/api/dashboard` immediately and every 2.5 seconds while visible. This Next.js server
 route requests `/api/v1/insights/overview`, `/flags?status=OPEN&limit=500`, `/assets`, `/locations`, and
 `/insights/reliability?group_by=battery_band` from FastAPI. Backend order and scores are preserved.
 Up to 500 open escalated flags are displayed, with the total shown when the queue is larger. Metrics and
-battery bands come from backend data, replacing the frontend CSV analysis. Failed requests show an error
-and Retry; a failed refresh retains the last successful data with a connection warning. Refresh now
+battery bands come from backend data, replacing the frontend CSV analysis. The battery chart uses a
+0–100 axis, visible bars and the backend's above-25% success rate as its reference line. The initial dashboard renders on the server. When the backend is unavailable, the console shows
+explicitly labeled challenge-kit data with flag details/actions/explanations disabled. Polling
+automatically restores live data after the backend recovers. Refresh now
 requests an immediate update.
 
 The V2 comparison uses the backend's matched-battery metric (actions above 40% battery), rather than
@@ -46,6 +48,28 @@ For native development set them in `web/.env.local` and restart the dev server.
 Reopen reverses the flag's status change; it does not delete the recorded acknowledgement, resolution,
 or note. After closing an acknowledged/resolved flag, reopen its detail at `/?flag=<flag_id>`.
 
+## AI Assistance (`/assistant`)
+
+A ChatGPT-style chat over the mission data (contract: `docs/chat-contract.md`). The browser only calls
+`/api/chat/**`; those routes proxy to FastAPI's `/api/v1/chat` with `BACKEND_URL`, and the messages
+route pipes the backend's SSE stream through unbuffered (Stop aborts it upstream). Chats, titles and
+history live in Postgres; the last model, mode and history-panel state are remembered in localStorage.
+
+- `FEATURE_AI_ASSISTANT=false` turns it off: every `/api/chat` route answers 404 and the page shows a notice.
+- No Gemini key on the backend shows "Gemini API key not configured"; history still loads.
+- The chat UI lives in `src/app/assistant/layout.tsx`, and the live answer in a module-level store
+  (`src/lib/chat/store.ts`), so a new chat's URL can change to `/assistant/<id>` mid-answer without
+  dropping the stream.
+- **Mission chats** (contract §9). "Ask AI" on the All missions and Flagged cards, and "Ask AI about <id>"
+  on the replay page, open `/assistant?mission=<id>`. That page shows the mission's context card (status,
+  failed actions, anomalies, open flags, hidden-failure warning) and its own suggestions, and the first
+  send creates the conversation with `mission_id`. "Focus on a mission" in the composer is a searchable
+  picker over `/api/chat/missions`. Inside a mission chat, the header chip links to the replay, and history
+  rows carry a mission badge. An unknown id shows a notice and falls back to a normal new chat. The helpers
+  are in `src/lib/chat/mission.ts` and the UI is in `src/components/chat/MissionFocus.tsx`.
+- Tests: `npm run test:chat` (SSE parser, citation chips, history groups, grounding badge, proxy routes,
+  mission chats).
+
 For native development with Node.js installed:
 
 ```bash
@@ -58,3 +82,38 @@ The default backend is `http://127.0.0.1:8000/api/v1`. Set `BACKEND_URL` in `web
 In Docker, set `WEB_BACKEND_URL` in the root `.env` instead. Include `/api/v1` in either URL. These are
 server settings; the browser always requests its own `/api/dashboard` origin. No frontend admin secret
 or browser CORS configuration is required for these reads.
+
+## Deploy on Vercel
+
+Import the repository as a new Vercel project with these settings:
+
+- **Root Directory:** `web/`
+- **Framework Preset:** Next.js (auto-detected; default build and output settings, no `vercel.json`)
+- **Node.js:** 24.x, pinned by `engines.node` in `package.json`, matching CI
+
+`/` streams the initial dashboard from the server and then polls `/api/dashboard`. That route
+and the `/api/flags/*` routes run as Vercel Functions that proxy to FastAPI. The offline fallback reads `web/data/kit/*.csv` at runtime; keep these files in the deployment.
+
+Environment variables (Project Settings → Environment Variables):
+
+| Variable | Required | Value |
+| --- | --- | --- |
+| `BACKEND_URL` | Yes | Public HTTPS URL of the FastAPI backend, including `/api/v1` (its production domain, e.g. `https://<backend>.vercel.app/api/v1`: preview URLs sit behind Deployment Protection). Server-only; never sent to the browser. |
+| `FEATURE_FLAG_DETAILS`, `FEATURE_FLAG_ACTIONS`, `FEATURE_FLAG_EXPLANATIONS` | No | Set `false` to switch a feature off (default `true`). |
+| `EXPLAIN_TIMEOUT_MS` | No | Explanation request timeout, 5000–120000 (default 50000). |
+
+Without `BACKEND_URL` the routes fall back to `http://127.0.0.1:8000/api/v1`, which does not exist on Vercel. The page
+still loads with a notice that it is showing challenge-kit data. Env changes only apply to new deployments, so
+redeploy after setting them. If the backend later moves to direct browser calls, it will need a `NEXT_PUBLIC_API_URL`
+(inlined at build time) and CORS for the Vercel domain. The current server proxy needs neither.
+
+## Live model outputs
+
+Overview and Analytics include live Laya probability charts, System 2 confidence
+and assessments, model response latency, prediction answers, and pipeline outputs.
+See [MODEL-STREAM.md](MODEL-STREAM.md) for the endpoint wiring, data limits and
+validation. With no reachable backend the panels explicitly wait for results.
+
+For native development, copy `.env.example` to `.env.local` and set `BACKEND_URL`
+when the backend is deployed. Optional `BACKEND_ADMIN_TOKEN` enables model-call
+metrics; it stays on the server. Restart Next.js after configuring these values.

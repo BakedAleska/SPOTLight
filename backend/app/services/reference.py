@@ -111,6 +111,10 @@ class Reference:
         if not action_id:
             return None
         base = self.actions.get(action_id)
+        src = (details or {}).get("source_action_id")
+        if base is None and src in self.actions:
+            # A live event (fresh action id) re-sending a kit row: the kit row is the base, the details win.
+            base = dict(self.actions[src], action_id=action_id, timestamp=None)
         merged: Dict[str, Any] = dict(base) if base else {"action_id": action_id}
         for src in (self._started.get(action_id) or {}, details or {}):
             for k in ("mission_id", "location_id", "asset_id", "action_type", "status", "sequence",
@@ -150,12 +154,18 @@ class Reference:
         battery = _int(details.get("battery_pct"))
         # Same shape as `db/setup.py seed`: the event's details, plus the joined reading/anomaly on results.
         payload: Dict[str, Any] = dict(details)
+        if mission_id and mission_id not in self.missions and isinstance(details.get("live"), dict):
+            # Live runs are not kit missions: events.mission_id references `missions`, so the live mission id
+            # stays in the payload (details.mission / details.live) and in raw.spot_event_log only.
+            mission_id = None
         if action_id:
             a = self.action(action_id, details) or {}
             location_id, asset_id = a.get("location_id"), a.get("asset_id")
             if battery is None:
                 battery = a.get("battery_pct")
-            if etype in ACTION_RESULT_TYPES:
+            if etype in ACTION_RESULT_TYPES and ("reading" in details or "anomaly" in details):
+                rd, an = details.get("reading"), details.get("anomaly")   # live: sent with the event
+            elif etype in ACTION_RESULT_TYPES:
                 rd, an = self.reading_of(action_id), self.anomaly_of(action_id)
                 if rd:
                     payload["reading"] = rd
@@ -184,6 +194,9 @@ class Reference:
         mission_id = raw.get("mission_id") or details.get("mission_id")
         if etype == "MISSION_STARTED":
             return None, None, "MISSION_STARTED carries nothing to triage"
+        live = details.get("live") if isinstance(details.get("live"), dict) else None
+        if etype == "MISSION_COMPLETED" and live and mission_id not in self.missions:
+            return None, None, "live run summary (MISSION_COMPLETED of a live run) is stored, not triaged"
         if etype == "MISSION_COMPLETED":
             m = self.mission(mission_id, {"mission_status": details.get("status"),
                                           "end_battery_pct": _int(details.get("end_battery_pct")),
@@ -201,7 +214,10 @@ class Reference:
             a = self.action(action_id, details, raw.get("timestamp"))
             if a is None:
                 return None, None, "action event without action_id"
-            m = self.mission(a.get("mission_id") or mission_id)
+            if live and isinstance(details.get("mission"), dict) and (a.get("mission_id") or mission_id)                     not in self.missions:
+                m = dict(details["mission"])     # live run: the mission record travels with every event
+            else:
+                m = self.mission(a.get("mission_id") or mission_id)
             loc, asset = self.locations.get(a.get("location_id") or ""), self.assets.get(a.get("asset_id") or "")
             if m is None or loc is None or asset is None:
                 return None, None, "unknown %s" % ("mission" if m is None else "location" if loc is None else "asset")
@@ -219,8 +235,14 @@ class Reference:
             a = dict(a, status=details.get("status") or ("FAILED" if etype == "ACTION_FAILED" else "SUCCESS"))
             if "failure_type" in details:
                 a["failure_type"] = details.get("failure_type") or None
-            return "action", T_events.action_event(a, m, loc, asset, self.readings.get(action_id),
-                                                   self.anomalies.get(action_id), source), None
+            if live and ("reading" in details or "anomaly" in details):
+                rd = details.get("reading")
+                rd = {k: v for k, v in rd.items() if k != "reading_id"} if isinstance(rd, dict) else None
+                an = details.get("anomaly")
+                an = {k: v for k, v in an.items() if k != "anomaly_id"} if isinstance(an, dict) else None
+            else:
+                rd, an = self.readings.get(action_id), self.anomalies.get(action_id)
+            return "action", T_events.action_event(a, m, loc, asset, rd, an, source), None
         return None, None, "unknown event_type %r" % etype
 
     def _action_event(self, a: dict, m: dict, source: str) -> Optional[dict]:

@@ -1,9 +1,12 @@
-# Light CI: unit tests and builds only. No secrets, no database, no model weights, nothing pushed.
+# Light CI: unit tests, builds, and the DB tests on a throwaway pgvector service container. No secrets (no
+# GEMINI_API_KEY: Gemini is respx-mocked), no model weights, nothing pushed.
 # Local equivalents: make test-policy / test-compose / test-backend / test-mcp / test-system1-fast / test-system2 /
-# test-gateway / test-vision / test-contract / test-orchestrator, and `npm ci && npm run lint && npm run build` in
-# web/. The only download beyond packages is the ~30 MB RapidOCR ONNX set (cached; the vision image bakes it in).
-# Left out on purpose (heavy or needs the stack): real-Laya system1 tests, DB integration tests, e2e, and the torch
-# images (embed, system1). See docs/RUNNING.md.
+# test-gateway / test-vision / test-contract / test-orchestrator / test-chat-contract, make test-chat-db / test-graph /
+# test-db (against the compose Postgres), make test-web (web/: lint + test:chat + test:flags), and
+# `npm ci && npm run build` in web/. The only download beyond packages is the ~30 MB RapidOCR ONNX set (cached; the
+# vision image bakes it in). Left out on purpose (heavy or needs the stack): real-Laya system1 tests, the backend
+# integration test, e2e, the graph tests that need ingested documents or a live embed service, and the torch images
+# (embed, system1). See docs/RUNNING.md.
 name: CI
 
 on:
@@ -44,12 +47,86 @@ jobs:
       # Static: compose vs its header table vs the contract/RUNNING.md port tables, healthchecks, depends_on, BIND_ADDR.
       - name: Compose drift guard (make test-compose)
         run: python -m pytest tests/test_compose_consistency.py -q -p no:cacheprovider
-      # Includes tests/test_system2_integration.py, which imports amd/system2 from this checkout.
+      # Includes tests/test_system2_integration.py, which imports amd/system2 from this checkout, and the chat unit
+      # tests (tests/test_chat_*.py: FakeChatRepo + respx-mocked Gemini, so no GEMINI_API_KEY).
       - name: Backend unit tests (make test-backend; DB integration tests skipped)
         working-directory: backend
         env:
           SKIP_INTEGRATION: "1"
         run: python -m pytest -q -p no:cacheprovider
+
+  chat-contract:
+    name: chat contract (golden SSE, backend side)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements*.txt
+      - name: Install
+        run: python -m pip install -r backend/requirements-dev.txt
+      # Real backend turns (app + ChatService + grounding, FakeChatRepo, respx-mocked Gemini) vs
+      # tests/contract/chat_golden/, plus the shared citation fixtures (chat_citations.json). The web job replays the
+      # same goldens through the real proxy route, SSE parser and store (web/tests/chat-contract.test.ts).
+      - name: Chat cross-layer contract (make test-chat-contract)
+        run: python -m pytest tests/contract/test_chat_contract.py -q -p no:cacheprovider
+
+  chat-db:
+    name: db integration (chat, graph, seed) on pgvector
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Same image as docker-compose.yml's db. The tests create (and drop) their own spot_*test_<hex> databases and
+    # roles; there is no `spot` database here, so the graph tests that need ingested documents skip, and the vector
+    # paths use the synthetic vectors the tests insert (no embed service).
+    services:
+      postgres:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_PASSWORD: postgres   # throwaway CI database, not a secret
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      DB_PORT: "5432"
+      POSTGRES_PASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements*.txt
+      # The backend venv runs these locally too (make test-chat-db / test-graph / test-db): psycopg + pool + pytest.
+      - name: Install
+        run: python -m pip install -r backend/requirements-dev.txt
+      # The DB tests skip (not fail) when Postgres is unreachable, so prove it is up, with pgvector, first.
+      - name: Postgres + pgvector reachable
+        run: |
+          python - <<'EOF'
+          import os, psycopg
+          url = "postgresql://postgres:%s@localhost:%s/postgres" % (os.environ["POSTGRES_PASSWORD"], os.environ["DB_PORT"])
+          with psycopg.connect(url, connect_timeout=10) as c:
+              print(c.execute("SELECT version()").fetchone()[0])
+              assert c.execute("SELECT 1 FROM pg_available_extensions WHERE name = 'vector'").fetchone(), "no pgvector"
+          EOF
+      # 010/011 migrations twice, ChatRepo as a spot_app member, spot_mcp_reader can't read chats.
+      - name: Chat DB tests (make test-chat-db)
+        run: python -m pytest db/tests/test_chat.py -q -p no:cacheprovider -rs
+      - name: Knowledge graph DB tests (make test-graph)
+        run: python -m pytest db/tests/test_graph.py -q -p no:cacheprovider -rs
+      - name: Seed is non-destructive (make test-db)
+        run: python -m pytest tests/test_seed_nondestructive.py -q -p no:cacheprovider -rs
 
   mcp:
     name: mcp
@@ -148,6 +225,7 @@ jobs:
       - name: Vision tests (make test-vision)
         working-directory: amd/vision
         run: python -m pytest tests -q -p no:cacheprovider
+      # tests/contract/test_chat_contract.py skips itself here (no backend deps); the chat-contract job runs it.
       - name: Vision -> orchestrator -> System 2 contract (make test-contract)
         run: python -m pytest tests/contract -q -p no:cacheprovider
 
@@ -198,7 +276,7 @@ jobs:
         run: python -m pytest service/tests -q -p no:cacheprovider
 
   web:
-    name: web (lint + build)
+    name: web (lint + tests + build)
     runs-on: ubuntu-latest
     timeout-minutes: 10
     defaults:
@@ -217,6 +295,11 @@ jobs:
           cache-dependency-path: web/package-lock.json
       - run: npm ci
       - run: npm run lint
+      # tsx + node:test, offline (fetch is stubbed). test:chat includes chat-contract.test.ts, which replays the
+      # backend's golden SSE transcripts (tests/contract/chat_golden/) through the real proxy route, parser and store.
+      - run: npm run test:chat
+      - run: npm run test:flags
+      - run: npm run test:live
       # Needs network for next/font/google (Fira Sans, Fira Code); no env or secrets.
       - run: npm run build
 
@@ -248,6 +331,10 @@ jobs:
         run: docker build -t spot-mcp:ci amd/mcp
       - name: Build system2 (context amd/system2)
         run: docker build -t spot-system2:ci amd/system2
+      - name: Build web (context web)
+        run: docker build -t spot-web:ci web
+      - name: Build live-runner (context ., scripts/live_runner.Dockerfile)
+        run: docker build -f scripts/live_runner.Dockerfile -t spot-live-runner:ci .
 
   docker-build:
     name: image ${{ matrix.service }} (build + healthy)

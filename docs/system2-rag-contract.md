@@ -315,6 +315,27 @@ All of it is one transaction (readers see the old or the new graph), logged to `
 node kind and per rel) and each embedding batch to `app.model_calls`. ~1 s without embedding; ~20 s on CPU to embed the
 ~70 summary nodes the first time. Runtime nodes (new operator notes and explanations) are picked up on the next run.
 
+### Live rows (`props.source = 'live'`, ADDED 2026-10-11; `docs/backend-services-contract.md` "Live simulation")
+The live simulation writes graph rows **as each stop is processed**, not through `graph_build.py`. Every live node has
+`props.source = 'live'`, `props.built_by = 'live'`, `props.run_id`, `props.route_id`, `props.stop`; every live edge has
+the same `source`, `run_id` and `stop`. The build never deletes them (its node delete is limited to
+`built_by = 'graph_build'` and its edge rewrite to `fk | stat | extract | curated`).
+- `mission:LIVE-<run>` (at claim) — the run.
+- `action:LIVE-<run>-<stop>` (document-backed: `event:act-LIVE-<run>-<stop>`) `part_of` the mission, `at` its
+  location, `inspects` its asset, `of_type` its action type, `failed_with` its failure type when it failed.
+- `anomaly:LIVE-<run>-<stop>` when the stop's log has an anomaly: `of_type` anomaly type, `raised_on` asset, `during`
+  the action.
+- `flag:<flag_id>` on a red stop: `flags` the action, `triggered` each fired policy rule.
+- `explanation:<assessment_id>` (red) or `explanation:live-<capture_id>` (green), document-backed, only for a real
+  System 2 answer (never a template): `explains` the flag (red) or the action (green; an extension of the relation
+  for live stops, which have no flag).
+Edges to kit nodes that do not exist are skipped. Node summaries are embedded by the live runner through the
+backend (`POST /live/runs/{id}/embeddings`); document-backed nodes reuse their document's vector, as in the build.
+`graph_neighborhood` and `match_kg_nodes*` see them as soon as they are written (a kit flag's 2-hop neighbourhood
+reaches live actions on the same asset). Known gap: MCP `get_flag_context` on a **live** flag has no `actions` row to
+bundle (live actions are not kit actions), so its own packet reports the action as missing; the live console shows the
+packet the backend built for that stop instead.
+
 ### MCP (`amd/mcp`)
 - `get_flag_context` gains a bounded `graph` section (≤ ~300 tokens): the 1–2-hop neighbourhood of the flag's action, asset, location, failure_type/anomaly_type and triggered rules, with manual/topic links ranked first. Each fact is a readable triple (`WP09 —has_environment→ HIGH_NOISE`) cited by `node_id`/`evidence`. The whole packet stays ≤ 1,500 tokens.
 - New tool `graph_neighborhood(entity, hops=2, k=20)`: `entity` is a node_id, or a name/id resolved with `match_kg_nodes_text` (falling back to vector).

@@ -9,8 +9,16 @@ from pathlib import Path
 from typing import List, Optional
 
 # backend/app/config.py -> repo root is two levels above backend/
-_REPO_ROOT = Path(__file__).resolve().parents[2]
+_BACKEND_DIR = Path(__file__).resolve().parents[1]
+_REPO_ROOT = _BACKEND_DIR.parent
+# Vercel bundles only backend/ (its Root Directory): `vercel_build.py` copies the shared triage code and the kit
+# here, mirroring the repo layout. A repo checkout (local, Docker, CI) always wins, so nothing reads the copy there.
+_BUNDLED_ROOT = _BACKEND_DIR / "_shared"
+TRIAGE_DIR_DEFAULT = Path("amd") / "system1"              # folder holding the `triage` package
+KIT_DIR_DEFAULT = Path("amd") / "system1" / "data" / "kit"
 
+# chat.2: Gemma is opt-in (add it to CHAT_MODELS): on 2026-10-10 it took 37 s to the first byte and then a 503.
+DEFAULT_CHAT_MODELS = ["gemini-3.8-flash", "gemini-3.5-flash", "gemini-3.5-flash-lite"]
 DEFAULT_QUERY_PREFIX = ("Instruct: Given an operator question about a SPOT robot inspection, retrieve relevant "
                         "inspection events, anomaly notes, operator notes, and Spot manual passages\nQuery:")
 
@@ -25,12 +33,33 @@ def _unescape(s: str) -> str:
     return s.replace("\\n", "\n")
 
 
+def _rooted(rel: Path) -> Path:
+    """A repo-relative path: the checkout's copy when it exists, else the copy bundled by vercel_build.py."""
+    repo, bundled = _REPO_ROOT / rel, _BUNDLED_ROOT / rel
+    return bundled if not repo.exists() and bundled.exists() else repo
+
+
 def _path(name: str, default: Path) -> Path:
     v = _env(name)
     if not v:
-        return default
+        return _rooted(default)
     p = Path(v)
-    return p if p.is_absolute() else _REPO_ROOT / p
+    return p if p.is_absolute() else _rooted(p)
+
+
+def triage_dir_from_env() -> Path:
+    """The folder holding the `triage` package (`TRIAGE_DIR`); services/triage.py imports it before Settings exist."""
+    return _path("TRIAGE_DIR", TRIAGE_DIR_DEFAULT)
+
+
+def _truthy(v: Optional[str]) -> bool:
+    return (v or "").strip().lower() not in ("", "0", "false", "no", "off")
+
+
+def serverless_from_env() -> bool:
+    """SERVERLESS=1/0 wins; unset -> on when Vercel's runtime env (VERCEL) is present."""
+    v = _env("SERVERLESS")
+    return _truthy(v) if v is not None else _truthy(os.environ.get("VERCEL"))
 
 
 @dataclass
@@ -56,12 +85,16 @@ class Settings:
     orchestrator_url: Optional[str] = None     # set -> /explain asks the LangGraph orchestrator first; unset -> unchanged
     orchestrator_api_key: Optional[str] = None
     orchestrator_timeout_s: float = 42.0       # REQUEST_DEADLINE_S (45) minus the 3 s reserve; ORCH_DEADLINE_S is 40
-    kit_dir: Path = field(default_factory=lambda: _REPO_ROOT / "amd" / "system1" / "data" / "kit")
-    triage_dir: Path = field(default_factory=lambda: _REPO_ROOT / "amd" / "system1")
+    kit_dir: Path = field(default_factory=lambda: _rooted(KIT_DIR_DEFAULT))
+    triage_dir: Path = field(default_factory=lambda: _rooted(TRIAGE_DIR_DEFAULT))
     triage_mode: str = "serial"
     replay_speed: float = 60.0
     replay_max_gap_s: float = 2.0
+    replay_mode: str = "background"        # background (asyncio task) | stepped (replay_runs + POST /replay/step)
+    replay_step_budget_s: float = 10.0
+    serverless: bool = False               # Vercel: no state kept between requests (contract "Serverless deployment")
     breaker_cooldown_s: float = 10.0
+    db_pool_min: int = 1
     db_pool_max: int = 10
     db_connect_timeout_s: float = 3.0
     cors_origins: List[str] = field(default_factory=lambda: ["http://localhost:3000"])
@@ -69,6 +102,16 @@ class Settings:
     request_deadline_s: float = 45.0       # overall deadline for /flags/{id}/context and /explain (audit M4)
     log_requests: bool = True
     service_name: str = "backend"
+    # AI Assistance chat (docs/chat-contract.md §7). The key is never printed: repr=False keeps it out of any
+    # log line that formats the settings object.
+    gemini_api_key: Optional[str] = field(default=None, repr=False)
+    gemini_base_url: str = "https://generativelanguage.googleapis.com/v1beta"
+    chat_models: List[str] = field(default_factory=lambda: list(DEFAULT_CHAT_MODELS))
+    chat_default_model: str = "gemini-3.8-flash"
+    chat_title_model: Optional[str] = "gemini-3.1-flash-lite"   # None -> auto titles only
+    chat_timeout_s: float = 120.0
+    chat_retrieval_budget_s: float = 8.0
+    chat_history_messages: int = 12
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -77,6 +120,10 @@ class Settings:
         mode = (_env("TRIAGE_MODE", "serial") or "serial").lower()
         if mode not in ("serial", "parallel"):
             raise ValueError("TRIAGE_MODE must be 'serial' or 'parallel', got %r" % mode)
+        serverless = serverless_from_env()
+        replay_mode = (_env("REPLAY_MODE", "stepped" if serverless else "background") or "").lower()
+        if replay_mode not in ("background", "stepped"):
+            raise ValueError("REPLAY_MODE must be 'background' or 'stepped', got %r" % replay_mode)
         return cls(
             database_url=db,
             logs_database_url=_env("LOGS_DATABASE_URL", db),
@@ -103,12 +150,17 @@ class Settings:
             orchestrator_url=(_env("ORCHESTRATOR_URL") or "").rstrip("/") or None,
             orchestrator_api_key=_env("ORCHESTRATOR_API_KEY"),
             orchestrator_timeout_s=float(_env("ORCHESTRATOR_TIMEOUT_S", "42") or 42),
-            kit_dir=_path("KIT_DIR", _REPO_ROOT / "amd" / "system1" / "data" / "kit"),
-            triage_dir=_path("TRIAGE_DIR", _REPO_ROOT / "amd" / "system1"),
+            kit_dir=_path("KIT_DIR", KIT_DIR_DEFAULT),
+            triage_dir=triage_dir_from_env(),
             triage_mode=mode,
             replay_speed=float(_env("REPLAY_SPEED", "60") or 60),
             replay_max_gap_s=float(_env("REPLAY_MAX_GAP_S", "2") or 2),
+            replay_mode=replay_mode,
+            replay_step_budget_s=float(_env("REPLAY_STEP_BUDGET_S", "10") or 10),
+            serverless=serverless,
             breaker_cooldown_s=float(_env("BREAKER_COOLDOWN_S", "10") or 10),
+            # Serverless: no idle connection survives a frozen instance, so keep none open between requests.
+            db_pool_min=int(_env("DB_POOL_MIN", "0" if serverless else "1") or 0),
             db_pool_max=int(_env("DB_POOL_MAX", "10") or 10),
             db_connect_timeout_s=float(_env("DB_CONNECT_TIMEOUT_S", "3") or 3),
             cors_origins=[o.strip() for o in (_env("CORS_ORIGINS", "http://localhost:3000") or "").split(",")
@@ -116,4 +168,23 @@ class Settings:
             admin_token=_env("ADMIN_TOKEN"),
             request_deadline_s=float(_env("REQUEST_DEADLINE_S", "45") or 45),
             log_requests=(_env("LOG_REQUESTS", "1") or "1") not in ("0", "false", "no"),
+            gemini_api_key=_env("GEMINI_API_KEY"),
+            gemini_base_url=(_env("GEMINI_BASE_URL", cls.gemini_base_url) or "").rstrip("/"),
+            chat_models=[m.strip() for m in (_env("CHAT_MODELS") or ",".join(DEFAULT_CHAT_MODELS)).split(",")
+                         if m.strip()],
+            chat_default_model=_env("CHAT_DEFAULT_MODEL", cls.chat_default_model) or cls.chat_default_model,
+            chat_title_model=_title_model(),
+            chat_timeout_s=float(_env("CHAT_TIMEOUT_S", "120") or 120),
+            chat_retrieval_budget_s=float(_env("CHAT_RETRIEVAL_BUDGET_S", "8") or 8),
+            chat_history_messages=int(_env("CHAT_HISTORY_MESSAGES", "12") or 12),
         )
+
+
+def _title_model() -> Optional[str]:
+    """CHAT_TITLE_MODEL: unset -> the default; empty, `none` or `off` -> auto titles only. (Compose's `${VAR:-x}`
+    turns an empty value back into the default, so `none` is the way to switch titles off there.)"""
+    v = os.environ.get("CHAT_TITLE_MODEL")
+    if v is None:
+        return Settings.chat_title_model
+    v = v.strip()
+    return None if v.lower() in ("", "none", "off", "false", "0") else v
