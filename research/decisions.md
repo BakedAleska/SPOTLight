@@ -53,6 +53,8 @@ Single source of truth. Each entry is the decision plus why, in one or two lines
 
 - **SPOTbot grounds only plant questions (2026-10-11, user decision; chat contract `chat.4` §10).** A rule-based router, with no extra model call, sends greetings and general questions to a general answer: no retrieval, no citation rule, no "unverified" badge. Mission chats, questions naming an id or using plant words, and follow-ups to cited answers stay strictly grounded. Anything unsure is probed, and grounds only if retrieval finds plant records; the Spot manual alone doesn't count. Forced grounding had made "hi" cite fleet stats and made "how does lidar work?" refuse.
 
+- **Live patrol defaults to a mock Mission 1 (2026-10-11, user decision).** Start route plays kit mission M001 stop by stop in the browser (`/api/live/mock`, `lib/mock-playback.ts`): the kit's robot log, the seeded flags as the stops that need attention, and SPOTbot's stored answers, with no runner, model call or write, so the demo works without the AMD tunnel. Real routes stay in the picker. The page drops model-call telemetry and the knowledge-graph panel for live analytics.
+
 ## Pending
 - Roles.
 - Public access to the AMD services for Vercel (relay VM or tunnel agent; `docs/AMD-K8S-PLAN.md` §5-6).

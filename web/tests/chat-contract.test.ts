@@ -87,6 +87,14 @@ const EXPECT: Record<string, Expect> = {
     thinking: null, error: null, title: "How is the fleet doing?",
     html: ["Cited an unknown source", /aria-label="Source 1: [^"]*"[^>]*>1<\/button>/, "[incident:AN999]"],
   },
+  // chat.4 (§10): small talk gets a general answer: no retrieval, no sources, a neutral badge (never "unverified").
+  general: {
+    question: "hi", model: "gemini-3.8-flash", mode: "fast",
+    content: "Hi! I'm SPOTbot. Ask me about a mission, an asset or a flag and I'll look it up.",
+    chips: [], badge: { tone: "muted", label: "General answer" },
+    thinking: null, error: null, title: "hi",
+    html: ["General answer"],
+  },
 };
 
 /* ── helpers ─────────────────────────────────────────────────────────────── */

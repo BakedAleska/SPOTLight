@@ -5,6 +5,10 @@ The judges watch https://spotlight-web-mu.vercel.app/live. The page reads Neon t
 page, calls Laya / vision / Qwen / the embedder through SSH tunnels, and posts every result to the Vercel backend.
 How it works: `docs/backend-services-contract.md` "Live simulation". Never commit IPs, ports or keys.
 
+**No runner? Use the mock.** The route picker defaults to "Mission 1 · mock patrol": Start route replays kit mission
+M001 in the browser (the seeded flags mark the stops that need attention; their explanations are SPOTbot's stored
+answers). It needs only the web app and the backend, no runner, no tunnel, no model calls, and writes nothing.
+
 ## 1. Box: the five services (in tmux on the box: `ssh spot-amd`)
 | tmux | Port | What | Check on the box |
 |---|---|---|---|

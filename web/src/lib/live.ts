@@ -51,6 +51,16 @@ export interface LiveCapture {
   updated_at: string;
 }
 export interface LiveRunDetail { run: LiveRun; route: LiveRoute | null; captures: LiveCapture[] }
+
+/** Mock live patrol (lib/mock-patrol.ts, GET /api/live/mock): a kit mission replayed in the browser, no runner. */
+export const MOCK_ROUTE_ID = "MOCK-M001";
+export interface MockPatrol {
+  route: LiveRoute;
+  /** One finished capture per stop, in order; the browser reveals them one by one. */
+  captures: LiveCapture[];
+  /** "flags" when the seeded flags were read from the backend; "kit" when it was unreachable (anomaly rule only). */
+  verdicts: "flags" | "kit";
+}
 export interface LiveKg {
   nodes: { node_id: string; kind: string; label: string; embedded: boolean; stop: string | null }[];
   edges: { src: string; rel: string; dst: string; stop: string | null }[];
