@@ -32,7 +32,7 @@ export const nav: NavItem[] = [
     ],
   },
   { label: "Analytics", icon: ChartColumn, href: "/analytics" },
-  { label: "Assets", icon: Boxes },
+  { label: "Assets", icon: Boxes, href: "/assets" },
   { label: "AI review", icon: Sparkles, href: "/review" },
   { label: "Settings", icon: Settings, href: "/settings" },
 ];

@@ -11,6 +11,7 @@ import { TopBar } from "./TopBar";
 const CRUMBS: Record<string, string[]> = {
   "/missions/replay": ["SPOTlight", "Missions", "Path preview"],
   "/": ["SPOTlight", "Overview"],
+  "/assets": ["SPOTlight", "Assets", "Inspection imagery"],
 };
 
 function crumbsFor(pathname: string): string[] {
