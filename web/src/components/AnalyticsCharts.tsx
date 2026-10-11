@@ -86,14 +86,25 @@ const ANIMATED = new Set<unknown>([Area, Bar, Line, Pie, Scatter]);
    size changes. Folding the sidebar or a row partner resizes every chart at
    once, and the whole page redrawing from empty reads as a reload. So a chart
    animates on mount only: the first size change after the one it mounted at
-   switches its series' animation off, and resizes reflow it in place. */
+   switches its series' animation off, and resizes reflow it in place.
+
+   Sizes that land while the page is still loading (a scrollbar appearing,
+   a sibling resolving, sub-pixel layout) don't count: switching animation
+   off mid-entrance snaps the chart to its end state, so on open it looked
+   as if nothing had animated. Only a change after the entrance has had time
+   to play, compared at whole pixels as Recharts lays out, settles it. */
+const ENTRANCE_MS = 1600;
+
 function Plot({ height = 240, children }: { height?: number; children: React.ReactElement<{ children?: React.ReactNode }> }) {
   const [settled, setSettled] = useState(false);
   const size = useRef<string | null>(null);
+  const mounted = useRef<number | null>(null);
 
   const onResize = (width: number, h: number) => {
-    const next = `${width}x${h}`;
-    if (size.current !== null && size.current !== next) setSettled(true);
+    const next = `${Math.round(width)}x${Math.round(h)}`;
+    const now = performance.now();
+    mounted.current ??= now;
+    if (size.current !== null && size.current !== next && now - mounted.current > ENTRANCE_MS) setSettled(true);
     size.current = next;
   };
 
