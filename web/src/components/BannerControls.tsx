@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Check, ChevronDown, RotateCcw } from "lucide-react";
 
 /* The classes that carry a load animation. Listed explicitly rather than
@@ -98,10 +99,18 @@ const CHIP =
 export function BannerControls() {
   const [hero, setHero] = useState<Hero>("auto");
   const [open, setOpen] = useState(false);
+  // Where the menu sits, measured off the trigger at the moment it opens.
+  const [anchor, setAnchor] = useState<DOMRect | null>(null);
 
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLUListElement>(null);
   const optionRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  function openMenu() {
+    if (triggerRef.current) setAnchor(triggerRef.current.getBoundingClientRect());
+    setOpen(true);
+  }
 
   function choose(next: Hero) {
     setHero(next);
@@ -121,10 +130,26 @@ export function BannerControls() {
   useEffect(() => {
     if (!open) return;
     function onPointerDown(event: PointerEvent) {
-      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
+      const target = event.target as Node;
+      if (!rootRef.current?.contains(target) && !menuRef.current?.contains(target)) setOpen(false);
+    }
+    // The menu is fixed to where the trigger was, so if the page moves under
+    // it, it closes rather than floating detached. Scrolls inside the menu
+    // itself are its own and don't count.
+    function onScroll(event: Event) {
+      if (!menuRef.current?.contains(event.target as Node)) setOpen(false);
+    }
+    function onResize() {
+      setOpen(false);
     }
     document.addEventListener("pointerdown", onPointerDown);
-    return () => document.removeEventListener("pointerdown", onPointerDown);
+    window.addEventListener("scroll", onScroll, true);
+    window.addEventListener("resize", onResize);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      window.removeEventListener("scroll", onScroll, true);
+      window.removeEventListener("resize", onResize);
+    };
   }, [open]);
 
   // Opening moves focus onto the current choice, which is where a keyboard
@@ -164,11 +189,11 @@ export function BannerControls() {
         <button
           ref={triggerRef}
           type="button"
-          onClick={() => setOpen((isOpen) => !isOpen)}
+          onClick={() => (open ? setOpen(false) : openMenu())}
           onKeyDown={(event) => {
             if (event.key === "ArrowDown") {
               event.preventDefault();
-              setOpen(true);
+              openMenu();
             }
           }}
           aria-haspopup="listbox"
@@ -196,8 +221,12 @@ export function BannerControls() {
           />
         </button>
 
-        {open && (
+        {/* Portalled to <body> with fixed positioning: the banner clips its
+            overflow (the artwork bleeds past its corners), and nine rows are
+            taller than the banner, so a menu inside it gets cut off. */}
+        {open && anchor && createPortal(
           <ul
+            ref={menuRef}
             id="hero-listbox"
             role="listbox"
             aria-label="Banner gradient"
@@ -206,8 +235,15 @@ export function BannerControls() {
                surface you read, so it gets the console's real panel tokens —
                opaque background, standard border and shadow — rather than
                more glass. It spans exactly the trigger's width (the trigger is
-               sized for the longest hint), so both edges line up. */
-            className="panel-shadow absolute inset-x-0 top-full z-20 mt-1.5 overflow-hidden rounded border border-line bg-surface py-1"
+               sized for the longest hint), so both edges line up. It scrolls
+               if the viewport is too short for all nine rows. */
+            className="panel-shadow fixed z-50 overflow-y-auto overscroll-contain rounded border border-line bg-surface py-1"
+            style={{
+              top: anchor.bottom + 6,
+              left: anchor.left,
+              width: anchor.width,
+              maxHeight: `calc(100dvh - ${anchor.bottom + 6 + 12}px)`,
+            }}
           >
             {HEROES.map((option, i) => {
               const selected = option === hero;
@@ -248,7 +284,8 @@ export function BannerControls() {
                 </li>
               );
             })}
-          </ul>
+          </ul>,
+          document.body,
         )}
       </div>
 
