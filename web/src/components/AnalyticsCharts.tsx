@@ -18,6 +18,7 @@ import {
   YAxis,
   ZAxis,
 } from "recharts";
+import { Children, cloneElement, isValidElement, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Panel } from "./Panel";
@@ -77,10 +78,34 @@ function Section({ id, title, blurb, children }: { id: string; title: string; bl
 }
 
 /** Every chart drills down: a click on a mark opens the rows behind it (/analytics/breakdown). */
-function Plot({ height = 240, children }: { height?: number; children: React.ReactElement }) {
+/** Series that play an entrance animation, and so replay it on every resize. */
+const ANIMATED = new Set<unknown>([Area, Bar, Line, Pie, Scatter]);
+
+/* Recharts replays a series' entrance animation from zero whenever the chart's
+   size changes. Folding the sidebar or a row partner resizes every chart at
+   once, and the whole page redrawing from empty reads as a reload. So a chart
+   animates on mount only: the first size change after the one it mounted at
+   switches its series' animation off, and resizes reflow it in place. A panel
+   that unfolds re-mounts its Plot, so it still plays its entrance again. */
+function Plot({ height = 240, children }: { height?: number; children: React.ReactElement<{ children?: React.ReactNode }> }) {
+  const [settled, setSettled] = useState(false);
+  const size = useRef<string | null>(null);
+
+  const onResize = (width: number, h: number) => {
+    const next = `${width}x${h}`;
+    if (size.current !== null && size.current !== next) setSettled(true);
+    size.current = next;
+  };
+
+  const chart = settled
+    ? cloneElement(children, undefined, Children.map(children.props.children, (child) =>
+        isValidElement(child) && ANIMATED.has(child.type) ? cloneElement(child as React.ReactElement<{ isAnimationActive?: boolean }>, { isAnimationActive: false }) : child,
+      ))
+    : children;
+
   return (
     <div className="my-auto w-full min-w-0 cursor-pointer" style={{ height }}>
-      <ResponsiveContainer width="100%" height="100%">{children}</ResponsiveContainer>
+      <ResponsiveContainer width="100%" height="100%" onResize={onResize}>{chart}</ResponsiveContainer>
     </div>
   );
 }
