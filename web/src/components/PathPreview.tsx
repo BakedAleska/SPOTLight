@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Pause, Play, RotateCcw, Radio, Route, TriangleAlert, ScanLine, CheckCircle2, ArrowRight, AudioLines, ArrowUp, ArrowDown } from "lucide-react";
+import { Pause, Play, RotateCcw, Radio, Route, TriangleAlert, ScanLine, CheckCircle2, ArrowRight, AudioLines, ArrowUp, ArrowDown, Timer, BatteryMedium } from "lucide-react";
 import { Panel } from "./Panel";
 import { LoadingDots } from "./LoadingDots";
 import type { PathEvent, PathFeed, PathMission, PathPoint } from "@/lib/path-types";
@@ -24,7 +24,8 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
   const [mode, setMode] = useState<"replay" | "live">("replay");
   const [elapsed, setElapsed] = useState(0);
   const segments = useMemo(() => buildPlayback(mission, points), [mission, points]);
-  const duration = segments.at(-1)?.end ?? 0;
+  // Whole ms: segment ends are float sums that differ in the last digit between engines, breaking hydration.
+  const duration = Math.ceil(segments.at(-1)?.end ?? 0);
   const frame = playbackAt(segments, elapsed);
   const index = frame?.eventIndex ?? 0;
   const finished = elapsed >= duration;
@@ -148,14 +149,25 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
         <Panel title="Errors along the path" className="max-h-80 xl:max-h-none" bodyClassName="relative overflow-y-auto p-4 xl:min-h-40 xl:overflow-hidden xl:p-0" aside={String(errors.length)}>{/* On desktop the list is lifted out of flow so it adds no height of its own: the panel fills whatever the map leaves in the column and scrolls inside that. */}<div className="flex flex-col gap-3 xl:absolute xl:inset-0 xl:overflow-y-auto xl:p-4" aria-live="polite">{errors.length === 0 ? <p className="text-sm text-muted">No errors observed at this point in the mission.</p> : errors.map(e => <button key={e.id} className="rounded border border-line bg-surface-2 p-3 text-left hover:border-bad" onClick={() => setSelectedId(e.locationId ?? null)}><p className="flex items-center gap-2 text-sm font-medium text-bad"><TriangleAlert size={16} />{e.locationId ?? "Unlocated"} · {e.severity ?? "FAILED"}</p><p className="mt-2 text-sm text-ink">{e.error?.replaceAll("_", " ")}</p><p className="mt-2 font-mono text-xs text-muted">{e.timestamp.split("T")[1]} · {e.actionId}</p></button>)}</div></Panel>
       </div>
     </div>
-    <Panel title="Mission timeline" aside={`${events.length} events`}>
-      <ol ref={timeline} className="flex snap-x gap-3 overflow-x-auto pb-2">{events.map((e, i) => { const latest = i === events.length - 1; return <li key={e.id} className="aspect-square w-48 shrink-0 snap-end">
-        <button onClick={() => setSelectedId(e.locationId ?? null)} className={`flex h-full w-full gap-3 rounded border p-3 text-left transition-colors hover:bg-surface-2 ${latest ? "border-accent-ink bg-surface-2" : "border-line"}`}>
-          <span className={`mt-0.5 shrink-0 ${e.error ? "text-bad" : "text-accent-ink"}`}>{e.error ? <TriangleAlert size={18} /> : e.type === "ACTION_STARTED" ? <ScanLine size={18} /> : <CheckCircle2 size={18} />}</span>
-          <span className="min-w-0"><span className="flex flex-wrap items-center gap-2 text-sm font-medium text-ink">{eventLabel(e)}{latest && <span className="rounded bg-canvas px-1.5 py-0.5 text-[10px] text-accent-ink">LATEST</span>}</span>
-          <span className="mt-1 block text-xs text-muted">{e.locationId ?? "Mission"}{e.assetName ? ` · ${e.assetName}` : ""}</span>
-          {e.error && <span className="mt-1 block text-xs text-bad">{e.error.replaceAll("_", " ")}</span>}
-          <span className="mt-2 block font-mono text-xs text-muted">{e.timestamp.split("T")[1]}{e.durationSec && e.type === "ACTION_STARTED" ? ` · ${e.durationSec}s recorded` : ""}</span></span>
+    <Panel title="Mission timeline" aside={`${events.length} event${events.length === 1 ? "" : "s"}`}>
+      <ol ref={timeline} className="flex snap-x gap-2.5 overflow-x-auto pb-2">{events.map((e, i) => { const latest = i === events.length - 1; const place = e.locationId ? `${e.locationId}${e.assetName ? ` · ${e.assetName}` : ""}` : `Mission ${e.missionId}`; return <li key={e.id} className="aspect-square w-36 shrink-0 snap-end">
+        {/* A fixed-size tile with a fixed skeleton — header, title, place, footer —
+            so a sparse event and a busy one read as the same shape. */}
+        <button onClick={() => setSelectedId(e.locationId ?? null)} title={`${eventLabel(e)} · ${place}`} className={`flex h-full w-full flex-col rounded border p-2.5 text-left transition-colors hover:bg-surface-2 ${latest ? "border-accent-ink bg-surface-2" : e.error ? "border-bad/40" : "border-line"}`}>
+          <span className="flex items-center justify-between gap-2">
+            <span className={e.error ? "text-bad" : "text-accent-ink"}>{e.error ? <TriangleAlert size={15} /> : e.type === "ACTION_STARTED" ? <ScanLine size={15} /> : <CheckCircle2 size={15} />}</span>
+            {latest ? <span className="rounded bg-canvas px-1.5 py-0.5 text-[9px] font-semibold tracking-wide text-accent-ink">LATEST</span> : <span className="nums font-mono text-[10px] text-faint">#{i + 1}</span>}
+          </span>
+          <span className="mt-2 line-clamp-2 text-[13px] leading-tight font-medium text-ink">{eventLabel(e)}</span>
+          <span className="mt-1 line-clamp-2 text-[11px] leading-snug text-muted">{place}</span>
+          {e.error && <span className="mt-1 truncate text-[10px] font-medium tracking-wide text-bad uppercase">{e.error.replaceAll("_", " ")}</span>}
+          <span className="nums mt-auto flex items-center justify-between gap-2 border-t border-line pt-1.5 font-mono text-[10px] text-muted">
+            <span>{e.timestamp.split("T")[1]}</span>
+            <span className="flex items-center gap-2">
+              {e.durationSec && e.type === "ACTION_STARTED" ? <span className="flex items-center gap-0.5"><Timer size={10} aria-hidden="true" />{e.durationSec}s</span> : null}
+              {e.battery != null && <span className="flex items-center gap-0.5"><BatteryMedium size={11} aria-hidden="true" />{e.battery}%</span>}
+            </span>
+          </span>
         </button>
       </li>; })}</ol>{!events.length && <p className="text-sm text-muted">Waiting for mission events.</p>}
     </Panel>
