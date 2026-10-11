@@ -68,21 +68,17 @@ export default function Dashboard({ initialData, analytics }: {
 
       <WelcomeBanner hiddenFailures={data.hiddenFailures} />
 
-      {/* The banner's question, the list that answers it (with search and
-          filters over it), and beside the list a few fleet charts that turn
-          to whichever flag is open. On a wide container the queue takes the
-          left ~60% and the charts the rest, both panels the same height; the
-          filters sit over the queue only, since they filter only the queue.
-          Narrower, everything stacks, queue first. The full chart catalogue
-          is /analytics. */}
+      {/* The banner's question, the list that answers it (severity pills in
+          its header), and beside the list a few fleet charts that turn to
+          whichever flag is open. On a wide container the queue takes the left
+          ~60% and the charts the rest, both panels the same height. Narrower,
+          everything stacks, queue first. The full chart catalogue is
+          /analytics. */}
       <div className="@container">
-        <div className={`grid gap-4 ${analytics ? "@4xl:grid-cols-[minmax(0,3fr)_minmax(22rem,2fr)] @4xl:grid-rows-[auto_1fr]" : ""}`}>
-          <div className="min-w-0 @4xl:col-start-1 @4xl:row-start-1">
-            <QueueFilters flags={flags} value={filter} onChange={setFilter} shown={shown.length} />
-          </div>
-
-          <div id="queue" className="min-w-0 scroll-mt-4 @4xl:col-start-1 @4xl:row-start-2">
+        <div className={`grid gap-4 ${analytics ? "@4xl:grid-cols-[minmax(0,3fr)_minmax(22rem,2fr)]" : ""}`}>
+          <div id="queue" className="min-w-0 scroll-mt-4">
             <PriorityQueue flags={shown} total={isFiltered(filter) ? flags.length : data.flagCount} delay={STAGGER}
+              filters={<QueueFilters flags={flags} total={data.flagCount} value={filter} onChange={setFilter} shown={shown.length} />}
               emptyMessage={isFiltered(filter) ? "No open flags match these filters." : undefined}
               openId={openId} onOpenChange={setOpenId}
               onSelect={data.features.flagDetails ? selectFlag : undefined} />
@@ -91,9 +87,9 @@ export default function Dashboard({ initialData, analytics }: {
           {/* Side by side, the queue sets the row's height and the charts
               fill it (absolutely, so a taller chart never stretches the queue
               into a gap under its last row); 30rem keeps them readable when
-              filters shrink the queue to a row or two. */}
+              a filter shrinks the queue to a row or two. */}
           {analytics && (
-            <div className="relative min-w-0 @4xl:col-start-2 @4xl:row-start-2 @4xl:min-h-[30rem]">
+            <div className="relative min-w-0 @4xl:min-h-[30rem]">
               <div className="h-full @4xl:absolute @4xl:inset-0">
                 <OverviewAnalytics data={analytics} flag={openFlag} delay={STAGGER * 2} />
               </div>

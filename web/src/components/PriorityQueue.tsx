@@ -187,6 +187,7 @@ export function PriorityQueue({
   openId: controlledOpenId,
   onOpenChange,
   emptyMessage = "No open escalated flags need attention.",
+  filters,
 }: {
   flags: Flag[];
   total?: number;
@@ -197,6 +198,8 @@ export function PriorityQueue({
   onOpenChange?: (id: string | null) => void;
   /** Shown when the list is empty, e.g. when filters match nothing. */
   emptyMessage?: string;
+  /** Header controls (the Overview's severity pills), in place of the count. */
+  filters?: React.ReactNode;
 }) {
   const list = useRef<HTMLDivElement>(null);
   const [ownOpenId, setOwnOpenId] = useState<string | null>(null);
@@ -235,7 +238,7 @@ export function PriorityQueue({
   return (
     <Panel
       title="Needs attention"
-      aside={total > flags.length ? `${flags.length} of ${total} open flags` : `${total} open flags`}
+      aside={filters ?? (total > flags.length ? `${flags.length} of ${total} open flags` : `${total} open flags`)}
       bodyClassName=""
       className="h-full"
       delay={delay}

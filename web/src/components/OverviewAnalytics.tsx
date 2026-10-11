@@ -68,7 +68,7 @@ const VALUE_LABEL = { fill: "var(--c-muted)", fontSize: 10 };
 const DIM = 0.28;
 const FADE = "transition-[fill-opacity] duration-300";
 
-const PILL = "h-7 rounded px-2.5 text-xs transition-colors focus-visible:outline-2 focus-visible:outline-accent";
+const PILL = "h-6 rounded px-2 text-xs transition-colors focus-visible:outline-2 focus-visible:outline-accent";
 const PILL_ON = `${PILL} bg-surface-2 font-semibold text-ink`;
 const PILL_OFF = `${PILL} text-muted hover:text-ink`;
 
@@ -130,26 +130,27 @@ export function OverviewAnalytics({
     : chart === "missions" ? <MissionsChart data={data} mission={mission} go={go} />
     : <FailuresChart data={data} mission={mission} go={go} />;
 
+  /* The chart toggles sit in the panel header, where the panel's own width
+     picks the label length: short labels until the header has room. */
+  const toggles = (
+    <div role="group" aria-label="Chart" className="flex items-center gap-0.5 rounded border border-line bg-surface p-px">
+      {OVERVIEW_CHARTS.map((c) => (
+        <button key={c.key} type="button" aria-pressed={chart === c.key} aria-label={c.label} onClick={() => pick(c.key)} className={chart === c.key ? PILL_ON : PILL_OFF}>
+          <span className="whitespace-nowrap @xl:hidden">{c.short}</span>
+          <span className="hidden whitespace-nowrap @xl:inline">{c.label}</span>
+        </button>
+      ))}
+    </div>
+  );
+
   return (
     <Panel
       title="Fleet analytics"
-      aside={mission ? <span className="text-accent-ink">Mission {mission.id} marked</span> : "Challenge kit"}
-      className="h-full"
+      aside={toggles}
+      className="@container h-full"
       bodyClassName="gap-3 p-4"
       delay={delay}
     >
-      {/* One row of toggles at any width: a narrow panel gets the short labels. */}
-      <div className="@container">
-        <div role="group" aria-label="Chart" className="flex w-fit max-w-full items-center gap-0.5 overflow-x-auto rounded border border-line bg-surface p-0.5">
-          {OVERVIEW_CHARTS.map((c) => (
-            <button key={c.key} type="button" aria-pressed={chart === c.key} aria-label={c.label} onClick={() => pick(c.key)} className={chart === c.key ? PILL_ON : PILL_OFF}>
-              <span className="whitespace-nowrap @sm:hidden">{c.short}</span>
-              <span className="hidden whitespace-nowrap @sm:inline">{c.label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
       {flag && (
         <div key={flag.id} className="anim-rise rounded border-l-2 border-accent bg-accent/10 px-3 py-2 text-xs leading-snug text-muted" style={{ "--rise": "6px" } as React.CSSProperties}>
           <p className="truncate">
