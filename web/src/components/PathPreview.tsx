@@ -119,7 +119,7 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
             <text y="65" textAnchor="middle" fill="white" stroke="black" strokeWidth="3" paintOrder="stroke" fontSize="15" fontWeight="bold">SPOT</text>
           </g>}
         </svg>
-        <p className="mt-3 text-xs text-muted">Dashed arrow: route to the next stop · Solid: visited route · !: error. Travel follows the hallways and stairs between stops; activity durations are compressed from the logs.</p>
+        <p className="mt-3 text-xs text-muted">Dashed: route to the next stop · Solid: visited route · !: error. Travel follows the hallways and stairs between stops; activity durations are compressed from the logs.</p>
         <div className="mt-4 flex flex-col gap-3 border-t border-line pt-4">
           <label className="text-xs text-muted">Replay position · event {index + 1} of {mission.events.length}<input className="mt-2 w-full accent-accent-ink" type="range" min="0" max={duration} value={elapsed} onChange={e => setElapsed(Number(e.target.value))} /></label>
           <div className="flex flex-wrap items-center gap-2"><button className={control} onClick={() => {

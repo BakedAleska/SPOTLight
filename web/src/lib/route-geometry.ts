@@ -160,7 +160,7 @@ export function legsPath(legs: Leg[], { from = 0, to = 1 }: { from?: number; to?
     if (leg.kind !== "walk") return [];
     const start = i === 0 ? from : 0, end = i === legs.length - 1 ? to : 1;
     const points = slice(leg.points, start, end);
-    // A pin can sit a few pixels off its hallway line; drop that last little jog so the run (and its arrow) stays
+    // A pin can sit a few pixels off its hallway line; drop that last little jog so the run stays
     // straight into the pin. Only at whole ends, never where the line is cut at SPOT.
     if (end === 1 && points.length > 2 && dist(points.at(-2)!, points.at(-1)!) < JOG) points.pop();
     if (start === 0 && points.length > 2 && dist(points[0], points[1]) < JOG) points.shift();
