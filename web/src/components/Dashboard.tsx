@@ -81,8 +81,12 @@ export default function Dashboard({ initialData, analytics }: {
           the flag opened last. On a wide container the queue takes the left
           ~60% and the charts the rest, both panels the same height. Narrower,
           everything stacks, queue first. The full chart catalogue is
-          /analytics. */}
-      <div className="@container">
+          /analytics. The minimum height leaves <main> room to scroll the
+          queue's top to the top bar ("Go to the priority queue"): the
+          viewport less the 3rem top bar, the queue's 1rem scroll margin and
+          the page's 1rem bottom padding. Without it a short page runs out of
+          scroll first and the banner's foot stays on screen. */}
+      <div className="@container min-h-[calc(100dvh-5rem)]">
         <div className={`grid gap-4 ${analytics ? "@4xl:grid-cols-[minmax(0,3fr)_minmax(22rem,2fr)]" : ""}`}>
           <div id="queue" className="min-w-0 scroll-mt-4">
             <PriorityQueue flags={shown} total={isFiltered(filter) ? flags.length : data.flagCount} delay={STAGGER}
