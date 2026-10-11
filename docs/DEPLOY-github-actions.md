@@ -28,7 +28,7 @@ Create a Vercel deployment token with access to that account/team at <https://ve
 
 ## 2. Configure application secrets in Vercel
 
-Follow `DEPLOY-neon.md` and `DEPLOY-vercel.md` before the first run. The verified Neon project from this deployment is `summer-sound-57299654` (Postgres 17, AWS us-east-2); its main branch has 500 seeded events and 58 flags.
+Follow `DEPLOY-neon.md` and `DEPLOY-vercel.md` before the first run. The verified Neon project from this deployment is `summer-sound-57299654` (Postgres 17, AWS us-east-2); its main branch has 500 seeded events and 51 flags after the completed replay (58 flags before replay).
 
 Use the generated credentials in the private, git-ignored local `.env` from deployment setup. Copy them directly into each project's **Production** environment settings:
 
@@ -83,7 +83,7 @@ The workflow checks:
 
 The summary records the deployed commit and production origins. This does not verify browser rendering, authenticated MCP tools, or replay. Complete **all** remaining checks in `DEPLOY-vercel.md`: authenticated MCP tools/list (17 tools), missing/wrong token rejection, loading the dashboard in a browser, and stepped replay through completion. Drive replay from a trusted local shell with the generated admin token; do not reset demo data automatically on every push.
 
-Embeddings ingestion, graph building and embedding smoke tests remain deferred until an embedding endpoint is available. See `DEPLOY-status-2026-10-10.md` for database evidence and current account blockers.
+Embeddings ingestion, graph building and embedding smoke tests remain deferred until an embedding endpoint is available. See `DEPLOY-status-2026-10-10.md` for database and production verification evidence.
 
 ## References
 
@@ -91,7 +91,7 @@ Embeddings ingestion, graph building and embedding smoke tests remain deferred u
 - [Vercel build and prebuilt deployment](https://vercel.com/docs/cli/deploy)
 - [Vercel CI/CD with GitHub Actions](https://vercel.com/docs/deployments/configure-a-build#using-github-actions)
 
-This workflow has been prepared and validated locally with actionlint, but it has not been pushed or run because repository write permission remains unavailable. The same Vercel account has now accepted direct CLI production deployments of all three projects; those do not enable GitHub Actions automatically.
+This workflow has been prepared and validated locally with actionlint, but it has not been run. Merge it and configure the protected production environment before enabling automated deployments. The same Vercel account has now accepted direct CLI production deployments of all three projects; those do not enable GitHub Actions automatically.
 
 ## Verified project mapping
 

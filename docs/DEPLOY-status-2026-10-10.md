@@ -1,6 +1,6 @@
 # SPOTlight deployment status — 2026-10-10
 
-Deployment is **live**: Neon and all three Vercel projects are deployed and verified. Full stepped replay completed successfully with 500/500 events and zero errors. Publishing the documentation and workflow remains blocked by GitHub repository write permission.
+Deployment is **live**: Neon and all three Vercel projects are deployed and verified. Full stepped replay completed successfully with 500/500 events and zero errors. The documentation and workflow are prepared for review on a separate deployment branch.
 
 ## Source and accounts
 
@@ -79,9 +79,9 @@ Full replay was started with `{"speed":120,"reset":true}` on the new project's m
 
 ## Publishing and automation
 
-The documentation and GitHub Actions workflow are on the local branch `deploy/spotlight-production-20261010`. HTTPS Git push has no terminal GitHub credentials. The connected GitHub app returned 403 (`Resource not accessible by integration`) when creating this branch in `JylerTackson/SpotTheDOT`. SSH authentication was also unavailable; host keys were verified against GitHub's official HTTPS metadata before that test. No branch push or PR creation has succeeded.
+The documentation and GitHub Actions workflow are on `deploy/spotlight-production-20261010`, based on the latest main. The GitHub connector returned 403 when creating a branch; local GitHub CLI authentication now succeeds as `Ammar-btye` and enables publishing through Git.
 
-`deploy-vercel.yml` passes actionlint and deploys MCP → backend → web after successful CI on main, using a protected production environment. It has not been published or run. `DEPLOY-github-actions.md` contains the verified project IDs, production domains and account scope. Configure a fresh Vercel deployment token directly in that GitHub environment; no token values are included in documentation.
+`deploy-vercel.yml` passes actionlint and deploys MCP → backend → web after successful CI on main, using a protected production environment. It has not been run. `DEPLOY-github-actions.md` contains the verified project IDs, production domains and account scope. A repository admin must configure a fresh Vercel deployment token directly in that GitHub environment before running the workflow; no token values are included in documentation.
 
 ## Skipped steps
 
@@ -89,9 +89,9 @@ The documentation and GitHub Actions workflow are on the local branch `deploy/sp
 - Embedding/RAG smoke queries: depend on the absent embedder; documents remain empty, so a positive search-result check cannot pass yet.
 - `db/smoke_test.py --roles`: the script runs embedding queries before its role check and creates a temporary login with a fixed password. Equivalent least-privilege checks were run directly against the actual MCP login instead, with the logging insert rolled back.
 - AMD environment variables and related API keys: intentionally not provisioned until the AMD services exist; deploy with rules-only triage, templated explanations, and text-search fallback.
-- GitHub Actions execution and PR publishing: repository write permission remains unavailable; direct CLI deployment succeeded.
+- GitHub Actions execution: pending workflow merge and production environment configuration; direct CLI deployment succeeded.
 
-No application code was changed. All requested live service, dashboard and replay checks completed; embeddings checks remain deferred. The remaining publishing blocker is GitHub repository write permission.
+No application code was changed. All requested live service, dashboard and replay checks completed; embeddings checks remain deferred. Automated deployment remains pending workflow merge and production environment configuration.
 
 ## Final health outputs
 
