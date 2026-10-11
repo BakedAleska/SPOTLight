@@ -163,7 +163,7 @@ export function FlagDetails({ flag, features, onClose, onChanged }: {
             {data.flag.status !== "RESOLVED" && <button type="button" disabled={saving || !!error || !operator.trim()} onClick={() => void update("RESOLVE")} className={BUTTON}>Resolve</button>}
             {data.flag.status !== "OPEN" && <button type="button" disabled={saving || !!error || !operator.trim()} onClick={() => void update("ESCALATE")} className={BUTTON}>Reopen flag</button>}
           </div>
-          <p className="mt-2 text-xs text-muted">Acknowledged and resolved flags leave the open queue. Reopen returns them; notes and action history are kept.</p>
+          <p className="mt-2 text-xs text-muted">Acknowledged and resolved flags leave the queue; history is kept.</p>
         </section>}
         {data.acks.length > 0 && <section className="mt-5" aria-label="Action history">
           <h3 className="font-semibold">Action history</h3>

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, X } from "lucide-react";
 import {
   Bar,
   BarChart,
@@ -18,6 +18,7 @@ import {
   YAxis,
 } from "recharts";
 import { Panel } from "./Panel";
+import { valueBar } from "./ValueBar";
 import type { Flag } from "@/lib/types";
 import { breakdownHref, type BreakdownQuery } from "@/lib/breakdown-link";
 import {
@@ -35,7 +36,8 @@ import {
 
 /* The Overview's analytics, beside the queue: four of the Analytics page's
    charts behind a toggle, so the fleet picture is one click from the list it
-   explains. With a flag open the panel turns to that flag — it says so, the
+   explains. Once a flag is opened the panel turns to that flag (and stays on
+   it after the row closes, until another opens) — it says so, the
    flag's mission is marked on the Missions chart, and the other charts set
    the mission's own numbers (in the accent, like the open row) against the
    fleet's.
@@ -62,17 +64,16 @@ const TOOLTIP = {
   itemStyle: { color: "var(--c-ink)" },
   cursor: { fill: "var(--c-surface-2)" },
 };
-const VALUE_LABEL = { fill: "var(--c-muted)", fontSize: 10 };
 
 /** Marks outside the open flag's mission step back so its own read first. */
 const DIM = 0.28;
 const FADE = "transition-[fill-opacity] duration-300";
 
-const PILL = "h-7 rounded px-2.5 text-xs transition-colors focus-visible:outline-2 focus-visible:outline-accent";
+const PILL = "h-6 rounded px-2 text-xs transition-colors focus-visible:outline-2 focus-visible:outline-accent";
 const PILL_ON = `${PILL} bg-surface-2 font-semibold text-ink`;
 const PILL_OFF = `${PILL} text-muted hover:text-ink`;
 
-const percent = (value: unknown) => (value == null ? "" : `${Math.round(Number(value))}%`);
+const percent = (value: number) => `${Math.round(value)}%`;
 
 /** The row under a chart-level click (Recharts reports the hovered category's index). */
 function at<T>(rows: T[], state: unknown): T | undefined {
@@ -85,17 +86,26 @@ type Mission = OverviewAnalyticsData["missions"][number];
 export function OverviewAnalytics({
   data,
   flag,
+  onClear,
   delay,
 }: {
   data: OverviewAnalyticsData;
-  /** The open queue row, if any: the panel becomes context for it. */
+  /** The queue row opened last, if any: the panel becomes context for it. */
   flag: Flag | null;
+  /** Drops the flag context, back to the fleet alone. */
+  onClear?: () => void;
   delay?: number;
 }) {
   const router = useRouter();
   const go = (query: BreakdownQuery) => router.push(breakdownHref(query));
   const [saved, setSaved] = useState<OverviewChart>(DEFAULT_CHART);
   const [pickedWhileOpen, setPickedWhileOpen] = useState(false);
+  // Each newly opened flag starts on its mission again.
+  const [pickedFor, setPickedFor] = useState(flag?.id ?? null);
+  if ((flag?.id ?? null) !== pickedFor) {
+    setPickedFor(flag?.id ?? null);
+    setPickedWhileOpen(false);
+  }
 
   // The last pick is a per-viewer convenience: a blocked or empty store just
   // means the default chart.
@@ -130,31 +140,40 @@ export function OverviewAnalytics({
     : chart === "missions" ? <MissionsChart data={data} mission={mission} go={go} />
     : <FailuresChart data={data} mission={mission} go={go} />;
 
+  /* The chart toggles sit in the panel header, where the panel's own width
+     picks the label length: short labels until the header has room. */
+  const toggles = (
+    <div role="group" aria-label="Chart" className="flex items-center gap-0.5 rounded border border-line bg-surface p-px">
+      {OVERVIEW_CHARTS.map((c) => (
+        <button key={c.key} type="button" aria-pressed={chart === c.key} aria-label={c.label} onClick={() => pick(c.key)} className={chart === c.key ? PILL_ON : PILL_OFF}>
+          <span className="whitespace-nowrap @xl:hidden">{c.short}</span>
+          <span className="hidden whitespace-nowrap @xl:inline">{c.label}</span>
+        </button>
+      ))}
+    </div>
+  );
+
   return (
     <Panel
       title="Fleet analytics"
-      aside={mission ? <span className="text-accent-ink">Mission {mission.id} marked</span> : "Challenge kit"}
-      className="h-full"
+      aside={toggles}
+      toolbar
+      className="@container h-full"
       bodyClassName="gap-3 p-4"
       delay={delay}
     >
-      {/* One row of toggles at any width: a narrow panel gets the short labels. */}
-      <div className="@container">
-        <div role="group" aria-label="Chart" className="flex w-fit max-w-full items-center gap-0.5 overflow-x-auto rounded border border-line bg-surface p-0.5">
-          {OVERVIEW_CHARTS.map((c) => (
-            <button key={c.key} type="button" aria-pressed={chart === c.key} aria-label={c.label} onClick={() => pick(c.key)} className={chart === c.key ? PILL_ON : PILL_OFF}>
-              <span className="whitespace-nowrap @sm:hidden">{c.short}</span>
-              <span className="hidden whitespace-nowrap @sm:inline">{c.label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
       {flag && (
-        <div key={flag.id} className="anim-rise rounded border-l-2 border-accent bg-accent/10 px-3 py-2 text-xs leading-snug text-muted" style={{ "--rise": "6px" } as React.CSSProperties}>
-          <p className="truncate">
-            Context for <span className="font-medium text-ink" title={flag.title}>{flag.title}</span>
-          </p>
+        <div key={flag.id} className="anim-rise rounded border border-line-strong bg-surface-2 px-3 py-2 text-xs leading-snug text-muted" style={{ "--rise": "6px" } as React.CSSProperties}>
+          <div className="flex items-start gap-2">
+            <p className="min-w-0 flex-1 truncate">
+              Context for <span className="font-medium text-ink" title={flag.title}>{flag.title}</span>
+            </p>
+            {onClear && (
+              <button type="button" onClick={onClear} aria-label="Clear flag context" title="Back to the fleet" className="-my-0.5 shrink-0 rounded p-0.5 text-faint hover:text-ink focus-visible:outline-2 focus-visible:outline-accent">
+                <X className="size-3.5" aria-hidden />
+              </button>
+            )}
+          </div>
           {mission ? (
             <p className="mt-0.5">
               Mission <span className="font-mono text-ink">{mission.id}</span> · {mission.version} · {mission.succeeded} of {mission.succeeded + mission.failed} actions succeeded · reported {mission.reported.toLowerCase()} ·{" "}
@@ -245,14 +264,14 @@ function TypesChart({ data, mission, go }: ChartProps) {
           <ReferenceLine y={data.fleetRate} stroke="var(--c-line-strong)" strokeDasharray="4 3" />
           <Bar dataKey="rate" name="Fleet" radius={[4, 4, 0, 0]} maxBarSize={32} animationDuration={700} animationEasing="ease-out"
             onClick={(_, i) => go({ view: "actions", type: rows[i]?.key })}
-            label={mission ? undefined : { position: "top", ...VALUE_LABEL, formatter: percent }}>
+            shape={mission ? undefined : valueBar({ position: "top", format: percent })}>
             {rows.map((row) => <Cell key={row.key} fill={row.key === flagged ? "var(--c-bad)" : "var(--c-series-1)"} />)}
           </Bar>
           {mission && (
             <Bar dataKey="mission" name={`Mission ${mission.id}`} fill="var(--c-accent)" radius={[4, 4, 0, 0]} maxBarSize={32}
               animationBegin={250} animationDuration={700} animationEasing="ease-out"
               onClick={(_, i) => go({ view: "actions", type: rows[i]?.key, mission: mission.id })}
-              label={{ position: "top", ...VALUE_LABEL, formatter: percent }} />
+              shape={valueBar({ position: "top", format: percent })} />
           )}
         </BarChart>
       </Plot>
@@ -298,7 +317,7 @@ function BatteryChart({ data, mission, go }: ChartProps) {
           />
           <Bar dataKey="rate" name="Success" radius={[4, 4, 0, 0]} maxBarSize={44} animationDuration={800} animationEasing="ease-out"
             onClick={(_, i) => go({ view: "actions", band: rows[i]?.key })}
-            label={{ position: "top", ...VALUE_LABEL, formatter: percent, offset: 10 }}>
+            shape={valueBar({ position: "top", format: percent, offset: 10 })}>
             {rows.map((row) => (
               <Cell key={row.key} className={FADE}
                 fill={row === cliff && best.rate - cliff.rate > 10 ? "var(--c-bad)" : "var(--c-series-1)"}
@@ -374,11 +393,11 @@ function FailuresChart({ data, mission, go }: ChartProps) {
           <Tooltip {...TOOLTIP} formatter={(value, name) => [`${value} failed action${value === 1 ? "" : "s"}`, name]} />
           <Bar dataKey="count" name="Fleet" fill="var(--c-series-1)" radius={[0, 4, 4, 0]} animationDuration={800} animationEasing="ease-out"
             onClick={(_, i) => go({ view: "actions", failure: rows[i]?.key })}
-            label={{ position: "right", ...VALUE_LABEL }} />
+            shape={valueBar({ position: "right" })} />
           {mission && (
             <Bar dataKey="mission" name={`Mission ${mission.id}`} fill="var(--c-accent)" radius={[0, 4, 4, 0]} animationBegin={250} animationDuration={700} animationEasing="ease-out"
               onClick={(_, i) => go({ view: "actions", failure: rows[i]?.key, mission: mission.id })}
-              label={{ position: "right", ...VALUE_LABEL, formatter: (v: unknown) => (Number(v) > 0 ? String(v) : "") }} />
+              shape={valueBar({ position: "right", hideZero: true })} />
           )}
         </BarChart>
       </Plot>

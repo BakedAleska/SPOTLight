@@ -1,11 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Pause, Play, RotateCcw, Route, TriangleAlert, ScanLine, CheckCircle2, ArrowRight, AudioLines, ArrowUp, ArrowDown, Timer, BatteryMedium } from "lucide-react";
 import { Panel } from "./Panel";
 import { LoadingDots } from "./LoadingDots";
-import { RouteAhead } from "./RouteAhead";
+import { MapLegend, RouteAhead } from "./RouteAhead";
 import { AskAiLink } from "./AskAiLink";
 import type { PathMission, PathPoint } from "@/lib/path-types";
 
@@ -25,10 +24,10 @@ export function PathPreview({ points, missions, initialMissionId }: { points: Pa
   return <div className="mx-auto flex max-w-[1600px] flex-col gap-4 p-4">
     {/* Same columns as the map and side panels below, so the Mission picker lines up with them. */}
     <header className="grid items-end gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-      <div><p className="mb-1 text-xs text-muted">MISSION CONTROL</p><h1 className="flex items-center gap-2 text-2xl font-semibold text-ink"><Route size={24} />SPOT path preview</h1><p className="mt-1 text-sm text-muted">Replay a recorded challenge-kit mission. For a running robot, open <Link href="/live" className="text-accent-ink hover:underline">Live patrol</Link>.</p></div>
+      <div><p className="mb-1 text-xs text-muted">MISSION CONTROL</p><h1 className="flex items-center gap-2 text-2xl font-semibold text-ink"><Route size={24} />SPOT path preview</h1></div>
       <div className="flex flex-col gap-2">
         <label className="flex flex-col gap-1 text-xs text-muted">Mission<select className={`${control} w-full`} value={missionId} onChange={e => setMissionId(e.target.value)}>{missions.map(m => <option key={m.id} value={m.id}>{m.id} · {m.name}</option>)}</select></label>
-        {missionId && <AskAiLink missionId={missionId} label={`Ask AI about ${missionId}`} className="min-h-11 px-4" />}
+        {missionId && <AskAiLink missionId={missionId} label={`Ask SPOTbot about ${missionId}`} className="min-h-11 px-4" />}
       </div>
     </header>
     {missions.find(m => m.id === missionId) && <MissionPath key={`${missionId}:${visit}`} mission={missions.find(m => m.id === missionId)!} points={points} />}
@@ -78,7 +77,7 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
   const current = frame?.moving ? frame.from : frame?.to;
   const changingFloor = !!frame?.moving && frame.from?.floor !== frame.to?.floor;
   const floorUp = (frame?.to?.floor ?? 0) > (frame?.from?.floor ?? 0);
-  const floorLabel = `Floor ${frame?.from?.floor} → Floor ${frame?.to?.floor}`;
+  const floorLabel = `Floor ${frame?.from?.floor} to Floor ${frame?.to?.floor}`;
   const marker = frame ? { x: frame.x, y: frame.y } : current;
   const active = playing && !finished;
   // On the stairs SPOT fades out at the floor-1 stair, then fades back in on the floor-2 landing (or the reverse).
@@ -129,7 +128,7 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
             <text y="65" textAnchor="middle" fill="white" stroke="black" strokeWidth="3" paintOrder="stroke" fontSize="15" fontWeight="bold">SPOT</text>
           </g>}
         </svg>
-        <p className="mt-3 text-xs text-muted">Dashed: route to the next stop · Solid: visited route · !: error. Travel follows the hallways and stairs between stops; activity durations are compressed from the logs.</p>
+        <MapLegend marks={[{ glyph: "!", tone: "bad", label: "Error" }]} />
         <div className="mt-4 flex flex-col gap-3 border-t border-line pt-4">
           <label className="text-xs text-muted">Replay position · event {index + 1} of {mission.events.length}<input className="mt-2 w-full accent-accent-ink" type="range" min="0" max={duration} value={elapsed} onChange={e => setElapsed(Number(e.target.value))} /></label>
           <div className="flex flex-wrap items-center gap-2"><button className={control} onClick={() => {
@@ -143,7 +142,7 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
         <Panel title="SPOT activity" aside={active ? "IN PROGRESS" : finished ? "COMPLETE" : "PAUSED"}>
           <div className="flex items-center gap-3"><div className={`grid size-12 shrink-0 place-items-center rounded-full border border-line bg-surface-2 text-accent-ink ${active && !frame?.moving ? "spot-activity-icon" : ""}`}>
             {changingFloor ? floorUp ? <ArrowUp size={24} /> : <ArrowDown size={24} /> : frame?.moving ? <ArrowRight size={24} /> : activity.includes("Listening") ? <AudioLines size={24} /> : finished ? <CheckCircle2 size={24} /> : <ScanLine size={24} />}
-          </div><div><p className="text-sm font-semibold text-ink">{activity}</p><p className="mt-1 text-xs text-muted">{frame?.moving ? `${frame.from?.id} → ${frame.to?.id}` : last?.assetName ?? current?.name ?? "Preparing mission"}</p></div></div>
+          </div><div><p className="text-sm font-semibold text-ink">{changingFloor ? <span className="inline-flex flex-wrap items-center gap-1">{floorUp ? "Going up" : "Going down"} · Floor {frame?.from?.floor} <ArrowRight size={14} aria-label="to" /> Floor {frame?.to?.floor}</span> : activity}</p><p className="mt-1 text-xs text-muted">{frame?.moving ? <span className="inline-flex items-center gap-1">{frame.from?.id} <ArrowRight size={12} aria-label="to" /> {frame.to?.id}</span> : last?.assetName ?? current?.name ?? "Preparing mission"}</p></div></div>
           <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-surface-2"><div className="h-full bg-accent-ink" style={{ width: `${(frame?.progress ?? 0) * 100}%` }} /></div>
         </Panel>
         <Panel title="Selected waypoint"><p className="text-lg font-semibold text-ink">{selected?.id ?? "No position yet"}</p><p className="mt-1 text-sm text-muted">{selected?.name ?? "Waiting for a located action."}</p>{selected && <p className="mt-3 text-xs text-muted">Floor {selected.floor} · {errors.filter(e => e.locationId === selected.id).length} observed errors</p>}</Panel>

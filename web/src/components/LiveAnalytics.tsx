@@ -53,11 +53,11 @@ function Tile({ label, value, tone }: { label: string; value: string; tone?: "ba
   );
 }
 
-export function LiveAnalytics({ captures, route }: { captures: LiveCapture[]; route: LiveRoute | null }) {
+export function LiveAnalytics({ className, captures, route }: { className?: string; captures: LiveCapture[]; route: LiveRoute | null }) {
   const t = liveTally(captures, route);
   const points = captures.map((c) => ({ stop: c.stop, battery: c.battery_pct, verdict: c.verdict }));
   return (
-    <Panel title="Live analytics" aside={t.total ? `${t.done} of ${t.total} stops` : undefined}>
+    <Panel title="Live analytics" className={className} aside={t.total ? `${t.done} of ${t.total} stops` : undefined}>
       <div className="flex flex-col gap-4">
         <div className="grid grid-cols-2 gap-2">
           <Tile label="Stops triaged" value={`${t.done}/${t.total || "—"}`} />
@@ -68,7 +68,7 @@ export function LiveAnalytics({ captures, route }: { captures: LiveCapture[]; ro
 
         <div>
           <p className="mb-1 text-xs font-medium text-ink">Battery along the route</p>
-          {points.length < 2 ? <p className="flex h-36 items-center justify-center text-center text-xs text-muted">The battery curve draws as SPOT reaches each stop.</p> : (
+          {points.length < 2 ? <p className="flex h-36 items-center justify-center text-center text-xs text-muted">No readings yet.</p> : (
             <div className="h-36 w-full min-w-0">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={points} margin={{ top: 6, right: 8, bottom: 0, left: -18 }}>
@@ -86,12 +86,12 @@ export function LiveAnalytics({ captures, route }: { captures: LiveCapture[]; ro
               </ResponsiveContainer>
             </div>
           )}
-          <p className="mt-1 text-[11px] text-muted">Dashed line: the 25% battery cliff. Dots: red needs attention, green all good.</p>
+          <p className="mt-1 text-[11px] text-muted">Dashed: 25% cliff</p>
         </div>
 
         <div>
           <p className="mb-1 text-xs font-medium text-ink">Findings so far</p>
-          {t.findings.length === 0 ? <p className="text-xs text-muted">{captures.length ? "Nothing failed or looked abnormal yet." : "Findings appear here as stops are inspected."}</p> : (
+          {t.findings.length === 0 ? <p className="text-xs text-muted">{captures.length ? "Nothing abnormal yet." : "None yet."}</p> : (
             <ul className="flex max-h-48 flex-col gap-1 overflow-y-auto text-xs">
               {[...t.findings].reverse().map((f, i) => (
                 <li key={`${f.stop}-${i}`} className="flex gap-2">

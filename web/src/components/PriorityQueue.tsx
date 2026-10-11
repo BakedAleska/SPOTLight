@@ -1,22 +1,20 @@
 "use client";
 
-import { Fragment, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ChevronDown, ClipboardCheck, Route, Search, Sparkles } from "lucide-react";
 import { Panel } from "./Panel";
 import { SeverityBadge, severityAccent } from "./SeverityBadge";
 import type { Flag } from "@/lib/types";
 import { displayText } from "@/lib/display";
-import { openFirst } from "@/lib/overview";
 
 /* Clicking a row opens it: every signal that fired, then the places an
    operator can go from here. The row is a disclosure, not a link, because
    there is no single "right" next page — review it, watch the mission that
    raised it, see what else touches the asset, or ask about it.
 
-   The opened row is lifted to the head of the list, above everything else
-   that needs attention, and the list scrolls up to it. Closing it drops it
-   back into its place in the queue's own order. */
+   The row opens where it is: the queue keeps the backend's order, so the
+   operator never loses their place in it. */
 
 /* A flag carries every rule that fired — often eight or nine. A closed row
    can't show eight bullets and still be scannable, so it shows the heaviest
@@ -24,13 +22,20 @@ import { openFirst } from "@/lib/overview";
    The backend score also accounts for priority and confidence. */
 const REASONS_SHOWN = 2;
 
+/** Long enough to follow a row's whole expand (--dur-base, 450ms). */
+const GLIDE_MS = 520;
+/** Room kept between the list and the screen edge when the page scrolls to it. */
+const EDGE = 16;
+
+const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+
 /* Colours live only in the two variants: Tailwind orders same-property
    utilities by its own stylesheet order, not class order, so bg-accent added
    on top of a bg-surface base lost to it and left on-accent (near-black) text
    on the dark surface. */
 const OPTION_BASE =
   "inline-flex h-8 items-center gap-1.5 rounded border px-3 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-accent";
-const OPTION = `${OPTION_BASE} border-line bg-surface text-ink hover:border-accent hover:bg-surface-2`;
+const OPTION = `${OPTION_BASE} border-line bg-surface text-ink hover:border-line-strong hover:bg-surface-3`;
 const OPTION_PRIMARY = `${OPTION_BASE} border-accent bg-accent font-semibold text-on-accent hover:bg-accent-hover`;
 
 function hasMission(flag: Flag) {
@@ -48,31 +53,55 @@ function reducedMotion() {
 }
 
 /* Closed rows share one hairline list. The open row leaves it: it becomes a
-   card at the head of the list, ringed in the accent, so it reads as "the one
-   in hand" rather than as row three of fifty. Background and border colours
-   live only in these two variants, never one on top of the other (see
-   OPTION_BASE). */
+   card at the head of the list, so it reads as "the one in hand" rather than
+   as row three of fifty. It is lifted with neutrals only (a raised surface and
+   a stronger hairline, as Linear and GitHub mark a selected row); colour stays
+   reserved for meaning, so the severity spine is the only colour on it.
+   Background and border colours live only in these two variants, never one
+   on top of the other (see OPTION_BASE). */
 const ROW_CLOSED = "border-b border-line transition-colors last:border-0 hover:bg-surface-2";
-const ROW_OPEN = "anim-rise m-2 rounded-panel border border-accent bg-accent/10 panel-shadow";
+const ROW_OPEN = "m-2 rounded-panel border border-line-strong bg-surface-2 panel-shadow";
 
 function QueueRow({
   flag,
   open,
-  position,
   onToggle,
   onSelect,
+  reviewUnavailable,
 }: {
   flag: Flag;
   open: boolean;
-  /** 1-based place in the queue's own order, shown while the row is lifted out of it. */
-  position: number;
   onToggle: () => void;
   onSelect?: (flag: Flag) => void;
+  reviewUnavailable?: string;
 }) {
-  const shown = open ? flag.reasons : flag.reasons.slice(0, REASONS_SHOWN);
-  const hidden = flag.reasons.length - shown.length;
+  const shown = flag.reasons.slice(0, REASONS_SHOWN);
+  const rest = flag.reasons.slice(REASONS_SHOWN);
   const panelId = `flag-${flag.id}-options`;
   const title = useRef<HTMLButtonElement>(null);
+  /* Closing plays the collapse first and only then tells the queue; with
+     reduced motion it is immediate. Closed from outside instead (another row
+     opened), the row is already closed as far as the queue knows, so it plays
+     the same collapse on its own ("leaving") before the details unmount. */
+  const [closing, setClosing] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+  // Set as the row's own collapse ends and it hands the close to the queue.
+  const [handedOff, setHandedOff] = useState(false);
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    setClosing(false);
+    setHandedOff(false);
+    // A collapse already under way just carries on as the leaving one.
+    setLeaving(!open && !handedOff && !reducedMotion());
+  }
+  const expanded = open && !closing;
+  const toggle = () => {
+    if (!open) return onToggle();
+    if (closing) return;
+    if (reducedMotion()) return onToggle();
+    setClosing(true);
+  };
 
   return (
     <div
@@ -80,16 +109,16 @@ function QueueRow({
       onKeyDown={open ? (event) => {
         if (event.key !== "Escape") return;
         event.stopPropagation();
-        onToggle();
+        toggle();
         title.current?.focus();
       } : undefined}
-      className={`group relative px-4 py-3 pl-5 text-left ${open ? ROW_OPEN : ROW_CLOSED}`}
+      className={`group relative px-4 py-3 pl-5 text-left transition-[margin,background-color,border-color,border-radius,box-shadow] ease-(--ease-settle) ${expanded ? "duration-(--dur-base)" : "duration-(--dur-collapse)"} ${expanded ? ROW_OPEN : ROW_CLOSED}`}
     >
       {/* A severity-coloured spine, so the shape of the backlog is legible
           from across the room before any text is read. */}
       <span
         aria-hidden="true"
-        className={`absolute inset-y-0 left-0 ${open ? "w-1 rounded-l-[3px]" : "w-0.5"} ${severityAccent(flag.severity)}`}
+        className={`absolute inset-y-0 left-0 transition-[width] duration-(--dur-base) ease-(--ease-settle) ${expanded ? "w-1 rounded-l-[3px]" : "w-0.5"} ${severityAccent(flag.severity)}`}
       />
 
       <div className="flex items-baseline gap-3">
@@ -97,24 +126,20 @@ function QueueRow({
         <span className="nums font-mono text-xs text-muted">
           Confidence {Math.round(flag.score)}%
         </span>
-        {open && <span className="nums text-xs text-muted">Queue position {position}</span>}
-        {open ? (
-          <button
-            type="button"
-            onClick={onToggle}
-            aria-label={`Close ${flag.title}`}
-            title="Close (Esc)"
-            className="-my-1 ml-auto shrink-0 self-center rounded p-1 text-muted transition-colors hover:bg-surface-2 hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
-          >
-            <ChevronDown size={16} aria-hidden="true" className="rotate-180" />
-          </button>
-        ) : (
-          <ChevronDown
-            size={16}
-            aria-hidden="true"
-            className="ml-auto shrink-0 self-center text-faint transition-transform group-hover:text-ink"
-          />
-        )}
+        {/* One chevron for both states, so it turns rather than swaps. Closed,
+            the title's stretched hit area covers it and it stays out of the
+            tab order; open, it is the close button. */}
+        <button
+          type="button"
+          onClick={toggle}
+          tabIndex={open ? undefined : -1}
+          aria-hidden={open ? undefined : true}
+          aria-label={`Close ${flag.title}`}
+          title={open ? "Close (Esc)" : undefined}
+          className={`-my-1 ml-auto shrink-0 self-center rounded p-1 transition-colors focus-visible:outline-2 focus-visible:outline-accent ${expanded ? "text-muted hover:bg-surface-2 hover:text-ink" : "text-faint group-hover:text-ink"}`}
+        >
+          <ChevronDown size={16} aria-hidden="true" className={`transition-transform ease-(--ease-settle) ${expanded ? "rotate-180 duration-(--dur-base)" : "duration-(--dur-collapse)"}`} />
+        </button>
       </div>
 
       <p className="mt-1.5 leading-snug font-medium text-ink">
@@ -124,8 +149,8 @@ function QueueRow({
         <button
           ref={title}
           type="button"
-          onClick={onToggle}
-          aria-expanded={open}
+          onClick={toggle}
+          aria-expanded={open && !closing}
           aria-controls={panelId}
           className={`cursor-pointer text-left hover:underline focus-visible:outline-2 focus-visible:outline-accent ${open ? "" : "after:absolute after:inset-0"}`}
         >
@@ -146,20 +171,46 @@ function QueueRow({
             {displayText(reason.detail)}
           </li>
         ))}
-        {hidden > 0 && (
-          <li className="pl-4 text-xs text-faint">
-            +{hidden} more signal{hidden > 1 ? "s" : ""}
+        {rest.length > 0 && (
+          <li className="fold" data-folded={expanded || undefined} aria-hidden={expanded || undefined}>
+            <span className="pl-4 text-xs text-faint">
+              +{rest.length} more signal{rest.length > 1 ? "s" : ""}
+            </span>
           </li>
         )}
       </ul>
 
-      {open && (
-        <nav id={panelId} aria-label={`Next steps for ${flag.title}`} className="relative mt-3 flex flex-wrap gap-2">
-          {onSelect && (
-            <button type="button" onClick={() => onSelect(flag)} className={OPTION_PRIMARY}>
-              <ClipboardCheck size={14} aria-hidden="true" /> Review &amp; act
-            </button>
+      {(open || leaving) && (
+        <Disclosure closing={closing || leaving} onClosed={() => {
+          if (leaving) return setLeaving(false);
+          setHandedOff(true);
+          onToggle();
+        }}>
+          {rest.length > 0 && (
+            <ul className="mt-1 space-y-1">
+              {rest.map((reason) => (
+                <li
+                  key={reason.rule}
+                  className="flex gap-2 text-sm leading-snug text-muted before:text-faint before:content-['•']"
+                >
+                  {displayText(reason.detail)}
+                </li>
+              ))}
+            </ul>
           )}
+        <nav id={panelId} aria-label={`Next steps for ${flag.title}`} className="relative mt-3 flex flex-wrap gap-2">
+          {/* Always offered: without the backend it is shown disabled with the
+              reason, rather than vanishing from the row. */}
+          <button
+            type="button"
+            disabled={!onSelect}
+            onClick={onSelect ? () => onSelect(flag) : undefined}
+            title={onSelect ? undefined : reviewUnavailable}
+            aria-describedby={onSelect ? undefined : `${panelId}-review-off`}
+            className={`${OPTION_PRIMARY} disabled:cursor-not-allowed disabled:opacity-50`}
+          >
+            <ClipboardCheck size={14} aria-hidden="true" /> Review &amp; act
+          </button>
           {hasMission(flag) && (
             <Link href={`/missions/replay?mission=${encodeURIComponent(flag.missionId)}`} className={OPTION}>
               <Route size={14} aria-hidden="true" /> Replay mission
@@ -174,7 +225,30 @@ function QueueRow({
             <Sparkles size={14} aria-hidden="true" /> Ask SPOTbot
           </Link>
         </nav>
+          {!onSelect && reviewUnavailable && (
+            <p id={`${panelId}-review-off`} className="relative mt-2 text-xs text-muted">{reviewUnavailable}</p>
+          )}
+        </Disclosure>
       )}
+    </div>
+  );
+}
+
+/** The part of an open row that the closed row doesn't have: it grows open
+    on mount and collapses before the row closes. Once open it drops the
+    animation class, whose clipping would otherwise cut the focus rings. */
+function Disclosure({ closing, onClosed, children }: { closing: boolean; onClosed: () => void; children: React.ReactNode }) {
+  const [settled, setSettled] = useState(false);
+  return (
+    <div
+      className={closing ? "anim-collapse" : settled ? "" : "anim-expand"}
+      onAnimationEnd={(event) => {
+        if (event.target !== event.currentTarget) return;
+        if (closing) onClosed();
+        else setSettled(true);
+      }}
+    >
+      <div>{children}</div>
     </div>
   );
 }
@@ -187,6 +261,8 @@ export function PriorityQueue({
   openId: controlledOpenId,
   onOpenChange,
   emptyMessage = "No open escalated flags need attention.",
+  filters,
+  reviewUnavailable = "Review & act needs the backend, which is offline. Kit data is still shown.",
 }: {
   flags: Flag[];
   total?: number;
@@ -197,6 +273,10 @@ export function PriorityQueue({
   onOpenChange?: (id: string | null) => void;
   /** Shown when the list is empty, e.g. when filters match nothing. */
   emptyMessage?: string;
+  /** Header controls (the Overview's severity pills), in place of the count. */
+  filters?: React.ReactNode;
+  /** Why Review & act is disabled when there is no onSelect. */
+  reviewUnavailable?: string;
 }) {
   const list = useRef<HTMLDivElement>(null);
   const [ownOpenId, setOwnOpenId] = useState<string | null>(null);
@@ -204,38 +284,73 @@ export function PriorityQueue({
   const setOpenId = onOpenChange ?? setOwnOpenId;
   const previous = useRef<string | null>(null);
 
-  // Queue order is the backend's; only the open row is lifted out of it.
-  const ordered = openFirst(flags, openId);
-  const position = new Map(flags.map((flag, i) => [flag.id, i + 1]));
-  const lifted = !!openId && ordered[0]?.id === openId;
-
-  /* Opening lifts the row to the head of the list, so the list goes to the
-     top to show it. Closing puts the row back in its place, and the list
-     follows it there, which is also where the operator was reading. */
+  /* Opening a row centres it on screen. Two things scroll: the page (<main>)
+     brings the whole list into view, and the list puts the row in its
+     middle, or its head at the top when the opened row is taller than the
+     list. A closing row the list was scrolled past just comes back into view.
+     It is a glide that re-measures every frame rather than one scrollTo,
+     because the target keeps moving while it runs: the row grows as it opens
+     and a row above it may be collapsing at the same time. */
   useEffect(() => {
     const el = list.current;
     const closed = previous.current;
     previous.current = openId;
     if (!el || openId === closed) return;
-    const behavior: ScrollBehavior = reducedMotion() ? "auto" : "smooth";
-    if (openId) {
-      el.scrollTo({ top: 0, behavior });
-      // And if the page has been scrolled past the panel's head, bring it back.
-      const page = el.closest("main")?.getBoundingClientRect().top ?? 0;
-      if (el.getBoundingClientRect().top < page) el.closest("section")?.scrollIntoView({ block: "start", behavior });
-      return;
-    }
-    const row = closed ? el.querySelector<HTMLElement>(`[data-flag-id="${CSS.escape(closed)}"]`) : null;
+    const id = openId ?? closed;
+    const row = id ? el.querySelector<HTMLElement>(`[data-flag-id="${CSS.escape(id)}"]`) : null;
     if (!row) return;
-    const box = el.getBoundingClientRect();
-    const at = row.getBoundingClientRect();
-    if (at.top < box.top || at.bottom > box.bottom) el.scrollTo({ top: el.scrollTop + at.top - box.top, behavior });
+    const page = el.closest("main");
+    const offset = row.getBoundingClientRect().top - el.getBoundingClientRect().top;
+    if (!openId && offset >= 0 && offset <= el.clientHeight - 48) return;
+
+    const goal = () => {
+      const box = el.getBoundingClientRect();
+      const at = row.getBoundingClientRect();
+      const slack = openId ? Math.max(0, box.height - at.height) / 2 : 0;
+      const inList = clamp(el.scrollTop + at.top - box.top - slack, 0, el.scrollHeight - el.clientHeight);
+      if (!page) return { inList, onPage: 0 };
+      const view = page.getBoundingClientRect();
+      let by = 0;
+      if (box.top < view.top + EDGE) by = box.top - view.top - EDGE;
+      else if (box.bottom > view.bottom - EDGE) by = Math.min(box.bottom - view.bottom + EDGE, box.top - view.top - EDGE);
+      return { inList, onPage: clamp(page.scrollTop + by, 0, page.scrollHeight - page.clientHeight) };
+    };
+    const apply = (to: { inList: number; onPage: number }) => {
+      el.scrollTop = to.inList;
+      if (page) page.scrollTop = to.onPage;
+    };
+    if (reducedMotion()) return apply(goal());
+
+    const from = { inList: el.scrollTop, onPage: page?.scrollTop ?? 0 };
+    const start = performance.now();
+    let frame = requestAnimationFrame(function step(now) {
+      const t = Math.min(1, (now - start) / GLIDE_MS);
+      const eased = 1 - (1 - t) ** 3;
+      const to = goal();
+      apply({ inList: from.inList + (to.inList - from.inList) * eased, onPage: from.onPage + (to.onPage - from.onPage) * eased });
+      if (t < 1) frame = requestAnimationFrame(step);
+    });
+    // The operator's own scroll takes over from the glide.
+    const targets = [el, page].filter((t): t is HTMLElement => !!t);
+    const stop = () => {
+      cancelAnimationFrame(frame);
+      for (const t of targets) {
+        t.removeEventListener("wheel", stop);
+        t.removeEventListener("touchstart", stop);
+      }
+    };
+    for (const t of targets) {
+      t.addEventListener("wheel", stop, { passive: true });
+      t.addEventListener("touchstart", stop, { passive: true });
+    }
+    return stop;
   }, [openId]);
 
   return (
     <Panel
       title="Needs attention"
-      aside={total > flags.length ? `${flags.length} of ${total} open flags` : `${total} open flags`}
+      aside={filters ?? (total > flags.length ? `${flags.length} of ${total} open flags` : `${total} open flags`)}
+      toolbar={!!filters}
       bodyClassName=""
       className="h-full"
       delay={delay}
@@ -249,19 +364,15 @@ export function PriorityQueue({
            banner and filters (never under 28rem), and scrolls inside the
            panel so the analytics beside it stay put. */
         <div ref={list} className="max-h-[max(28rem,calc(100dvh-14rem))] overflow-y-auto overscroll-contain">
-          {ordered.map((flag, i) => (
-            <Fragment key={flag.id}>
-              <QueueRow
-                flag={flag}
-                open={openId === flag.id}
-                position={position.get(flag.id) ?? i + 1}
-                onToggle={() => setOpenId(openId === flag.id ? null : flag.id)}
-                onSelect={onSelect}
-              />
-              {lifted && i === 0 && ordered.length > 1 && (
-                <p className="border-b border-line px-5 pt-2 pb-1.5 text-xs text-faint">Rest of the queue</p>
-              )}
-            </Fragment>
+          {flags.map((flag) => (
+            <QueueRow
+              key={flag.id}
+              flag={flag}
+              open={openId === flag.id}
+              onToggle={() => setOpenId(openId === flag.id ? null : flag.id)}
+              onSelect={onSelect}
+              reviewUnavailable={reviewUnavailable}
+            />
           ))}
         </div>
       )}

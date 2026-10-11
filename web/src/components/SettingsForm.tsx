@@ -39,7 +39,7 @@ export function SettingsForm() {
       <header className="mb-6">
         <h1 className="text-2xl font-semibold text-ink">Settings</h1>
         <p className="mt-1 text-sm text-muted">
-          Tune the console for your shift. Only the theme is saved; everything else resets on reload.
+          Only the theme is saved; the rest resets on reload.
         </p>
       </header>
 
