@@ -22,6 +22,9 @@ import { displayText } from "@/lib/display";
    The backend score also accounts for priority and confidence. */
 const REASONS_SHOWN = 2;
 
+/** Long enough to outlast a collapsing row above (220ms in globals.css). */
+const GLIDE_MS = 360;
+
 /* Colours live only in the two variants: Tailwind orders same-property
    utilities by its own stylesheet order, not class order, so bg-accent added
    on top of a bg-surface base lost to it and left on-accent (near-black) text
@@ -270,9 +273,11 @@ export function PriorityQueue({
   const setOpenId = onOpenChange ?? setOwnOpenId;
   const previous = useRef<string | null>(null);
 
-  /* Opening or closing a row keeps it in view inside the list: an opened
-     row's head scrolls up to the top edge if it was cut off there, and a
-     closing row the list was scrolled past comes back into view. */
+  /* Opening a row scrolls the list to put it at the top, with room below for
+     what it reveals. A closing row the list was scrolled past comes back into
+     view. The scroll is a short glide that re-measures the row every frame,
+     because a row above it may be collapsing at the same time (opening one
+     row closes the other) and would otherwise carry it past the top. */
   useEffect(() => {
     const el = list.current;
     const closed = previous.current;
@@ -281,11 +286,30 @@ export function PriorityQueue({
     const id = openId ?? closed;
     const row = id ? el.querySelector<HTMLElement>(`[data-flag-id="${CSS.escape(id)}"]`) : null;
     if (!row) return;
-    const box = el.getBoundingClientRect();
-    const at = row.getBoundingClientRect();
-    if (at.top < box.top || at.top > box.bottom - 48) {
-      el.scrollTo({ top: el.scrollTop + at.top - box.top, behavior: reducedMotion() ? "auto" : "smooth" });
+    const target = () => el.scrollTop + row.getBoundingClientRect().top - el.getBoundingClientRect().top;
+    const offset = row.getBoundingClientRect().top - el.getBoundingClientRect().top;
+    if (!openId && offset >= 0 && offset <= el.clientHeight - 48) return;
+    if (reducedMotion()) {
+      el.scrollTop = target();
+      return;
     }
+    const from = el.scrollTop;
+    const start = performance.now();
+    let frame = requestAnimationFrame(function step(now) {
+      const t = Math.min(1, (now - start) / GLIDE_MS);
+      const eased = 1 - (1 - t) ** 3;
+      el.scrollTop = from + (target() - from) * eased;
+      if (t < 1) frame = requestAnimationFrame(step);
+    });
+    // The operator's own scroll takes over from the glide.
+    const stop = () => cancelAnimationFrame(frame);
+    el.addEventListener("wheel", stop, { passive: true, once: true });
+    el.addEventListener("touchstart", stop, { passive: true, once: true });
+    return () => {
+      stop();
+      el.removeEventListener("wheel", stop);
+      el.removeEventListener("touchstart", stop);
+    };
   }, [openId]);
 
   return (
