@@ -153,7 +153,7 @@ export function OverviewAnalytics({
       delay={delay}
     >
       {flag && (
-        <div key={flag.id} className="anim-rise rounded border-l-2 border-accent bg-accent/10 px-3 py-2 text-xs leading-snug text-muted" style={{ "--rise": "6px" } as React.CSSProperties}>
+        <div key={flag.id} className="anim-rise rounded border border-line-strong bg-surface-2 px-3 py-2 text-xs leading-snug text-muted" style={{ "--rise": "6px" } as React.CSSProperties}>
           <p className="truncate">
             Context for <span className="font-medium text-ink" title={flag.title}>{flag.title}</span>
           </p>

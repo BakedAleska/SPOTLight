@@ -30,7 +30,7 @@ const REASONS_SHOWN = 2;
    on the dark surface. */
 const OPTION_BASE =
   "inline-flex h-8 items-center gap-1.5 rounded border px-3 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-accent";
-const OPTION = `${OPTION_BASE} border-line bg-surface text-ink hover:border-accent hover:bg-surface-2`;
+const OPTION = `${OPTION_BASE} border-line bg-surface text-ink hover:border-line-strong hover:bg-surface-3`;
 const OPTION_PRIMARY = `${OPTION_BASE} border-accent bg-accent font-semibold text-on-accent hover:bg-accent-hover`;
 
 function hasMission(flag: Flag) {
@@ -48,12 +48,14 @@ function reducedMotion() {
 }
 
 /* Closed rows share one hairline list. The open row leaves it: it becomes a
-   card at the head of the list, ringed in the accent, so it reads as "the one
-   in hand" rather than as row three of fifty. Background and border colours
-   live only in these two variants, never one on top of the other (see
-   OPTION_BASE). */
+   card at the head of the list, so it reads as "the one in hand" rather than
+   as row three of fifty. It is lifted with neutrals only (a raised surface and
+   a stronger hairline, as Linear and GitHub mark a selected row); colour stays
+   reserved for meaning, so the severity spine is the only colour on it.
+   Background and border colours live only in these two variants, never one
+   on top of the other (see OPTION_BASE). */
 const ROW_CLOSED = "border-b border-line transition-colors last:border-0 hover:bg-surface-2";
-const ROW_OPEN = "anim-rise m-2 rounded-panel border border-accent bg-accent/10 panel-shadow";
+const ROW_OPEN = "anim-rise m-2 rounded-panel border border-line-strong bg-surface-2 panel-shadow";
 
 function QueueRow({
   flag,
@@ -61,6 +63,7 @@ function QueueRow({
   position,
   onToggle,
   onSelect,
+  reviewUnavailable,
 }: {
   flag: Flag;
   open: boolean;
@@ -68,6 +71,7 @@ function QueueRow({
   position: number;
   onToggle: () => void;
   onSelect?: (flag: Flag) => void;
+  reviewUnavailable?: string;
 }) {
   const shown = open ? flag.reasons : flag.reasons.slice(0, REASONS_SHOWN);
   const hidden = flag.reasons.length - shown.length;
@@ -155,11 +159,18 @@ function QueueRow({
 
       {open && (
         <nav id={panelId} aria-label={`Next steps for ${flag.title}`} className="relative mt-3 flex flex-wrap gap-2">
-          {onSelect && (
-            <button type="button" onClick={() => onSelect(flag)} className={OPTION_PRIMARY}>
-              <ClipboardCheck size={14} aria-hidden="true" /> Review &amp; act
-            </button>
-          )}
+          {/* Always offered: without the backend it is shown disabled with the
+              reason, rather than vanishing from the row. */}
+          <button
+            type="button"
+            disabled={!onSelect}
+            onClick={onSelect ? () => onSelect(flag) : undefined}
+            title={onSelect ? undefined : reviewUnavailable}
+            aria-describedby={onSelect ? undefined : `${panelId}-review-off`}
+            className={`${OPTION_PRIMARY} disabled:cursor-not-allowed disabled:opacity-50`}
+          >
+            <ClipboardCheck size={14} aria-hidden="true" /> Review &amp; act
+          </button>
           {hasMission(flag) && (
             <Link href={`/missions/replay?mission=${encodeURIComponent(flag.missionId)}`} className={OPTION}>
               <Route size={14} aria-hidden="true" /> Replay mission
@@ -175,6 +186,9 @@ function QueueRow({
           </Link>
         </nav>
       )}
+      {open && !onSelect && reviewUnavailable && (
+        <p id={`${panelId}-review-off`} className="relative mt-2 text-xs text-muted">{reviewUnavailable}</p>
+      )}
     </div>
   );
 }
@@ -188,6 +202,7 @@ export function PriorityQueue({
   onOpenChange,
   emptyMessage = "No open escalated flags need attention.",
   filters,
+  reviewUnavailable = "Review & act needs the backend, which is offline. Kit data is still shown.",
 }: {
   flags: Flag[];
   total?: number;
@@ -200,6 +215,8 @@ export function PriorityQueue({
   emptyMessage?: string;
   /** Header controls (the Overview's severity pills), in place of the count. */
   filters?: React.ReactNode;
+  /** Why Review & act is disabled when there is no onSelect. */
+  reviewUnavailable?: string;
 }) {
   const list = useRef<HTMLDivElement>(null);
   const [ownOpenId, setOwnOpenId] = useState<string | null>(null);
@@ -261,6 +278,7 @@ export function PriorityQueue({
                 position={position.get(flag.id) ?? i + 1}
                 onToggle={() => setOpenId(openId === flag.id ? null : flag.id)}
                 onSelect={onSelect}
+                reviewUnavailable={reviewUnavailable}
               />
               {lifted && i === 0 && ordered.length > 1 && (
                 <p className="border-b border-line px-5 pt-2 pb-1.5 text-xs text-faint">Rest of the queue</p>
