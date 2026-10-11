@@ -5,6 +5,7 @@
    the UI can branch on `error` codes like conversation_busy or gemini_unset. */
 
 import { assistantFeatures } from "@/lib/features";
+import { normalizeMissionId } from "./mission";
 
 const NO_STORE = { "Cache-Control": "no-store" };
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -45,6 +46,18 @@ export function guard(request: Request, { write = false } = {}): Response | null
   try { sameOrigin = !!origin && new URL(origin).host === request.headers.get("host"); }
   catch { /* Malformed origins fail closed. */ }
   return sameOrigin ? null : chatError(403, "forbidden", "Use the SPOTlight console to change chats.");
+}
+
+/**
+ * chat.3: the `mission_id` query parameter, checked before it reaches the
+ * backend. Absent → null (no filter); malformed → a 422 `unknown_mission`
+ * Response, the same answer the backend gives an id it doesn't know.
+ */
+export function missionParam(request: Request): { missionId: string | null } | Response {
+  const raw = new URL(request.url).searchParams.get("mission_id");
+  if (raw === null || raw.trim() === "") return { missionId: null };
+  const missionId = normalizeMissionId(raw);
+  return missionId ? { missionId } : chatError(422, "unknown_mission", "That is not a mission id.");
 }
 
 /** Reads a JSON request body with a size cap. Returns a Response on failure. */

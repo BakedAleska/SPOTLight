@@ -32,6 +32,13 @@ class Message(BaseModel):
     created_at: Optional[dt.datetime] = None
 
 
+class MissionRef(BaseModel):
+    """chat.3: the mission a conversation is about."""
+    mission_id: str
+    mission_name: Optional[str] = None
+    mission_status: Optional[str] = Field(None, description="The mission's reported status (COMPLETED | FAILED).")
+
+
 class Conversation(BaseModel):
     conversation_id: str
     title: str
@@ -42,6 +49,9 @@ class Conversation(BaseModel):
     created_at: dt.datetime
     updated_at: dt.datetime
     message_count: int = 0
+    mission_id: Optional[str] = Field(None, description="chat.3: the mission this chat is about (set at creation, "
+                                                        "never changed), or null.")
+    mission: Optional[MissionRef] = None
 
 
 class ConversationSummary(Conversation):
@@ -63,6 +73,10 @@ class ConversationCreateIn(BaseModel):
                                                                    "the operator's (never replaced by a model title).")
     model: Optional[str] = Field(None, description="A /chat/models id. Default CHAT_DEFAULT_MODEL.")
     mode: Optional[Mode] = None
+    mission_id: Optional[str] = Field(None, max_length=40, description="chat.3: make this a chat about one mission. "
+                                                                       "Case-insensitive ('m007' is stored as "
+                                                                       "'M007'); an unknown id is 422 "
+                                                                       "unknown_mission.")
 
 
 class ConversationPatchIn(BaseModel):
@@ -121,6 +135,30 @@ class Suggestion(BaseModel):
 
 class SuggestionsOut(BaseModel):
     suggestions: List[Suggestion]
+
+
+class MissionSummary(BaseModel):
+    """chat.3 (§9): one row of the mission picker (ChatRepo.list_missions)."""
+    mission_id: str
+    mission_name: Optional[str] = None
+    scenario: Optional[str] = None
+    configuration_version: Optional[str] = None
+    start_time: Optional[dt.datetime] = None
+    duration_min: Optional[int] = None
+    start_battery_pct: Optional[int] = None
+    end_battery_pct: Optional[int] = None
+    mission_status: Optional[str] = None
+    actions: int = 0
+    failed: int = 0
+    anomalies: int = 0
+    serious_anomalies: int = 0
+    open_flags: int = 0
+    hidden_failure: bool = Field(False, description="Reported COMPLETED with at least one failed action.")
+    chats: int = Field(0, description="Conversations about this mission with at least one message.")
+
+
+class MissionsOut(BaseModel):
+    items: List[MissionSummary]
 
 
 def message_out(row: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:

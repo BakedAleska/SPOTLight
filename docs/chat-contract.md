@@ -1,4 +1,4 @@
-# AI Assistance chat: contract (2026-10-10, `chat.2`)
+# AI Assistance chat: contract (2026-10-11, `chat.3`)
 
 `chat.2` (after the cross-layer audit) is additive. It adds carry-over sources, history rules, one shared citation rule,
 the date/time number rule, `retrieval.gaps`, `error_code`, no Markdown images, and client send/stop rules, all marked
@@ -359,3 +359,54 @@ error     {"code", "detail", "retry_after_s"?: int, "message": Message | null}
 
 Web: `FEATURE_AI_ASSISTANT` (default `true`). The compose `backend` service passes the backend vars and `web`
 passes `FEATURE_AI_ASSISTANT`. No new container and no new port.
+
+## 9. Mission chats (`chat.3`, 2026-10-11, additive)
+A conversation can be **about one mission**. Operators open it from a mission card ("Ask AI") or pick a mission in the
+chat. Every turn then retrieves that mission's context, whatever the question says.
+
+### DB: `db/migrations/013_chat_mission.sql` (`-- target: main`, idempotent)
+`ALTER TABLE chat_conversations ADD COLUMN IF NOT EXISTS mission_id text REFERENCES missions(mission_id) ON DELETE SET NULL`,
+plus an index on `(mission_id, updated_at DESC)`. `ChatRepo` changes (all additive keyword arguments):
+- `create_conversation(*, title, model, mode, mission_id=None)`. Conversation rows always carry `mission_id` (`str | None`).
+- `list_conversations(q=None, limit=50, offset=0, mission_id=None)`: filters to that mission when given.
+- `search_documents(q, vec, k=8, kinds=None, mission_id=None)`: `filter_mission` on the hybrid function, and the same
+  filter on the full-text path.
+- New `list_missions(q=None, limit=100) -> list[dict]`, one row per mission, ordered by `mission_id`: `mission_id,
+  mission_name, scenario, configuration_version, start_time, duration_min, start_battery_pct, end_battery_pct,
+  mission_status, actions, failed, anomalies, serious_anomalies, open_flags, hidden_failure` (bool: reported COMPLETED
+  with ≥1 failed action) and `chats` (conversations about it with ≥1 message). `q` matches the id or name with ILIKE.
+- The mission digest is the existing `entity_digests(mission_ids=[id])["missions"][0]`.
+
+### Backend API (additions)
+| Method and path | Change |
+|---|---|
+| `GET /chat/missions?q=` | `{"items": [MissionSummary]}` (the `list_missions` row), for the picker |
+| `POST /chat/conversations` | body gains `"mission_id"?`. An unknown id gets 422 `unknown_mission`. Ids are matched case-insensitively and stored canonical (`M007`) |
+| `GET /chat/conversations?mission_id=` | filter |
+| `GET /chat/suggestions?mission_id=` | 4 prompts built from that mission's digest (no LLM): its hidden or reported failures, the worst failed action, its anomalies, and battery start→end. Unknown id → 422 `unknown_mission` |
+| Conversation / ConversationSummary | gain `"mission_id": "M007" \| null` and `"mission": {"mission_id", "mission_name", "mission_status"} \| null` |
+
+A conversation's mission can't be changed by PATCH: a mission chat stays about that mission, so start a new chat for another.
+
+### Retrieval for a mission chat (on top of §2)
+- **Pinned digest.** The mission's digest (`mission:M007`) is always a source, ranked first and **never dropped** for
+  the budget. Its failures, anomalies and flags are part of it.
+- **Mission-filtered documents.** `search_documents(..., mission_id=M007, k=6)` runs in addition to the global search.
+  Its rows rank ahead of the global ones, and duplicates are merged.
+- **Graph seed.** `mission:M007` is always a seed of `graph_neighborhood`, alongside the usual entry nodes.
+- **Prompt.** The final user turn starts with one line: `This conversation is about mission M007 (<name>). Questions
+  that name no other subject refer to it.` Other missions can still be asked about and cited.
+- The `sources` event's `retrieval` gains `"mission_id": "M007" | null`.
+
+### Web
+- **Mission cards** on All missions and Flagged get an **"Ask AI"** action next to the replay link, as a separate
+  link (never nested inside the card link). The replay page gets "Ask AI about <id>" too. All of them open
+  `/assistant?mission=<id>`.
+- **`/assistant?mission=<id>`** shows a mission context card (id, name, reported status, failed actions,
+  anomalies, open flags, and a "hidden failure" warning when it applies) and that mission's suggestions. The first
+  send creates the conversation with `mission_id`. An unknown id shows a notice and falls back to a normal new chat.
+- **Mission picker** ("Focus on a mission") in the new-chat empty state: a searchable list from `/api/chat/missions`
+  showing status, failures and the number of existing chats. Picking one sets `?mission=`; the chip has a remove (×) button.
+- **Inside a mission chat** the header shows a mission chip that links to `/missions/replay?mission=<id>`. History
+  rows show a small mission badge. Next routes: `/api/chat/missions`, plus `mission_id` passthrough on the
+  suggestions, conversations-list and create routes.

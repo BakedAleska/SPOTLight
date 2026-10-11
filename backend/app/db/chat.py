@@ -1,6 +1,7 @@
 """AI Assistance chat: history storage + read-only retrieval for grounding (docs/chat-contract.md §1).
 
-`ChatRepo` is the backend's only way into `chat_conversations` / `chat_messages` (db/migrations/011_chat.sql), and
+`ChatRepo` is the backend's only way into `chat_conversations` / `chat_messages` (db/migrations/011_chat.sql;
+013_chat_mission.sql adds the conversation's mission, chat.3 §9), and
 the retrieval side of a chat turn (RAG `documents`, the knowledge graph, and plain SQL digests over the kit tables).
 
 - Rows are plain dicts. uuids come back as `str`, timestamps as `datetime` (also inside the nested digest lists),
@@ -30,8 +31,13 @@ class ConversationNotFound(LookupError):
 
 
 # ── columns ──────────────────────────────────────────────────────────────────────────────────────────
+# chat.3 (§9): every Conversation / ConversationSummary row carries mission_id and `mission` (id, name, reported
+# status) or None. A correlated subquery, so every statement that selects CONV_COLS (INSERT/UPDATE ... RETURNING
+# included) gets it without a join.
+CONV_MISSION = ("(SELECT json_build_object('mission_id', ms.mission_id, 'mission_name', ms.mission_name, "
+                "'mission_status', ms.mission_status) FROM missions ms WHERE ms.mission_id = c.mission_id) AS mission")
 CONV_COLS = ("c.conversation_id::text AS conversation_id, c.title, c.title_source, c.model, c.mode, c.pinned, "
-             "c.created_at, c.updated_at")
+             "c.created_at, c.updated_at, c.mission_id, " + CONV_MISSION)
 MSG_COLS = ("m.message_id::text AS message_id, m.conversation_id::text AS conversation_id, m.seq, m.role, m.content, "
             "m.thinking, m.thinking_ms, m.model, m.mode, m.status, m.sources, m.citations, m.grounding, m.usage, "
             "m.latency_ms, m.error, m.error_code, m.request_id, m.created_at")
@@ -93,6 +99,12 @@ def _fix_ts(items: Any, keys: Sequence[str] = ("timestamp", "created_at")) -> Li
             if k in it:
                 it[k] = _ts(it[k])
     return items
+
+
+def _mission_id(value: Any) -> Optional[str]:
+    """'m007', ' M007 ', 'mission:M007' -> 'M007'; blank -> None. (Existence is checked by the caller.)"""
+    ids = _text_ids([value]) if value not in (None, "") else []
+    return ids[0] if ids else None
 
 
 def _text_ids(ids: Iterable[Any]) -> List[str]:
@@ -240,6 +252,25 @@ SELECT f.flag_id, f.title, f.severity, f.status, f.escalated, f.mission_id, f.ac
  ORDER BY array_position(%s::bigint[], f.flag_id)
  LIMIT 5"""
 
+SQL_LIST_MISSIONS = """
+SELECT m.mission_id, m.mission_name, m.scenario, m.configuration_version, m.start_time, m.duration_min,
+       m.start_battery_pct, m.end_battery_pct, m.mission_status, st.actions, st.failed,
+       (SELECT count(*)::int FROM anomalies n WHERE n.mission_id = m.mission_id) AS anomalies,
+       (SELECT count(*)::int FROM anomalies n WHERE n.mission_id = m.mission_id
+           AND n.severity IN ('HIGH','CRITICAL')) AS serious_anomalies,
+       (SELECT count(*)::int FROM flags f WHERE f.mission_id = m.mission_id AND f.escalated AND f.status = 'OPEN')
+         AS open_flags,
+       coalesce(m.mission_status = 'COMPLETED' AND st.failed > 0, false) AS hidden_failure,
+       (SELECT count(*)::int FROM chat_conversations c WHERE c.mission_id = m.mission_id
+           AND EXISTS (SELECT 1 FROM chat_messages me WHERE me.conversation_id = c.conversation_id)) AS chats
+  FROM missions m
+  CROSS JOIN LATERAL (
+    SELECT count(*)::int AS actions, count(*) FILTER (WHERE a.status = 'FAILED')::int AS failed
+      FROM actions a WHERE a.mission_id = m.mission_id) st
+ %s
+ ORDER BY m.mission_id
+ LIMIT %%s"""
+
 
 def _bands(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """Every battery band in BAND_ORDER (empty ones as n=0, success_rate_pct None)."""
@@ -253,11 +284,12 @@ class ChatRepo:
         self.db = db
 
     # ════ conversations ═════════════════════════════════════════════════════════════════════════════
-    async def list_conversations(self, q: Optional[str] = None, limit: int = 50,
-                                 offset: int = 0) -> Tuple[List[Dict[str, Any]], int]:
+    async def list_conversations(self, q: Optional[str] = None, limit: int = 50, offset: int = 0,
+                                 mission_id: Optional[str] = None) -> Tuple[List[Dict[str, Any]], int]:
         """ConversationSummary rows ordered pinned DESC, updated_at DESC (then id), and the total matching.
         Conversations with no messages are not listed (`chat.2`: a chat whose first send never started leaves no
-        ghost row). `q`: case-insensitive substring of the title OR of any message's content (taken literally)."""
+        ghost row). `q`: case-insensitive substring of the title OR of any message's content (taken literally).
+        `mission_id` (chat.3): only the chats about that mission (matched case-insensitively)."""
         limit, offset = _clamp(limit, 1, 500, 50), _clamp(offset, 0, 10 ** 9, 0)
         q = (q or "").strip()
         where = "WHERE EXISTS (SELECT 1 FROM chat_messages me WHERE me.conversation_id = c.conversation_id)"
@@ -267,6 +299,10 @@ class ChatRepo:
             where += (" AND (c.title ILIKE %s OR EXISTS (SELECT 1 FROM chat_messages m "
                       "WHERE m.conversation_id = c.conversation_id AND m.content ILIKE %s))")
             params = [pat, pat]
+        mid = _mission_id(mission_id)
+        if mid:
+            where += " AND c.mission_id = %s"
+            params.append(mid)
         rows = await self.db.fetch(
             "WITH page AS (SELECT c.*, count(*) OVER () AS _total FROM chat_conversations c %s "
             "ORDER BY c.pinned DESC, c.updated_at DESC, c.conversation_id LIMIT %%s OFFSET %%s) "
@@ -284,10 +320,13 @@ class ChatRepo:
             r.pop("_total", None)
         return rows, total
 
-    async def create_conversation(self, *, title: str, model: str, mode: str) -> Dict[str, Any]:
+    async def create_conversation(self, *, title: str, model: str, mode: str,
+                                  mission_id: Optional[str] = None) -> Dict[str, Any]:
+        """`mission_id` (chat.3): the mission this chat is about, stored canonical ('m007' -> 'M007'). The caller
+        checks it exists; an unknown id raises psycopg's ForeignKeyViolation."""
         return await self.db.fetchone(
-            "INSERT INTO chat_conversations AS c (title, model, mode) VALUES (%%s, %%s, %%s) "
-            "RETURNING %s, 0 AS message_count" % CONV_COLS, (_title(title), model, mode))
+            "INSERT INTO chat_conversations AS c (title, model, mode, mission_id) VALUES (%%s, %%s, %%s, %%s) "
+            "RETURNING %s, 0 AS message_count" % CONV_COLS, (_title(title), model, mode, _mission_id(mission_id)))
 
     async def get_conversation(self, conversation_id: str) -> Optional[Dict[str, Any]]:
         cid = _uid(conversation_id)
@@ -385,24 +424,27 @@ class ChatRepo:
             return max(cur.rowcount, 0)
 
     # ════ retrieval (read-only, bounded) ════════════════════════════════════════════════════════════
-    async def search_documents(self, q: str, vec: Optional[str], k: int = 8,
-                               kinds: Optional[List[str]] = None) -> Tuple[List[Dict[str, Any]], str]:
+    async def search_documents(self, q: str, vec: Optional[str], k: int = 8, kinds: Optional[List[str]] = None,
+                               mission_id: Optional[str] = None) -> Tuple[List[Dict[str, Any]], str]:
         """RAG documents. `vec` (pgvector literal) -> match_documents_hybrid (RRF score), mode 'hybrid'.
         `vec` None -> full text (query terms ORed, ts_rank_cd score; if nothing matches, a literal ILIKE pass
-        for ids such as 'HX-204', score 0), mode 'fulltext'. Same approach as Repo.search_fulltext."""
+        for ids such as 'HX-204', score 0), mode 'fulltext'. Same approach as Repo.search_fulltext.
+        `mission_id` (chat.3): only documents of that mission (the hybrid function's filter_mission, and the same
+        filter on both full-text passes)."""
         k = _clamp(k, 1, 50, 8)
         q = (q or "").strip()
         kinds = [str(x) for x in kinds] if kinds else None
+        mid = _mission_id(mission_id)
         cols = "doc_id, kind, title, content, asset_id, location_id, mission_id, action_id, ts"
         if vec:
             rows = await self.db.fetch(
                 "SELECT %s, score::float8 AS score FROM match_documents_hybrid(%%s::vector, %%s, %%s::text[], "
-                "NULL, NULL, NULL, %%s)" % cols, (vec, q, kinds, k))
+                "NULL, NULL, %%s, %%s)" % cols, (vec, q, kinds, mid, k))
             return rows, "hybrid"
         if not q:
             return [], "fulltext"
-        kf = " AND d.kind = ANY (%s::text[])" if kinds else ""
-        kp = [kinds] if kinds else []
+        kf = (" AND d.kind = ANY (%s::text[])" if kinds else "") + (" AND d.mission_id = %s" if mid else "")
+        kp = ([kinds] if kinds else []) + ([mid] if mid else [])
         rows = await self.db.fetch(
             "WITH q AS (SELECT replace(plainto_tsquery('english', %%s)::text, ' & ', ' | ') AS t) "
             "SELECT %s, ts_rank_cd(d.content_tsv, q.t::tsquery)::float8 AS score FROM documents d, q "
@@ -512,6 +554,20 @@ class ChatRepo:
         for r in out["flags"]:
             r["acks"] = _fix_ts(r["acks"])
         return out
+
+    async def list_missions(self, q: Optional[str] = None, limit: int = 100) -> List[Dict[str, Any]]:
+        """chat.3 (§9): one MissionSummary row per mission for the picker, ordered by mission_id. `q`: ILIKE on the
+        id or the name (taken literally). `hidden_failure`: reported COMPLETED with >= 1 failed action (the same
+        rule as fleet_snapshot's completed_with_failures). `open_flags`: escalated and OPEN (as the snapshot).
+        `chats`: conversations about the mission with >= 1 message (the ones the history panel lists)."""
+        limit = _clamp(limit, 1, 500, 100)
+        q = (q or "").strip()
+        where, params = "", []
+        if q:
+            pat = _like(q)
+            where = "WHERE (m.mission_id ILIKE %s OR m.mission_name ILIKE %s)"
+            params = [pat, pat]
+        return await self.db.fetch(SQL_LIST_MISSIONS % where, params + [limit])
 
     async def suggestion_facts(self) -> Dict[str, Any]:
         """Facts for the starter prompts (no LLM call). Same queries as fleet_snapshot, so the numbers agree."""

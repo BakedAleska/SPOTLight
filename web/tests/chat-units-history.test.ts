@@ -14,7 +14,7 @@ function conv(id: string, updated: Date | string, pinned = false): ConversationS
   return {
     conversation_id: id, title: id, title_source: "auto", model: "m", mode: "fast", pinned,
     created_at: "2026-01-01T00:00:00Z", updated_at: typeof updated === "string" ? updated : updated.toISOString(),
-    message_count: 2, last_message_preview: null,
+    message_count: 2, last_message_preview: null, mission_id: null, mission: null,
   };
 }
 

@@ -37,9 +37,10 @@ Binding contracts: `docs/backend-services-contract.md` (routes, pipeline, env) a
 | `GET /api/v1/ops/model-calls` | p50/p95/mean latency and tokens/s per system/model from `app.model_calls`, plus System 1 routing |
 | `GET /api/v1/ops/jobs` | `app.job_runs` + replay status |
 | `POST /api/v1/ops/reset-demo` | `{"confirm": true}`: clears events, flags, assessments, acks and demo docs (kit tables and raw/app logs stay) |
-| `GET /api/v1/chat/models`, `/chat/suggestions` | AI Assistance model picker (`CHAT_MODELS`, `configured` = key set) and 4 starter prompts from live facts (no LLM) |
-| `GET/POST /api/v1/chat/conversations`, `GET/PATCH/DELETE /chat/conversations/{id}` | Stored chats (search `q`, pin, rename = `title_source: user`); malformed ids are 404 |
-| `POST /api/v1/chat/conversations/{id}/messages` | SSE answer (`meta`, `sources`, `thinking`, `delta`, `done`, `title` / `error`): retrieval (documents + graph + SQL digests, `CHAT_RETRIEVAL_BUDGET_S`) then ONE Gemini call; `[id]` citations checked by a deterministic grounding pass; `regenerate`, `edit_message_id`; 409 while a turn runs; disconnect = Stop (partial answer stored `stopped`). `docs/chat-contract.md` |
+| `GET /api/v1/chat/models`, `/chat/suggestions?mission_id=` | AI Assistance model picker (`CHAT_MODELS`, `configured` = key set) and 4 starter prompts from live facts (no LLM); with `mission_id`, 4 prompts from that mission's digest (unknown → 422 `unknown_mission`) |
+| `GET /api/v1/chat/missions?q=` | Mission picker for mission chats (`chat.3`): one row per mission with failed actions, anomalies, open flags, `hidden_failure`, `chats` |
+| `GET/POST /api/v1/chat/conversations`, `GET/PATCH/DELETE /chat/conversations/{id}` | Stored chats (search `q`, filter `mission_id`, pin, rename = `title_source: user`); `POST` takes `mission_id` (case-insensitive, stored canonical; unknown → 422 `unknown_mission`; PATCH can't change it); malformed ids are 404 |
+| `POST /api/v1/chat/conversations/{id}/messages` | SSE answer (`meta`, `sources`, `thinking`, `delta`, `done`, `title` / `error`): retrieval (documents + graph + SQL digests, `CHAT_RETRIEVAL_BUDGET_S`) then ONE Gemini call; `[id]` citations checked by a deterministic grounding pass; a mission chat pins the mission's digest, adds a mission-filtered document search and the `mission:<id>` graph seed (`retrieval.mission_id`); `regenerate`, `edit_message_id`; 409 while a turn runs; disconnect = Stop (partial answer stored `stopped`). `docs/chat-contract.md` |
 
 ## Run
 Local (Python 3.12):

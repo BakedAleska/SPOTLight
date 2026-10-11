@@ -63,8 +63,18 @@ def sources_block(rendered: Sequence[str]) -> str:
     return "<sources>\n%s\n</sources>" % "\n".join(rendered)
 
 
-def user_turn(block: str, question: str) -> str:
-    return "%s\n\nQuestion: %s" % (block, question)
+def mission_line(mission_id: Optional[str], name: Optional[str] = None) -> Optional[str]:
+    """chat.3 (§9): the line that opens the final user turn of a mission chat; None for an ordinary chat."""
+    if not mission_id:
+        return None
+    name = " ".join(str(name or "").split())
+    return ("This conversation is about mission %s%s. Questions that name no other subject refer to it."
+            % (mission_id, " (%s)" % name if name else ""))
+
+
+def user_turn(block: str, question: str, preface: Optional[str] = None) -> str:
+    text = "%s\n\nQuestion: %s" % (block, question)
+    return "%s\n%s" % (preface, text) if preface else text
 
 
 def history_contents(history: Sequence[Dict[str, Any]], limit: int) -> List[Dict[str, Any]]:

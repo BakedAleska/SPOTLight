@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { getKit } from "@/lib/kit";
 import type { Severity } from "@/lib/types";
+import { replayHref } from "@/lib/chat/mission";
+import { AskAiLink } from "./AskAiLink";
 import { SeverityBadge, severityAccent } from "./SeverityBadge";
 
 const rank: Record<Severity, number> = { CRITICAL: 3, HIGH: 2, MEDIUM: 1, LOW: 0 };
@@ -71,10 +73,11 @@ export function FlaggedMissions() {
 
       <div className="grid gap-3 sm:grid-cols-2">
         {rows.map(({ m, failed, anomalies, worst, review, hidden }) => (
-          <Link
+          // Two sibling actions: the replay link is stretched over the card
+          // (::after), and "Ask AI" sits above it. No nested links.
+          <article
             key={m.mission_id}
-            href={`/missions/replay?mission=${encodeURIComponent(m.mission_id)}`}
-            className="relative overflow-hidden rounded border border-line bg-surface p-4 pl-5 hover:border-accent"
+            className="relative overflow-hidden rounded border border-line bg-surface p-4 pl-5 transition-colors hover:border-accent has-[a:focus-visible]:border-accent"
           >
             <span
               aria-hidden="true"
@@ -117,8 +120,17 @@ export function FlaggedMissions() {
               </ul>
             )}
 
-            <p className="mt-3 text-sm text-accent-ink">Investigate in replay →</p>
-          </Link>
+            <div className="mt-3 flex items-center justify-between gap-3">
+              <Link
+                href={replayHref(m.mission_id)}
+                aria-label={`Investigate ${m.mission_id} · ${m.mission_name} in replay`}
+                className="text-sm text-accent-ink after:absolute after:inset-0 after:content-['']"
+              >
+                Investigate in replay →
+              </Link>
+              <AskAiLink missionId={m.mission_id} />
+            </div>
+          </article>
         ))}
       </div>
       {!rows.length && <p>No flagged missions.</p>}

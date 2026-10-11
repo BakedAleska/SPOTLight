@@ -28,7 +28,9 @@ export const Composer = forwardRef<ComposerHandle, {
   onModeChange: (mode: ChatMode) => void;
   thinkingHint?: string;
   placeholder?: string;
-}>(function Composer({ value, onChange, onSend, onStop, streaming, disabled = false, disabledReason, mode, onModeChange, thinkingHint, placeholder = "Ask about missions, assets, failures…" }, ref) {
+  /** Extra controls after the Thinking toggle (the mission picker in a new chat). */
+  tools?: React.ReactNode;
+}>(function Composer({ value, onChange, onSend, onStop, streaming, disabled = false, disabledReason, mode, onModeChange, thinkingHint, placeholder = "Ask about missions, assets, failures…", tools }, ref) {
   const area = useRef<HTMLTextAreaElement>(null);
   useImperativeHandle(ref, () => ({ focus: () => area.current?.focus() }), []);
 
@@ -67,7 +69,7 @@ export const Composer = forwardRef<ComposerHandle, {
     <form
       onSubmit={submit}
       aria-label="Message composer"
-      className="chat-composer panel-shadow rounded-3xl border border-line bg-surface transition-[border-color,box-shadow]"
+      className="chat-composer panel-shadow relative rounded-3xl border border-line bg-surface transition-[border-color,box-shadow]"
     >
       <label htmlFor="chat-composer" className="sr-only">Message</label>
       <textarea
@@ -99,6 +101,7 @@ export const Composer = forwardRef<ComposerHandle, {
           <Brain size={14} aria-hidden="true" />
           Thinking
         </button>
+        {tools}
         {value.length > MAX - 1000 && (
           <span className={`nums ml-auto font-mono text-xs ${value.length > MAX ? "text-bad" : "text-muted"}`}>
             {value.length}/{MAX}

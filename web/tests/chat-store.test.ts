@@ -92,7 +92,7 @@ function message(id: string, n: number, role: "user" | "assistant", content: str
 function conversation(id: string, title = "New chat"): Conversation {
   return {
     conversation_id: id, title, title_source: "auto", model: "gemini-3.8-flash", mode: "fast", pinned: false,
-    created_at: "2026-10-10T12:00:00Z", updated_at: "2026-10-10T12:00:00Z", message_count: 2,
+    created_at: "2026-10-10T12:00:00Z", updated_at: "2026-10-10T12:00:00Z", message_count: 2, mission_id: null, mission: null,
   };
 }
 

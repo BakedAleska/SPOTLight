@@ -24,6 +24,12 @@ TITLE_RE = r"^http://gemini\.test/v1beta/models/(?P<model>[^/:]+):generateConten
 T0 = dt.datetime(2026, 10, 10, 12, 0, tzinfo=dt.timezone.utc)
 
 
+def _mid(v: Any) -> str:
+    """'m007', 'mission:M007' -> 'M007' (as app.db.chat._text_ids)."""
+    s = str(v or "").strip()
+    return (s.split(":", 1)[1] if ":" in s else s).strip().upper()
+
+
 def _uid(v: Any) -> Optional[str]:
     try:
         return str(uuid.UUID(str(v).strip()))
@@ -39,6 +45,16 @@ DOCS = [
     {"doc_id": "policy:battery_low", "kind": "policy", "title": "Low battery policy",
      "content": "Do not start a mission below 40% battery. Below 25% the action success rate drops sharply.",
      "asset_id": None, "location_id": None, "mission_id": None, "action_id": None, "ts": None, "score": 0.0213},
+]
+# chat.3: what search_documents(mission_id=...) returns (filtered by mission_id).
+MISSION_DOCS = [
+    {"doc_id": "event:act-A0061", "kind": "event", "title": "A0061 NAVIGATION failed at WP05 (M007)",
+     "content": "Mission M007 action A0061 (NAVIGATION) at WP05 failed with LOCALIZATION_FAILURE at 47% battery.",
+     "asset_id": None, "location_id": "WP05", "mission_id": "M007", "action_id": "A0061", "ts": T0, "score": 0.0402},
+    {"doc_id": "incident:AN012", "kind": "incident", "title": "Gauge out of range on HX-217 (M014)",
+     "content": "During mission M014 the pressure gauge on HX-217 read 412.5 psi, above the safe band of 380 psi. "
+                "Severity HIGH.", "asset_id": "HX-217", "location_id": "WP06", "mission_id": "M014",
+     "action_id": "A0133", "ts": T0, "score": 0.0331},
 ]
 NODES = [
     {"node_id": "asset:HX-217", "kind": "asset", "label": "Heat Exchanger 17",
@@ -117,6 +133,7 @@ class FakeChatRepo:
         self.calls: List[Tuple[str, Dict[str, Any]]] = []
         self.docs, self.nodes, self.neighbours = copy.deepcopy(DOCS), copy.deepcopy(NODES), copy.deepcopy(NEIGHBOURS)
         self.snapshot, self.facts = copy.deepcopy(SNAPSHOT), copy.deepcopy(FACTS)
+        self.mission_docs = copy.deepcopy(MISSION_DOCS)
         self._clock = itertools.count(1)
 
     def _now(self) -> dt.datetime:
@@ -127,12 +144,17 @@ class FakeChatRepo:
             raise DatabaseUnavailable("main database is not reachable")
 
     def _conv_out(self, c: Dict[str, Any]) -> Dict[str, Any]:
-        return {**c, "message_count": len(self.messages.get(c["conversation_id"], []))}
+        d = DIGESTS["missions"].get(c.get("mission_id") or "")
+        mission = ({"mission_id": d["mission_id"], "mission_name": d["mission_name"],
+                    "mission_status": d["mission_status"]} if d else None)
+        return {**c, "message_count": len(self.messages.get(c["conversation_id"], [])), "mission": mission}
 
     # conversations
-    async def list_conversations(self, q=None, limit=50, offset=0):
+    async def list_conversations(self, q=None, limit=50, offset=0, mission_id=None):
         self._check("list_conversations")
         rows = [c for c in self.conversations.values() if self.messages.get(c["conversation_id"])]   # chat.2
+        if mission_id:                                                                                # chat.3
+            rows = [c for c in rows if c.get("mission_id") == _mid(mission_id)]
         if q:
             ql = q.lower()
             rows = [c for c in rows if ql in c["title"].lower() or any(
@@ -145,11 +167,15 @@ class FakeChatRepo:
                         "last_message_preview": " ".join(msgs[-1]["content"].split())[:120] if msgs else None})
         return out, len(rows)
 
-    async def create_conversation(self, *, title, model, mode):
+    async def create_conversation(self, *, title, model, mode, mission_id=None):
         self._check("create_conversation")
         cid, now = str(uuid.uuid4()), self._now()
+        mid = _mid(mission_id) if mission_id else None
+        if mid is not None and mid not in DIGESTS["missions"]:
+            raise ValueError("FK violation: unknown mission %r" % mid)     # the real table has an FK
         self.conversations[cid] = {"conversation_id": cid, "title": title, "title_source": "default", "model": model,
-                                   "mode": mode, "pinned": False, "created_at": now, "updated_at": now}
+                                   "mode": mode, "pinned": False, "created_at": now, "updated_at": now,
+                                   "mission_id": mid}
         self.messages[cid] = []
         return self._conv_out(self.conversations[cid])
 
@@ -210,9 +236,12 @@ class FakeChatRepo:
         return len(before) - len(self.messages[cid])
 
     # retrieval
-    async def search_documents(self, q, vec, k=8, kinds=None):
-        self.calls.append(("search_documents", {"q": q, "vec": vec, "k": k}))
+    async def search_documents(self, q, vec, k=8, kinds=None, mission_id=None):
+        self.calls.append(("search_documents", {"q": q, "vec": vec, "k": k, "mission_id": mission_id}))
         self._check("search_documents")
+        if mission_id:                                                                               # chat.3
+            return (copy.deepcopy([d for d in self.mission_docs if d["mission_id"] == _mid(mission_id)][:k]),
+                    ("hybrid" if vec else "fulltext"))
         return copy.deepcopy(self.docs[:k]), ("hybrid" if vec else "fulltext")
 
     async def match_graph_nodes(self, q, vec, k=6):
@@ -238,8 +267,27 @@ class FakeChatRepo:
         out = {}
         for kind, ids in (("missions", mission_ids), ("assets", asset_ids), ("locations", location_ids),
                           ("flags", flag_ids)):
+            ids = [i if kind == "flags" else _mid(i) for i in ids]          # the real repo matches any case
             out[kind] = [copy.deepcopy(DIGESTS[kind][i]) for i in ids if i in DIGESTS[kind]][:5]
         return out
+
+    async def list_missions(self, q=None, limit=100):
+        self.calls.append(("list_missions", {"q": q, "limit": limit}))
+        self._check("list_missions")
+        out = []
+        for mid, d in sorted(DIGESTS["missions"].items()):
+            if q and q.lower() not in mid.lower() and q.lower() not in (d.get("mission_name") or "").lower():
+                continue
+            out.append({k: d[k] for k in ("mission_id", "mission_name", "scenario", "configuration_version",
+                                          "start_time", "duration_min", "start_battery_pct", "end_battery_pct",
+                                          "mission_status", "actions", "failed")}
+                       | {"anomalies": len(d["anomalies"]),
+                          "serious_anomalies": sum(a["severity"] in ("HIGH", "CRITICAL") for a in d["anomalies"]),
+                          "open_flags": sum(f["status"] == "OPEN" for f in d["flags"]),
+                          "hidden_failure": d["mission_status"] == "COMPLETED" and d["failed"] > 0,
+                          "chats": sum(1 for c in self.conversations.values() if c.get("mission_id") == mid
+                                       and self.messages.get(c["conversation_id"]))})
+        return out[:limit]
 
     async def suggestion_facts(self):
         self._check("suggestion_facts")
