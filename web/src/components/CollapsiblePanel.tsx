@@ -14,8 +14,9 @@ import { ChevronDown } from "lucide-react";
    to a row partner. Only height ever moves — never width — so a full-width
    panel stays full-width while folded.
 
-   The body is unmounted once folded, so a chart inside re-mounts on unfold and
-   plays its own entrance animation again.
+   The body stays mounted while folded — clipped, hidden and inert, at the
+   height it had — so a chart inside keeps its size and state and unfolds as
+   it was. Unmounting it made every unfold redraw the chart from empty.
 
    The choice is remembered per panel in localStorage — a convenience only,
    so a blocked or empty store just means every panel starts open. */
@@ -52,6 +53,10 @@ export function CollapsiblePanel({
   const header = useRef<HTMLElement>(null);
   const body = useRef<HTMLDivElement>(null);
   const running = useRef<Animation | null>(null);
+  /** The fold's fade on the body; it holds opacity at 0 until unfold cancels it. */
+  const fade = useRef<Animation | null>(null);
+  /** The body's height when it was folded, held so its contents never see a resize. */
+  const [frozen, setFrozen] = useState<number | null>(null);
   /** Height to unfold from, set by the click and consumed after the commit. */
   const expandFrom = useRef<number | null>(null);
 
@@ -75,7 +80,10 @@ export function CollapsiblePanel({
     const el = panel.current;
     const from = expandFrom.current;
     expandFrom.current = null;
-    if (!el || from === null || collapsed) return;
+    if (collapsed) return;
+    fade.current?.cancel();
+    fade.current = null;
+    if (!el || from === null) return;
     const to = el.getBoundingClientRect().height;
     running.current = el.animate([{ height: `${from}px` }, { height: `${to}px` }], { duration: DURATION, easing: EASE });
     body.current?.animate(
@@ -92,12 +100,13 @@ export function CollapsiblePanel({
 
     if (!collapsed) {
       remember(true);
+      setFrozen(body.current?.getBoundingClientRect().height ?? null);
       if (!el || reducedMotion()) { setCollapsed(true); return; }
       // Fold: shrink to the header (plus the panel's 1px borders), fade the
-      // body over it, and only then drop the body from the tree.
+      // body over it, and only then pin the panel at the folded height.
       setFolding(true);
       const to = (header.current?.getBoundingClientRect().height ?? 36) + 2;
-      body.current?.animate([{ opacity: 1 }, { opacity: 0 }], { duration: DURATION * 0.6, easing: "ease-out", fill: "forwards" });
+      fade.current = body.current?.animate([{ opacity: 1 }, { opacity: 0 }], { duration: DURATION * 0.6, easing: "ease-out", fill: "forwards" }) ?? null;
       const anim = el.animate([{ height: `${from}px` }, { height: `${to}px` }], { duration: DURATION, easing: EASE, fill: "forwards" });
       running.current = anim;
       anim.onfinish = () => {
@@ -112,6 +121,7 @@ export function CollapsiblePanel({
 
     remember(false);
     setFolding(false);
+    setFrozen(null);
     if (!reducedMotion()) expandFrom.current = from;
     setCollapsed(false);
   };
@@ -120,11 +130,11 @@ export function CollapsiblePanel({
     <section
       ref={panel}
       aria-labelledby={id}
-      // Folded, the panel takes its content height instead of stretching to
-      // its row partner, or it reads as an empty box rather than a closed one.
-      // `height`, not `align-self`: in a flex column align-self is the
-      // horizontal axis, and the panel would shrink sideways.
-      style={collapsed ? { ...style, height: "fit-content" } : style}
+      // Folded, the panel is the header's height (plus its 1px borders)
+      // instead of stretching to its row partner, or it reads as an empty box
+      // rather than a closed one. `height`, not `align-self`: in a flex column
+      // align-self is the horizontal axis, and the panel would shrink sideways.
+      style={collapsed ? { ...style, height: "calc(2.25rem + 2px)" } : style}
       className={`anim-float panel-shadow flex flex-col overflow-hidden rounded-panel border border-line bg-surface ${className}`}
     >
       <header ref={header} className={`flex h-9 shrink-0 items-center gap-2 px-2 pr-4 ${collapsed ? "" : "border-b border-line"}`}>
@@ -143,11 +153,16 @@ export function CollapsiblePanel({
         </h2>
         {aside && <div className="nums ml-auto shrink-0 text-xs text-muted">{aside}</div>}
       </header>
-      {!collapsed && (
-        <div ref={body} id={`${id}-body`} className={`flex min-h-0 flex-1 flex-col ${bodyClassName}`}>
-          {children}
-        </div>
-      )}
+      <div
+        ref={body}
+        id={`${id}-body`}
+        inert={collapsed}
+        aria-hidden={collapsed || undefined}
+        style={collapsed ? { height: frozen ?? undefined, flex: "none" } : undefined}
+        className={`flex min-h-0 flex-1 flex-col ${collapsed ? "invisible" : ""} ${bodyClassName}`}
+      >
+        {children}
+      </div>
     </section>
   );
 }

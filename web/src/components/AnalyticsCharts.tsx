@@ -86,8 +86,7 @@ const ANIMATED = new Set<unknown>([Area, Bar, Line, Pie, Scatter]);
    size changes. Folding the sidebar or a row partner resizes every chart at
    once, and the whole page redrawing from empty reads as a reload. So a chart
    animates on mount only: the first size change after the one it mounted at
-   switches its series' animation off, and resizes reflow it in place. A panel
-   that unfolds re-mounts its Plot, so it still plays its entrance again. */
+   switches its series' animation off, and resizes reflow it in place. */
 function Plot({ height = 240, children }: { height?: number; children: React.ReactElement<{ children?: React.ReactNode }> }) {
   const [settled, setSettled] = useState(false);
   const size = useRef<string | null>(null);
