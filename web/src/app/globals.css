@@ -791,22 +791,6 @@ body {
   to { transform: rotate(360deg); }
 }
 
-.spotlight-radar-blip {
-  opacity: 0;
-  animation: spotlight-radar-return 12s linear var(--blip-delay) infinite;
-}
-
-.spotlight-radar-caution {
-  filter: drop-shadow(0 0 2px #ffca44);
-}
-
-/* The 90-degree trail takes three seconds to pass a return. Fade throughout
-   that interval, reaching transparency at the tail rather than after it. */
-@keyframes spotlight-radar-return {
-  0% { opacity: 0.8; }
-  25%, 100% { opacity: 0; }
-}
-
 /* Reduced motion. Zeroing duration alone is not enough, and each extra line
    here fixes a way the page would otherwise still move:
 
@@ -820,7 +804,7 @@ body {
    - scroll-behavior: smooth scrolling is motion the duration overrides never
      touch, because it isn't an animation or a transition. */
 @media (prefers-reduced-motion: reduce) {
-  .spotlight-radar-blip, .spotlight-radar-trail { display: none; }
+  .spotlight-radar-trail { display: none; }
   .spotlight-radar-sweep {
     animation: none !important;
   }

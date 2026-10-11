@@ -1,5 +1,4 @@
 import Image from "next/image";
-import { RadarBlips } from "./RadarBlips";
 
 /** Angular opacity ramp behind the arrow; every slice shares its rotation. */
 function RadarTrail() {
@@ -21,9 +20,9 @@ function RadarTrail() {
 
 /** The supplied artwork shares one coordinate system; the cropped mark is
  * offset back into it before rotating about the radar's actual center. */
-export function SpotlightLogo({ animated = false, blips = false, small = false, className = "" }: {
+export function SpotlightLogo({ animated = false, dimmed = false, small = false, className = "" }: {
   animated?: boolean;
-  blips?: boolean;
+  dimmed?: boolean;
   small?: boolean;
   className?: string;
 }) {
@@ -33,14 +32,13 @@ export function SpotlightLogo({ animated = false, blips = false, small = false, 
 
   return (
     <svg viewBox="0 0 2016 2051" fill="none" aria-hidden="true" focusable="false" className={className}>
-      <image className={blips ? "opacity-40" : undefined} href={small ? "/spotlight-logo-small.svg" : "/spotlight-arrow.svg"} width="2016" height="2051" />
-      <g transform="translate(1008 1042.42)" opacity={blips ? 0.4 : 1}>
+      <image className={dimmed ? "opacity-40" : undefined} href={small ? "/spotlight-logo-small.svg" : "/spotlight-arrow.svg"} width="2016" height="2051" />
+      <g transform="translate(1008 1042.42)" opacity={dimmed ? 0.4 : 1}>
         <g className="spotlight-radar-sweep">
           <RadarTrail />
           <image href="/spotlight-mark.svg" x="37.474" y="23.805" width="723" height="586" />
         </g>
       </g>
-      {blips && <RadarBlips />}
     </svg>
   );
 }
