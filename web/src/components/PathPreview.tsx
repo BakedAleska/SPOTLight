@@ -115,11 +115,8 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
             </g>;
           })}
           {current && marker && <g aria-label={`SPOT at ${current.id}`} transform={`translate(${marker.x} ${marker.y})`}>
-            {((active && !frame?.moving && last?.type === "ACTION_STARTED") || (mode === "live" && last?.type === "ACTION_STARTED")) && <g className="spot-working-spinner" aria-label="SPOT working">
-              {[0, 1, 2, 3, 4].map(i => <circle key={i} cx={46 * Math.cos((-110 - i * 17) * Math.PI / 180)} cy={46 * Math.sin((-110 - i * 17) * Math.PI / 180)} r="3.5" fill="white" opacity={1 - i * 0.16} />)}
-            </g>}
-            {changingFloor && <g className={active ? "spot-floor-chevron" : undefined} style={{ "--floor-direction": floorUp ? "-1" : "1" } as React.CSSProperties} aria-hidden="true">
-              <path d={floorUp ? "M -16 -48 L 0 -62 L 16 -48 M -16 -62 L 0 -76 L 16 -62" : "M -16 -76 L 0 -62 L 16 -76 M -16 -62 L 0 -48 L 16 -62"} fill="none" stroke="white" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+            {((active && (changingFloor || (!frame?.moving && last?.type === "ACTION_STARTED"))) || (mode === "live" && last?.type === "ACTION_STARTED")) && <g className="spot-working-spinner" aria-label={changingFloor ? "SPOT changing floors" : "SPOT working"}>
+              {[0, 1, 2, 3, 4].map(i => <g key={i} className="spot-merging-dot" style={{ "--dot-start": `${i * 24}deg`, "--dot-end": `${360 + i * 24}deg` } as React.CSSProperties}><circle cx="0" cy="-48" r="4" fill="white" opacity={1 - i * 0.1} /></g>)}
             </g>}
             <image href="/spotlight-logo-small.svg" x="-30" y="-34" width="60" height="68" filter="url(#spot-marker-contrast)" />
             <text y="65" textAnchor="middle" fill="white" stroke="black" strokeWidth="3" paintOrder="stroke" fontSize="15" fontWeight="bold">{changingFloor ? `F${frame?.from?.floor} → F${frame?.to?.floor}` : "SPOT"}</text>

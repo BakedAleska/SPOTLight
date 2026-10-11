@@ -799,21 +799,17 @@ body {
   .spot-activity-ring, .spot-activity-icon { animation: none; }
 }
 
-/* Windows-style trailing dots surround the dog during an inspection. */
-.spot-working-spinner {
+/* Dots catch up, merge and spread around SPOT during work or floor changes. */
+.spot-working-spinner { filter: drop-shadow(0 1px 2px black); }
+.spot-merging-dot {
   transform-box: view-box;
   transform-origin: 0 0;
-  animation: spot-working-orbit 1.8s cubic-bezier(0.4, 0, 0.3, 1) infinite;
-  filter: drop-shadow(0 1px 2px black);
+  transform: rotate(var(--dot-start));
+  animation: spot-dots-merge 2.4s ease-in-out infinite;
 }
-@keyframes spot-working-orbit { to { transform: rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) {
-  .spot-working-spinner { animation: none; }
+@keyframes spot-dots-merge {
+  0% { transform: rotate(var(--dot-start)); }
+  45%, 55% { transform: rotate(180deg); }
+  100% { transform: rotate(var(--dot-end)); }
 }
-
-/* Floor-change arrows signal vertical travel without inventing a stair location. */
-.spot-floor-chevron { animation: spot-floor-step 1s ease-in-out infinite; filter: drop-shadow(0 1px 2px black); }
-@keyframes spot-floor-step {
-  50% { transform: translateY(calc(var(--floor-direction) * 8px)); opacity: 0.5; }
-}
-@media (prefers-reduced-motion: reduce) { .spot-floor-chevron { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .spot-merging-dot { animation: none; } }
