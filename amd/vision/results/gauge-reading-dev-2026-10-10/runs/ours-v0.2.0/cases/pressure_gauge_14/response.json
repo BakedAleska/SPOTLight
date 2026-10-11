@@ -1,0 +1,243 @@
+{
+ "media_id": "pressure_gauge_14",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "7",
+   "bbox": [
+    282,
+    281,
+    329,
+    332
+   ],
+   "conf": 0.992
+  },
+  {
+   "text": "6",
+   "bbox": [
+    209,
+    297,
+    248,
+    339
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "8",
+   "bbox": [
+    367,
+    314,
+    407,
+    355
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "5",
+   "bbox": [
+    136,
+    343,
+    181,
+    391
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "W",
+   "bbox": [
+    200,
+    381,
+    270,
+    425
+   ],
+   "conf": 0.938
+  },
+  {
+   "text": "orks",
+   "bbox": [
+    249,
+    374,
+    361,
+    412
+   ],
+   "conf": 0.834
+  },
+  {
+   "text": "9",
+   "bbox": [
+    429,
+    376,
+    467,
+    419
+   ],
+   "conf": 0.997
+  },
+  {
+   "text": "4",
+   "bbox": [
+    98,
+    420,
+    136,
+    464
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "10",
+   "bbox": [
+    428,
+    452,
+    495,
+    499
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "OIL",
+   "bbox": [
+    463,
+    489,
+    517,
+    526
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "3",
+   "bbox": [
+    100,
+    503,
+    136,
+    545
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "Press",
+   "bbox": [
+    422,
+    519,
+    516,
+    550
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "2",
+   "bbox": [
+    138,
+    574,
+    180,
+    618
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "Kg/",
+   "bbox": [
+    244,
+    606,
+    335,
+    655
+   ],
+   "conf": 0.996
+  },
+  {
+   "text": "cm'",
+   "bbox": [
+    313,
+    604,
+    384,
+    644
+   ],
+   "conf": 0.824
+  },
+  {
+   "text": "0",
+   "bbox": [
+    290,
+    645,
+    328,
+    684
+   ],
+   "conf": 0.966
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "pressure",
+   "value": 11.9,
+   "unit": "psi",
+   "confidence": 0.3,
+   "method": "hough_ray_ransac_labels",
+   "flags": [
+    "LABEL_OUTLIER",
+    "WEAK_NEEDLE",
+    "NEEDLE_OUTSIDE_SCALE",
+    "UNIT_UNKNOWN"
+   ],
+   "point": [
+    406,
+    601
+   ],
+   "note": "needle at 136° reads 11.9 (unit unknown)"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "psi",
+   "value": 11.9
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 30
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": 136.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 0.41
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.0
+  },
+  {
+   "name": "Full Scale",
+   "units": "psi",
+   "value": 10.0
+  },
+  {
+   "name": "Scale Labels Used",
+   "units": "",
+   "value": "9 of 10"
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 494,
+ "version": {
+  "service": "0.2.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

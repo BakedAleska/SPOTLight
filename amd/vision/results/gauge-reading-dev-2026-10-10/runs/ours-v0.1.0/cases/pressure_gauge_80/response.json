@@ -1,0 +1,360 @@
+{
+ "media_id": "pressure_gauge_80",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "6",
+   "bbox": [
+    228,
+    162,
+    240,
+    178
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "7",
+   "bbox": [
+    276,
+    151,
+    292,
+    170
+   ],
+   "conf": 0.997
+  },
+  {
+   "text": "8",
+   "bbox": [
+    329,
+    158,
+    344,
+    175
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "5",
+   "bbox": [
+    176,
+    180,
+    200,
+    206
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "100",
+   "bbox": [
+    271,
+    202,
+    305,
+    221
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "120",
+   "bbox": [
+    318,
+    203,
+    360,
+    238
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "10",
+   "bbox": [
+    406,
+    204,
+    441,
+    240
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "80",
+   "bbox": [
+    223,
+    209,
+    255,
+    238
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "60",
+   "bbox": [
+    184,
+    242,
+    215,
+    273
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "1",
+   "bbox": [
+    434,
+    250,
+    463,
+    280
+   ],
+   "conf": 0.866
+  },
+  {
+   "text": "3",
+   "bbox": [
+    121,
+    272,
+    138,
+    286
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "160",
+   "bbox": [
+    394,
+    274,
+    420,
+    313
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "40",
+   "bbox": [
+    168,
+    288,
+    187,
+    314
+   ],
+   "conf": 0.801
+  },
+  {
+   "text": "212",
+   "bbox": [
+    454,
+    304,
+    474,
+    330
+   ],
+   "conf": 0.509
+  },
+  {
+   "text": "2",
+   "bbox": [
+    115,
+    325,
+    132,
+    339
+   ],
+   "conf": 0.879
+  },
+  {
+   "text": "0",
+   "bbox": [
+    408,
+    338,
+    422,
+    350
+   ],
+   "conf": 0.724
+  },
+  {
+   "text": "C",
+   "bbox": [
+    287,
+    354,
+    304,
+    373
+   ],
+   "conf": 0.981
+  },
+  {
+   "text": "13",
+   "bbox": [
+    449,
+    355,
+    469,
+    382
+   ],
+   "conf": 0.807
+  },
+  {
+   "text": "R22",
+   "bbox": [
+    284,
+    373,
+    310,
+    387
+   ],
+   "conf": 0.995
+  },
+  {
+   "text": "20",
+   "bbox": [
+    378,
+    370,
+    414,
+    413
+   ],
+   "conf": 0.98
+  },
+  {
+   "text": "R407C",
+   "bbox": [
+    279,
+    387,
+    320,
+    402
+   ],
+   "conf": 0.998
+  },
+  {
+   "text": "30",
+   "bbox": [
+    211,
+    409,
+    246,
+    442
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "R404A",
+   "bbox": [
+    276,
+    420,
+    313,
+    434
+   ],
+   "conf": 0.989
+  },
+  {
+   "text": "R134a",
+   "bbox": [
+    275,
+    432,
+    313,
+    449
+   ],
+   "conf": 0.997
+  },
+  {
+   "text": "220",
+   "bbox": [
+    340,
+    410,
+    383,
+    448
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "psi",
+   "bbox": [
+    279,
+    462,
+    314,
+    486
+   ],
+   "conf": 0.985
+  },
+  {
+   "text": "15",
+   "bbox": [
+    390,
+    439,
+    425,
+    474
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "bar",
+   "bbox": [
+    279,
+    481,
+    316,
+    504
+   ],
+   "conf": 1.0
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "pressure",
+   "value": 12.3,
+   "unit": "psi",
+   "confidence": 0.7,
+   "method": "hough_ray_ransac_labels",
+   "flags": [
+    "LABEL_OUTLIER"
+   ],
+   "point": [
+    445,
+    276
+   ],
+   "note": "needle at 72° reads 12.3 psi"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "psi",
+   "value": 12.3
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 70
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": 72.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 0.57
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.0
+  },
+  {
+   "name": "Full Scale",
+   "units": "psi",
+   "value": 20.0
+  },
+  {
+   "name": "Scale Labels Used",
+   "units": "",
+   "value": "10 of 21"
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 751,
+ "version": {
+  "service": "0.1.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

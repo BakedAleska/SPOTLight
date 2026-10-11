@@ -1,0 +1,30 @@
+{
+ "question_id": "pressure_gauge_52",
+ "question": "What is the reading on the instrument?",
+ "evaluator": "multi_interval_matching",
+ "evaluator_kwargs": {
+  "intervals": [
+   [
+    1.5,
+    2
+   ],
+   [
+    0.15,
+    0.2
+   ]
+  ],
+  "units": [
+   [
+    "kgf/cm^2",
+    "kgf/cm²"
+   ],
+   [
+    "MPa"
+   ]
+  ]
+ },
+ "meta_info": {
+  "source": "https://www.youtube.com/watch?v=HQmlFIPNQlE",
+  "uploader": ""
+ }
+}

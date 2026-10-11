@@ -1,0 +1,20 @@
+{
+ "question_id": "pressure_gauge_14",
+ "question": "What's the reading on the car's oil pressure gauge?",
+ "evaluator": "interval_matching",
+ "evaluator_kwargs": {
+  "interval": [
+   8.3,
+   8.5
+  ],
+  "units": [
+   "kg/cm²",
+   "kg/cm^2",
+   "kilogram per square centimeter"
+  ]
+ },
+ "meta_info": {
+  "source": "https://www.youtube.com/watch?v=ciJUx4FDmn4",
+  "uploader": ""
+ }
+}

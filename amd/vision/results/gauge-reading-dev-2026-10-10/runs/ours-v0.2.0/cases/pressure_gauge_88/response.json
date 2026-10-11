@@ -1,0 +1,59 @@
+{
+ "media_id": "pressure_gauge_88",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "INCHES OF WAT",
+   "bbox": [
+    653,
+    156,
+    715,
+    168
+   ],
+   "conf": 0.996
+  },
+  {
+   "text": "MAGNEHEL",
+   "bbox": [
+    633,
+    237,
+    715,
+    256
+   ],
+   "conf": 0.998
+  },
+  {
+   "text": "MAX.PRESSURE 1S",
+   "bbox": [
+    635,
+    269,
+    713,
+    284
+   ],
+   "conf": 0.911
+  }
+ ],
+ "readings": [],
+ "key_results": [],
+ "comparison": null,
+ "alert": null,
+ "flags": [
+  "AXIS_FIT_FAILED"
+ ],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 306,
+ "version": {
+  "service": "0.2.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

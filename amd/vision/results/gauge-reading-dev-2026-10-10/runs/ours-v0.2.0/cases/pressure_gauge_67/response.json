@@ -1,0 +1,141 @@
+{
+ "media_id": "pressure_gauge_67",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "0.1",
+   "bbox": [
+    472,
+    81,
+    513,
+    115
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "0.05 PRESSURE GAUGE 0.15",
+   "bbox": [
+    377,
+    141,
+    611,
+    188
+   ],
+   "conf": 0.953
+  },
+  {
+   "text": "0",
+   "bbox": [
+    399,
+    255,
+    420,
+    286
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "0.2",
+   "bbox": [
+    541,
+    257,
+    586,
+    295
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "MPa",
+   "bbox": [
+    458,
+    268,
+    523,
+    302
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "GUNGYO",
+   "bbox": [
+    466,
+    339,
+    532,
+    369
+   ],
+   "conf": 0.798
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "pressure",
+   "value": 0.1,
+   "unit": "MPa",
+   "confidence": 0.3,
+   "method": "hough_ray_ransac_labels",
+   "flags": [
+    "SHORT_NEEDLE",
+    "AMBIGUOUS_NEEDLE"
+   ],
+   "point": [
+    617,
+    136
+   ],
+   "note": "two needle candidates: 59° -> 0 MPa and -123° -> 0 MPa (two-ended needle (opposite arm 0.30 r long)); do not trust this value"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "MPa",
+   "value": 0.1
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 30
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": 59.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 300000.0
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.3
+  },
+  {
+   "name": "Full Scale",
+   "units": "MPa",
+   "value": 0.2
+  },
+  {
+   "name": "Scale Labels Used",
+   "units": "",
+   "value": "3 of 3"
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 284,
+ "version": {
+  "service": "0.2.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

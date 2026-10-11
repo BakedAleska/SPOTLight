@@ -1,0 +1,16 @@
+gauge_photo      run 1 |  20228 ms | cache off  | image text_only | path retry    | REINSPECT_NOW | cited [['action:A0030'], ['reading:R0053'], ['flag:14']]
+    answer (127 chars): The GAUGE_READING failed with SENSOR_TIMEOUT, the 114.2 psi reading is QUESTIONABLE, and the flag is P2 OPEN, so reinspect now.
+gauge_photo      run 2 |  18294 ms | cache off  | image text_only | path retry    | REINSPECT_NOW | cited [['action:A0030'], ['reading:R0053'], ['flag:14']]
+    answer (127 chars): The GAUGE_READING failed with SENSOR_TIMEOUT, the 114.2 psi reading is QUESTIONABLE, and the flag is P2 OPEN, so reinspect now.
+thermal_photo    run 1 |   9808 ms | cache off  | image used      | path llm      | SCHEDULE_MAINTENANCE | cited [['F1'], ['F2'], ['F3']]
+    answer (174 chars): Thermal inspection of PANEL-218 failed with SENSOR_TIMEOUT; the logged 63.0 C is QUESTIONABLE and a MEDIUM ABNORMAL_TEMPERATURE anomaly was detected, so schedule maintenance.
+thermal_photo    run 2 |   8619 ms | cache off  | image used      | path llm      | SCHEDULE_MAINTENANCE | cited [['F1'], ['F2'], ['F3']]
+    answer (174 chars): Thermal inspection of PANEL-218 failed with SENSOR_TIMEOUT; the logged 63.0 C is QUESTIONABLE and a MEDIUM ABNORMAL_TEMPERATURE anomaly was detected, so schedule maintenance.
+gauge_disagree   run 1 |  11571 ms | cache off  | image used      | path llm      | MANUAL_READING | cited [['V1', 'reading:R0053'], ['action:A0030'], ['flag:14']]
+    answer (186 chars): The gauge_needle tool and logged reading disagree (121.0 psi vs 114.2 psi), the GAUGE_READING failed with SENSOR_TIMEOUT at 17% battery, and flag:14 is OPEN P2, so take a manual reading.
+gauge_disagree   run 2 |  10551 ms | cache off  | image used      | path llm      | MANUAL_READING | cited [['V1', 'reading:R0053'], ['action:A0030'], ['flag:14']]
+    answer (186 chars): The gauge_needle tool and logged reading disagree (121.0 psi vs 114.2 psi), the GAUGE_READING failed with SENSOR_TIMEOUT at 17% battery, and flag:14 is OPEN P2, so take a manual reading.
+text_equipment   run 1 |  10866 ms | cache off  | image None      | path llm      | DISPATCH_TECHNICIAN | cited [['flag:9', 'anomaly:AN009'], ['flag:9', 'action:A0009'], ['flag:9', 'action:A0009']]
+    answer (146 chars): Heat Exchanger 08 has a HIGH severity VISUAL_DEFECT, a failed VISUAL_INSPECTION with SENSOR_TIMEOUT, and battery at 22%, so dispatch a technician.
+text_equipment   run 2 |   7898 ms | cache off  | image None      | path llm      | DISPATCH_TECHNICIAN | cited [['flag:9', 'anomaly:AN009'], ['flag:9', 'action:A0009'], ['flag:9', 'action:A0009']]
+    answer (146 chars): Heat Exchanger 08 has a HIGH severity VISUAL_DEFECT, a failed VISUAL_INSPECTION with SENSOR_TIMEOUT, and battery at 22%, so dispatch a technician.

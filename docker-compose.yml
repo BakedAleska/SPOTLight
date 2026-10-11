@@ -242,7 +242,8 @@ services:
       SYSTEM2_LLAMA_API_KEY: ${SYSTEM2_LLAMA_API_KEY:-${LITELLM_MASTER_KEY:-sk-spot-gateway-dev-key-change-me}}
       SYSTEM2_DEADLINE_S: ${SYSTEM2_DEADLINE_S:-15}   # text requests (p95 target); raise only for slow local models; (0, 120]
       SYSTEM2_IMAGE_DEADLINE_S: ${SYSTEM2_IMAGE_DEADLINE_S:-25}   # requests with image_b64 only (text: 15 s); (0, 120]
-      SYSTEM2_CACHE_DIR: ${SYSTEM2_CACHE_DIR:-}
+      SYSTEM2_CACHE_DIR: ${SYSTEM2_CACHE_DIR:-}             # `off` disables the cache (measurement runs)
+      SYSTEM2_RECORD_DIR: ${SYSTEM2_RECORD_DIR:-}           # measurement runs only: raw attempts to a writable mount
     depends_on:
       gateway: {condition: service_healthy, required: false}
     ports: ["${BIND_ADDR:-127.0.0.1}:8083:8083"]

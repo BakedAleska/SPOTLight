@@ -1,0 +1,116 @@
+{
+ "media_id": "pressure_gauge_68",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "9.8",
+   "bbox": [
+    452,
+    148,
+    496,
+    176
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "消",
+   "bbox": [
+    305,
+    259,
+    346,
+    301
+   ],
+   "conf": 0.998
+  },
+  {
+   "text": "SUS",
+   "bbox": [
+    504,
+    266,
+    566,
+    311
+   ],
+   "conf": 0.999
+  },
+  {
+   "text": "X10-1MPa",
+   "bbox": [
+    378,
+    348,
+    477,
+    379
+   ],
+   "conf": 0.985
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "pressure",
+   "value": 10.1,
+   "unit": "MPa",
+   "confidence": 0.3,
+   "method": "hough_ray_default_sweep",
+   "flags": [
+    "DEFAULT_SWEEP",
+    "AMBIGUOUS_NEEDLE"
+   ],
+   "point": [
+    505,
+    350
+   ],
+   "note": "two needle candidates: 142° -> 10 MPa and -160° -> -1 MPa (peak ratio 0.93); do not trust this value"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "MPa",
+   "value": 10.1
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 30
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": 142.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 0.93
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.16
+  },
+  {
+   "name": "Full Scale",
+   "units": "MPa",
+   "value": 9.8
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 280,
+ "version": {
+  "service": "0.2.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

@@ -1,0 +1,28 @@
+# gauge_disagree.json (1x1 PNG placeholder image), in-process run_pipeline with the live LlamaGenerator,
+# repo df63f64 (clean), ~20:33 UTC. SYSTEM2 image deadline 25 s. Same code and server as step 6.
+path retry image_used False
+{'index': 1, 'status': 'rejected', 'detail': '', 'latency_ms': 13188, 'completion_tokens': 247}
+   err: {'code': 'ungrounded_identifier', 'field': 'evidence', 'claim': 1, 'value': 'A0030'}
+   err: {'code': 'ungrounded_number', 'field': 'evidence', 'claim': 2, 'value': '14'}
+   err: {'code': 'ungrounded_identifier', 'field': 'answer', 'claim': None, 'value': 'A0030'}
+   err: {'code': 'ungrounded_number', 'field': 'answer', 'claim': None, 'value': '14'}
+{'index': 2, 'status': 'accepted', 'detail': '', 'latency_ms': 11293, 'completion_tokens': 227}
+
+# Second in-process run (generator wrapped to keep raw text), ~20:45 UTC. Only attempt 1 returned text;
+# the run ended path fallback (attempt 2 raised before returning).
+path fallback image_used None
+=== attempt 1 PreparedPacket image present: True kw: {} prior errors: []
+{'model': '/root/models/q38-27b/Qwen3.8-27B-Q8_0.gguf', 'finish_reason': 'stop', 'prompt_tokens': 2680, 'completion_tokens': 247, 'tokens_per_sec': 22.172958994897968, 'image_used': True}
+{"evidence":[{"claim":"V1 says agrees=false; tool gauge_needle logged value=121.0 psi; logged_id reading:R0053 logged_value=114.2 psi","ids":["V1","reading:R0053"]},{"claim":"action:A0030 action_type=GAUGE_READING; battery_pct=17; failure_type=SENSOR_TIMEOUT; status=FAILED","ids":["action:A0030"]},{"claim":"flag:14 category=data_quality; escalated=true; priority=P2; status=OPEN","ids":["flag:14"]}],"answer":"V1 says agrees=false; tool gauge_needle logged value=121.0 psi; logged_id reading:R0053 logged_value=114.2 psi; action:A0030 action_type=GAUGE_READING; battery_pct=17; failure_type=SENSOR_TIMEOUT; status=FAILED; flag:14 category=dataquality","question":"What should the operator do about flag flag:act-A0030?","recommended_action":"MANUAL_READING","confidence":"medium","insufficient_context":false}
+
+# Reference reply check, then three direct generator calls (image attempt only, timeout_s=25), ~20:46-20:47 UTC.
+V1 content: {"agrees": false, "confidence": 0.88, "delta": 6.8, "kind": "gauge", "logged_id": "reading:R0053", "logged_value": 114.2, "pairing": "linked", "quantity": "pressure", "tool": "gauge_needle", "trust": "HIGH", "unit": "psi", "value": 121.0}
+R0053 content: {"measurement_type": "PRESSURE_PSI", "quality": "QUESTIONABLE", "unit": "psi", "value": 114.2}
+reference reply errors: []
+--- run 1 image_used True tokens 247 action MANUAL_READING
+  ev ['V1', 'reading:R0053'] | V1 says agrees=false; tool gauge_needle logged value=121.0 psi; logged_id reading:R0053 logged_value=114.2 psi
+  ev ['action:A0030'] | action:A0030 action_type=GAUGE_READING; battery_pct=17; failure_type=SENSOR_TIMEOUT; status=FAILED
+  ev ['flag:14'] | flag:14 category=data_quality; escalated=true; priority=P2; status=OPEN
+  answer: V1 says agrees=false; tool gauge_needle logged value=121.0 psi; logged_id reading:R0053 logged_value=114.2 psi; action:A0030 action_type=GAUGE_READING; battery_pct=17; failure_type=SENSOR_TIMEOUT; status=FAILED; flag:14 category=dataquality
+  errors: [('ungrounded_identifier', 'evidence', 1, 'A0030'), ('ungrounded_number', 'evidence', 2, '14'), ('ungrounded_identifier', 'answer', None, 'A0030'), ('ungrounded_number', 'answer', None, '14')]
+# runs 2 and 3 printed output identical to run 1 (same claims, answer and errors).

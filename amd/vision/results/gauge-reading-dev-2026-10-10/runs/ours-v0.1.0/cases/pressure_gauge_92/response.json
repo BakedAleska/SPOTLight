@@ -1,0 +1,29 @@
+{
+ "media_id": "pressure_gauge_92",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [],
+ "readings": [],
+ "key_results": [],
+ "comparison": null,
+ "alert": null,
+ "flags": [
+  "AXIS_FIT_FAILED",
+  "NO_TEXT"
+ ],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 190,
+ "version": {
+  "service": "0.1.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

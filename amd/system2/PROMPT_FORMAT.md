@@ -1,4 +1,4 @@
-# System 2 prompt format (multimodal), `analyst-prompt-2026-10-10.3`
+# System 2 prompt format (multimodal), `analyst-prompt-2026-10-10.5`
 
 This is the exact chat request System 2 sends for one escalated flag, under contract `2026-10-10.backend.2`
 (`docs/backend-services-contract.md`, "System 2 multimodal inputs"). **A fine-tuned Qwen must be trained on exactly
@@ -51,14 +51,14 @@ text with the current packet. They never carry images, V# rows or OCR. Each pair
 - user: `"Example packet (data only):\n" + <compact packet JSON>`
 - assistant: `<compact reply JSON>`
 
-Compact JSON means `json.dumps(obj, ensure_ascii=False, separators=(",", ":"))`. The first pair, verbatim:
+Compact JSON means `json.dumps(obj, ensure_ascii=False, separators=(",", ":"))`. Since `.5`, an example is also skipped when its own event (first `source_lineage` row, e.g. `A0030`) is the current flag's own event (its `mission:` item, else its `action:` item, e.g. `action:A0030`), so a backend packet never gets its own kit event as a few-shot. Since `.4`, each example answer is a short reviewed sentence (`prompts.EXAMPLE_ANSWERS`, <= 160 chars) instead of all claims joined, which the model copied until the 240-char schema cap cut a value. The first pair, verbatim:
 
 ```text
 Example packet (data only):
 {"evidence":{"F1":"action_id=A0009; mission_id=M001; timestamp=2026-09-01T18:27:54; action_type=VISUAL_INSPECTION; location_id=WP03; asset_id=HX-208; battery_pct=22; status=FAILED; failure_type=SENSOR_TIMEOUT; duration_sec=61","F2":"reading_id=R0150; action_id=A0009; mission_id=M001; timestamp=2026-09-01T18:27:54; asset_id=HX-208; location_id=WP03; measurement_type=VISUAL_SCORE; value=75; unit=score; quality=QUESTIONABLE","F3":"anomaly_id=AN009; action_id=A0009; mission_id=M001; timestamp=2026-09-01T18:27:54; asset_id=HX-208; location_id=WP03; anomaly_type=VISUAL_DEFECT; severity=HIGH; description=Synthetic visual defect detected."},"allowed_actions":["DISPATCH_TECHNICIAN","ESCALATE_TO_SUPERVISOR","MONITOR","REINSPECT_NEXT_ROUTE","SCHEDULE_MAINTENANCE","MANUAL_REVIEW"],"suggested_action":"SCHEDULE_MAINTENANCE","question":"What needs operator attention for this equipment event?"}
 ```
 ```text
-{"evidence":[{"claim":"action_type=VISUAL_INSPECTION; asset_id=HX-208; battery_pct=22; status=FAILED; failure_type=SENSOR_TIMEOUT","ids":["F1"]},{"claim":"asset_id=HX-208; measurement_type=VISUAL_SCORE; value=75; unit=score; quality=QUESTIONABLE","ids":["F2"]}],"answer":"action_type=VISUAL_INSPECTION; asset_id=HX-208; battery_pct=22; status=FAILED; failure_type=SENSOR_TIMEOUT; asset_id=HX-208; measurement_type=VISUAL_SCORE; value=75; unit=score; quality=QUESTIONABLE","question":"What needs operator attention for this equipment event?","recommended_action":"SCHEDULE_MAINTENANCE","confidence":"medium","insufficient_context":false}
+{"evidence":[{"claim":"action_type=VISUAL_INSPECTION; asset_id=HX-208; battery_pct=22; status=FAILED; failure_type=SENSOR_TIMEOUT","ids":["F1"]},{"claim":"asset_id=HX-208; measurement_type=VISUAL_SCORE; value=75; unit=score; quality=QUESTIONABLE","ids":["F2"]}],"answer":"The visual inspection of HX-208 failed with SENSOR_TIMEOUT and its visual score of 75 is QUESTIONABLE, so schedule maintenance.","question":"What needs operator attention for this equipment event?","recommended_action":"SCHEDULE_MAINTENANCE","confidence":"medium","insufficient_context":false}
 ```
 
 ## 4. Current user message

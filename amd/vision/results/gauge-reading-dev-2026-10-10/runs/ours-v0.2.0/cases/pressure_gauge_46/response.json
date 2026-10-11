@@ -1,0 +1,142 @@
+{
+ "media_id": "pressure_gauge_46",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "400",
+   "bbox": [
+    55,
+    380,
+    95,
+    407
+   ],
+   "conf": 0.996
+  },
+  {
+   "text": "608",
+   "bbox": [
+    127,
+    382,
+    169,
+    409
+   ],
+   "conf": 0.996
+  },
+  {
+   "text": "200",
+   "bbox": [
+    8,
+    437,
+    50,
+    463
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "800",
+   "bbox": [
+    165,
+    443,
+    207,
+    469
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "0",
+   "bbox": [
+    29,
+    510,
+    45,
+    532
+   ],
+   "conf": 0.999
+  },
+  {
+   "text": "1000",
+   "bbox": [
+    129,
+    512,
+    177,
+    538
+   ],
+   "conf": 0.998
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "pressure",
+   "value": 971.0,
+   "unit": "psi",
+   "confidence": 0.3,
+   "method": "hough_ray_ransac_labels",
+   "flags": [
+    "UNIT_UNKNOWN",
+    "SHORT_NEEDLE",
+    "AMBIGUOUS_NEEDLE"
+   ],
+   "point": [
+    159,
+    527
+   ],
+   "note": "two needle candidates: 144° -> 971 psi and -42° -> 344 psi (two-ended needle (opposite arm 0.54 r long)); do not trust this value"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "psi",
+   "value": 971.0
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 30
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": 144.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 1.0
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.54
+  },
+  {
+   "name": "Full Scale",
+   "units": "psi",
+   "value": 1000.0
+  },
+  {
+   "name": "Scale Labels Used",
+   "units": "",
+   "value": "6 of 6"
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 360,
+ "version": {
+  "service": "0.2.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

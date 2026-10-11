@@ -1,0 +1,29 @@
+{
+ "question_id": "pressure_gauge_5",
+ "question": "What is the reading of the instrument(current atmospheric pressure(black))?",
+ "evaluator": "multi_interval_matching",
+ "evaluator_kwargs": {
+  "intervals": [
+   [
+    738,
+    739
+   ],
+   [
+    985,
+    985
+   ]
+  ],
+  "units": [
+   [
+    "mmHg"
+   ],
+   [
+    "hPa"
+   ]
+  ]
+ },
+ "meta_info": {
+  "source": "https://pxhere.com/en/photo/142911",
+  "uploader": "Unknown"
+ }
+}

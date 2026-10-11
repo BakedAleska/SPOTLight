@@ -1,0 +1,247 @@
+{
+ "media_id": "pressure_gauge_108",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "-400",
+   "bbox": [
+    799,
+    22,
+    865,
+    76
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "-600",
+   "bbox": [
+    623,
+    33,
+    691,
+    90
+   ],
+   "conf": 0.996
+  },
+  {
+   "text": "6",
+   "bbox": [
+    668,
+    116,
+    707,
+    155
+   ],
+   "conf": 0.983
+  },
+  {
+   "text": "-40",
+   "bbox": [
+    768,
+    109,
+    810,
+    141
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "PRESSURE GAUGE",
+   "bbox": [
+    679,
+    145,
+    812,
+    182
+   ],
+   "conf": 0.97
+  },
+  {
+   "text": "-200",
+   "bbox": [
+    915,
+    149,
+    952,
+    202
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "008-",
+   "bbox": [
+    547,
+    170,
+    581,
+    223
+   ],
+   "conf": 0.999
+  },
+  {
+   "text": "-20",
+   "bbox": [
+    828,
+    178,
+    869,
+    210
+   ],
+   "conf": 0.995
+  },
+  {
+   "text": "-80",
+   "bbox": [
+    631,
+    196,
+    667,
+    224
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "0",
+   "bbox": [
+    825,
+    258,
+    844,
+    283
+   ],
+   "conf": 0.999
+  },
+  {
+   "text": "-100",
+   "bbox": [
+    652,
+    270,
+    701,
+    301
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "-1000",
+   "bbox": [
+    576,
+    299,
+    644,
+    363
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "mbar",
+   "bbox": [
+    669,
+    300,
+    716,
+    325
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "0",
+   "bbox": [
+    881,
+    300,
+    907,
+    325
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "mmH20",
+   "bbox": [
+    635,
+    330,
+    700,
+    357
+   ],
+   "conf": 0.966
+  },
+  {
+   "text": "022090001",
+   "bbox": [
+    713,
+    331,
+    818,
+    357
+   ],
+   "conf": 0.994
+  },
+  {
+   "text": "Made in Germany",
+   "bbox": [
+    688,
+    351,
+    823,
+    381
+   ],
+   "conf": 0.985
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "pressure",
+   "value": 1100.0,
+   "unit": "bar",
+   "confidence": 0.3,
+   "method": "hough_ray_default_sweep",
+   "flags": [
+    "DEFAULT_SWEEP",
+    "NEEDLE_OUTSIDE_SCALE",
+    "SHORT_NEEDLE"
+   ],
+   "point": [
+    794,
+    339
+   ],
+   "note": "needle at 162° reads 1100.0 bar"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "bar",
+   "value": 1100.0
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 30
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": 162.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 0.47
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.12
+  },
+  {
+   "name": "Full Scale",
+   "units": "bar",
+   "value": 1000.0
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 505,
+ "version": {
+  "service": "0.2.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

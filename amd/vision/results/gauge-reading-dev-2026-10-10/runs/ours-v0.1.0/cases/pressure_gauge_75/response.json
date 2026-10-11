@@ -1,0 +1,151 @@
+{
+ "media_id": "pressure_gauge_75",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "40",
+   "bbox": [
+    213,
+    258,
+    235,
+    269
+   ],
+   "conf": 0.997
+  },
+  {
+   "text": "50",
+   "bbox": [
+    254,
+    277,
+    280,
+    293
+   ],
+   "conf": 0.999
+  },
+  {
+   "text": "60",
+   "bbox": [
+    274,
+    321,
+    298,
+    331
+   ],
+   "conf": 0.999
+  },
+  {
+   "text": "EXHAUST",
+   "bbox": [
+    249,
+    335,
+    322,
+    350
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "PAESS",
+   "bbox": [
+    268,
+    347,
+    319,
+    362
+   ],
+   "conf": 0.923
+  },
+  {
+   "text": "PSI",
+   "bbox": [
+    218,
+    360,
+    243,
+    372
+   ],
+   "conf": 0.977
+  },
+  {
+   "text": "10",
+   "bbox": [
+    175,
+    368,
+    198,
+    382
+   ],
+   "conf": 0.999
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "pressure",
+   "value": 53.1,
+   "unit": "psi",
+   "confidence": 0.3,
+   "method": "hough_ray_ransac_labels",
+   "flags": [
+    "WEAK_NEEDLE",
+    "AMBIGUOUS_NEEDLE"
+   ],
+   "point": [
+    309,
+    273
+   ],
+   "note": "two needle candidates: 55° -> 53 psi and -124° -> 13 psi (two-ended needle (opposite arm 0.76 r long)); do not trust this value"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "psi",
+   "value": 53.1
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 30
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": 55.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 760000.0
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.76
+  },
+  {
+   "name": "Full Scale",
+   "units": "psi",
+   "value": 60.0
+  },
+  {
+   "name": "Scale Labels Used",
+   "units": "",
+   "value": "4 of 4"
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 405,
+ "version": {
+  "service": "0.1.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

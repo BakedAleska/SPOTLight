@@ -1,0 +1,19 @@
+# Isolated CPU environment for ethz-asl/analog_gauge_reader @ 518cdfa, versions from its pyproject.toml/README.
+FROM python:3.8-slim
+RUN apt-get update && apt-get install -y --no-install-recommends libgl1 libglib2.0-0 git && rm -rf /var/lib/apt/lists/*
+RUN pip install --no-cache-dir "numpy==1.24.4" torch==2.0.0+cpu torchvision==0.15.1+cpu --extra-index-url https://download.pytorch.org/whl/cpu
+COPY dependencies/mmcv-2.0.0-cp38-cp38-manylinux1_x86_64.whl /tmp/
+RUN pip install --no-cache-dir "numpy==1.24.4" mmengine==0.7.2 /tmp/mmcv-2.0.0-cp38-cp38-manylinux1_x86_64.whl mmdet==3.0.0 mmocr==1.0.0 \
+    ultralytics==8.0.66 scikit-learn==1.2.2 "opencv-python-headless<4.9" "pandas<2.1" pyarrow "lmdb==1.4.1"
+WORKDIR /agr
+COPY . /agr
+# Use the DINOv2 code the repo pins (c3c2683), not torch.hub's current main (Python 3.10+ syntax).
+RUN python -c "import zipfile,os,shutil; z=zipfile.ZipFile('dependencies/facebookresearch-dinov2-c3c2683.zip'); d='/root/.cache/torch/hub'; os.makedirs(d,exist_ok=True); top=z.namelist()[0].split('/')[0]; z.extractall(d); shutil.move(os.path.join(d,top), os.path.join(d,'facebookresearch_dinov2_main')); print('dinov2 code from', top)"
+# Bundled MMOCR weights (identical to the files MMOCRInferencer would download), so runs need no network.
+RUN mkdir -p /root/.cache/torch/hub/checkpoints && cp dependencies/*.pth /root/.cache/torch/hub/checkpoints/
+# Load DINOv2 from the pinned local code (the GitHub hub call per image hit 504s / rate limits) and cache its
+# pretrained weights at build time, so evaluation runs with --network none. Model and weights are unchanged.
+RUN python patch_offline.py
+RUN python -c "import torch; m=torch.hub.load('/root/.cache/torch/hub/facebookresearch_dinov2_main','dinov2_vits14',source='local',pretrained=True); print('dinov2 weights cached')"
+# Opt-in registered-instrument mode (ETH_REGISTERED_JSON); inactive when the variable is unset.
+RUN python patch_registered.py

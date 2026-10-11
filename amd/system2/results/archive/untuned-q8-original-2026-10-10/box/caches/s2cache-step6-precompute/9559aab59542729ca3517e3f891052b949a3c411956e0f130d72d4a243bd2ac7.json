@@ -1,0 +1,41 @@
+{
+  "key": {
+    "flag_id": 1001,
+    "packet_hash": "a1b7c73c7faa92ba28abe05d10aa53e88821fc6bf2c9c89672cf0fc3b072acb0",
+    "model": "qwen3.8-27b-q8_0",
+    "prompt_ver": "analyst-prompt-2026-10-10.3:985c5f635a4eda75"
+  },
+  "response": {
+    "evidence": [
+      {
+        "claim": "reported_status=COMPLETED; actions_failed=2; actions_total=10; anomalies_by_severity={\"CRITICAL\": 0, \"HIGH\": 1, \"LOW\": 1, \"MEDIUM\": 0}",
+        "ids": [
+          "mission:M001"
+        ]
+      },
+      {
+        "claim": "action_type=VISUAL_INSPECTION; anomaly_type=VISUAL_DEFECT; severity=HIGH; status=FAILED; failure_type=SENSOR_TIMEOUT",
+        "ids": [
+          "action:A0009"
+        ]
+      },
+      {
+        "claim": "category=mission; escalated=true; priority=P2; reasons=[{\"detail\": \"Reported COMPLETED but 2 of 10 actions failed\", \"rule\": \"silent_failure\"}, {\"detail\": \"1 LOW",
+        "ids": [
+          "flag:1001"
+        ]
+      }
+    ],
+    "answer": "reported_status=COMPLETED; actions_failed=2; actions_total=10; anomalies_by_severity={\"CRITICAL\": 0, \"HIGH\": 1, \"LOW\": 1, \"MEDIUM\": 0}; action_type=VISUAL_INSPECTION; anomaly_type=VISUAL_DEFECT; severity=HIGH; status=FAILED; failure_type=SE",
+    "question": "Did mission M001 really complete cleanly?",
+    "recommended_action": "REVIEW_MISSION",
+    "confidence": "high",
+    "insufficient_context": false,
+    "flag_id": 1001,
+    "model": "/root/models/q38-27b/Qwen3.8-27B-Q8_0.gguf",
+    "latency_ms": 13370,
+    "tokens_per_sec": 22.466731119611428,
+    "path": "llm"
+  },
+  "created_at": "2026-10-10T20:31:35Z"
+}

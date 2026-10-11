@@ -1,0 +1,18 @@
+{
+ "question_id": "pressure_gauge_10",
+ "question": "What is the current water pressure (MPa)?",
+ "evaluator": "interval_matching",
+ "evaluator_kwargs": {
+  "interval": [
+   1.9,
+   2.1
+  ],
+  "units": [
+   "MPa"
+  ]
+ },
+ "meta_info": {
+  "source": "self-collected",
+  "uploader": ""
+ }
+}

@@ -1,0 +1,161 @@
+{
+ "media_id": "pressure_gauge_84",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "100",
+   "bbox": [
+    252,
+    425,
+    301,
+    445
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "50",
+   "bbox": [
+    159,
+    503,
+    199,
+    544
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "150",
+   "bbox": [
+    355,
+    492,
+    412,
+    536
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "0",
+   "bbox": [
+    176,
+    610,
+    203,
+    649
+   ],
+   "conf": 0.997
+  },
+  {
+   "text": "psi",
+   "bbox": [
+    261,
+    608,
+    315,
+    653
+   ],
+   "conf": 0.999
+  },
+  {
+   "text": "200",
+   "bbox": [
+    347,
+    617,
+    406,
+    662
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "6",
+   "bbox": [
+    238,
+    658,
+    266,
+    683
+   ],
+   "conf": 0.743
+  },
+  {
+   "text": "MEANLIN",
+   "bbox": [
+    208,
+    695,
+    372,
+    730
+   ],
+   "conf": 1.0
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "pressure",
+   "value": 126.0,
+   "unit": "psi",
+   "confidence": 0.3,
+   "method": "hough_ray_ransac_labels",
+   "flags": [
+    "LABEL_OUTLIER",
+    "AMBIGUOUS_NEEDLE"
+   ],
+   "point": [
+    372,
+    433
+   ],
+   "note": "two needle candidates: 28° -> 126 psi and -151° -> 4 psi (two-ended needle (opposite arm 0.48 r long)); do not trust this value"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "psi",
+   "value": 126.0
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 30
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": 28.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 0.73
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.48
+  },
+  {
+   "name": "Full Scale",
+   "units": "psi",
+   "value": 200.0
+  },
+  {
+   "name": "Scale Labels Used",
+   "units": "",
+   "value": "5 of 6"
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 375,
+ "version": {
+  "service": "0.2.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

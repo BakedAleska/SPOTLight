@@ -1,0 +1,18 @@
+{
+ "question_id": "pressure_gauge_0",
+ "question": "What is the reading of the pressure gauge?",
+ "evaluator": "interval_matching",
+ "evaluator_kwargs": {
+  "interval": [
+   3,
+   3.5
+  ],
+  "units": [
+   "bar"
+  ]
+ },
+ "meta_info": {
+  "source": "https://universe.roboflow.com/itu-weijie-wang/dial-meter-detection-4-points",
+  "uploader": "ITU WeiJie Wang"
+ }
+}

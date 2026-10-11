@@ -1,0 +1,18 @@
+{
+ "question_id": "pressure_gauge_32",
+ "question": "What is the reading of the pressure meter?",
+ "evaluator": "interval_matching",
+ "evaluator_kwargs": {
+  "interval": [
+   45,
+   45
+  ],
+  "units": [
+   "inches of water"
+  ]
+ },
+ "meta_info": {
+  "source": "https://www.youtube.com/watch?v=MFZZJIbFv_k",
+  "uploader": ""
+ }
+}

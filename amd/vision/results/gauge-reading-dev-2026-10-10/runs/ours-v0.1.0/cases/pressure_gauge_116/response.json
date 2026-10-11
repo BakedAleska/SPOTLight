@@ -1,0 +1,155 @@
+{
+ "media_id": "pressure_gauge_116",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "AMOISMETROLOGY",
+   "bbox": [
+    19,
+    0,
+    732,
+    147
+   ],
+   "conf": 0.999
+  },
+  {
+   "text": "200",
+   "bbox": [
+    222,
+    144,
+    244,
+    161
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "300",
+   "bbox": [
+    271,
+    178,
+    291,
+    193
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "PSI",
+   "bbox": [
+    223,
+    257,
+    242,
+    275
+   ],
+   "conf": 0.998
+  },
+  {
+   "text": "bar",
+   "bbox": [
+    222,
+    272,
+    242,
+    289
+   ],
+   "conf": 0.999
+  },
+  {
+   "text": "KLL5",
+   "bbox": [
+    251,
+    276,
+    275,
+    291
+   ],
+   "conf": 0.737
+  },
+  {
+   "text": "因",
+   "bbox": [
+    224,
+    293,
+    241,
+    310
+   ],
+   "conf": 0.708
+  },
+  {
+   "text": "RATION SERVICES &",
+   "bbox": [
+    277,
+    381,
+    835,
+    489
+   ],
+   "conf": 0.994
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "pressure",
+   "value": 41.0,
+   "unit": "psi",
+   "confidence": 0.4,
+   "method": "hough_ray_default_sweep",
+   "flags": [
+    "DEFAULT_SWEEP"
+   ],
+   "point": [
+    140,
+    444
+   ],
+   "note": "needle at -98° reads 41.1 psi"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "psi",
+   "value": 41.0
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 40
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": -98.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 0.1
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.0
+  },
+  {
+   "name": "Full Scale",
+   "units": "psi",
+   "value": 300.0
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 383,
+ "version": {
+  "service": "0.1.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

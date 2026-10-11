@@ -1,0 +1,179 @@
+{
+ "media_id": "thermal_pump_bearing_01",
+ "kind": "thermal",
+ "router": {
+  "label": "thermal",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "℃",
+   "bbox": [
+    209,
+    9,
+    228,
+    25
+   ],
+   "conf": 0.932
+  },
+  {
+   "text": "100",
+   "bbox": [
+    209,
+    26,
+    234,
+    41
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "75",
+   "bbox": [
+    210,
+    59,
+    228,
+    75
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "SO",
+   "bbox": [
+    209,
+    92,
+    228,
+    107
+   ],
+   "conf": 0.564
+  },
+  {
+   "text": "25",
+   "bbox": [
+    208,
+    126,
+    228,
+    142
+   ],
+   "conf": 1.0
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "max_temperature",
+   "value": 100.0,
+   "unit": "°C",
+   "confidence": 0.8,
+   "method": "colorbar_lut",
+   "flags": [
+    "CLIPPED"
+   ],
+   "bbox": [
+    141,
+    60,
+    156,
+    76
+   ],
+   "point": [
+    149,
+    66
+   ],
+   "note": "hottest spot reaches the 100 °C top of the scale; true value may be higher"
+  },
+  {
+   "id": "V2",
+   "quantity": "p95_temperature",
+   "value": 81.5,
+   "unit": "°C",
+   "confidence": 0.9,
+   "method": "colorbar_lut",
+   "flags": [],
+   "bbox": null,
+   "point": null,
+   "note": null
+  },
+  {
+   "id": "V3",
+   "quantity": "median_temperature",
+   "value": 41.6,
+   "unit": "°C",
+   "confidence": 0.9,
+   "method": "colorbar_lut",
+   "flags": [],
+   "bbox": null,
+   "point": null,
+   "note": null
+  },
+  {
+   "id": "V4",
+   "quantity": "reference_temperature",
+   "value": 41.0,
+   "unit": "°C",
+   "confidence": 0.75,
+   "method": "scene_median_outside_hotspot",
+   "flags": [],
+   "bbox": null,
+   "point": null,
+   "note": "median of the scene outside the hotspot"
+  },
+  {
+   "id": "V5",
+   "quantity": "delta_t",
+   "value": 59.0,
+   "unit": "°C",
+   "confidence": 0.75,
+   "method": "hotspot_minus_reference",
+   "flags": [
+    "CLIPPED"
+   ],
+   "bbox": null,
+   "point": null,
+   "note": "hotspot 59.0 °C over the reference 41.0 °C"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Max Temperature",
+   "units": "°C",
+   "value": 100.0
+  },
+  {
+   "name": "Reference Temperature",
+   "units": "°C",
+   "value": 41.0
+  },
+  {
+   "name": "Delta T",
+   "units": "°C",
+   "value": 59.0
+  },
+  {
+   "name": "Scale",
+   "units": "°C",
+   "value": "25.5–101"
+  },
+  {
+   "name": "Clipped",
+   "units": "",
+   "value": "yes"
+  }
+ ],
+ "comparison": null,
+ "alert": {
+  "title": "Thermal hotspot ≥100.0 °C (ΔT 59 °C over reference)",
+  "severity": 4,
+  "source": "vision.thermal"
+ },
+ "flags": [],
+ "annotated_image_b64": "<thermal_photo-run2.annotated.jpg>",
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 1166,
+ "version": {
+  "service": "0.1.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ }
+}

@@ -1,0 +1,25 @@
+# Step 6 rerun after the cited-ID grounding fix, ~20:50-20:51 UTC. Box checkout: df63f64 + uncommitted
+# grounding.py/test_grounding.py change (content identical to commit edae3db). System 2 restarted with
+# SYSTEM2_CACHE_DIR=/root/s2cache-fix (fresh); cache files: box/caches/s2cache-step6-after-fix/.
+== baseline rebuild with fixed checker
+rebuild: identical | 38 held-out flags | /root/tmp/rb-fix/metrics.json
+{"status":"ok","mode":"live","contract_version":"2026-10-10.backend.2","model":"qwen3.8-27b-q8_0"}
+fixtures/backend/equipment.json call 1:
+HTTP/1.1 200 OK
+x-system2-cache: miss
+{'path': 'llm', 'model': '/root/models/q38-27b/Qwen3.8-27B-Q8_0.gguf', 'latency_ms': 13658, 'recommended_action': 'DISPATCH_TECHNICIAN'} [['flag:9', 'anomaly:AN009', 'asset:HX-208'], ['flag:9', 'action:A0009'], ['flag:9', 'action:A0009']]
+fixtures/backend/equipment.json call 2:
+HTTP/1.1 200 OK
+x-system2-cache: hit
+{'path': 'llm', 'model': '/root/models/q38-27b/Qwen3.8-27B-Q8_0.gguf', 'latency_ms': 13658, 'recommended_action': 'DISPATCH_TECHNICIAN'} [['flag:9', 'anomaly:AN009', 'asset:HX-208'], ['flag:9', 'action:A0009'], ['flag:9', 'action:A0009']]
+fixtures/multimodal/gauge_disagree.json call 1:
+HTTP/1.1 200 OK
+x-system2-cache: miss
+x-system2-image: used
+{'path': 'llm', 'model': '/root/models/q38-27b/Qwen3.8-27B-Q8_0.gguf', 'latency_ms': 11852, 'recommended_action': 'MANUAL_READING'} [['V1', 'reading:R0053'], ['action:A0030'], ['flag:14']]
+fixtures/multimodal/gauge_disagree.json call 2:
+HTTP/1.1 200 OK
+x-system2-cache: hit
+x-system2-image: used
+{'path': 'llm', 'model': '/root/models/q38-27b/Qwen3.8-27B-Q8_0.gguf', 'latency_ms': 11852, 'recommended_action': 'MANUAL_READING'} [['V1', 'reading:R0053'], ['action:A0030'], ['flag:14']]
+# Note: call 2 of each fixture is a cache hit, not a second generation.

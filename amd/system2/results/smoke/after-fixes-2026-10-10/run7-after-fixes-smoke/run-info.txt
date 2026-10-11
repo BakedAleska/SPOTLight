@@ -1,0 +1,5 @@
+repo HEAD: db3fb1d03cffeed2396101d03a9bea87701bf244
+9a5e94ad92e3d02bc141b3dcd0d0872d6481bdb1927496e2f901acd21de77564  amd/system2/scripts/photo_smoke.py
+llama-server.log start line: 917
+2026-10-10T22:00:40Z
+llama-server.log end line: 1000

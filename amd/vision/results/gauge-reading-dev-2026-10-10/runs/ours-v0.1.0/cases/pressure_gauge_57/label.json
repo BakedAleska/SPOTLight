@@ -1,0 +1,18 @@
+{
+ "question_id": "pressure_gauge_57",
+ "question": "What is the reading on the instrument?",
+ "evaluator": "interval_matching",
+ "evaluator_kwargs": {
+  "interval": [
+   0.25,
+   0.26
+  ],
+  "units": [
+   "MPa"
+  ]
+ },
+ "meta_info": {
+  "source": "https://www.youtube.com/watch?v=qjMk7detri8",
+  "uploader": ""
+ }
+}

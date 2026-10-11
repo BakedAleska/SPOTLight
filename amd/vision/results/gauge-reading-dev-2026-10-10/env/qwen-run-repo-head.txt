@@ -1,0 +1,9 @@
+8c20fda
+ M amd/vision/vision/__init__.py
+ M amd/vision/vision/gauge.py
+?? amd/vision/scripts/measurebench_eval.py
+?? amd/vision/scripts/qwen_gauge_read.py
+adb81004edf6b4e87aea4d599d4385826cd7386eadc60d84da143871b8462dc4  scripts/qwen_gauge_read.py
+773e611b632ca2279edb133c3fb99a3a65ed4701219e1977a8cc4d0591ba34ac  scripts/measurebench_eval.py
+llama-server restarted 2026-10-10T23:44:35Z after persistent grammar errors (first at task 11454)
+d4d2a74f31f1d172cefa2e42a86d72294796894a89b80c7731a1bc771f8aa5a0  scripts/qwen_gauge_read.py

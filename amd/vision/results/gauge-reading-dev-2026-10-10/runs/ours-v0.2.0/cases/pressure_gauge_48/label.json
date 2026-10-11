@@ -1,0 +1,19 @@
+{
+ "question_id": "pressure_gauge_48",
+ "question": "What is the reading on the instrument(black)?",
+ "evaluator": "interval_matching",
+ "evaluator_kwargs": {
+  "interval": [
+   4.6,
+   4.8
+  ],
+  "units": [
+   "kg/cm^2",
+   "kg/cm²"
+  ]
+ },
+ "meta_info": {
+  "source": "https://www.youtube.com/watch?v=--Iqgf05gDo",
+  "uploader": ""
+ }
+}

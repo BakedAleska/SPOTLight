@@ -1,0 +1,41 @@
+{
+  "key": {
+    "flag_id": 2,
+    "packet_hash": "d0d9851a32d2c8b16cd74a3e4b44d3a1ad18389638b869ba812f7dcd4ab7f3f6",
+    "model": "qwen3.8-27b-q8_0",
+    "prompt_ver": "analyst-prompt-2026-10-10.3:985c5f635a4eda75"
+  },
+  "response": {
+    "evidence": [
+      {
+        "claim": "action_type=VISUAL_INSPECTION; asset_id=HX-208; battery_pct=22; status=FAILED; failure_type=SENSOR_TIMEOUT",
+        "ids": [
+          "F1"
+        ]
+      },
+      {
+        "claim": "asset_id=HX-208; measurement_type=VISUAL_SCORE; value=75; unit=score; quality=QUESTIONABLE",
+        "ids": [
+          "F2"
+        ]
+      },
+      {
+        "claim": "asset_id=HX-208; anomaly_type=VISUAL_DEFECT; severity=HIGH",
+        "ids": [
+          "F3"
+        ]
+      }
+    ],
+    "answer": "action_type=VISUAL_INSPECTION; asset_id=HX-208; battery_pct=22; status=FAILED; failure_type=SENSOR_TIMEOUT; asset_id=HX-208; measurement_type=VISUAL_SCORE; value=75; unit=score; quality=QUESTIONABLE; asset_id=HX-208; anomaly_type=VISUAL_DEF",
+    "question": "What needs operator attention for this equipment event?",
+    "recommended_action": "SCHEDULE_MAINTENANCE",
+    "confidence": "medium",
+    "insufficient_context": false,
+    "flag_id": 2,
+    "model": "/root/models/q38-27b/Qwen3.8-27B-Q8_0.gguf",
+    "latency_ms": 10949,
+    "tokens_per_sec": 22.32197511915952,
+    "path": "llm"
+  },
+  "created_at": "2026-10-10T20:30:41Z"
+}

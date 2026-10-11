@@ -1,0 +1,1 @@
+tmux new -d -s llama source /root/env.sh; /root/llama.cpp/build/bin/llama-server -m /root/models/q38-27b/Qwen3.8-27B-Q8_0.gguf --mmproj /root/models/q38-27b/mmproj-F16.gguf --image-max-tokens 1024 -ngl all -fa on -c 16384 -np 1 -rea off --host 127.0.0.1 --port 8080 --metrics 2>&1 | tee /root/llama-server.log 

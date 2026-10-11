@@ -1,0 +1,151 @@
+{
+ "media_id": "pressure_gauge_65",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "40",
+   "bbox": [
+    735,
+    259,
+    772,
+    283
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "600",
+   "bbox": [
+    835,
+    259,
+    873,
+    283
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "計",
+   "bbox": [
+    822,
+    277,
+    841,
+    296
+   ],
+   "conf": 0.768
+  },
+  {
+   "text": "200",
+   "bbox": [
+    685,
+    333,
+    723,
+    357
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "800",
+   "bbox": [
+    895,
+    333,
+    933,
+    355
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "1000",
+   "bbox": [
+    866,
+    420,
+    910,
+    444
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "kPa",
+   "bbox": [
+    859,
+    458,
+    892,
+    482
+   ],
+   "conf": 0.997
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "pressure",
+   "value": 418.0,
+   "unit": "kPa",
+   "confidence": 0.3,
+   "method": "hough_ray_ransac_labels",
+   "flags": [
+    "LABEL_OUTLIER",
+    "AMBIGUOUS_NEEDLE"
+   ],
+   "point": [
+    758,
+    238
+   ],
+   "note": "two needle candidates: -21° -> 418 kPa and 159° -> 1138 kPa (two-ended needle (opposite arm 0.46 r long)); do not trust this value"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "kPa",
+   "value": 418.0
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 30
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": -21.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 0.88
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.46
+  },
+  {
+   "name": "Full Scale",
+   "units": "kPa",
+   "value": 1000.0
+  },
+  {
+   "name": "Scale Labels Used",
+   "units": "",
+   "value": "4 of 5"
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 537,
+ "version": {
+  "service": "0.1.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

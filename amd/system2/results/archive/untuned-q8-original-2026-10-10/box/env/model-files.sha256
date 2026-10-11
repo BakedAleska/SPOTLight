@@ -1,0 +1,4 @@
+a680f44a06920e5d689774823782006aa3acc8db95750323373b24139b67e348  Qwen3.8-27B-Q8_0.gguf
+cbb841a9ee0636b2ec172f5bb8df2ea8dfeb01e90fe7c6126581d662a0b4e43e  mmproj-F16.gguf
+-rw-r--r-- 1 root root 29047086048 Oct 10 20:18 Qwen3.8-27B-Q8_0.gguf
+-rw-r--r-- 1 root root   927607488 Oct 10 20:12 mmproj-F16.gguf

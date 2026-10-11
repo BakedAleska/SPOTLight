@@ -1,0 +1,221 @@
+{
+ "media_id": "pressure_gauge_43",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "30",
+   "bbox": [
+    434,
+    202,
+    466,
+    229
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "40",
+   "bbox": [
+    540,
+    226,
+    570,
+    254
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "2",
+   "bbox": [
+    445,
+    258,
+    456,
+    273
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "2.5",
+   "bbox": [
+    484,
+    256,
+    508,
+    274
+   ],
+   "conf": 0.969
+  },
+  {
+   "text": "20",
+   "bbox": [
+    353,
+    278,
+    383,
+    303
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "3",
+   "bbox": [
+    523,
+    281,
+    536,
+    298
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "1.5",
+   "bbox": [
+    410,
+    287,
+    435,
+    306
+   ],
+   "conf": 0.852
+  },
+  {
+   "text": "3.5",
+   "bbox": [
+    521,
+    323,
+    547,
+    342
+   ],
+   "conf": 0.993
+  },
+  {
+   "text": "50",
+   "bbox": [
+    575,
+    330,
+    599,
+    353
+   ],
+   "conf": 0.997
+  },
+  {
+   "text": "1",
+   "bbox": [
+    410,
+    334,
+    417,
+    345
+   ],
+   "conf": 0.972
+  },
+  {
+   "text": "0.5",
+   "bbox": [
+    420,
+    359,
+    445,
+    379
+   ],
+   "conf": 0.999
+  },
+  {
+   "text": "10",
+   "bbox": [
+    369,
+    377,
+    398,
+    402
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "KG/cm2",
+   "bbox": [
+    448,
+    389,
+    507,
+    410
+   ],
+   "conf": 0.928
+  },
+  {
+   "text": ".BS/IN2",
+   "bbox": [
+    454,
+    409,
+    510,
+    434
+   ],
+   "conf": 0.849
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "dial_value",
+   "value": 2.1,
+   "unit": "kg/cm²",
+   "confidence": 0.3,
+   "method": "hough_ray_ransac_labels",
+   "flags": [
+    "LABEL_OUTLIER",
+    "AMBIGUOUS_NEEDLE"
+   ],
+   "point": [
+    454,
+    221
+   ],
+   "note": "two needle candidates: -12° -> 2 kg/cm² and 177° -> 5 kg/cm² (two-ended needle (opposite arm 0.44 r long)); do not trust this value"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "kg/cm²",
+   "value": 2.1
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 30
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": -12.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 0.93
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.44
+  },
+  {
+   "name": "Full Scale",
+   "units": "kg/cm²",
+   "value": 3.5
+  },
+  {
+   "name": "Scale Labels Used",
+   "units": "",
+   "value": "7 of 12"
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 688,
+ "version": {
+  "service": "0.1.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

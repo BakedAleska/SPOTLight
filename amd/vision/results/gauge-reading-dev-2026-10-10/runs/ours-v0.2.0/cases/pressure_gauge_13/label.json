@@ -1,0 +1,33 @@
+{
+ "question_id": "pressure_gauge_13",
+ "question": "What is the reading of the longer black needle on the barometer?",
+ "evaluator": "multi_interval_matching",
+ "evaluator_kwargs": {
+  "intervals": [
+   [
+    1017,
+    1017
+   ],
+   [
+    30.03,
+    30.05
+   ]
+  ],
+  "units": [
+   [
+    "hPa",
+    "mba",
+    "millibars"
+   ],
+   [
+    "inHg",
+    "inches",
+    "inches of mercury"
+   ]
+  ]
+ },
+ "meta_info": {
+  "source": "https://picryl.com/media/a-barometer-measures-the-atmospheric-pressure-aboard-2f76cc",
+  "uploader": "N/A"
+ }
+}

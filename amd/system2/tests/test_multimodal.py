@@ -27,7 +27,7 @@ from analyst.backend_contract import BACKEND_CONTRACT_VERSION, BackendAssessRequ
 from analyst.dataset import load_dataset  # noqa: E402
 from analyst.evaluation import packet_hash  # noqa: E402
 from analyst.grounding import check_assessment  # noqa: E402
-from analyst.live import ExplanationCache, LiveAssessor  # noqa: E402
+from analyst.live import IMAGE_DEADLINE_S, ExplanationCache, LiveAssessor  # noqa: E402
 from analyst.pipeline import Generation, GenerationError, PipelineConfig, run_pipeline  # noqa: E402
 from analyst.template import template_assessment  # noqa: E402
 
@@ -418,7 +418,7 @@ def test_retry_errors_follow_the_packet_in_the_text_part():
 def test_vision_rules_text_is_the_documented_text():
     doc = (S2 / 'PROMPT_FORMAT.md').read_text(encoding='utf-8')
     assert pr.VISION_RULES in doc and pr.SYSTEM in doc and pr.IMAGE_NOTE in doc
-    assert pr.PROMPT_VERSION == 'analyst-prompt-2026-10-10.3' and pr.PROMPT_VERSION in doc
+    assert pr.PROMPT_VERSION == 'analyst-prompt-2026-10-10.5' and pr.PROMPT_VERSION in doc
 
 
 @pytest.mark.parametrize('name', ['gauge_disagree', 'gauge_demo'])
@@ -530,7 +530,7 @@ def test_image_request_uses_vision_model_and_content_array(server):
     http, url = server
     http.script[:] = [{'body': envelope(fixture()['reply'])}]
     gen = g.LlamaGenerator(url, model='system2', vision_model='system2-vision', api_key='sk-gateway-test-key-1')
-    run = run_pipeline(mm_request(), gen, PipelineConfig())
+    run = run_pipeline(mm_request(), gen, PipelineConfig(deadline_s=IMAGE_DEADLINE_S))
     assert run.path == 'llm' and run.image_used is True and run.attempts[0].to_dict()['image_used'] is True
     sent = http.requests[0]
     assert sent['body']['model'] == 'system2-vision' and is_image_body(sent['body'])
@@ -543,7 +543,8 @@ def test_text_request_never_sends_image_parts_and_uses_text_model(server):
     req = backend_request()
     p = prepare(req)
     http.script[:] = [{'body': envelope(pr.example_output(p))}]
-    run = run_pipeline(req, g.LlamaGenerator(url, model='system2', vision_model='system2-vision'), PipelineConfig())
+    run = run_pipeline(req, g.LlamaGenerator(url, model='system2', vision_model='system2-vision'),
+                       PipelineConfig(deadline_s=IMAGE_DEADLINE_S))
     assert run.path == 'llm' and run.image_used is None and 'image_used' not in run.attempts[0].to_dict()
     assert http.requests[0]['body']['model'] == 'system2' and not is_image_body(http.requests[0]['body'])
 
@@ -558,7 +559,7 @@ def test_image_rejection_resends_once_text_only(server, status, body, vision_mod
     http, url = server
     http.script[:] = [{'status': status, 'body': body}, {'body': envelope(fixture()['reply'])}]
     gen = g.LlamaGenerator(url, model='system2', vision_model=vision_model)
-    run = run_pipeline(mm_request(), gen, PipelineConfig())
+    run = run_pipeline(mm_request(), gen, PipelineConfig(deadline_s=IMAGE_DEADLINE_S))
     assert run.path == 'llm' and run.image_used is False
     assert len(http.requests) == 2
     first, second = http.requests[0]['body'], http.requests[1]['body']
@@ -573,7 +574,8 @@ def test_image_rejection_resends_once_text_only(server, status, body, vision_mod
 def test_other_http_errors_are_not_image_rejections(server, status, body):
     http, url = server
     http.script[:] = [{'status': status, 'body': body}]
-    run = run_pipeline(mm_request(), g.LlamaGenerator(url, model='system2'), PipelineConfig())
+    run = run_pipeline(mm_request(), g.LlamaGenerator(url, model='system2'),
+                       PipelineConfig(deadline_s=IMAGE_DEADLINE_S))
     assert run.path == 'fallback' and len(http.requests) == 2      # two attempts, no text-only resend
     assert all(is_image_body(r['body']) for r in http.requests)
 
@@ -582,7 +584,8 @@ def test_text_only_resend_failing_counts_as_one_attempt(server):
     http, url = server
     http.script[:] = [{'status': 500, 'body': NO_MMPROJ}, {'status': 500, 'body': {'error': 'boom'}},
                       {'status': 500, 'body': NO_MMPROJ}, {'status': 500, 'body': {'error': 'boom'}}]
-    run = run_pipeline(mm_request(), g.LlamaGenerator(url, model='system2'), PipelineConfig())
+    run = run_pipeline(mm_request(), g.LlamaGenerator(url, model='system2'),
+                       PipelineConfig(deadline_s=IMAGE_DEADLINE_S))
     assert run.path == 'fallback' and len(run.attempts) == 2 and len(http.requests) == 4
 
 
@@ -739,7 +742,7 @@ def test_gateway_wrong_key_over_http_falls_back_without_text_only_resend(server)
     http, url = server
     http.script[:] = [{'status': 400, 'body': {'error': {'message': 'No connected db.', 'type': 'no_db_connection'}}}]
     run = run_pipeline(mm_request(), g.LlamaGenerator(url, model='system2', vision_model='system2-vision'),
-                       PipelineConfig())
+                       PipelineConfig(deadline_s=IMAGE_DEADLINE_S))
     assert run.path == 'fallback' and len(http.requests) == 2 and all(is_image_body(r['body']) for r in http.requests)
 
 

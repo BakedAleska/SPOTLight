@@ -1,0 +1,79 @@
+{
+ "media_id": "pressure_gauge_101",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "Ru",
+   "bbox": [
+    659,
+    103,
+    685,
+    120
+   ],
+   "conf": 0.921
+  },
+  {
+   "text": "\"RC for me!..annd me!\"",
+   "bbox": [
+    484,
+    111,
+    604,
+    162
+   ],
+   "conf": 0.867
+  },
+  {
+   "text": "DELIO",
+   "bbox": [
+    288,
+    239,
+    309,
+    251
+   ],
+   "conf": 0.887
+  },
+  {
+   "text": "40",
+   "bbox": [
+    583,
+    359,
+    592,
+    366
+   ],
+   "conf": 0.999
+  },
+  {
+   "text": "100",
+   "bbox": [
+    612,
+    410,
+    625,
+    421
+   ],
+   "conf": 0.852
+  }
+ ],
+ "readings": [],
+ "key_results": [],
+ "comparison": null,
+ "alert": null,
+ "flags": [
+  "AXIS_FIT_FAILED"
+ ],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 508,
+ "version": {
+  "service": "0.1.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

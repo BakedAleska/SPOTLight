@@ -1,0 +1,19 @@
+{
+ "question_id": "pressure_gauge_16",
+ "question": "What is the reading of the pressure meter according to the red arrow?",
+ "evaluator": "interval_matching",
+ "evaluator_kwargs": {
+  "interval": [
+   116,
+   118
+  ],
+  "units": [
+   "psi",
+   "pound per square inch"
+  ]
+ },
+ "meta_info": {
+  "source": "https://www.youtube.com/watch?v=HEBBYu_dv9Y",
+  "uploader": ""
+ }
+}

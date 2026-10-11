@@ -1,0 +1,186 @@
+{
+ "media_id": "pressure_gauge_40",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "kgf/cm²",
+   "bbox": [
+    350,
+    313,
+    453,
+    355
+   ],
+   "conf": 0.998
+  },
+  {
+   "text": "3KM-1Y",
+   "bbox": [
+    352,
+    347,
+    453,
+    384
+   ],
+   "conf": 0.983
+  },
+  {
+   "text": "(GAS",
+   "bbox": [
+    324,
+    409,
+    369,
+    441
+   ],
+   "conf": 0.819
+  },
+  {
+   "text": "2",
+   "bbox": [
+    624,
+    434,
+    656,
+    482
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "1989",
+   "bbox": [
+    489,
+    478,
+    540,
+    506
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "2.5",
+   "bbox": [
+    535,
+    626,
+    598,
+    689
+   ],
+   "conf": 0.817
+  },
+  {
+   "text": "0",
+   "bbox": [
+    230,
+    647,
+    262,
+    691
+   ],
+   "conf": 0.999
+  },
+  {
+   "text": "50Hz 1A",
+   "bbox": [
+    411,
+    700,
+    489,
+    725
+   ],
+   "conf": 0.998
+  },
+  {
+   "text": "JP40",
+   "bbox": [
+    421,
+    722,
+    477,
+    751
+   ],
+   "conf": 0.999
+  },
+  {
+   "text": "TOCT 13717.84",
+   "bbox": [
+    272,
+    761,
+    396,
+    818
+   ],
+   "conf": 0.853
+  },
+  {
+   "text": "No 697.",
+   "bbox": [
+    419,
+    760,
+    516,
+    812
+   ],
+   "conf": 0.766
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "pressure",
+   "value": -0.3,
+   "unit": "psi",
+   "confidence": 0.3,
+   "method": "hough_ray_default_sweep",
+   "flags": [
+    "DEFAULT_SWEEP",
+    "NEEDLE_OUTSIDE_SCALE"
+   ],
+   "point": [
+    378,
+    798
+   ],
+   "note": "needle at -163° reads -0.3 psi"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "psi",
+   "value": -0.3
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 30
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": -163.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 0.28
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.14
+  },
+  {
+   "name": "Full Scale",
+   "units": "psi",
+   "value": 3.0
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 511,
+ "version": {
+  "service": "0.1.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

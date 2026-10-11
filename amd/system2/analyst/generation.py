@@ -57,7 +57,10 @@ TEMPERATURE = 0
 TIMEOUT_S = 15.0            # per call; run_pipeline passes its remaining deadline, the smaller one wins
 IMAGE_TIMEOUT_S = 25.0      # per call for packets with an image (SYSTEM2_IMAGE_DEADLINE_S)
 TEXT_RESERVE_S = 8.0        # kept back from an image call for the text-only resend
-MIN_IMAGE_CALL_S = 4.0      # below this an image call is not started; the attempt goes text-only directly
+# Below this an image call is not started; the attempt goes text-only directly, with the whole remaining budget.
+# Measured on the W7900D Q8_0 (results/archive/untuned-q8-original-2026-10-10): image calls that returned took
+# 9.3-14.5 s, so a call started with ~5 s left (the old 4 s floor let the retry do that) was always cancelled.
+MIN_IMAGE_CALL_S = 9.0
 MAX_RESPONSE_BYTES = 262144  # whole HTTP body; the pipeline separately caps completion text at 64 KiB
 MAX_IDS = 8
 CHUNK = 16384

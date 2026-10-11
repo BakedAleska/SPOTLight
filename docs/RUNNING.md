@@ -229,7 +229,8 @@ pipeline: at most two llama-server attempts inside a 15 s deadline, then the che
 |---|---|---|
 | `SYSTEM2_LLAMA_URL` | llama-server base URL (`http(s)://host:port`); loopback or SSH tunnel only | unset = stub |
 | `SYSTEM2_MODEL` | served model name, sent to llama-server and part of the cache key; required when the URL is set | unset |
-| `SYSTEM2_CACHE_DIR` | explanation cache directory | `amd/system2/cache` in a checkout; none in the image unless set to a writable mount |
+| `SYSTEM2_CACHE_DIR` | explanation cache directory; `off` disables it (measurement runs: every request generates) | `amd/system2/cache` in a checkout; none in the image unless set to a writable mount |
+| `SYSTEM2_RECORD_DIR` | measurement runs: append one JSON line per request (raw text of every attempt, checker errors, timings, cache and image status) to `<dir>/system2-records.jsonl` | unset = off |
 | `SYSTEM2_VISION_MODEL` | model for requests that carry `image_b64` (gateway alias `system2-vision`) | compose: `system2-vision`; native: `SYSTEM2_MODEL` |
 | `SYSTEM2_DEADLINE_S` | generation deadline for text requests (the 15 s p95 target); raise only for a slow local model; must be in (0, 120] | `15` |
 | `SYSTEM2_IMAGE_DEADLINE_S` | generation deadline for requests with `image_b64` (text keeps 15 s); must be in (0, 120] | `25` |

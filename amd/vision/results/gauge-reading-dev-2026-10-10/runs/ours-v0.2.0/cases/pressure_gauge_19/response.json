@@ -1,0 +1,190 @@
+{
+ "media_id": "pressure_gauge_19",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "1",
+   "bbox": [
+    278,
+    89,
+    297,
+    115
+   ],
+   "conf": 0.879
+  },
+  {
+   "text": "4",
+   "bbox": [
+    278,
+    111,
+    316,
+    160
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "6",
+   "bbox": [
+    454,
+    124,
+    492,
+    176
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "2",
+   "bbox": [
+    160,
+    233,
+    201,
+    285
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "8",
+   "bbox": [
+    535,
+    265,
+    574,
+    316
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "CLASS",
+   "bbox": [
+    325,
+    317,
+    378,
+    343
+   ],
+   "conf": 0.988
+  },
+  {
+   "text": "SSIEL",
+   "bbox": [
+    331,
+    343,
+    388,
+    372
+   ],
+   "conf": 0.816
+  },
+  {
+   "text": "0",
+   "bbox": [
+    201,
+    393,
+    236,
+    441
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "Kg/cm2",
+   "bbox": [
+    301,
+    400,
+    402,
+    449
+   ],
+   "conf": 0.967
+  },
+  {
+   "text": "X",
+   "bbox": [
+    156,
+    419,
+    215,
+    471
+   ],
+   "conf": 0.715
+  },
+  {
+   "text": "General",
+   "bbox": [
+    281,
+    464,
+    393,
+    515
+   ],
+   "conf": 0.989
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "dial_value",
+   "value": 10.1,
+   "unit": "kg/cm²",
+   "confidence": 0.85,
+   "method": "hough_ray_ransac_labels",
+   "flags": [
+    "LABEL_OUTLIER"
+   ],
+   "point": [
+    500,
+    465
+   ],
+   "note": "needle at 143° reads 10.1 kg/cm²"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "kg/cm²",
+   "value": 10.1
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 85
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": 143.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 0.12
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.08
+  },
+  {
+   "name": "Full Scale",
+   "units": "kg/cm²",
+   "value": 8.0
+  },
+  {
+   "name": "Scale Labels Used",
+   "units": "",
+   "value": "5 of 6"
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 460,
+ "version": {
+  "service": "0.2.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

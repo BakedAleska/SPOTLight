@@ -1,0 +1,221 @@
+{
+ "media_id": "pressure_gauge_23",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "40",
+   "bbox": [
+    447,
+    41,
+    490,
+    79
+   ],
+   "conf": 0.951
+  },
+  {
+   "text": "3",
+   "bbox": [
+    508,
+    100,
+    530,
+    131
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "2",
+   "bbox": [
+    463,
+    137,
+    488,
+    170
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "5",
+   "bbox": [
+    615,
+    135,
+    639,
+    166
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "88",
+   "bbox": [
+    690,
+    144,
+    731,
+    189
+   ],
+   "conf": 0.749
+  },
+  {
+   "text": "20",
+   "bbox": [
+    375,
+    165,
+    410,
+    205
+   ],
+   "conf": 0.986
+  },
+  {
+   "text": "1",
+   "bbox": [
+    457,
+    198,
+    472,
+    222
+   ],
+   "conf": 0.998
+  },
+  {
+   "text": "6",
+   "bbox": [
+    629,
+    192,
+    651,
+    223
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "0",
+   "bbox": [
+    478,
+    236,
+    500,
+    266
+   ],
+   "conf": 0.999
+  },
+  {
+   "text": "7",
+   "bbox": [
+    598,
+    242,
+    620,
+    271
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "BAR",
+   "bbox": [
+    528,
+    304,
+    573,
+    328
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "100xkPa",
+   "bbox": [
+    509,
+    323,
+    593,
+    346
+   ],
+   "conf": 0.982
+  },
+  {
+   "text": "100",
+   "bbox": [
+    632,
+    278,
+    693,
+    339
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "psi",
+   "bbox": [
+    532,
+    342,
+    569,
+    366
+   ],
+   "conf": 0.998
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "pressure",
+   "value": 3.9,
+   "unit": "bar",
+   "confidence": 0.3,
+   "method": "hough_ray_ransac_labels",
+   "flags": [
+    "LABEL_OUTLIER",
+    "AMBIGUOUS_NEEDLE"
+   ],
+   "point": [
+    594,
+    52
+   ],
+   "note": "two needle candidates: 15° -> 4 bar and -149° -> -0 bar (two-ended needle (opposite arm 0.34 r long)); do not trust this value"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "bar",
+   "value": 3.9
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 30
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": 15.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 0.47
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.34
+  },
+  {
+   "name": "Full Scale",
+   "units": "bar",
+   "value": 7.0
+  },
+  {
+   "name": "Scale Labels Used",
+   "units": "",
+   "value": "7 of 11"
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 499,
+ "version": {
+  "service": "0.1.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}
