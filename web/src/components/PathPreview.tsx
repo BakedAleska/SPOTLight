@@ -8,6 +8,7 @@ import type { PathEvent, PathFeed, PathMission, PathPoint } from "@/lib/path-typ
 
 import { buildPlayback, playbackAt, eventLabel } from "@/lib/path-playback";
 
+const issueColor: Record<string, string> = { CRITICAL: "var(--c-bad)", HIGH: "var(--c-warn)", MEDIUM: "var(--c-info)", LOW: "var(--c-faint)" };
 const control = "flex min-h-11 items-center justify-center gap-2 rounded border border-line bg-surface px-3 text-sm text-ink hover:bg-surface-2 disabled:opacity-40";
 export function PathPreview({ points, missions, initialMissionId }: { points: PathPoint[]; missions: PathMission[]; initialMissionId?: string }) {
   const [missionId, setMissionId] = useState(missions.find(m => m.id === initialMissionId)?.id ?? missions[0]?.id ?? "");
@@ -113,6 +114,10 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
           })}
           {current && marker && <g aria-label={`SPOT at ${current.id}`} transform={`translate(${marker.x} ${marker.y})`}>
             {((active && !frame?.moving && last?.type === "ACTION_STARTED") || (mode === "live" && last?.type === "ACTION_STARTED")) && <foreignObject x="-15" y="-31" width="30" height="12" transform="scale(2)" aria-label="SPOT working"><div className="spot-working-dots flex h-full items-center justify-center"><LoadingDots color="white" /></div></foreignObject>}
+            {last?.error && !frame?.moving && <g aria-label={`Issue detected: ${last.severity ?? "FAILED"}`} className={active || mode === "live" ? "spot-issue spot-issue-flash" : "spot-issue"}>
+              <path d="M 0 -64 L 14 -39 L -14 -39 Z" fill={issueColor[last.severity ?? ""] ?? "var(--c-bad)"} stroke="white" strokeWidth="2.5" strokeLinejoin="round" />
+              <path d="M 0 -57 V -49" stroke="white" strokeWidth="3.5" strokeLinecap="round" /><circle cy="-43.5" r="2" fill="white" />
+            </g>}
             {changingFloor && <g aria-label={`Changing floor: ${floorLabel}`} className={active ? "spot-floor-arrow" : undefined} style={{ "--floor-direction": floorUp ? "-1" : "1" } as React.CSSProperties}>
               <path d={floorUp ? "M 0 -45 V -73 M -12 -61 L 0 -73 L 12 -61" : "M 0 -73 V -45 M -12 -57 L 0 -45 L 12 -57"} fill="none" stroke="white" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
             </g>}

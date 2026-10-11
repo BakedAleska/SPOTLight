@@ -810,6 +810,10 @@ body {
 @keyframes loading-dots-blink { 0% { opacity: 0.2; } 20% { opacity: 1; } 100% { opacity: 0.2; } }
 @media (prefers-reduced-motion: reduce) { .loading-dots span { animation: none; } }
 .spot-working-dots { filter: drop-shadow(0 1px 2px black); }
+.spot-issue { filter: drop-shadow(0 1px 2px black); }
+.spot-issue-flash { animation: spot-issue-flash 0.9s ease-in-out infinite; }
+@keyframes spot-issue-flash { 50% { opacity: 0.25; } }
+@media (prefers-reduced-motion: reduce) { .spot-issue-flash { animation: none; } }
 
 .spot-floor-arrow { animation: spot-floor-step 1s ease-in-out infinite; filter: drop-shadow(0 1px 2px black); }
 @keyframes spot-floor-step { 50% { transform: translateY(calc(var(--floor-direction) * 8px)); opacity: 0.6; } }
