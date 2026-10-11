@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Pause, Play, RotateCcw, Radio, Route, TriangleAlert, ScanLine, CheckCircle2, ArrowRight, AudioLines, ArrowUp, ArrowDown } from "lucide-react";
 import { Panel } from "./Panel";
 import { LoadingDots } from "./LoadingDots";
@@ -72,6 +72,7 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
     const timer = setInterval(() => { void poll(); }, 2000);
     return () => { stopped = true; controller.abort(); clearInterval(timer); };
   }, [mode, mission.id]);
+  const timeline = useRef<HTMLOListElement>(null);
   const events = mode === "replay" ? mission.events.slice(0, index + 1) : liveEvents;
   // Completion records can omit location; retain the action's last known waypoint.
   const located = events.map(e => ({ ...e, locationId: e.locationId ?? events.find(start => start.actionId && start.actionId === e.actionId && start.locationId)?.locationId }));
@@ -88,6 +89,7 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
   const battery = events.filter(e => e.battery != null).at(-1)?.battery;
   const last = events.at(-1);
   const planned = mission.events.filter(e => e.type === "ACTION_STARTED").flatMap(e => { const p = points.find(p => p.id === e.locationId); return p ? [p] : []; });
+  useEffect(() => { const list = timeline.current; if (list) list.scrollTo({ left: list.scrollWidth, behavior: "smooth" }); }, [events.length]);
   const path = (list: PathPoint[]) => list.map(p => `${p.x},${p.y}`).join(" ");
   return <>
     <div className="flex flex-wrap items-center gap-2 rounded-panel border border-line bg-surface p-3">
@@ -144,18 +146,18 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
         </Panel>
         <Panel title="Selected waypoint"><p className="text-lg font-semibold text-ink">{selected?.id ?? "No position yet"}</p><p className="mt-1 text-sm text-muted">{selected?.name ?? "Waiting for a located action."}</p>{selected && <p className="mt-3 text-xs text-muted">Floor {selected.floor} · {errors.filter(e => e.locationId === selected.id).length} observed errors</p>}</Panel>
         <Panel title="Errors along the path" className="max-h-80" bodyClassName="overflow-y-auto p-4" aside={String(errors.length)}><div className="flex flex-col gap-3" aria-live="polite">{errors.length === 0 ? <p className="text-sm text-muted">No errors observed at this point in the mission.</p> : errors.map(e => <button key={e.id} className="rounded border border-line bg-surface-2 p-3 text-left hover:border-bad" onClick={() => setSelectedId(e.locationId ?? null)}><p className="flex items-center gap-2 text-sm font-medium text-bad"><TriangleAlert size={16} />{e.locationId ?? "Unlocated"} · {e.severity ?? "FAILED"}</p><p className="mt-2 text-sm text-ink">{e.error?.replaceAll("_", " ")}</p><p className="mt-2 font-mono text-xs text-muted">{e.timestamp.split("T")[1]} · {e.actionId}</p></button>)}</div></Panel>
-        <Panel title="Mission timeline" aside={`${events.length} events`}>
-          <ol className="flex max-h-[32rem] flex-col gap-1 overflow-y-auto">{events.slice().reverse().map((e, i) => <li key={e.id}>
-            <button onClick={() => setSelectedId(e.locationId ?? null)} className={`flex w-full gap-3 rounded p-3 text-left transition-colors hover:bg-surface-2 ${i === 0 ? "border border-line bg-surface-2" : ""}`}>
-              <span className={`mt-0.5 shrink-0 ${e.error ? "text-bad" : "text-accent-ink"}`}>{e.error ? <TriangleAlert size={18} /> : e.type === "ACTION_STARTED" ? <ScanLine size={18} /> : <CheckCircle2 size={18} />}</span>
-              <span className="min-w-0"><span className="flex flex-wrap items-center gap-2 text-sm font-medium text-ink">{eventLabel(e)}{i === 0 && <span className="rounded bg-canvas px-1.5 py-0.5 text-[10px] text-accent-ink">LATEST</span>}</span>
-              <span className="mt-1 block text-xs text-muted">{e.locationId ?? "Mission"}{e.assetName ? ` · ${e.assetName}` : ""}</span>
-              {e.error && <span className="mt-1 block text-xs text-bad">{e.error.replaceAll("_", " ")}</span>}
-              <span className="mt-2 block font-mono text-xs text-muted">{e.timestamp.split("T")[1]}{e.durationSec && e.type === "ACTION_STARTED" ? ` · ${e.durationSec}s recorded` : ""}</span></span>
-            </button>
-          </li>)}</ol>{!events.length && <p className="text-sm text-muted">Waiting for mission events.</p>}
-        </Panel>
       </div>
     </div>
+    <Panel title="Mission timeline" aside={`${events.length} events`}>
+      <ol ref={timeline} className="flex snap-x gap-3 overflow-x-auto pb-2">{events.map((e, i) => { const latest = i === events.length - 1; return <li key={e.id} className="w-60 shrink-0 snap-end">
+        <button onClick={() => setSelectedId(e.locationId ?? null)} className={`flex h-full w-full gap-3 rounded border p-3 text-left transition-colors hover:bg-surface-2 ${latest ? "border-accent-ink bg-surface-2" : "border-line"}`}>
+          <span className={`mt-0.5 shrink-0 ${e.error ? "text-bad" : "text-accent-ink"}`}>{e.error ? <TriangleAlert size={18} /> : e.type === "ACTION_STARTED" ? <ScanLine size={18} /> : <CheckCircle2 size={18} />}</span>
+          <span className="min-w-0"><span className="flex flex-wrap items-center gap-2 text-sm font-medium text-ink">{eventLabel(e)}{latest && <span className="rounded bg-canvas px-1.5 py-0.5 text-[10px] text-accent-ink">LATEST</span>}</span>
+          <span className="mt-1 block text-xs text-muted">{e.locationId ?? "Mission"}{e.assetName ? ` · ${e.assetName}` : ""}</span>
+          {e.error && <span className="mt-1 block text-xs text-bad">{e.error.replaceAll("_", " ")}</span>}
+          <span className="mt-2 block font-mono text-xs text-muted">{e.timestamp.split("T")[1]}{e.durationSec && e.type === "ACTION_STARTED" ? ` · ${e.durationSec}s recorded` : ""}</span></span>
+        </button>
+      </li>; })}</ol>{!events.length && <p className="text-sm text-muted">Waiting for mission events.</p>}
+    </Panel>
   </>;
 }
