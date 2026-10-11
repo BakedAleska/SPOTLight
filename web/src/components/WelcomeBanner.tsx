@@ -2,6 +2,7 @@ import { ArrowRight } from "lucide-react";
 import { SpotlightLogo } from "./SpotlightLogo";
 import { BannerControls } from "./BannerControls";
 import { TypeIn } from "./TypeIn";
+import { ScrollLink } from "./ScrollLink";
 
 /* The shift-start banner. It exists to state the thesis in one sentence
    before any number is read — an operator (or a judge) who reads only this
@@ -78,7 +79,7 @@ export function WelcomeBanner({
           least one failed action, the status field alone won’t tell you that.
         </p>
 
-        <a
+        <ScrollLink
           href="#queue"
           className="anim-rise group mt-5 inline-flex h-9 cursor-pointer items-center gap-2 rounded bg-accent px-4 text-sm font-semibold text-on-accent transition-colors [--rise:6px] [animation-delay:860ms] hover:bg-accent-hover"
         >
@@ -90,7 +91,7 @@ export function WelcomeBanner({
             aria-hidden="true"
             className="transition-transform duration-(--dur-fast) ease-(--ease-settle) group-hover:translate-x-0.5"
           />
-        </a>
+        </ScrollLink>
       </div>
     </section>
   );

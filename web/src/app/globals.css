@@ -757,6 +757,58 @@ body {
   animation: grow 800ms var(--ease-settle) both;
 }
 
+/* A disclosure opening and closing: the grid row grows from 0fr to its
+   content's height, so nothing needs measuring. The inner wrapper clips only
+   while it runs; once open, the class comes off (see QueueRow) so focus rings
+   inside aren't cut. Closing is shorter and eases in, as things leaving do. */
+@keyframes expand {
+  from {
+    grid-template-rows: 0fr;
+    opacity: 0;
+  }
+  to {
+    grid-template-rows: 1fr;
+    opacity: 1;
+  }
+}
+
+@keyframes collapse {
+  from {
+    grid-template-rows: 1fr;
+    opacity: 1;
+  }
+  to {
+    grid-template-rows: 0fr;
+    opacity: 0;
+  }
+}
+
+.anim-expand,
+.anim-collapse {
+  display: grid;
+}
+
+.anim-expand > *,
+.anim-collapse > * {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.anim-expand {
+  animation: expand var(--dur-base) var(--ease-settle) both;
+}
+
+.anim-collapse {
+  animation: collapse 220ms ease-in both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-expand,
+  .anim-collapse {
+    animation: none;
+  }
+}
+
 /* Heatmap cells pop in on a diagonal wave; the delay is set inline per cell. */
 @keyframes heat-cell-in {
   from {

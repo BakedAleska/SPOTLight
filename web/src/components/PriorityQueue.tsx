@@ -73,10 +73,25 @@ function QueueRow({
   onSelect?: (flag: Flag) => void;
   reviewUnavailable?: string;
 }) {
-  const shown = open ? flag.reasons : flag.reasons.slice(0, REASONS_SHOWN);
-  const hidden = flag.reasons.length - shown.length;
+  const shown = flag.reasons.slice(0, REASONS_SHOWN);
+  const rest = flag.reasons.slice(REASONS_SHOWN);
   const panelId = `flag-${flag.id}-options`;
   const title = useRef<HTMLButtonElement>(null);
+  /* Closing plays the collapse first and only then tells the queue, which
+     drops the row back into its place; with reduced motion it is immediate. */
+  const [closing, setClosing] = useState(false);
+  // Closed from outside (another row opened) mid-collapse: forget the collapse.
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (!open) setClosing(false);
+  }
+  const toggle = () => {
+    if (!open) return onToggle();
+    if (closing) return;
+    if (reducedMotion()) return onToggle();
+    setClosing(true);
+  };
 
   return (
     <div
@@ -84,16 +99,16 @@ function QueueRow({
       onKeyDown={open ? (event) => {
         if (event.key !== "Escape") return;
         event.stopPropagation();
-        onToggle();
+        toggle();
         title.current?.focus();
       } : undefined}
-      className={`group relative px-4 py-3 pl-5 text-left ${open ? ROW_OPEN : ROW_CLOSED}`}
+      className={`group relative px-4 py-3 pl-5 text-left transition-[margin,background-color,border-color,border-radius,box-shadow] duration-(--dur-base) ease-(--ease-settle) ${open && !closing ? ROW_OPEN : ROW_CLOSED}`}
     >
       {/* A severity-coloured spine, so the shape of the backlog is legible
           from across the room before any text is read. */}
       <span
         aria-hidden="true"
-        className={`absolute inset-y-0 left-0 ${open ? "w-1 rounded-l-[3px]" : "w-0.5"} ${severityAccent(flag.severity)}`}
+        className={`absolute inset-y-0 left-0 transition-[width] duration-(--dur-base) ease-(--ease-settle) ${open && !closing ? "w-1 rounded-l-[3px]" : "w-0.5"} ${severityAccent(flag.severity)}`}
       />
 
       <div className="flex items-baseline gap-3">
@@ -105,7 +120,7 @@ function QueueRow({
         {open ? (
           <button
             type="button"
-            onClick={onToggle}
+            onClick={toggle}
             aria-label={`Close ${flag.title}`}
             title="Close (Esc)"
             className="-my-1 ml-auto shrink-0 self-center rounded p-1 text-muted transition-colors hover:bg-surface-2 hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
@@ -128,8 +143,8 @@ function QueueRow({
         <button
           ref={title}
           type="button"
-          onClick={onToggle}
-          aria-expanded={open}
+          onClick={toggle}
+          aria-expanded={open && !closing}
           aria-controls={panelId}
           className={`cursor-pointer text-left hover:underline focus-visible:outline-2 focus-visible:outline-accent ${open ? "" : "after:absolute after:inset-0"}`}
         >
@@ -150,14 +165,27 @@ function QueueRow({
             {displayText(reason.detail)}
           </li>
         ))}
-        {hidden > 0 && (
+        {!open && rest.length > 0 && (
           <li className="pl-4 text-xs text-faint">
-            +{hidden} more signal{hidden > 1 ? "s" : ""}
+            +{rest.length} more signal{rest.length > 1 ? "s" : ""}
           </li>
         )}
       </ul>
 
       {open && (
+        <Disclosure closing={closing} onClosed={() => { setClosing(false); onToggle(); }}>
+          {rest.length > 0 && (
+            <ul className="mt-1 space-y-1">
+              {rest.map((reason) => (
+                <li
+                  key={reason.rule}
+                  className="flex gap-2 text-sm leading-snug text-muted before:text-faint before:content-['•']"
+                >
+                  {displayText(reason.detail)}
+                </li>
+              ))}
+            </ul>
+          )}
         <nav id={panelId} aria-label={`Next steps for ${flag.title}`} className="relative mt-3 flex flex-wrap gap-2">
           {/* Always offered: without the backend it is shown disabled with the
               reason, rather than vanishing from the row. */}
@@ -185,10 +213,30 @@ function QueueRow({
             <Sparkles size={14} aria-hidden="true" /> Ask SPOTbot
           </Link>
         </nav>
+          {!onSelect && reviewUnavailable && (
+            <p id={`${panelId}-review-off`} className="relative mt-2 text-xs text-muted">{reviewUnavailable}</p>
+          )}
+        </Disclosure>
       )}
-      {open && !onSelect && reviewUnavailable && (
-        <p id={`${panelId}-review-off`} className="relative mt-2 text-xs text-muted">{reviewUnavailable}</p>
-      )}
+    </div>
+  );
+}
+
+/** The part of an open row that the closed row doesn't have: it grows open
+    on mount and collapses before the row closes. Once open it drops the
+    animation class, whose clipping would otherwise cut the focus rings. */
+function Disclosure({ closing, onClosed, children }: { closing: boolean; onClosed: () => void; children: React.ReactNode }) {
+  const [settled, setSettled] = useState(false);
+  return (
+    <div
+      className={closing ? "anim-collapse" : settled ? "" : "anim-expand"}
+      onAnimationEnd={(event) => {
+        if (event.target !== event.currentTarget) return;
+        if (closing) onClosed();
+        else setSettled(true);
+      }}
+    >
+      <div>{children}</div>
     </div>
   );
 }

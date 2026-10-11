@@ -141,26 +141,25 @@ export function LiveConsole({ initialRoutes }: { initialRoutes: LiveRoute[] }) {
     finally { setBusy(false); }
   }, [liveRun, mock]);
 
-  return <div className="mx-auto flex max-w-[1600px] flex-col gap-4 p-4">
-    <header className="flex flex-wrap items-end justify-between gap-4">
-      <div>
-        <p className="mb-1 text-xs text-muted">LIVE OPERATIONS</p>
-        <h1 className="flex items-center gap-2 text-2xl font-semibold text-ink"><Radio size={24} />SPOT live patrol</h1>
-        <p className="mt-1 text-sm text-muted">Every stop is triaged by the confidence model and the rules, photographed and explained by SPOTbot while you watch.</p>
-      </div>
-      <div className="flex flex-wrap items-end gap-2">
-        <label className="flex flex-col gap-1 text-xs text-muted">Route
-          <select className={control} value={routeId} onChange={e => setRouteId(e.target.value)} disabled={!!liveRun || mockRunning}>
-            <option value={MOCK_ROUTE_ID}>Mission 1 · mock patrol (no robot needed)</option>
-            {routes.map(r => <option key={r.route_id} value={r.route_id}>{r.route_id} · {r.name} ({r.planned_red} alerts planned)</option>)}
-          </select>
-        </label>
-        <button className={controlPrimary} onClick={start} disabled={busy || mockRunning || (!isMock && !!liveRun)}><Play size={16} />Start route</button>
-        <button className={control} onClick={cancel} disabled={busy || !(mockRunning || liveRun)}><Square size={14} />Cancel</button>
-      </div>
-    </header>
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-panel border border-line bg-surface p-3 text-xs text-muted">
-      <span className="font-semibold text-ink">What is live</span>
+  /* The page is a title over a grid of panels: the run's controls, what is
+     live, and any notice sit in the Run panel at the head of the right
+     column, beside the map they drive, rather than in loose bands above it. */
+  const controls = <div className="flex flex-col gap-2">
+    <label className="flex flex-col gap-1 text-xs text-muted">Route
+      <select className={`${control} w-full justify-start`} value={routeId} onChange={e => setRouteId(e.target.value)} disabled={!!liveRun || mockRunning}>
+        <option value={MOCK_ROUTE_ID}>Mission 1 · mock patrol (no robot needed)</option>
+        {routes.map(r => <option key={r.route_id} value={r.route_id}>{r.route_id} · {r.name} ({r.planned_red} alerts planned)</option>)}
+      </select>
+    </label>
+    <div className="grid grid-cols-2 gap-2">
+      <button className={controlPrimary} onClick={start} disabled={busy || mockRunning || (!isMock && !!liveRun)}><Play size={16} />Start route</button>
+      <button className={control} onClick={cancel} disabled={busy || !(mockRunning || liveRun)}><Square size={14} />Cancel</button>
+    </div>
+    {notice && <p className="rounded border border-line bg-surface-2 px-3 py-2 text-xs text-ink" role="status">{notice}</p>}
+  </div>;
+  const sources = <div className="flex flex-col gap-2 text-xs text-muted">
+    <p className="font-semibold text-ink">What is live</p>
+    <ul className="flex flex-col gap-1.5">
       {mock || isMock ? <>
         <Chip icon={<Database size={13} />} tag="KIT">Robot log: Mission 1&apos;s kit rows, in order</Chip>
         <Chip icon={<Camera size={13} />} tag="SIMULATED">Photos: kit samples by action type</Chip>
@@ -173,13 +172,20 @@ export function LiveConsole({ initialRoutes }: { initialRoutes: LiveRoute[] }) {
         <Chip icon={<Brain size={13} />} tag="LIVE">SPOTbot on AMD</Chip>
         <Chip icon={<Network size={13} />} tag="LIVE">Neon rows, embeddings, knowledge graph</Chip>
       </>}
-      <span className="ml-auto" role="status">{connection}</span>
-    </div>
-    {notice && <p className="rounded border border-line bg-surface-2 p-3 text-sm text-ink" role="status">{notice}</p>}
-    {(mock || isMock) && <p className="rounded border border-line bg-surface-2 p-3 text-sm text-muted">
+    </ul>
+    {(mock || isMock) && <p className="leading-snug">
       <strong className="text-ink">Mock patrol.</strong> Mission 1 from the challenge kit, replayed stop by stop in your browser: each stop is the kit&apos;s real
       robot log, the stops that need attention are the ones the triage flagged, and their explanations are SPOTbot&apos;s stored answers. No robot, runner or model is called.
     </p>}
+    <p role="status" className="text-faint">{connection}</p>
+  </div>;
+
+  return <div className="mx-auto flex max-w-[1600px] flex-col gap-4 p-4">
+    <header>
+      <p className="mb-1 text-xs text-muted">LIVE OPERATIONS</p>
+      <h1 className="flex items-center gap-2 text-2xl font-semibold text-ink"><Radio size={24} />SPOT live patrol</h1>
+      <p className="mt-1 text-sm text-muted">Every stop is triaged by the confidence model and the rules, photographed and explained by SPOTbot while you watch.</p>
+    </header>
     <div className="panel-columns grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
       <div className="flex min-w-0 flex-col gap-4">
         <Panel title="Facility map" aside={run ? `${run.run_id === 0 ? "MOCK" : `RUN #${run.run_id}`} · ${run.route_id} · ${run.status.toUpperCase()}` : "NO RUN YET"}>
@@ -193,8 +199,10 @@ export function LiveConsole({ initialRoutes }: { initialRoutes: LiveRoute[] }) {
             : <ol className="flex flex-col gap-3">{[...captures].reverse().map(c => <li key={c.capture_id}><CaptureCard c={c} stop={route?.stops[c.stop_index]} /></li>)}</ol>}
         </Panel>
       </div>
-      <div className="panel-stack flex min-w-0 flex-col gap-4">
-        <RunPanel run={run} route={route} captures={captures} />
+      {/* Stacked (under xl), this column goes first and side by side, so
+          Start route is above the map rather than under the feed. */}
+      <div className="panel-stack order-first grid min-w-0 content-start gap-4 md:grid-cols-2 xl:order-none xl:flex xl:flex-col">
+        <RunPanel run={run} route={route} captures={captures} controls={controls} sources={sources} />
         <LiveAnalytics captures={captures} route={route} />
       </div>
     </div>
@@ -213,7 +221,7 @@ export function LiveConsole({ initialRoutes }: { initialRoutes: LiveRoute[] }) {
 }
 
 function Chip({ icon, tag, children }: { icon: React.ReactNode; tag: "LIVE" | "SIMULATED" | "STORED" | "KIT"; children: React.ReactNode }) {
-  return <span className="inline-flex items-center gap-1.5">{icon}{children}<span className={`rounded px-1 text-[10px] font-semibold ${tag === "LIVE" ? "bg-ok/15 text-ok" : "bg-surface-2 text-muted"}`}>{tag}</span></span>;
+  return <li className="flex items-start gap-2"><span className="mt-px shrink-0">{icon}</span><span className="min-w-0 flex-1 leading-snug">{children}</span><span className={`shrink-0 rounded px-1 text-[10px] font-semibold ${tag === "LIVE" ? "bg-ok/15 text-ok" : "bg-surface-2 text-muted"}`}>{tag}</span></li>;
 }
 
 function LiveMap({ route, captures, run }: { route: LiveRoute | null; captures: LiveCapture[]; run: LiveRun | null }) {
@@ -251,14 +259,17 @@ function LiveMap({ route, captures, run }: { route: LiveRoute | null; captures: 
   </svg>;
 }
 
-function RunPanel({ run, route, captures }: { run: LiveRun | null; route: LiveRoute | null; captures: LiveCapture[] }) {
+function RunPanel({ run, route, captures, controls, sources }: {
+  run: LiveRun | null; route: LiveRoute | null; captures: LiveCapture[]; controls: React.ReactNode; sources: React.ReactNode;
+}) {
   const red = captures.filter(c => c.verdict === "red").length;
   const green = captures.filter(c => c.verdict === "green").length;
   const qwen = captures.filter(c => c.qwen_source === "system2").length;
   const template = captures.filter(c => c.qwen_source === "template").length;
   const latest = captures.at(-1);
-  return <Panel title="Run" aside={run ? run.status.toUpperCase() : "IDLE"}>
-    {!run ? <p className="text-sm text-muted">No run selected.</p> : <div className="flex flex-col gap-3 text-sm">
+  return <Panel title="Run" aside={run ? run.status.toUpperCase() : "IDLE"} bodyClassName="divide-y divide-line [&>*]:p-4">
+    {controls}
+    {!run ? <p className="text-sm text-muted">No run yet. Pick a route and start it to watch SPOT patrol.</p> : <div className="flex flex-col gap-3 text-sm">
       <p className="font-semibold text-ink">{run.run_id === 0 ? "Mock patrol" : `#${run.run_id}`} · {route?.name}</p>
       <p className="text-xs text-muted">{route?.description}</p>
       <div className="flex gap-1" aria-label="Stops">{(route?.stops ?? []).map((s, i) => {
@@ -275,6 +286,7 @@ function RunPanel({ run, route, captures }: { run: LiveRun | null; route: LiveRo
       </dl>
       {run.error && <p className="text-xs text-bad">{run.error}</p>}
     </div>}
+    {sources}
   </Panel>;
 }
 
