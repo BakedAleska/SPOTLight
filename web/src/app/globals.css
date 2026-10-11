@@ -868,5 +868,8 @@ body {
 .live-ping { animation: live-ping 1.6s ease-out infinite; transform-box: fill-box; transform-origin: center; }
 @keyframes live-ping { 0% { transform: scale(0.6); opacity: 0.9; } 100% { transform: scale(2.6); opacity: 0; } }
 .live-spot { transition: transform 1.6s ease-in-out; }
+/* Route ahead of SPOT: dashes march toward the destination (one 6+8 dash period per cycle). */
+.route-ahead { animation: route-flow 0.9s linear infinite; }
+@keyframes route-flow { to { stroke-dashoffset: -14; } }
 .live-card-in { animation: float-in 0.45s ease-out both; }
-@media (prefers-reduced-motion: reduce) { .live-ping { animation: none; } .live-spot { transition: none; } .live-card-in { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .live-ping { animation: none; } .live-spot { transition: none; } .live-card-in { animation: none; } .route-ahead { animation: none; } }

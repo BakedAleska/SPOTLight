@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Pause, Play, RotateCcw, Route, TriangleAlert, ScanLine, CheckCircle2, ArrowRight, AudioLines, ArrowUp, ArrowDown, Timer, BatteryMedium } from "lucide-react";
 import { Panel } from "./Panel";
 import { LoadingDots } from "./LoadingDots";
+import { RouteAhead } from "./RouteAhead";
 import type { PathMission, PathPoint } from "@/lib/path-types";
 
 import { buildPlayback, playbackAt, eventLabel } from "@/lib/path-playback";
@@ -76,10 +77,12 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
   const last = events.at(-1);
   // Only the trip underway, or the next one while SPOT is stopped, is drawn ahead of it.
   const nextTravel = segments.find(s => s.leg && s.end > elapsed)?.leg?.travel;
-  const planned = legsPath(segments.flatMap(s => s.leg && s.leg.travel === nextTravel ? [s.leg] : []));
+  const upcoming = segments.filter(s => s.leg && s.end > elapsed && s.leg.travel === nextTravel);
+  // Mid-walk, the route ahead starts at SPOT rather than redrawing what it has already covered.
+  const ahead = legsPath(upcoming.map(s => s.leg!), { from: upcoming[0] && upcoming[0].start <= elapsed ? frame?.progress : 0 });
   // Walked so far: every finished leg, plus the one underway cut at SPOT's position.
   const underway = frame?.leg && elapsed < frame.end ? frame.leg : undefined;
-  const walked = legsPath([...segments.filter(s => s.leg && s.end <= elapsed).map(s => s.leg!), ...(underway ? [underway] : [])], underway ? frame?.progress : 1);
+  const walked = legsPath([...segments.filter(s => s.leg && s.end <= elapsed).map(s => s.leg!), ...(underway ? [underway] : [])], { to: underway ? frame?.progress : 1 });
   useEffect(() => { const list = timeline.current; if (list) list.scrollTo({ left: list.scrollWidth, behavior: "smooth" }); }, [events.length]);
   return <>
     <div className="panel-columns grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
@@ -88,8 +91,8 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
         <svg viewBox="0 0 1095 595" className="w-full rounded border border-line bg-surface-2" role="group" aria-label="Facility map with mission route, waypoint buttons and SPOT position">
           <defs><filter id="spot-marker-contrast" x="-25%" y="-25%" width="150%" height="150%"><feComponentTransfer><feFuncA type="linear" slope="2" /></feComponentTransfer><feDropShadow dx="0" dy="1" stdDeviation="1.5" floodColor="black" floodOpacity="0.9" /></filter></defs>
           <image href="/spot-blueprint.svg" width="1095" height="595" />
-          <path d={planned} fill="none" stroke="white" strokeWidth="3" strokeDasharray="8 8" opacity="0.65" />
           <path d={walked} fill="none" stroke="var(--c-accent-ink)" strokeWidth="5" strokeLinejoin="round" strokeLinecap="round" />
+          <RouteAhead d={ahead} />
           {points.map(p => {
             const fault = errors.some(e => e.locationId === p.id);
             return <g key={p.id} role="button" tabIndex={0} aria-label={`${p.id}: ${p.name}${fault ? ", error detected" : ""}`} onClick={() => setSelectedId(p.id)} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSelectedId(p.id); } }} className="cursor-pointer">
@@ -111,7 +114,7 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
             <text y="65" textAnchor="middle" fill="white" stroke="black" strokeWidth="3" paintOrder="stroke" fontSize="15" fontWeight="bold">SPOT</text>
           </g>}
         </svg>
-        <p className="mt-3 text-xs text-muted">Dashed: route to the next stop · Solid: visited route · !: error. Travel follows the hallways and stairs between stops; activity durations are compressed from the logs.</p>
+        <p className="mt-3 text-xs text-muted">Dashed arrow: route to the next stop · Solid: visited route · !: error. Travel follows the hallways and stairs between stops; activity durations are compressed from the logs.</p>
         <div className="mt-4 flex flex-col gap-3 border-t border-line pt-4">
           <label className="text-xs text-muted">Replay position · event {index + 1} of {mission.events.length}<input className="mt-2 w-full accent-accent-ink" type="range" min="0" max={duration} value={elapsed} onChange={e => setElapsed(Number(e.target.value))} /></label>
           <div className="flex flex-wrap items-center gap-2"><button className={control} onClick={() => {

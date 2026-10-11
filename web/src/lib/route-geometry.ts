@@ -15,47 +15,57 @@ export type Leg =
 export const floorOf = (p: XY) => (p.x >= 751 ? 2 : 1);
 export const STAIRS = { id: "Stairs", name: "Stairwell" };
 
-/* The walkable network, traced from the blueprint: hallway centrelines, door gaps and stair ends. Waypoints join it
-   through their room's door. Floor 1 hallways: north y145-175, south y330-360, west x165-195, east x600-630. Floor 2:
-   one hallway y225-255 with a stair column x915-945 running south to the WP15 hall. */
+/* The walkable network, traced from the blueprint: hallway centrelines, door gaps and stair ends. Every edge is
+   horizontal or vertical, so routes read as clean right-angled runs; corner nodes inside rooms turn SPOT from a door
+   toward its waypoint. Floor 1 hallways: north y145-175, south y330-360, west x165-195, east x600-630. Floor 2: one
+   hallway y225-255 with a stair column x915-945 running south to the WP15 hall. */
 const nodes: Record<string, [number, number]> = {
   ...anchors,
-  // Floor 1
-  northHall: [235, 160], northEnd: [305, 160], wp04Door: [235, 145], wp03Top: [235, 175], wp03Bottom: [235, 330],
-  southWest: [180, 345], southWp03: [235, 345], southWp08: [378, 345], southWp09: [550, 345], southEast: [615, 345],
-  westWp02: [180, 390], westDock: [180, 420], wp02Door: [165, 390], garage: [110, 420],
-  wp08Door: [378, 360], wp09Door: [550, 360], wp10Door: [630, 440],
-  eastWp07: [615, 240], eastTop: [615, 145], wp07Door: [630, 240],
-  galleryEntry: [320, 175],
-  stairWp07Foot: [698, 212], stairWp07: [698, 172], stairWp09Foot: [482, 446], stairWp09: [482, 486],
-  // Floor 2
-  hallWp11: [845, 240], hallStair: [930, 240], hallWp12: [990, 240],
-  wp11Door: [845, 225], wp12Door: [990, 225], wp13Top: [845, 255], wp14Top: [990, 255], stairTop: [930, 255],
-  landing: [930, 337],
-  stairBottom: [930, 420], wp13Bottom: [845, 420], wp14Bottom: [990, 420],
+  // Floor 1: north hall, WP04 and WP03 off it, and the pipe gallery (entered where the hall meets its railing)
+  wp04Corner: [235, 102], wp04Door: [235, 145], northHall: [235, 160], northEnd: [305, 160], galleryLane: [447, 160],
+  wp03Top: [235, 175], wp03Aisle: [235, 249], wp03Bottom: [235, 330],
+  // South hall
+  southWest: [180, 345], southWp03: [235, 345], southWp08: [380, 345], southWp09: [551, 345], southEast: [615, 345],
+  wp08Door: [380, 360], wp09Door: [551, 360],
+  wp09Junction: [551, 446], stairWp09Foot: [482, 446], stairWp09: [482, 486], wp10Door: [630, 446], wp10Corner: [672, 446],
+  // West hall, WP02 and its garage door, and the loading dock
+  westWp02: [180, 390], westDock: [180, 420], dockEast: [180, 475],
+  wp02Door: [165, 390], wp02Corner: [113, 390], garage: [113, 420], dockWest: [113, 475],
+  // East hall, WP06 and WP07
+  eastWp07: [615, 240], eastTop: [615, 145], wp06Corner: [615, 103],
+  wp07Door: [630, 240], wp07Corner: [664, 240], stairWp07Foot: [698, 240], stairWp07: [698, 172],
+  // Floor 2: the hallway, its rooms, the stair column and the WP15 hall
+  wp11Door: [850, 225], hallWp11: [850, 240], hallStair: [930, 240], hallWp12: [992, 240], wp12Door: [992, 225],
+  wp12Corner: [992, 158], wp13Top: [850, 255], wp13Corner: [850, 338], wp13Bottom: [850, 420], wp14Top: [992, 255],
+  wp14Bottom: [992, 420], stairTop: [930, 255], landing: [930, 337], stairBottom: [930, 420],
+  lane13: [850, 489], laneStair: [930, 489], lane14: [992, 489],
 };
 const walks: [string, string][] = [
   // Floor 1: north hall and its rooms
-  ["WP04", "wp04Door"], ["wp04Door", "northHall"], ["northHall", "wp03Top"], ["northHall", "northEnd"],
-  ["northEnd", "galleryEntry"], ["galleryEntry", "WP05"],
-  ["wp03Top", "WP03"], ["WP03", "wp03Bottom"], ["wp03Top", "wp03Bottom"], ["wp03Bottom", "southWp03"],
+  ["WP04", "wp04Corner"], ["wp04Corner", "wp04Door"], ["wp04Door", "northHall"], ["northHall", "wp03Top"],
+  ["northHall", "northEnd"], ["northEnd", "galleryLane"], ["galleryLane", "WP05"],
+  ["wp03Top", "wp03Aisle"], ["wp03Aisle", "WP03"], ["wp03Aisle", "wp03Bottom"], ["wp03Bottom", "southWp03"],
   // South hall
   ["southWest", "southWp03"], ["southWp03", "southWp08"], ["southWp08", "southWp09"], ["southWp09", "southEast"],
   ["southWp08", "wp08Door"], ["wp08Door", "WP08"], ["southWp09", "wp09Door"], ["wp09Door", "WP09"],
-  ["WP09", "wp10Door"], ["wp10Door", "WP10"], ["WP09", "stairWp09Foot"], ["stairWp09Foot", "stairWp09"],
+  ["WP09", "wp09Junction"], ["wp09Junction", "stairWp09Foot"], ["stairWp09Foot", "stairWp09"],
+  ["wp09Junction", "wp10Door"], ["wp10Door", "wp10Corner"], ["wp10Corner", "WP10"],
   // West hall, the WP02 garage door and the loading dock
-  ["southWest", "westWp02"], ["westWp02", "westDock"], ["westWp02", "wp02Door"], ["wp02Door", "WP02"],
-  ["westDock", "WP01"], ["WP02", "garage"], ["garage", "WP01"],
+  ["southWest", "westWp02"], ["westWp02", "westDock"], ["westDock", "dockEast"], ["dockEast", "WP01"],
+  ["westWp02", "wp02Door"], ["wp02Door", "wp02Corner"], ["wp02Corner", "WP02"],
+  ["wp02Corner", "garage"], ["garage", "dockWest"], ["dockWest", "WP01"],
   // East hall
-  ["southEast", "eastWp07"], ["eastWp07", "eastTop"], ["eastTop", "WP06"],
-  ["eastWp07", "wp07Door"], ["wp07Door", "WP07"], ["WP07", "stairWp07Foot"], ["stairWp07Foot", "stairWp07"],
+  ["southEast", "eastWp07"], ["eastWp07", "eastTop"], ["eastTop", "wp06Corner"], ["wp06Corner", "WP06"],
+  ["eastWp07", "wp07Door"], ["wp07Door", "wp07Corner"], ["wp07Corner", "WP07"],
+  ["wp07Corner", "stairWp07Foot"], ["stairWp07Foot", "stairWp07"],
   // Floor 2: the hallway, its rooms and the stair column
   ["hallWp11", "hallStair"], ["hallStair", "hallWp12"],
-  ["hallWp11", "wp11Door"], ["wp11Door", "WP11"], ["hallWp12", "wp12Door"], ["wp12Door", "WP12"],
-  ["hallWp11", "wp13Top"], ["wp13Top", "WP13"], ["WP13", "wp13Bottom"],
+  ["hallWp11", "wp11Door"], ["wp11Door", "WP11"], ["hallWp12", "wp12Door"], ["wp12Door", "wp12Corner"], ["wp12Corner", "WP12"],
+  ["hallWp11", "wp13Top"], ["wp13Top", "wp13Corner"], ["wp13Corner", "WP13"], ["wp13Corner", "wp13Bottom"],
   ["hallWp12", "wp14Top"], ["wp14Top", "WP14"], ["WP14", "wp14Bottom"],
   ["hallStair", "stairTop"], ["stairTop", "landing"], ["landing", "stairBottom"],
-  ["stairBottom", "WP15"], ["wp13Bottom", "WP15"], ["wp14Bottom", "WP15"],
+  ["wp13Bottom", "lane13"], ["stairBottom", "laneStair"], ["wp14Bottom", "lane14"],
+  ["lane13", "WP15"], ["WP15", "laneStair"], ["laneStair", "lane14"],
 ];
 // Both floor 1 stairs arrive at the floor 2 landing between its two flights. Their weight stands in for the climb.
 const climbs: [string, string][] = [["stairWp07", "landing"], ["stairWp09", "landing"]];
@@ -132,11 +142,28 @@ export function pointOnLeg(leg: Leg, t: number): XY {
   return leg.kind === "walk" ? walked(leg.points, t).at(-1)! : t < 0.5 ? leg.from : leg.to;
 }
 
-/** SVG path data for the walks, the last one cut at `t`. Climbs leave a gap: the floors are separate plans. */
-export function legsPath(legs: Leg[], lastT = 1) {
+/** The part of a walk between `from` and `to` (0–1 of its length). */
+function slice(points: XY[], from: number, to: number): XY[] {
+  if (to <= from) return [];
+  const head = walked(points, to);
+  if (from <= 0) return head;
+  const reversed = walked([...head].reverse(), 1 - from / to);
+  return reversed.reverse();
+}
+
+const JOG = 16;
+
+/** SVG path data for the walks, the first one starting at `from` and the last one ending at `to` (0–1 of its
+    length). Climbs leave a gap: the floors are separate plans. */
+export function legsPath(legs: Leg[], { from = 0, to = 1 }: { from?: number; to?: number } = {}) {
   return legs.flatMap((leg, i) => {
     if (leg.kind !== "walk") return [];
-    const points = i === legs.length - 1 && lastT < 1 ? walked(leg.points, lastT) : leg.points;
-    return [`M${points.map(p => `${p.x},${p.y}`).join("L")}`];
+    const start = i === 0 ? from : 0, end = i === legs.length - 1 ? to : 1;
+    const points = slice(leg.points, start, end);
+    // A pin can sit a few pixels off its hallway line; drop that last little jog so the run (and its arrow) stays
+    // straight into the pin. Only at whole ends, never where the line is cut at SPOT.
+    if (end === 1 && points.length > 2 && dist(points.at(-2)!, points.at(-1)!) < JOG) points.pop();
+    if (start === 0 && points.length > 2 && dist(points[0], points[1]) < JOG) points.shift();
+    return points.length > 1 ? [`M${points.map(p => `${p.x},${p.y}`).join("L")}`] : [];
   }).join("");
 }

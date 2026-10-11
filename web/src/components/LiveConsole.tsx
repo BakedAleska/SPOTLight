@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { Panel } from "./Panel";
 import { LoadingDots } from "./LoadingDots";
+import { RouteAhead } from "./RouteAhead";
 import { anchors } from "@/lib/waypoints";
 import { legsPath, routeLegs } from "@/lib/route-geometry";
 import type { LiveCapture, LiveKg, LiveRoute, LiveRun, LiveRunDetail, LiveStop } from "@/lib/live";
@@ -182,8 +183,8 @@ function LiveMap({ route, captures, run }: { route: LiveRoute | null; captures: 
   return <svg viewBox="0 0 1095 595" className="w-full rounded border border-line bg-surface-2" role="img" aria-label={`Facility map: ${captures.length} stops inspected${latest ? `, SPOT at ${latest.location_id}` : ""}`}>
     <defs><filter id="live-spot-shadow" x="-25%" y="-25%" width="150%" height="150%"><feDropShadow dx="0" dy="1" stdDeviation="1.5" floodColor="black" floodOpacity="0.9" /></filter></defs>
     <image href="/spot-blueprint.svg" width="1095" height="595" />
-    <path d={legsPath(legs.filter(l => l.travel === (latest?.stop_index ?? 0)))} fill="none" stroke="white" strokeWidth="3" strokeDasharray="8 8" opacity="0.7" />
     <path d={walked} fill="none" stroke="var(--c-accent-ink)" strokeWidth="5" strokeLinejoin="round" strokeLinecap="round" />
+    <RouteAhead d={legsPath(legs.filter(l => l.travel === (latest?.stop_index ?? 0)))} />
     {stops.map((s, i) => {
       const [x, y] = pt(s.location_id);
       const c = captures.find(c => c.stop_index === i);
