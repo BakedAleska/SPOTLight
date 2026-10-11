@@ -141,7 +141,7 @@ export function BatteryCliff({
           {/* The bars. `inset-0` is what makes the columns' height definite,
               and therefore what makes the bars have any height at all. */}
           <div className="absolute inset-0 flex items-end gap-2">
-            {bands.map((band) => {
+            {bands.map((band, i) => {
               const isCliff = band.band.startsWith("≤25");
               return (
                 <div
@@ -156,9 +156,11 @@ export function BatteryCliff({
                   title={`${band.band} battery — ${band.successRate}% success, n=${band.sampleSize}`}
                 >
                   <div
-                    className={`relative w-full rounded-t-[4px] ${isCliff ? "bg-bad" : "bg-ok"}`}
+                    className={`anim-grow relative w-full rounded-t-[4px] ${isCliff ? "bg-bad" : "bg-ok"}`}
                     style={{
                       height: `${band.successRate}%`,
+                      // Grow once the panel has floated in, left to right.
+                      animationDelay: `${(delay ?? 0) + 200 + i * 90}ms`,
                       // A 0% band still gets a visible stub: "no action
                       // succeeded here" and "no data here" must not look alike.
                       minHeight: 2,

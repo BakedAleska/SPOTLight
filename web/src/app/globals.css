@@ -691,6 +691,20 @@ body {
   animation: caret 600ms linear 2 both;
 }
 
+/* Chart bars growing up from the baseline. Only a `from` keyframe: the
+   animation runs to the bar's own inline height, so one class serves every
+   bar. Height rather than scaleY, so the value label riding the cap moves up
+   with it instead of being squashed. */
+@keyframes grow {
+  from {
+    height: 0;
+  }
+}
+
+.anim-grow {
+  animation: grow 800ms var(--ease-settle) both;
+}
+
 /* One visible focus style everywhere, so keyboard users are never lost. */
 :focus-visible {
   outline: 2px solid var(--c-focus);

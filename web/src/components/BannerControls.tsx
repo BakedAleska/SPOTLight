@@ -5,7 +5,7 @@ import { Check, ChevronDown, RotateCcw } from "lucide-react";
 
 /* The classes that carry a load animation. Listed explicitly rather than
    matched on a prefix so a future `.animate-*` utility can't get swept up. */
-const ANIMATED = ".anim-rise, .anim-float, .anim-type, .anim-caret";
+const ANIMATED = ".anim-rise, .anim-float, .anim-type, .anim-caret, .anim-grow";
 
 /**
  * Restart every load animation on the page.

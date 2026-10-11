@@ -59,11 +59,10 @@ export function AIRunControls({ mission }: { mission?: string }) {
     refresh();
   }
   return <div className="rounded-panel border border-line bg-surface p-4">
-    <div className="flex flex-wrap items-center gap-3"><Sparkles size={18} className="text-accent-ink" /><div className="min-w-0 flex-1"><p className="text-sm font-semibold text-ink">Run an AI analysis</p><p className="mt-1 text-xs text-muted">{mission ? `Mission ${mission}` : "All supplied kit missions"} · Processing starts only when you click Run.</p></div>
+    <div className="flex flex-wrap items-center gap-3"><Sparkles size={18} className="shrink-0 text-accent-ink" /><div className="min-w-0 flex-1"><p className="text-sm font-semibold text-ink">Run an AI analysis</p><p className="mt-1 text-xs text-muted" role="status">{message}</p></div>
       <button type="button" onClick={() => void start()} disabled={busy} className="flex min-h-11 items-center gap-2 rounded bg-accent px-4 text-sm font-medium text-on-accent disabled:opacity-50"><Play size={16} />{busy ? "AI run in progress…" : "Run data through AI"}</button>
       {busy && <button type="button" onClick={() => void stop()} className="flex min-h-11 items-center gap-2 rounded border border-line px-3 text-sm text-ink"><Square size={14} />Stop</button>}
     </div>
-    <p className="mt-3 text-xs text-muted" role="status">{message}</p>
     {busy && <progress aria-label="AI analysis progress" className="mt-3 h-2 w-full accent-accent-ink" max="100" value={progress} />}
     {error && <p role="alert" className="mt-3 text-sm text-bad">{error}</p>}
   </div>;
