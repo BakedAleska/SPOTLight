@@ -54,7 +54,7 @@ function Row({ item, active }: { item: NavItem; active: boolean }) {
 function Section({ item, pathname }: { item: NavItem; pathname: string }) {
   const Icon = item.icon;
   return (
-    <details className="group">
+    <details className="group" open={item.children?.some(child => child.href === pathname)}>
       <summary
         className={`${ROW} cursor-pointer list-none text-muted hover:bg-surface-2 hover:text-ink [&::-webkit-details-marker]:hidden`}
       >
@@ -93,7 +93,7 @@ function Section({ item, pathname }: { item: NavItem; pathname: string }) {
   );
 }
 
-export function Sidebar({ onClose }: { onClose: () => void }) {
+export function Sidebar({ onClose, onNavigate }: { onClose: () => void; onNavigate: () => void }) {
   const pathname = usePathname();
 
   return (
@@ -111,7 +111,7 @@ export function Sidebar({ onClose }: { onClose: () => void }) {
         </button>
       </div>
 
-      <nav aria-label="Primary" className="flex-1 overflow-y-auto p-2">
+      <nav onClick={(event) => { if ((event.target as HTMLElement).closest("a")) onNavigate(); }} aria-label="Primary" className="flex-1 overflow-y-auto p-2">
         <ul className="space-y-0.5">
           {nav.map((item) => (
             <li key={item.label}>

@@ -82,9 +82,7 @@ export function TopBar({
         </ol>
       </nav>
 
-      {/* TODO: chrome only for now — wire this to a mission/asset/flag index
-          once there is a mission/asset/flag index to search. */}
-      <div className="relative ml-auto hidden min-w-0 sm:block sm:w-64 lg:w-80">
+      <form action="/search" className="relative ml-auto min-w-0 flex-1 sm:flex-none sm:w-64 lg:w-80">
         <Search
           size={14}
           aria-hidden="true"
@@ -92,6 +90,7 @@ export function TopBar({
         />
         <input
           ref={searchRef}
+          name="q"
           type="search"
           placeholder="Search missions, assets, flags…"
           aria-label="Search missions, assets and flags"
@@ -100,14 +99,12 @@ export function TopBar({
         <kbd className="nums pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 rounded border border-line-strong px-1 py-0.5 font-mono text-[10px] text-muted">
           ⌘K
         </kbd>
-      </div>
+      </form>
 
       <div className="ml-auto flex items-center gap-1 sm:ml-0">
         <ThemeToggle />
         <a
-          href="https://knight-hacks-ix.devpost.com/"
-          target="_blank"
-          rel="noreferrer"
+          href="/help"
           aria-label="Project help and documentation"
           className={ICON_BUTTON}
         >

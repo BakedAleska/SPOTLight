@@ -8,8 +8,8 @@ import type { PathEvent, PathFeed, PathMission, PathPoint } from "@/lib/path-typ
 import { buildPlayback, playbackAt, eventLabel } from "@/lib/path-playback";
 
 const control = "flex min-h-11 items-center justify-center gap-2 rounded border border-line bg-surface px-3 text-sm text-ink hover:bg-surface-2 disabled:opacity-40";
-export function PathPreview({ points, missions }: { points: PathPoint[]; missions: PathMission[] }) {
-  const [missionId, setMissionId] = useState(missions[0]?.id ?? "");
+export function PathPreview({ points, missions, initialMissionId }: { points: PathPoint[]; missions: PathMission[]; initialMissionId?: string }) {
+  const [missionId, setMissionId] = useState(missions.find(m => m.id === initialMissionId)?.id ?? missions[0]?.id ?? "");
   return <div className="mx-auto flex max-w-[1600px] flex-col gap-4 p-4">
     <header className="flex flex-wrap items-center justify-between gap-4">
       <div><p className="mb-1 text-xs text-muted">MISSION CONTROL</p><h1 className="flex items-center gap-2 text-2xl font-semibold text-ink"><Route size={24} />SPOT path preview</h1><p className="mt-1 text-sm text-muted">Follow the route. Catch the failure where it happens.</p></div>

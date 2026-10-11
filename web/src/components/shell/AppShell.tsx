@@ -63,7 +63,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           drawer ? "flex" : "hidden"
         } ${docked ? "lg:flex" : "lg:hidden"}`}
       >
-        <Sidebar onClose={closeRail} />
+        <Sidebar onClose={closeRail} onNavigate={() => setDrawer(false)} />
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">

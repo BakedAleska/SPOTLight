@@ -1,6 +1,4 @@
-import { LoadingIndicator } from "@/components/LoadingIndicator";
-
-// Temporary preview: deliberately stays loading to review the shared animation.
+import { LiveModelBoard } from "@/components/LiveModelBoard";
 export default function Analytics() {
-  return <LoadingIndicator label="Analytics loading preview…" />;
+  return <div className="mx-auto flex max-w-[1600px] flex-col gap-4 p-4"><h1 className="text-2xl font-semibold text-ink">Live model analytics</h1><LiveModelBoard /></div>;
 }
