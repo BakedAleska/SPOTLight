@@ -1,0 +1,146 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1095 595" width="1095" height="595" font-family="Inter, Segoe UI, Arial, sans-serif">
+  <!-- Coordinate system matches the original 1095x595 floor-plan image 1:1 -->
+  <defs>
+    <pattern id="grid-sm" width="10" height="10" patternUnits="userSpaceOnUse">
+      <path d="M10 0H0V10" fill="none" stroke="#ffffff" stroke-opacity="0.05" stroke-width="0.5"/>
+    </pattern>
+    <pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse">
+      <rect width="50" height="50" fill="url(#grid-sm)"/>
+      <path d="M50 0H0V50" fill="none" stroke="#ffffff" stroke-opacity="0.12" stroke-width="0.8"/>
+    </pattern>
+    <pattern id="hatch" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="10" stroke="#ffffff" stroke-opacity="0.55" stroke-width="2"/>
+    </pattern>
+    <pattern id="outside-hatch" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="12" stroke="#ffffff" stroke-opacity="0.32" stroke-width="1.5"/>
+    </pattern>
+    <!-- pin: tip at (0,0) -->
+    <path id="pin" d="M0,0 C-4,-8 -12,-12 -12,-22 A12,12 0 1 1 12,-22 C12,-12 4,-8 0,0Z"/>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1095" height="595" fill="#0d2a4a"/>
+  <rect width="1095" height="595" fill="url(#grid)"/>
+  <line x1="751" y1="8" x2="751" y2="587" stroke="#ffffff" stroke-opacity="0.35" stroke-width="2"/>
+  <rect x="6" y="6" width="1083" height="583" fill="none" stroke="#ffffff" stroke-opacity="0.35" stroke-width="1.5"/>
+
+  <!-- Floor titles -->
+  <!-- Same baseline, same 12px inset from each panel's left edge -->
+  <g fill="#ffffff" font-weight="700" font-size="16" letter-spacing="2">
+    <text x="18" y="30">FLOOR 1</text>
+    <text x="763" y="30">FLOOR 2</text>
+  </g>
+
+  <!-- ===================== FLOOR 1 ===================== -->
+  <g id="floor1" fill="none" stroke="#ffffff" stroke-linecap="square" stroke-linejoin="miter">
+    <!-- Outer walls -->
+    <path stroke-width="4" d="M80,420 L55,420 L55,85 L165,85 L165,30 L630,30 L630,140 L715,140 L715,518 L265,518 L265,420 L195,420 M165,420 L140,420"/>
+
+    <g stroke-width="2.5">
+      <!-- Layout grid: hallways are 30 wide, doors are 30 wide.
+           North hall y145-175 | South hall y330-360 | East hall x600-630 | West hall x165-195 -->
+      <!-- Top-left room (door 95-125 into room below) -->
+      <path d="M55,145 L95,145 M125,145 L165,145"/>
+      <!-- West column wall x=165 (left room door 145-175 = north hall; WP02 door 375-405 into west hall) -->
+      <path d="M165,85 L165,145 M165,175 L165,375 M165,405 L165,420"/>
+      <path d="M55,250 L165,250"/>
+      <!-- WP04 room: door 220-250 faces WP03 top door -->
+      <path d="M165,145 L220,145 M250,145 L305,145 M305,30 L305,145"/>
+      <!-- Room above WP05 with ┐-shaped hallway: top leg y30-60, right leg x437.5-467.5 down to the WP05 walkway -->
+      <path d="M305,60 L356,60 M386,60 L437.5,60 L437.5,145"/>
+      <!-- WP06 room (left wall = right edge of the hallway) -->
+      <path d="M467.5,30 L467.5,145"/>
+      <!-- WP03 room: top + bottom doors 220-250 (right side is WP05 railing) -->
+      <path d="M165,175 L220,175 M250,175 L305,175 M165,330 L220,330 M250,330 L305,330"/>
+      <!-- Small room: door 220-250 faces WP03 bottom door -->
+      <path d="M195,420 L195,360 L220,360 M250,360 L265,360 L265,420"/>
+      <!-- WP08 room: door 363-393 -->
+      <path d="M265,360 L363,360 M393,360 L465,360 L465,518"/>
+      <!-- WP09 room: door 535-565 (shares left wall x=465 with WP08) -->
+      <path d="M465,360 L535,360 M565,360 L630,360"/>
+      <!-- East wall x=630: WP07 door 225-255, WP09→WP10 door 425-455 -->
+      <path d="M630,140 L630,225 M630,255 L630,425 M630,455 L630,518"/>
+      <!-- WP07 / WP10 split -->
+      <path d="M630,360 L715,360"/>
+    </g>
+
+    <!-- Loading dock (WP01): outdoor area reachable through the door at x165-195 -->
+    <g id="loading-dock">
+      <rect x="55" y="420" width="170" height="98" fill="url(#outside-hatch)" stroke="none"/>
+      <path d="M55,420 L55,518 L225,518 L225,420" stroke-width="1.5" stroke-dasharray="6 4" stroke-opacity="0.8"/>
+    </g>
+    <!-- WP02 garage (roll-up) door: dashed overhead door outline in the wall opening -->
+    <g id="wp02-garage-door">
+      <rect x="80" y="382" width="60" height="38" stroke-width="1.2" stroke-dasharray="4 3" stroke-opacity="0.65"/>
+    </g>
+
+    <!-- Pipe gallery railing (WP05) -->
+    <!-- walkway opening 437.5-467.5 at top centre -->
+    <path d="M437.5,145 L305,145 L305,330 L600,330 L600,145 L467.5,145" stroke-width="1.5" stroke-dasharray="6 4" stroke-opacity="0.8"/>
+    <!-- Pipe runs (light detail) -->
+    <g stroke-width="1" stroke-opacity="0.35">
+      <line x1="315" y1="191" x2="590" y2="191"/>
+      <line x1="315" y1="237" x2="590" y2="237"/>
+      <line x1="315" y1="284" x2="590" y2="284"/>
+    </g>
+
+    <!-- Stairs -->
+    <g stroke-width="1.2" stroke-opacity="0.8">
+      <!-- WP07 stair: against top + right walls, 30 wide x 60 long -->
+      <rect x="683" y="142" width="30" height="60"/>
+      <path d="M683,150H713M683,158H713M683,166H713M683,174H713M683,182H713M683,190H713"/>
+      <!-- WP09 stair: against left + bottom walls, 30 wide x 60 long -->
+      <rect x="467" y="456" width="30" height="60"/>
+      <path d="M467,468H497M467,476H497M467,484H497M467,492H497M467,500H497M467,508H497"/>
+    </g>
+  </g>
+
+  <!-- ===================== FLOOR 2 ===================== -->
+  <g id="floor2" fill="none" stroke="#ffffff" stroke-linecap="square" stroke-linejoin="miter">
+    <!-- Outer walls -->
+    <path stroke-width="4" d="M775,80 L855,80 L855,55 L915,55 L915,32 L1065,32 L1065,550 L775,550 Z"/>
+
+    <g stroke-width="2.5">
+      <!-- Hallway y225-255 runs full width; stair column x915-945 -->
+      <!-- WP11 / WP12 split -->
+      <path d="M915,55 L915,225"/>
+      <!-- WP11 door 830-860 faces WP13 top door; WP12 door 975-1005 faces WP14 top door -->
+      <path d="M775,225 L830,225 M860,225 L975,225 M1005,225 L1065,225"/>
+      <path d="M775,255 L830,255 M860,255 L915,255 M945,255 L975,255 M1005,255 L1065,255"/>
+      <!-- WP13 / stair column / WP14 -->
+      <path d="M915,255 L915,420 M945,255 L945,420"/>
+      <!-- Bottom doors line up with top doors -->
+      <path d="M775,420 L830,420 M860,420 L915,420 M945,420 L975,420 M1005,420 L1065,420"/>
+    </g>
+
+    <!-- Stairs -->
+    <g stroke-width="1.2" stroke-opacity="0.8">
+      <!-- WP13/WP14 stairs: two flights facing each other across a middle landing -->
+      <rect x="917" y="262" width="26" height="58"/>
+      <path d="M917,270H943M917,278H943M917,286H943M917,294H943M917,302H943M917,310H943"/>
+      <rect x="917" y="355" width="26" height="58"/>
+      <path d="M917,365H943M917,373H943M917,381H943M917,389H943M917,397H943M917,405H943"/>
+    </g>
+  </g>
+
+  <!-- ===================== BEACONS ===================== -->
+  <!-- Each beacon: translate = pin tip (location). data-x/data-y in image px; divide by 1095/595 for %. -->
+  <g id="beacons" font-size="13" font-weight="700" text-anchor="middle">
+    <!-- colors: blue #2f7de1, yellow #f2b31f, green #36b34a, purple #7b3fb8, red #d9302c -->
+    <g class="beacon" id="WP01" data-x="110" data-y="472" transform="translate(110,472)"><use href="#pin" fill="#2f7de1" stroke="#fff" stroke-width="2"/><circle cy="-22" r="4.5" fill="#fff"/><rect x="-24" y="8" width="48" height="19" rx="3" fill="#0a1626" stroke="#fff" stroke-opacity="0.3"/><text y="22" fill="#fff">WP01</text></g>
+    <g class="beacon" id="WP02" data-x="112" data-y="324" transform="translate(112,324)"><use href="#pin" fill="#f2b31f" stroke="#fff" stroke-width="2"/><circle cy="-22" r="4.5" fill="#fff"/><rect x="-24" y="8" width="48" height="19" rx="3" fill="#0a1626" stroke="#fff" stroke-opacity="0.3"/><text y="22" fill="#fff">WP02</text></g>
+    <g class="beacon" id="WP03" data-x="253" data-y="250" transform="translate(253,250)"><use href="#pin" fill="#36b34a" stroke="#fff" stroke-width="2"/><circle cy="-22" r="4.5" fill="#fff"/><rect x="-24" y="8" width="48" height="19" rx="3" fill="#0a1626" stroke="#fff" stroke-opacity="0.3"/><text y="22" fill="#fff">WP03</text></g>
+    <g class="beacon" id="WP04" data-x="215" data-y="100" transform="translate(215,100)"><use href="#pin" fill="#7b3fb8" stroke="#fff" stroke-width="2"/><circle cy="-22" r="4.5" fill="#fff"/><rect x="16" y="-17" width="48" height="19" rx="3" fill="#0a1626" stroke="#fff" stroke-opacity="0.3"/><text x="40" y="-3" fill="#fff">WP04</text></g>
+    <g class="beacon" id="WP05" data-x="446" data-y="235" transform="translate(446,235)"><use href="#pin" fill="#d9302c" stroke="#fff" stroke-width="2"/><circle cy="-22" r="4.5" fill="#fff"/><rect x="-24" y="8" width="48" height="19" rx="3" fill="#0a1626" stroke="#fff" stroke-opacity="0.3"/><text y="22" fill="#fff">WP05</text></g>
+    <g class="beacon" id="WP06" data-x="553" data-y="98" transform="translate(553,98)"><use href="#pin" fill="#7b3fb8" stroke="#fff" stroke-width="2"/><circle cy="-22" r="4.5" fill="#fff"/><rect x="16" y="-17" width="48" height="19" rx="3" fill="#0a1626" stroke="#fff" stroke-opacity="0.3"/><text x="40" y="-3" fill="#fff">WP06</text></g>
+    <g class="beacon" id="WP07" data-x="662" data-y="293" transform="translate(662,293)"><use href="#pin" fill="#2f7de1" stroke="#fff" stroke-width="2"/><circle cy="-22" r="4.5" fill="#fff"/><rect x="-24" y="8" width="48" height="19" rx="3" fill="#0a1626" stroke="#fff" stroke-opacity="0.3"/><text y="22" fill="#fff">WP07</text></g>
+    <g class="beacon" id="WP08" data-x="378" data-y="423" transform="translate(378,423)"><use href="#pin" fill="#7b3fb8" stroke="#fff" stroke-width="2"/><circle cy="-22" r="4.5" fill="#fff"/><rect x="-24" y="8" width="48" height="19" rx="3" fill="#0a1626" stroke="#fff" stroke-opacity="0.3"/><text y="22" fill="#fff">WP08</text></g>
+    <g class="beacon" id="WP09" data-x="551" data-y="423" transform="translate(551,423)"><use href="#pin" fill="#7b3fb8" stroke="#fff" stroke-width="2"/><circle cy="-22" r="4.5" fill="#fff"/><rect x="-24" y="8" width="48" height="19" rx="3" fill="#0a1626" stroke="#fff" stroke-opacity="0.3"/><text y="22" fill="#fff">WP09</text></g>
+    <g class="beacon" id="WP10" data-x="672" data-y="435" transform="translate(672,435)"><use href="#pin" fill="#36b34a" stroke="#fff" stroke-width="2"/><circle cy="-22" r="4.5" fill="#fff"/><rect x="-24" y="8" width="48" height="19" rx="3" fill="#0a1626" stroke="#fff" stroke-opacity="0.3"/><text y="22" fill="#fff">WP10</text></g>
+    <g class="beacon" id="WP11" data-x="849" data-y="148" transform="translate(849,148)"><use href="#pin" fill="#f2b31f" stroke="#fff" stroke-width="2"/><circle cy="-22" r="4.5" fill="#fff"/><rect x="-24" y="8" width="48" height="19" rx="3" fill="#0a1626" stroke="#fff" stroke-opacity="0.3"/><text y="22" fill="#fff">WP11</text></g>
+    <g class="beacon" id="WP12" data-x="1000" data-y="155" transform="translate(1000,155)"><use href="#pin" fill="#36b34a" stroke="#fff" stroke-width="2"/><circle cy="-22" r="4.5" fill="#fff"/><rect x="-24" y="8" width="48" height="19" rx="3" fill="#0a1626" stroke="#fff" stroke-opacity="0.3"/><text y="22" fill="#fff">WP12</text></g>
+    <g class="beacon" id="WP13" data-x="836" data-y="338" transform="translate(836,338)"><use href="#pin" fill="#2f7de1" stroke="#fff" stroke-width="2"/><circle cy="-22" r="4.5" fill="#fff"/><rect x="-24" y="8" width="48" height="19" rx="3" fill="#0a1626" stroke="#fff" stroke-opacity="0.3"/><text y="22" fill="#fff">WP13</text></g>
+    <g class="beacon" id="WP14" data-x="991" data-y="366" transform="translate(991,366)"><use href="#pin" fill="#7b3fb8" stroke="#fff" stroke-width="2"/><circle cy="-22" r="4.5" fill="#fff"/><rect x="-24" y="8" width="48" height="19" rx="3" fill="#0a1626" stroke="#fff" stroke-opacity="0.3"/><text y="22" fill="#fff">WP14</text></g>
+    <g class="beacon" id="WP15" data-x="895" data-y="486" transform="translate(895,486)"><use href="#pin" fill="#2f7de1" stroke="#fff" stroke-width="2"/><circle cy="-22" r="4.5" fill="#fff"/><rect x="-24" y="8" width="48" height="19" rx="3" fill="#0a1626" stroke="#fff" stroke-opacity="0.3"/><text y="22" fill="#fff">WP15</text></g>
+  </g>
+</svg>

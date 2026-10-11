@@ -54,6 +54,7 @@ export function ActionSuccessChart({
   caption,
   benchmark = null,
   delay,
+  collapsible = false,
 }: {
   groups: SuccessGroup[];
   /** The takeaway sentence, generated from the same numbers as the bars. */
@@ -63,13 +64,14 @@ export function ActionSuccessChart({
       inventing a baseline. */
   benchmark?: number | null;
   delay?: number;
+  collapsible?: boolean;
 }) {
   // An empty dataset is a real state here: the console comes up before a
   // replay has been run. Axes over no data look like a rendering fault, so
   // the caption (which says exactly that) is all that's shown.
   if (groups.length === 0) {
     return (
-      <Panel title="Action success by inspection type" className="h-full" delay={delay}>
+      <Panel title="Action success by inspection type" className="h-full" delay={delay} collapsible={collapsible}>
         <p className="text-xs leading-snug text-muted">{caption}</p>
       </Panel>
     );
@@ -83,6 +85,7 @@ export function ActionSuccessChart({
   return (
     <Panel
       title="Action success by inspection type"
+      collapsible={collapsible}
       // Fill the shared grid row so the chart and attention queue align.
       className="h-full"
       aside={

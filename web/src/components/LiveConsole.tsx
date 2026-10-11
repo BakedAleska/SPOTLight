@@ -8,7 +8,10 @@ import {
 import { Panel } from "./Panel";
 import { LoadingDots } from "./LoadingDots";
 import { QwenDraftView } from "./QwenDraft";
+import { RouteAhead } from "./RouteAhead";
+import { ModelCallsPanel, RunModelCharts } from "./LiveModelPanels";
 import { anchors } from "@/lib/waypoints";
+import { legsPath, routeLegs } from "@/lib/route-geometry";
 import { detailPollMs, POLL_MS, type LiveCapture, type LiveKg, type LiveRoute, type LiveRun, type LiveRunDetail, type LiveStop } from "@/lib/live";
 import { draftFromCapture } from "@/lib/qwen-draft";
 
@@ -159,6 +162,8 @@ export function LiveConsole({ initialRoutes }: { initialRoutes: LiveRoute[] }) {
         <KgPanel kg={kg} />
       </div>
     </div>
+    <RunModelCharts captures={captures} route={route} />
+    <ModelCallsPanel />
     <Panel title="Inspection feed" aside={`${captures.length} of ${route?.stops.length ?? 8} stops · newest first`} bodyClassName="p-4">
       {captures.length === 0
         ? <p className="text-sm text-muted">{run && active(run) ? run.status === "pending" ? "Waiting for the robot runner to claim the run…" : "SPOT is heading to stop A…" : "Start a route to watch SPOT inspect the facility."}</p>
@@ -188,11 +193,15 @@ function LiveMap({ route, captures, run }: { route: LiveRoute | null; captures: 
   const latest = captures.at(-1);
   const pos = latest ? pt(latest.location_id) : stops[0] ? pt(stops[0].location_id) : null;
   const working = latest && latest.phase === "arrived";
+  const legs = useMemo(() => routeLegs((route?.stops ?? []).map(s => s.location_id)), [route]);
+  // Travel k leads to stop k + 1: every travel before the latest captured stop has been walked, and only the next one
+  // is drawn ahead of SPOT.
+  const walked = latest ? legsPath(legs.filter(l => l.travel < latest.stop_index)) : "";
   return <svg viewBox="0 0 1095 595" className="w-full rounded border border-line bg-surface-2" role="img" aria-label={`Facility map: ${captures.length} stops inspected${latest ? `, SPOT at ${latest.location_id}` : ""}`}>
     <defs><filter id="live-spot-shadow" x="-25%" y="-25%" width="150%" height="150%"><feDropShadow dx="0" dy="1" stdDeviation="1.5" floodColor="black" floodOpacity="0.9" /></filter></defs>
-    <image href="/kit/fictional_floor_plan.png" width="1095" height="595" />
-    <polyline points={stops.map(s => pt(s.location_id).join(",")).join(" ")} fill="none" stroke="white" strokeWidth="3" strokeDasharray="8 8" opacity="0.7" />
-    <polyline points={captures.map(c => pt(c.location_id).join(",")).join(" ")} fill="none" stroke="var(--c-accent-ink)" strokeWidth="5" strokeLinejoin="round" />
+    <image href="/spot-blueprint.svg" width="1095" height="595" />
+    <path d={walked} fill="none" stroke="var(--c-accent-ink)" strokeWidth="5" strokeLinejoin="round" strokeLinecap="round" />
+    <RouteAhead d={legsPath(legs.filter(l => l.travel === (latest?.stop_index ?? 0)))} />
     {stops.map((s, i) => {
       const [x, y] = pt(s.location_id);
       const c = captures.find(c => c.stop_index === i);

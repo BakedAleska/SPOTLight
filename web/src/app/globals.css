@@ -128,6 +128,13 @@
   --c-bad: #c02020;
   --c-info: #1d4ed8;
 
+  /* Chart series, for identity only (V1 vs V2, a category). The first three
+     slots of the dataviz reference palette — validated all-pairs for CVD on
+     this surface. Status meaning stays on ok/warn/bad. */
+  --c-series-1: #2a78d6;
+  --c-series-2: #eb6834;
+  --c-series-3: #1baf7a;
+
   --c-focus: #1d4ed8;
   --c-shadow: 0 1px 2px rgb(24 26 30 / 0.09);
   --c-hero-from: #2b4bb8;
@@ -172,6 +179,10 @@
     --c-bad: #f87171;
     --c-info: #60a5fa;
 
+  --c-series-1: #3987e5;
+  --c-series-2: #d95926;
+  --c-series-3: #199e70;
+
     --c-focus: #60a5fa;
     --c-shadow: 0 1px 2px rgb(0 0 0 / 0.45);
     --c-hero-from: #3b5bd9;
@@ -205,6 +216,10 @@
   --c-warn: #fbbf24;
   --c-bad: #f87171;
   --c-info: #60a5fa;
+
+  --c-series-1: #3987e5;
+  --c-series-2: #d95926;
+  --c-series-3: #199e70;
 
   --c-focus: #60a5fa;
   --c-shadow: 0 1px 2px rgb(0 0 0 / 0.45);
@@ -464,6 +479,9 @@
   --color-warn: var(--c-warn);
   --color-bad: var(--c-bad);
   --color-info: var(--c-info);
+  --color-series-1: var(--c-series-1);
+  --color-series-2: var(--c-series-2);
+  --color-series-3: var(--c-series-3);
 
   --color-focus: var(--c-focus);
 
@@ -736,6 +754,18 @@ body {
   animation: grow 800ms var(--ease-settle) both;
 }
 
+/* Heatmap cells pop in on a diagonal wave; the delay is set inline per cell. */
+@keyframes heat-cell-in {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+
+.heat-cell {
+  animation: heat-cell-in 380ms var(--ease-settle) both;
+}
+
 /* One visible focus style everywhere, so keyboard users are never lost. */
 :focus-visible {
   outline: 2px solid var(--c-focus);
@@ -761,26 +791,6 @@ body {
   to { transform: rotate(360deg); }
 }
 
-.spotlight-loading .spotlight-radar-sweep {
-  animation-duration: 2.4s;
-}
-
-.spotlight-radar-blip {
-  opacity: 0;
-  animation: spotlight-radar-return 12s linear var(--blip-delay) infinite;
-}
-
-.spotlight-radar-caution {
-  filter: drop-shadow(0 0 2px #ffca44);
-}
-
-/* The 90-degree trail takes three seconds to pass a return. Fade throughout
-   that interval, reaching transparency at the tail rather than after it. */
-@keyframes spotlight-radar-return {
-  0% { opacity: 0.8; }
-  25%, 100% { opacity: 0; }
-}
-
 /* Reduced motion. Zeroing duration alone is not enough, and each extra line
    here fixes a way the page would otherwise still move:
 
@@ -794,7 +804,7 @@ body {
    - scroll-behavior: smooth scrolling is motion the duration overrides never
      touch, because it isn't an animation or a transition. */
 @media (prefers-reduced-motion: reduce) {
-  .spotlight-radar-blip, .spotlight-radar-trail { display: none; }
+  .spotlight-radar-trail { display: none; }
   .spotlight-radar-sweep {
     animation: none !important;
   }
@@ -868,8 +878,11 @@ body {
 .live-ping { animation: live-ping 1.6s ease-out infinite; transform-box: fill-box; transform-origin: center; }
 @keyframes live-ping { 0% { transform: scale(0.6); opacity: 0.9; } 100% { transform: scale(2.6); opacity: 0; } }
 .live-spot { transition: transform 1.6s ease-in-out; }
+/* Route ahead of SPOT: dashes march toward the destination (one 6+8 dash period per cycle). */
+.route-ahead { animation: route-flow 0.9s linear infinite; }
+@keyframes route-flow { to { stroke-dashoffset: -14; } }
 .live-card-in { animation: float-in 0.45s ease-out both; }
-@media (prefers-reduced-motion: reduce) { .live-ping { animation: none; } .live-spot { transition: none; } .live-card-in { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .live-ping { animation: none; } .live-spot { transition: none; } .live-card-in { animation: none; } .route-ahead { animation: none; } }
 
 /* Qwen draft caret (components/QwenDraft.tsx): a thin bar blinking after the
    text Qwen is still writing. It is removed when the checked answer replaces

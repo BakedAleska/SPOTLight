@@ -7,5 +7,8 @@ export default function ReplayPage({ searchParams }: Props) {
 }
 async function Replay({ searchParams }: Props) {
  const { mission } = await searchParams;
- return <PathPreview {...getPathData()} initialMissionId={typeof mission === "string" ? mission : undefined} />;
+ const missionId = typeof mission === "string" ? mission : undefined;
+ // Keyed by the requested mission: Next keeps visited pages mounted, so a link to another mission must remount the
+ // preview rather than hand new props to state that already picked its mission.
+ return <PathPreview key={missionId ?? ""} {...getPathData()} initialMissionId={missionId} />;
 }

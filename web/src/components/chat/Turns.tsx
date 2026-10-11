@@ -137,8 +137,8 @@ export function LiveTurn({ stream, onOpenSources }: { stream: LiveStream; onOpen
   const waitingFast = stream.phase === "writing" && !stream.content;
   const thinkingNow = stream.phase === "thinking" && !stream.content;
   return (
-    <article aria-label="Assistant answer, in progress" aria-busy="true" className="chat-fade-in">
-      <h3 className="sr-only">Assistant said:</h3>
+    <article aria-label="SPOTbot answer, in progress" aria-busy="true" className="chat-fade-in">
+      <h3 className="sr-only">SPOTbot said:</h3>
       {searching && (
         <Status>
           <Search size={15} aria-hidden="true" />
@@ -215,8 +215,8 @@ export const AssistantTurn = memo(function AssistantTurn({
   const hasThinking = !!message.thinking || (message.mode === "thinking" && !!message.thinking_ms);
 
   return (
-    <article aria-label="Assistant answer" className="group chat-fade-in">
-      <h3 className="sr-only">Assistant said:</h3>
+    <article aria-label="SPOTbot answer" className="group chat-fade-in">
+      <h3 className="sr-only">SPOTbot said:</h3>
       {hasThinking && <ThinkingDone text={message.thinking} ms={message.thinking_ms} stopped={message.status === "stopped" && !message.content} />}
       {message.content && <Markdown content={message.content} sources={sources} onOpenSource={(id) => open(id)} />}
       {failed && (
