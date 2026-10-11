@@ -102,10 +102,6 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
           {mode === "replay" && <polyline points={path(planned)} fill="none" stroke="white" strokeWidth="3" strokeDasharray="8 8" opacity="0.65" />}
           <polyline points={path(visited)} fill="none" stroke="var(--c-accent-ink)" strokeWidth="5" strokeLinejoin="round" />
           {mode === "replay" && frame?.moving && <line x1={frame.from?.x} y1={frame.from?.y} x2={frame.x} y2={frame.y} stroke="var(--c-accent-ink)" strokeWidth="5" strokeDasharray={changingFloor ? "8 6" : undefined} />}
-          {changingFloor && <g aria-label={`Changing floor: ${floorLabel}`}>
-            <rect x={frame?.to?.floor === 2 ? 756 : 16} y="15" width={frame?.to?.floor === 2 ? 327 : 731} height="570" rx="3" fill="none" stroke="var(--c-accent-ink)" strokeWidth="4" strokeDasharray="12 8" opacity="0.8" />
-            <g transform="translate(395 20)"><rect width="305" height="48" rx="12" fill="var(--c-surface)" stroke="var(--c-accent-ink)" strokeWidth="2" /><text x="152" y="30" textAnchor="middle" fill="var(--c-ink)" fontSize="19" fontWeight="bold">{floorLabel}</text></g>
-          </g>}
           {points.map(p => {
             const fault = errors.some(e => e.locationId === p.id);
             return <g key={p.id} role="button" tabIndex={0} aria-label={`${p.id}: ${p.name}${fault ? ", error detected" : ""}`} onClick={() => setSelectedId(p.id)} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSelectedId(p.id); } }} className="cursor-pointer">
@@ -115,11 +111,14 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
             </g>;
           })}
           {current && marker && <g aria-label={`SPOT at ${current.id}`} transform={`translate(${marker.x} ${marker.y})`}>
-            {((active && (changingFloor || (!frame?.moving && last?.type === "ACTION_STARTED"))) || (mode === "live" && last?.type === "ACTION_STARTED")) && <g className="spot-working-spinner" aria-label={changingFloor ? "SPOT changing floors" : "SPOT working"}>
+            {((active && !frame?.moving && last?.type === "ACTION_STARTED") || (mode === "live" && last?.type === "ACTION_STARTED")) && <g className="spot-working-spinner" aria-label="SPOT working">
               {[0, 1, 2, 3, 4].map(i => <g key={i} className="spot-merging-dot" style={{ "--dot-start": `${i * 24}deg`, "--dot-end": `${360 + i * 24}deg` } as React.CSSProperties}><circle cx="0" cy="-48" r="4" fill="white" opacity={1 - i * 0.1} /></g>)}
             </g>}
+            {changingFloor && <g aria-label={`Changing floor: ${floorLabel}`} className={active ? "spot-floor-arrow" : undefined} style={{ "--floor-direction": floorUp ? "-1" : "1" } as React.CSSProperties}>
+              <path d={floorUp ? "M 0 -45 V -73 M -12 -61 L 0 -73 L 12 -61" : "M 0 -73 V -45 M -12 -57 L 0 -45 L 12 -57"} fill="none" stroke="white" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+            </g>}
             <image href="/spotlight-logo-small.svg" x="-30" y="-34" width="60" height="68" filter="url(#spot-marker-contrast)" />
-            <text y="65" textAnchor="middle" fill="white" stroke="black" strokeWidth="3" paintOrder="stroke" fontSize="15" fontWeight="bold">{changingFloor ? `F${frame?.from?.floor} → F${frame?.to?.floor}` : "SPOT"}</text>
+            <text y="65" textAnchor="middle" fill="white" stroke="black" strokeWidth="3" paintOrder="stroke" fontSize="15" fontWeight="bold">SPOT</text>
           </g>}
         </svg>
         <p className="mt-3 text-xs text-muted">Dashed: planned route · Solid: visited route · !: error. Travel is interpolated between stops; activity durations are compressed from the logs.</p>
