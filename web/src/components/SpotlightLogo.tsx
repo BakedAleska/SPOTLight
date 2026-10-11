@@ -11,9 +11,10 @@ function RadarTrail() {
     {Array.from({ length: slices }, (_, index) => {
       const start = head - span + index * span / slices;
       const end = start + span / slices + 0.0005;
-      const point = (angle: number) => `${radius * Math.cos(angle)} ${radius * Math.sin(angle)}`;
+      // Rounded so server (Node) and browser trig agree to the digit; unrounded floats caused hydration mismatches.
+      const point = (angle: number) => `${(radius * Math.cos(angle)).toFixed(2)} ${(radius * Math.sin(angle)).toFixed(2)}`;
       return <path key={index} d={`M 0 0 L ${point(start)} A ${radius} ${radius} 0 0 1 ${point(end)} Z`}
-        opacity={0.35 * (index / (slices - 1)) ** 1.8} />;
+        opacity={Number((0.35 * (index / (slices - 1)) ** 1.8).toFixed(4))} />;
     })}
   </g>;
 }

@@ -24,7 +24,7 @@ export function RadarBlips() {
         return <g key={index} className="spotlight-radar-blip"
           onAnimationStart={() => roll(index, Math.random() < 0.5)}
           onAnimationIteration={() => roll(index, Math.random() < 0.5)}
-          style={{ "--blip-delay": `${phase * PERIOD}s` } as CSSProperties}>
+          style={{ "--blip-delay": `${(phase * PERIOD).toFixed(3)}s` } as CSSProperties}>
           {!triangles[index] ? <g className="spotlight-radar-dot">
             <circle cx={x} cy={y} r="62" opacity="0.3" />
             <circle cx={x} cy={y} r="32" />
