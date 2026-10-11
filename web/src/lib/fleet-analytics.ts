@@ -11,17 +11,12 @@
 
 import { getKit, type Action } from "./kit";
 import type { Severity } from "./types";
+import { BATTERY_BANDS } from "./breakdown-link";
 
 const SEVERITIES: Severity[] = ["LOW", "MEDIUM", "HIGH", "CRITICAL"];
 
 /** The backend's five bands (`BATTERY_BAND_SQL`), so the two never disagree. */
-const BANDS: { band: string; max: number }[] = [
-  { band: "≤25%", max: 25 },
-  { band: "26–40%", max: 40 },
-  { band: "41–60%", max: 60 },
-  { band: "61–80%", max: 80 },
-  { band: "81%+", max: Infinity },
-];
+const BANDS = BATTERY_BANDS;
 
 const ACTION_LABELS: Record<string, string> = {
   NAVIGATION: "Navigation",
@@ -32,14 +27,14 @@ const ACTION_LABELS: Record<string, string> = {
 };
 
 /** ABNORMAL_TEMPERATURE → "Abnormal temperature" */
-function humanize(token: string) {
+export function humanize(token: string) {
   const text = token.toLowerCase().replaceAll("_", " ");
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
-const actionLabel = (type: string) => ACTION_LABELS[type] ?? humanize(type);
+export const actionLabel = (type: string) => ACTION_LABELS[type] ?? humanize(type);
 
-const MEASUREMENT_LABELS: Record<string, string> = {
+export const MEASUREMENT_LABELS: Record<string, string> = {
   SOUND_DB: "Sound (dB)",
   PRESSURE_PSI: "Pressure (psi)",
   LOCALIZATION_CONFIDENCE_PCT: "Localization conf.",
@@ -47,7 +42,7 @@ const MEASUREMENT_LABELS: Record<string, string> = {
   VISUAL_SCORE: "Visual score",
 };
 
-function pct(part: number, whole: number) {
+export function pct(part: number, whole: number) {
   return whole === 0 ? 0 : Math.round((part / whole) * 1000) / 10;
 }
 
@@ -67,11 +62,14 @@ function successOf(rows: Action[]) {
   return rows.filter((a) => a.status === "SUCCESS").length;
 }
 
+/** One action on the duration-vs-battery scatter; `mission` lets a click open it in its mission. */
+export interface ScatterPoint { battery: number; duration: number; id: string; mission: string }
+
 export interface FleetAnalytics {
   /** Success by battery band, with the Wilson interval drawn as a ribbon. */
-  battery: { band: string; rate: number; ci: [number, number]; n: number }[];
+  battery: { key: string; band: string; rate: number; ci: [number, number]; n: number }[];
   /** V1 vs V2 success, per action type. */
-  config: { type: string; V1: number | null; V2: number | null; nV1: number; nV2: number }[];
+  config: { key: string; type: string; V1: number | null; V2: number | null; nV1: number; nV2: number }[];
   /** Mean battery drain per mission, per configuration. */
   drain: { version: string; drain: number; missions: number }[];
   /** One row per mission in time order: action outcomes and the battery it spent. */
@@ -86,20 +84,20 @@ export interface FleetAnalytics {
   /** What a COMPLETED status was actually worth. */
   truth: { key: string; label: string; count: number }[];
   /** Why actions failed. */
-  failureModes: { mode: string; count: number }[];
+  failureModes: { key: string; mode: string; count: number }[];
   /** Anomaly type × severity, for a stacked bar. */
-  anomalies: ({ type: string; total: number } & Record<Severity, number>)[];
+  anomalies: ({ key: string; type: string; total: number } & Record<Severity, number>)[];
   /** Waypoint × action type failure rate. Null where the pair never happened. */
   heatmap: {
     types: { key: string; label: string }[];
     rows: { id: string; name: string; environment: string; n: number; rate: number; cells: ({ rate: number; n: number } | null)[] }[];
   };
   /** Success by the waypoint's environment. */
-  environments: { environment: string; rate: number; n: number }[];
+  environments: { key: string; environment: string; rate: number; n: number }[];
   /** Each action as a point: battery at the time vs how long it took. */
-  scatter: { success: { battery: number; duration: number; id: string }[]; failed: { battery: number; duration: number; id: string }[] };
+  scatter: { success: ScatterPoint[]; failed: ScatterPoint[] };
   /** Share of readings the robot marked QUESTIONABLE, by measurement. */
-  readings: { measurement: string; good: number; questionable: number }[];
+  readings: { key: string; measurement: string; good: number; questionable: number }[];
   /** What the numbers are, for the page's header. */
   coverage: string;
 }
@@ -108,11 +106,11 @@ export function fleetAnalytics(): FleetAnalytics {
   const kit = getKit();
   const { actions, missions, anomalies, readings } = kit;
 
-  const battery = BANDS.map(({ band, max }, i) => {
+  const battery = BANDS.map(({ key, band, max }, i) => {
     const min = i === 0 ? -Infinity : BANDS[i - 1].max;
     const rows = actions.filter((a) => a.battery_pct > min && a.battery_pct <= max);
     const ok = successOf(rows);
-    return { band, rate: pct(ok, rows.length), ci: wilson(ok, rows.length), n: rows.length };
+    return { key, band, rate: pct(ok, rows.length), ci: wilson(ok, rows.length), n: rows.length };
   }).filter((row) => row.n > 0);
 
   const types = [...new Set(actions.map((a) => a.action_type))].sort();
@@ -120,6 +118,7 @@ export function fleetAnalytics(): FleetAnalytics {
     const v1 = actions.filter((a) => a.action_type === type && a.configuration_version === "V1");
     const v2 = actions.filter((a) => a.action_type === type && a.configuration_version === "V2");
     return {
+      key: type,
       type: actionLabel(type),
       V1: v1.length ? pct(successOf(v1), v1.length) : null,
       V2: v2.length ? pct(successOf(v2), v2.length) : null,
@@ -158,15 +157,16 @@ export function fleetAnalytics(): FleetAnalytics {
 
   const modes = new Map<string, number>();
   for (const a of actions) if (a.status === "FAILED") {
-    const mode = a.failure_type ? humanize(a.failure_type) : "Unspecified";
-    modes.set(mode, (modes.get(mode) ?? 0) + 1);
+    const key = a.failure_type || "UNSPECIFIED";
+    modes.set(key, (modes.get(key) ?? 0) + 1);
   }
-  const failureModes = [...modes].map(([mode, count]) => ({ mode, count })).sort((a, b) => b.count - a.count);
+  const failureModes = [...modes].map(([key, count]) => ({ key, mode: key === "UNSPECIFIED" ? "Unspecified" : humanize(key), count }))
+    .sort((a, b) => b.count - a.count);
 
   const anomalyRows = [...new Set(anomalies.map((a) => a.anomaly_type))].map((type) => {
     const rows = anomalies.filter((a) => a.anomaly_type === type);
     const bySeverity = Object.fromEntries(SEVERITIES.map((s) => [s, rows.filter((a) => a.severity === s).length])) as Record<Severity, number>;
-    return { type: humanize(type), total: rows.length, ...bySeverity };
+    return { key: type, type: humanize(type), total: rows.length, ...bySeverity };
   }).sort((a, b) => b.total - a.total);
 
   const heatRows = kit.locations
@@ -192,10 +192,10 @@ export function fleetAnalytics(): FleetAnalytics {
   const environments = [...new Set(kit.locations.map((l) => l.environment))].map((environment) => {
     const ids = new Set(kit.locations.filter((l) => l.environment === environment).map((l) => l.location_id));
     const rows = actions.filter((a) => ids.has(a.location_id));
-    return { environment: humanize(environment), rate: pct(successOf(rows), rows.length), n: rows.length };
+    return { key: environment, environment: humanize(environment), rate: pct(successOf(rows), rows.length), n: rows.length };
   }).filter((row) => row.n > 0).sort((a, b) => b.rate - a.rate);
 
-  const point = (a: Action) => ({ battery: a.battery_pct, duration: a.duration_sec, id: a.action_id });
+  const point = (a: Action): ScatterPoint => ({ battery: a.battery_pct, duration: a.duration_sec, id: a.action_id, mission: a.mission_id });
   const scatter = {
     success: actions.filter((a) => a.status === "SUCCESS").map(point),
     failed: actions.filter((a) => a.status === "FAILED").map(point),
@@ -204,7 +204,7 @@ export function fleetAnalytics(): FleetAnalytics {
   const readingRows = [...new Set(readings.map((r) => r.measurement_type))].map((type) => {
     const rows = readings.filter((r) => r.measurement_type === type);
     const questionable = rows.filter((r) => r.quality === "QUESTIONABLE").length;
-    return { measurement: MEASUREMENT_LABELS[type] ?? humanize(type), good: rows.length - questionable, questionable };
+    return { key: type, measurement: MEASUREMENT_LABELS[type] ?? humanize(type), good: rows.length - questionable, questionable };
   }).sort((a, b) => b.questionable / (b.good + b.questionable) - a.questionable / (a.good + a.questionable));
 
   return {

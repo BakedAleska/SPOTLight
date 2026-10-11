@@ -22,11 +22,11 @@ export const STREAM_TIMEOUT_MS = 60_000;
 export const JSON_TIMEOUT_MS = 55_000;
 
 export function stageLabel(stage: ExplainStage | null, drafting: boolean): string {
-  if (drafting) return stage === "storing" ? "Checking and saving the answer…" : "Qwen is writing…";
+  if (drafting) return stage === "storing" ? "Checking and saving the answer…" : "SPOTbot is writing…";
   switch (stage) {
     case "cached": return "Loading the saved explanation…";
     case "context": return "Gathering context…";
-    case "system2": return "Qwen is thinking…";
+    case "system2": return "SPOTbot is thinking…";
     case "storing": return "Checking and saving the answer…";
     default: return "Starting the explanation…";
   }

@@ -505,9 +505,9 @@ export function InspectionViewer({
                 active={layer === "annotated"}
                 disabled={!image.annotated}
                 onClick={() => setLayer("annotated")}
-                title="The service's own annotated JPEG — the bytes System 2 is sent."
+                title="The service's own annotated JPEG — the bytes SPOTbot is sent."
               >
-                As sent to the model
+                As sent to SPOTbot
               </ToolButton>
             </div>
 

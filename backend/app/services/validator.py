@@ -15,6 +15,7 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional
 
 from .triage import T_policy as P
+from .triage import T_titles as T
 
 PRIORITY_RANK = {"P1": 1, "P2": 2, "P3": 3, "P4": 4}
 # Stable text of the laya_unavailable reason. The raw error (connection text, "busy: ...") is not copied into
@@ -234,29 +235,5 @@ def build_reasons(mode: str, laya: Optional[Dict[str, Any]], laya_error: Optiona
 
 def flag_title(kind: str, ev: dict, decision: Dict[str, Any],
                rules: Optional[List[Dict[str, Any]]] = None) -> str:
-    """One operator-readable line."""
-    if kind == "mission":
-        s = ev["anomalies_by_severity"]
-        serious = s["HIGH"] + s["CRITICAL"]
-        bits = []
-        if ev["actions_failed"]:
-            bits.append("%d of %d actions failed" % (ev["actions_failed"], ev["actions_total"]))
-        if serious:
-            bits.append("%d HIGH/CRITICAL anomal%s" % (serious, "y" if serious == 1 else "ies"))
-        tail = (" but " + " and ".join(bits)) if bits and ev["reported_status"] == "COMPLETED" else \
-            (": " + ", ".join(bits) if bits else "")
-        return "Mission %s reported %s%s" % (ev["mission_id"], ev["reported_status"], tail)
-    asset, loc = ev["asset"], ev["location"]
-    where = "%s (%s) at %s %s" % (asset["asset_name"], asset["asset_id"], loc["location_id"], loc["location_name"])
-    an = ev.get("anomaly")
-    if an:
-        head = "%s %s" % (an["severity"], _h(an["anomaly_type"]))
-    elif ev["status"] == "FAILED":
-        head = "%s failed (%s)" % (_h(ev["action_type"]).capitalize(), _h(ev.get("failure_type")) or "unknown")
-    elif decision["category"] == "robot_health":
-        head = "Low battery during %s" % _h(ev["action_type"])
-    elif rules:
-        head = rules[0]["detail"]
-    else:
-        head = "%s needs review" % _h(ev["action_type"]).capitalize()
-    return "%s: %s · battery %d%%" % (head[0].upper() + head[1:], where, ev["battery_pct"])
+    """One short line (triage/titles.py), the same one db/setup.py gives the seeded flags."""
+    return T.flag_title(ev, "mission" if kind == "mission" else decision.get("category"))

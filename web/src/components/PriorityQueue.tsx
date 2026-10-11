@@ -6,6 +6,7 @@ import { ChevronDown, ClipboardCheck, Route, Search, Sparkles } from "lucide-rea
 import { Panel } from "./Panel";
 import { SeverityBadge, severityAccent } from "./SeverityBadge";
 import type { Flag } from "@/lib/types";
+import { displayText } from "@/lib/display";
 
 /* Clicking a row opens it in place: every signal that fired, then the places
    an operator can go from here. The row is a disclosure, not a link, because
@@ -18,8 +19,14 @@ import type { Flag } from "@/lib/types";
    The backend score also accounts for priority and confidence. */
 const REASONS_SHOWN = 2;
 
-const OPTION =
-  "inline-flex h-8 items-center gap-1.5 rounded border border-line bg-surface px-3 text-sm text-ink transition-colors hover:border-accent hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-accent";
+/* Colours live only in the two variants: Tailwind orders same-property
+   utilities by its own stylesheet order, not class order, so bg-accent added
+   on top of a bg-surface base lost to it and left on-accent (near-black) text
+   on the dark surface. */
+const OPTION_BASE =
+  "inline-flex h-8 items-center gap-1.5 rounded border px-3 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-accent";
+const OPTION = `${OPTION_BASE} border-line bg-surface text-ink hover:border-accent hover:bg-surface-2`;
+const OPTION_PRIMARY = `${OPTION_BASE} border-accent bg-accent font-semibold text-on-accent hover:bg-accent-hover`;
 
 function hasMission(flag: Flag) {
   return !!flag.missionId && flag.missionId !== "Unassigned";
@@ -57,7 +64,7 @@ function QueueRow({
       <div className="flex items-baseline gap-3">
         <SeverityBadge severity={flag.severity} />
         <span className="nums font-mono text-xs text-muted">
-          score {flag.score}
+          Confidence {Math.round(flag.score)}%
         </span>
         <ChevronDown
           size={16}
@@ -91,7 +98,7 @@ function QueueRow({
             key={reason.rule}
             className="flex gap-2 text-sm leading-snug text-muted before:text-faint before:content-['•']"
           >
-            {reason.detail}
+            {displayText(reason.detail)}
           </li>
         ))}
         {hidden > 0 && (
@@ -104,7 +111,7 @@ function QueueRow({
       {open && (
         <nav id={panelId} aria-label={`Next steps for ${flag.title}`} className="relative mt-3 flex flex-wrap gap-2">
           {onSelect && (
-            <button type="button" onClick={() => onSelect(flag)} className={`${OPTION} border-accent bg-accent font-semibold text-on-accent hover:bg-accent-hover`}>
+            <button type="button" onClick={() => onSelect(flag)} className={OPTION_PRIMARY}>
               <ClipboardCheck size={14} aria-hidden="true" /> Review &amp; act
             </button>
           )}
@@ -132,11 +139,14 @@ export function PriorityQueue({
   total = flags.length,
   delay,
   onSelect,
+  emptyMessage = "No open escalated flags need attention.",
 }: {
   flags: Flag[];
   total?: number;
   delay?: number;
   onSelect?: (flag: Flag) => void;
+  /** Shown when the list is empty, e.g. when filters match nothing. */
+  emptyMessage?: string;
 }) {
   const list = useRef<HTMLDivElement>(null);
   const [visibleHeight, setVisibleHeight] = useState<number>();
@@ -162,7 +172,7 @@ export function PriorityQueue({
     >
       {flags.length === 0 ? (
         <p className="px-4 py-8 text-center text-sm text-muted">
-          No open escalated flags need attention.
+          {emptyMessage}
         </p>
       ) : (
         /* Fit exactly two complete rows, including wrapped text; remaining

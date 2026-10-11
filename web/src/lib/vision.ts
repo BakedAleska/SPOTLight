@@ -298,7 +298,7 @@ export function visionLanes(): ModelLane[] {
     },
     {
       id: "describe",
-      stage: "Qwen vision",
+      stage: "SPOTbot vision",
       model: DESCRIBE_MODEL,
       role: "Says what is visible: which component is hot, the scale's labels and units, glare or occlusion.",
       state: "pending",
@@ -308,7 +308,7 @@ export function visionLanes(): ModelLane[] {
     },
     {
       id: "analyst",
-      stage: "Qwen analyst",
+      stage: "SPOTbot analyst",
       model: ANALYST_MODEL,
       role: "Writes the Orbit-style assessment — question, answer, reasoning, recommended action — citing V# rows.",
       state: "pending",

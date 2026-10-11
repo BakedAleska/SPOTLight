@@ -1,5 +1,6 @@
 import { Fragment, type ReactNode } from "react";
 import { citations, evidenceItems, humanizeCode, parseClaim, type EvidenceItem } from "@/lib/evidence";
+import { displayText } from "@/lib/display";
 
 /* One look for a System 2 answer everywhere it shows (flag detail, Qwen's
    draft, /live): the answer sentence, the recommended action in words, then
@@ -14,7 +15,7 @@ export function EvidenceClaim({ claim, ids, partial = false, compact = false, tr
   compact?: boolean;
   trailing?: ReactNode;
 }) {
-  const parsed = parseClaim(claim, partial);
+  const parsed = parseClaim(displayText(claim), partial);
   const last = parsed.fields.length - 1;
   return (
     <div className={`min-w-0 ${compact ? "text-xs" : "text-sm"}`}>
@@ -54,13 +55,11 @@ export function EvidenceList({ items, compact = false, limit }: { items: Evidenc
   );
 }
 
-/** A recommended action code in words, with the code itself for operators who search by it. */
+/** A recommended action code, said once in words. */
 export function RecommendedAction({ code, compact = false }: { code: string; compact?: boolean }) {
-  const words = humanizeCode(code);
   return (
     <p className={compact ? "text-xs" : "text-sm"}>
-      <span className="text-muted">Recommended action: </span><strong className="text-ink">{words}</strong>
-      {words !== code && <span className="ml-1.5 font-mono text-[11px] text-faint">{code}</span>}
+      <span className="text-muted">Recommended action: </span><strong className="text-ink">{humanizeCode(code)}</strong>
     </p>
   );
 }
@@ -75,12 +74,13 @@ export function ModelExplanation({ answer, evidence, reasoning, recommendedActio
   limit?: number;
 }) {
   const items = evidenceItems(evidence, reasoning);
-  const structuredAnswer = answer ? parseClaim(answer).fields.length > 1 : false;
+  const shown = answer ? displayText(answer) : null;
+  const structuredAnswer = shown ? parseClaim(shown).fields.length > 1 : false;
   return (
     <div className="space-y-2">
-      {answer && (structuredAnswer
-        ? <EvidenceClaim claim={answer} ids={[]} compact={compact} />
-        : <p className={`text-ink ${compact ? "text-sm" : ""}`}>{answer}</p>)}
+      {shown && (structuredAnswer
+        ? <EvidenceClaim claim={shown} ids={[]} compact={compact} />
+        : <p className={`text-ink ${compact ? "text-sm" : ""}`}>{shown}</p>)}
       {recommendedAction && <RecommendedAction code={recommendedAction} compact={compact} />}
       {items.length > 0 && <div>
         <p className="mb-1 text-[11px] font-semibold tracking-wide text-muted uppercase">Cited evidence</p>

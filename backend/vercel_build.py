@@ -4,7 +4,7 @@ The Vercel project's Root Directory is `backend/`, and the Python runtime bundle
 imports the shared, torch-free triage modules and reads the kit data, both outside `backend/`, so this copies them
 into `backend/_shared/`, mirroring the repo layout (config.py falls back to it when the repo copy is absent):
 
-    amd/system1/triage/{__init__,events,kit,policy,questions,render}.py -> _shared/amd/system1/triage/
+    amd/system1/triage/{__init__,events,kit,policy,questions,render,titles}.py -> _shared/amd/system1/triage/
     amd/system1/data/kit/*                                                -> _shared/amd/system1/data/kit/
 
 Nothing is committed: `_shared/` is git-ignored and rebuilt on every deploy from the canonical files, so the policy
@@ -25,7 +25,7 @@ REPO = BACKEND.parent
 OUT = BACKEND / "_shared"
 
 # Only the modules the backend imports (app/services/triage.py). harness.py, trainer.py, ... import torch: never copied.
-TRIAGE_MODULES = ("__init__.py", "events.py", "kit.py", "policy.py", "questions.py", "render.py")
+TRIAGE_MODULES = ("__init__.py", "events.py", "kit.py", "policy.py", "questions.py", "render.py", "titles.py")
 TRIAGE_SRC = Path("amd") / "system1" / "triage"
 KIT_SRC = Path("amd") / "system1" / "data" / "kit"
 KIT_SUFFIXES = (".csv", ".ndjson", ".json")

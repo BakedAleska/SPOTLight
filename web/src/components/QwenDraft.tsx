@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { PenLine } from "lucide-react";
 import { draftLength, revealDraft, type QwenDraft } from "@/lib/qwen-draft";
+import { humanizeCode } from "@/lib/evidence";
 import { EvidenceClaim, RecommendedAction } from "./ModelOutput";
 
 /* Qwen's unverified draft, typed out as it arrives (contract "Streaming Qwen
@@ -96,7 +97,7 @@ export function QwenDraftView({ draft, label, catchUpMs, compact = false, finish
       {shown.answer && <p className="text-ink">{shown.answer}{caret?.part === "answer" && <Caret />}</p>}
       {/* The action code is labelled once it is complete; while typing it shows as written. */}
       {shown.recommendedAction && (caret?.part === "action"
-        ? <p className="text-ink">Recommended: <strong>{shown.recommendedAction}</strong><Caret /></p>
+        ? <p className="text-ink">Recommended: <strong>{humanizeCode(shown.recommendedAction)}</strong><Caret /></p>
         : <RecommendedAction code={shown.recommendedAction} compact={compact} />)}
       {!caret && !finished && <p className="text-muted"><Caret /></p>}
     </div>

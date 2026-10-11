@@ -291,6 +291,7 @@ def seed_flags(conn, counts: dict) -> None:
     from triage.events import mission_events
     from triage.kit import load_kit
     from triage.policy import label_action
+    from triage.titles import flag_title
     kit = load_kit(kit_dir=KIT_DIR)
     replay = {}
     for event_id, event_type, action_id, mission_id in conn.execute(
@@ -311,13 +312,7 @@ def seed_flags(conn, counts: dict) -> None:
                 continue
             is_action = ev["kind"] == "action"
             category = label_action(ev)["category"] if is_action else "mission"
-            top = res["reasons"][0]["detail"]
-            if is_action:
-                subj = "%s %s at %s" % (ev["action_type"].replace("_", " ").lower(), ev["asset"]["asset_id"],
-                                        ev["location"]["location_id"])
-            else:
-                subj = "mission %s" % mid
-            title = "%s %s · %s: %s" % (res["priority"], category, subj, top)
+            title = flag_title(ev, category)    # the same one-line title the backend gives replay/live flags
             rows.append({
                 "triage_event_id": ev["event_id"], "event_id": replay.get(ev["event_id"]), "mission_id": mid,
                 "action_id": ev.get("action_id"),

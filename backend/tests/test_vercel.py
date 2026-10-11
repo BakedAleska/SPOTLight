@@ -18,7 +18,7 @@ from app.services.calllog import LogSink
 
 BACKEND = Path(__file__).resolve().parents[1]
 REPO = BACKEND.parent
-SHIPPED_TRIAGE = {"__init__.py", "events.py", "kit.py", "policy.py", "questions.py", "render.py"}
+SHIPPED_TRIAGE = {"__init__.py", "events.py", "kit.py", "policy.py", "questions.py", "render.py", "titles.py"}
 
 PROBE = r"""
 import asyncio, json, sys

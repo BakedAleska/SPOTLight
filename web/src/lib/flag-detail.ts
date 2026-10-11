@@ -33,7 +33,7 @@ export interface FlagExplanation {
 export function explanationLabel(data: Pick<FlagExplanation, "source" | "model">): string {
   if (data.source === "template" || data.source === "system2_template") return "Rule-based explanation";
   if (data.source === "system1") return "Triage summary (not escalated)";
-  return data.model === "stub" ? "Evidence summary (stub)" : "Model explanation";
+  return data.model === "stub" ? "Evidence summary (stub)" : "SPOTbot explanation";
 }
 
 // The backend explain call can take long with a slow local model; EXPLAIN_TIMEOUT_MS overrides (5–120 s).

@@ -15,8 +15,12 @@ import { anchors } from "@/lib/waypoints";
 import { legsPath, routeLegs } from "@/lib/route-geometry";
 import { detailPollMs, POLL_MS, type LiveCapture, type LiveKg, type LiveRoute, type LiveRun, type LiveRunDetail, type LiveStop } from "@/lib/live";
 import { draftFromCapture } from "@/lib/qwen-draft";
+import { confidenceLabel, displayModel } from "@/lib/display";
 
-const control = "flex min-h-11 items-center justify-center gap-2 rounded border border-line bg-surface px-3 text-sm text-ink hover:bg-surface-2 disabled:opacity-40";
+// Colours only in the variants: same-property Tailwind utilities resolve by stylesheet order, not class order.
+const controlBase = "flex min-h-11 items-center justify-center gap-2 rounded border px-3 text-sm disabled:opacity-40";
+const control = `${controlBase} border-line bg-surface text-ink hover:bg-surface-2`;
+const controlPrimary = `${controlBase} border-accent bg-accent text-on-accent hover:bg-accent-hover`;
 const active = (r?: LiveRun | null) => !!r && (r.status === "pending" || r.status === "running");
 const human = (s?: string | null) => (s ?? "").replaceAll("_", " ").toLowerCase();
 const ms = (v?: number | null) => (v == null ? "—" : v >= 1000 ? `${(v / 1000).toFixed(1)} s` : `${Math.round(v)} ms`);
@@ -131,7 +135,7 @@ export function LiveConsole({ initialRoutes }: { initialRoutes: LiveRoute[] }) {
       <div>
         <p className="mb-1 text-xs text-muted">LIVE OPERATIONS</p>
         <h1 className="flex items-center gap-2 text-2xl font-semibold text-ink"><Radio size={24} />SPOT live patrol</h1>
-        <p className="mt-1 text-sm text-muted">Every stop is triaged by Laya and the rules, photographed and explained by Qwen while you watch.</p>
+        <p className="mt-1 text-sm text-muted">Every stop is triaged by the confidence model and the rules, photographed and explained by SPOTbot while you watch.</p>
       </div>
       <div className="flex flex-wrap items-end gap-2">
         <label className="flex flex-col gap-1 text-xs text-muted">Route
@@ -139,7 +143,7 @@ export function LiveConsole({ initialRoutes }: { initialRoutes: LiveRoute[] }) {
             {routes.map(r => <option key={r.route_id} value={r.route_id}>{r.route_id} · {r.name} ({r.planned_red} alerts planned)</option>)}
           </select>
         </label>
-        <button className={`${control} border-accent bg-accent text-on-accent hover:bg-accent-hover`} onClick={start} disabled={busy || !!liveRun}><Play size={16} />Start route</button>
+        <button className={controlPrimary} onClick={start} disabled={busy || !!liveRun}><Play size={16} />Start route</button>
         <button className={control} onClick={cancel} disabled={busy || !liveRun}><Square size={14} />Cancel</button>
       </div>
     </header>
@@ -147,8 +151,8 @@ export function LiveConsole({ initialRoutes }: { initialRoutes: LiveRoute[] }) {
       <span className="font-semibold text-ink">What is live</span>
       <Chip icon={<Database size={13} />} live={false}>Robot log: the kit row for each action, re-sent now</Chip>
       <Chip icon={<Camera size={13} />} live={false}>Photos: simulated captures (kit samples)</Chip>
-      <Chip icon={<Cpu size={13} />} live>Laya + rules triage</Chip>
-      <Chip icon={<Brain size={13} />} live>Qwen 3.8 27B on AMD</Chip>
+      <Chip icon={<Cpu size={13} />} live>Confidence model + rules triage</Chip>
+      <Chip icon={<Brain size={13} />} live>SPOTbot on AMD</Chip>
       <Chip icon={<Network size={13} />} live>Neon rows, embeddings, knowledge graph</Chip>
       <span className="ml-auto" role="status">{connection}</span>
     </div>
@@ -156,7 +160,7 @@ export function LiveConsole({ initialRoutes }: { initialRoutes: LiveRoute[] }) {
     <div className="panel-columns grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
       <Panel title="Facility map" aside={run ? `RUN #${run.run_id} · ${run.route_id} · ${run.status.toUpperCase()}` : "NO RUN YET"}>
         <LiveMap route={route} captures={captures} run={run} />
-        <p className="mt-3 text-xs text-muted">Dashed: the route · <span className="text-bad">●</span> red ping: needs attention · <span className="text-ok">●</span> green ping: all good. Pings come from the live triage (Laya ‖ rules), never from the photo.</p>
+        <p className="mt-3 text-xs text-muted">Dashed: the route · <span className="text-bad">●</span> red ping: needs attention · <span className="text-ok">●</span> green ping: all good. Pings come from the live triage (confidence model ‖ rules), never from the photo.</p>
       </Panel>
       <div className="panel-stack flex min-w-0 flex-col gap-4">
         <RunPanel run={run} route={route} captures={captures} />
@@ -173,7 +177,7 @@ export function LiveConsole({ initialRoutes }: { initialRoutes: LiveRoute[] }) {
     <Panel title="Earlier runs" aside={<span className="flex items-center gap-1"><History size={13} />{runs.length}</span>}>
       {runs.length === 0 ? <p className="text-sm text-muted">No runs yet.</p> :
         <div className="overflow-x-auto"><table className="w-full text-left text-sm">
-          <thead className="text-xs text-muted"><tr><th className="py-1 pr-3 font-normal">Run</th><th className="pr-3 font-normal">Route</th><th className="pr-3 font-normal">Status</th><th className="pr-3 font-normal">Red</th><th className="pr-3 font-normal">Green</th><th className="pr-3 font-normal">Qwen / template</th><th className="font-normal">Started</th></tr></thead>
+          <thead className="text-xs text-muted"><tr><th className="py-1 pr-3 font-normal">Run</th><th className="pr-3 font-normal">Route</th><th className="pr-3 font-normal">Status</th><th className="pr-3 font-normal">Red</th><th className="pr-3 font-normal">Green</th><th className="pr-3 font-normal">SPOTbot / template</th><th className="font-normal">Started</th></tr></thead>
           <tbody>{runs.map(r => <tr key={r.run_id} className={`cursor-pointer border-t border-line hover:bg-surface-2 ${r.run_id === runId ? "bg-surface-2" : ""}`} onClick={() => { setFollow(false); setRunId(r.run_id); }}>
             <td className="py-1.5 pr-3 font-mono">#{r.run_id}</td><td className="pr-3">{r.route_id}</td><td className="pr-3">{r.status}</td>
             <td className="pr-3 text-bad">{r.red ?? 0}</td><td className="pr-3 text-ok">{r.green ?? 0}</td>
@@ -240,7 +244,7 @@ function RunPanel({ run, route, captures }: { run: LiveRun | null; route: LiveRo
       <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
         <dt className="text-muted">Needs attention</dt><dd className="font-semibold text-bad">{red}</dd>
         <dt className="text-muted">All good</dt><dd className="font-semibold text-ok">{green}</dd>
-        <dt className="text-muted">Qwen answers</dt><dd className="text-ink">{qwen}</dd>
+        <dt className="text-muted">SPOTbot answers</dt><dd className="text-ink">{qwen}</dd>
         <dt className="text-muted">Template fallbacks</dt><dd className="text-ink">{template}</dd>
         <dt className="text-muted">Battery</dt><dd className="flex items-center gap-1 text-ink"><BatteryMedium size={13} />{latest ? `${latest.battery_pct}%` : "—"}</dd>
         <dt className="text-muted">Runner</dt><dd className="truncate text-ink">{run.runner ?? (run.status === "pending" ? "waiting…" : "—")}</dd>
@@ -304,13 +308,13 @@ function CaptureCard({ c, stop }: { c: LiveCapture; stop?: LiveStop }) {
           {c.anomaly && <p className="text-bad">Anomaly {human(c.anomaly.anomaly_type)} · {c.anomaly.severity}</p>}
           <p className="font-mono text-[11px] text-faint">{c.action_id} ← {c.source_action_id}</p>
         </Section>
-        <Section icon={<Cpu size={14} />} title="Laya (System 1)">
+        <Section icon={<Cpu size={14} />} title="Confidence (System 1)">
           {!laya ? <p className="text-muted">Waiting…</p> : laya.status === "ok" ? <>
-            <p className="text-ink">Escalate: <strong>{laya.verdict?.escalate ? "yes" : "no"}</strong> (p = {laya.verdict?.p_escalate?.toFixed(2) ?? "—"}) · priority {laya.answers?.priority?.answer ?? "—"} ({pct(laya.answers?.priority?.confidence)})</p>
-            <p className="text-[11px] text-muted">{laya.model}{laya.device ? ` on ${laya.device}` : ""} · {ms(laya.latency_ms)}</p>
-          </> : <p className="text-warn" title={laya.error}>Laya unavailable: the rules decided alone.</p>}
+            <p className="text-ink">Escalate: <strong>{laya.verdict?.escalate ? "yes" : "no"}</strong> · {confidenceLabel(laya.verdict?.p_escalate) ?? "Confidence —"} · priority {laya.answers?.priority?.answer ?? "—"} ({pct(laya.answers?.priority?.confidence)})</p>
+            <p className="text-[11px] text-muted">{displayModel(laya.model)}{laya.device ? ` on ${laya.device}` : ""} · {ms(laya.latency_ms)}</p>
+          </> : <p className="text-warn" title={laya.error}>Confidence model unavailable: the rules decided alone.</p>}
         </Section>
-        <Section icon={<ShieldAlert size={14} />} title={`Rules (${c.decision?.mode ?? "parallel"} with Laya)`}>
+        <Section icon={<ShieldAlert size={14} />} title={`Rules (${c.decision?.mode ?? "parallel"} with the confidence model)`}>
           {c.rules?.fired?.length ? <ul className="flex flex-wrap gap-1">{c.rules.fired.map(r => <li key={r} className="rounded bg-surface-2 px-1.5 py-0.5 font-mono text-[11px] text-ink">{r}</li>)}</ul>
             : <p className="text-muted">{c.rules ? `No rule fired (${c.rules.priority}).` : "Waiting…"}</p>}
         </Section>
@@ -322,16 +326,16 @@ function CaptureCard({ c, stop }: { c: LiveCapture; stop?: LiveStop }) {
         </Section>
       </div>
       <div className="flex min-w-0 flex-col gap-3 text-sm">
-        <Section icon={<Brain size={14} />} title="Qwen explanation (System 2)">
-          {c.qwen_source === "pending" && draft ? <QwenDraftView draft={draft} label="Qwen writing · unverified draft" catchUpMs={450} compact />
-            : c.qwen_source === "pending" || (!c.qwen && c.verdict && c.qwen_source !== "error") ? <p className="flex items-center gap-2 text-accent-ink">Qwen analysing <LoadingDots color="currentColor" /></p>
-            : !c.qwen ? <p className="text-muted">{c.qwen_source === "error" ? "The run ended before Qwen's answer was stored." : "—"}</p>
-            : draft ? <p className="text-muted">Qwen did not finish; its unverified draft was discarded.</p> : <>
-              {c.qwen.source === "template" && <p className="rounded bg-warn/10 px-2 py-1 text-xs font-semibold text-warn">TEMPLATE · Qwen did not answer ({c.qwen.fallback_reason?.slice(0, 120)})</p>}
+        <Section icon={<Brain size={14} />} title="SPOTbot explanation">
+          {c.qwen_source === "pending" && draft ? <QwenDraftView draft={draft} label="SPOTbot writing · unverified draft" catchUpMs={450} compact />
+            : c.qwen_source === "pending" || (!c.qwen && c.verdict && c.qwen_source !== "error") ? <p className="flex items-center gap-2 text-accent-ink">SPOTbot analysing <LoadingDots color="currentColor" /></p>
+            : !c.qwen ? <p className="text-muted">{c.qwen_source === "error" ? "The run ended before SPOTbot's answer was stored." : "—"}</p>
+            : draft ? <p className="text-muted">SPOTbot did not finish; its unverified draft was discarded.</p> : <>
+              {c.qwen.source === "template" && <p className="rounded bg-warn/10 px-2 py-1 text-xs font-semibold text-warn">TEMPLATE · SPOTbot did not answer ({c.qwen.fallback_reason?.slice(0, 120)})</p>}
               {c.qwen.question && <p className="text-xs text-muted">Q: {c.qwen.question}</p>}
               <ModelExplanation answer={c.qwen.answer} evidence={c.qwen.evidence} reasoning={c.qwen.reasoning}
                 recommendedAction={c.qwen.recommended_action} compact limit={4} />
-              <p className="text-[11px] text-muted">{c.qwen.source === "system2" ? `${c.qwen.model} · ${ms(c.qwen.latency_ms)}${c.qwen.tokens_per_sec ? ` · ${c.qwen.tokens_per_sec.toFixed(1)} tok/s` : ""}${c.qwen.confidence_label ? ` · confidence ${c.qwen.confidence_label}` : ""}${c.qwen.image ? ` · image ${c.qwen.image}` : ""}` : "template (checked rules text, not a model answer)"}</p>
+              <p className="text-[11px] text-muted">{c.qwen.source === "system2" ? `SPOTbot · ${ms(c.qwen.latency_ms)}${c.qwen.tokens_per_sec ? ` · ${c.qwen.tokens_per_sec.toFixed(1)} tok/s` : ""}${c.qwen.confidence_label ? ` · confidence ${c.qwen.confidence_label}` : ""}${c.qwen.image ? ` · image ${c.qwen.image}` : ""}` : "template (checked rules text, not a model answer)"}</p>
             </>}
         </Section>
         {red && <div className="flex flex-wrap items-center gap-3 rounded border border-bad bg-bad/10 p-3">
@@ -342,7 +346,7 @@ function CaptureCard({ c, stop }: { c: LiveCapture; stop?: LiveStop }) {
         </div>}
         <p className="mt-auto font-mono text-[11px] text-faint">
           {c.flag_id ? `flag #${c.flag_id} · ` : ""}{c.event_id ?? ""}{c.doc_id ? ` · ${c.doc_id}` : ""}<br />
-          ingest {ms(c.timings?.ingest_ms)} · vision {ms(c.timings?.vision_ms)} · Qwen {ms(c.timings?.system2_ms)} · KG +{c.kg?.triage?.nodes?.length ?? 0} nodes
+          ingest {ms(c.timings?.ingest_ms)} · vision {ms(c.timings?.vision_ms)} · SPOTbot {ms(c.timings?.system2_ms)} · KG +{c.kg?.triage?.nodes?.length ?? 0} nodes
         </p>
       </div>
     </div>
