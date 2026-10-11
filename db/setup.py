@@ -49,6 +49,10 @@ def _pgvector_version(conn):
 def _render(sql: str, conn) -> str:
     dim, vec_type, vec_ops = _vec_config()
     ver = _pgvector_version(conn)
+    if ver and ver >= (0, 8):
+        # CREATE EXTENSION IF NOT EXISTS does not load pgvector in a fresh session.
+        # Register its user-settable GUCs before CREATE FUNCTION ... SET validates them.
+        conn.execute("SELECT '[0]'::vector")
     hnsw_set = "SET hnsw.iterative_scan = strict_order" if ver and ver >= (0, 8) else ""
     return (sql.replace("{{EMBED_DIM}}", str(dim)).replace("{{VEC_TYPE}}", vec_type)
             .replace("{{VEC_OPS}}", vec_ops).replace("{{HNSW_SET}}", hnsw_set))

@@ -3,9 +3,11 @@
 //
 // Reads data/kit/*.csv and returns the SPOT dataset as typed rows plus the
 // lookups every later question needs (asset by id, anomalies by action, …).
-// The CSV columns are mirrored by db/schema.sql, so the field names here are
-// the names the Neon tables use: when the loader is swapped for a SQL query,
-// everything downstream of this module keeps working.
+// The CSV columns are the ones db/migrations/001_core.sql uses, so the field
+// names here are the Neon column names.
+//
+// OFFLINE ANALYSIS ONLY. The console reads the backend via @/lib/backend.
+// This module and @/lib/analysis are retained for offline kit analysis.
 //
 // SERVER ONLY. This touches the filesystem, so it must never be reached from a
 // Client Component — import types from @/lib/types there instead.

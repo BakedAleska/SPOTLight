@@ -1,0 +1,29 @@
+{
+  "key": {
+    "flag_id": 5,
+    "packet_hash": "a9dfa1af13a91c823df9d78a0c84d87e5c655550ae3d0e4316c26ef9ac651bc7",
+    "model": "qwen3.8-27b-q8_0",
+    "prompt_ver": "analyst-prompt-2026-10-10.3:985c5f635a4eda75"
+  },
+  "response": {
+    "evidence": [
+      {
+        "claim": "mission_name=Autowalk Inspection Route 01; mission_status=COMPLETED; start_battery_pct=82; end_battery_pct=15",
+        "ids": [
+          "F1"
+        ]
+      }
+    ],
+    "answer": "mission_name=Autowalk Inspection Route 01; mission_status=COMPLETED; start_battery_pct=82; end_battery_pct=15",
+    "question": "What needs operator attention for this mission event?",
+    "recommended_action": "REVIEW_MISSION",
+    "confidence": "medium",
+    "insufficient_context": false,
+    "flag_id": 5,
+    "model": "/root/models/q38-27b/Qwen3.8-27B-Q8_0.gguf",
+    "latency_ms": 6284,
+    "tokens_per_sec": 22.301225599618945,
+    "path": "llm"
+  },
+  "created_at": "2026-10-10T20:30:47Z"
+}

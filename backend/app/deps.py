@@ -3,23 +3,27 @@ from __future__ import annotations
 
 import hmac
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Union
 
 import httpx
 from fastapi import Request
 
 from .config import Settings
+from .db.chat import ChatRepo
+from .db.live import LiveRepo
 from .db.pool import Database
 from .db.queries import Repo
 from .services.calllog import LogSink, request_id_var
+from .services.chat import ChatService
 from .services.embed import EmbedClient
 from .services.flags import FlagService
 from .services.http import Breaker
 from .services.ingest import IngestPipeline
+from .services.live import LiveService
 from .services.mcp import MCPClient
 from .services.orchestrator import OrchestratorClient
 from .services.reference import Reference
-from .services.replay import ReplayManager
+from .services.replay import ReplayManager, SteppedReplay
 from .services.system1 import System1Client
 from .services.system2 import System2Client
 
@@ -39,8 +43,11 @@ class Services:
     system2: System2Client
     orchestrator: OrchestratorClient
     pipeline: IngestPipeline
-    replay: ReplayManager
+    replay: Union[ReplayManager, SteppedReplay]   # REPLAY_MODE background | stepped
     flags: FlagService
+    chat_repo: Optional[ChatRepo] = None     # AI Assistance chat storage + retrieval (docs/chat-contract.md §1)
+    chat: Optional[ChatService] = None       # chat turns: retrieval -> one Gemini call -> SSE
+    live: Optional[LiveService] = None       # live simulation runs (docs/backend-services-contract.md)
 
     async def open(self) -> None:
         await self.db.open()
@@ -48,7 +55,7 @@ class Services:
             await self.logs_db.open()
 
     async def close(self) -> None:
-        await self.replay.stop()
+        await self.replay.shutdown()
         await self.sink.drain()
         await self.http.aclose()
         if self.logs_db is not self.db:
@@ -59,10 +66,11 @@ class Services:
 def build_services(settings: Settings, *, repo: Optional[Repo] = None,
                    transport: Optional[httpx.AsyncBaseTransport] = None) -> Services:
     db = Database(settings.database_url, name="main", pool_max=settings.db_pool_max,
-                  connect_timeout_s=settings.db_connect_timeout_s)
+                  connect_timeout_s=settings.db_connect_timeout_s, pool_min=settings.db_pool_min,
+                  check=settings.serverless)
     logs_db = db if settings.logs_database_url in (None, settings.database_url) else Database(
         settings.logs_database_url, name="logs", pool_max=max(2, settings.db_pool_max // 2),
-        connect_timeout_s=settings.db_connect_timeout_s)
+        connect_timeout_s=settings.db_connect_timeout_s, pool_min=settings.db_pool_min, check=settings.serverless)
     repo = repo or Repo(db, logs_db)
     sink = LogSink(logs_db)
     http = httpx.AsyncClient(transport=transport, timeout=10.0,
@@ -85,11 +93,19 @@ def build_services(settings: Settings, *, repo: Optional[Repo] = None,
                                       settings.orchestrator_timeout_s,
                                       Breaker(max(cd, settings.orchestrator_timeout_s)))
     pipeline = IngestPipeline(repo, ref, system1, sink, settings.triage_mode)
-    replay = ReplayManager(pipeline, sink, ref.replay_path, settings.replay_speed, settings.replay_max_gap_s)
+    if settings.replay_mode == "stepped":
+        replay: Union[ReplayManager, SteppedReplay] = SteppedReplay(
+            repo, pipeline, sink, ref.replay_path, settings.replay_speed, settings.replay_max_gap_s,
+            settings.replay_step_budget_s)
+    else:
+        replay = ReplayManager(pipeline, sink, ref.replay_path, settings.replay_speed, settings.replay_max_gap_s)
     flags = FlagService(repo, mcp, system2, embed, sink, deadline_s=settings.request_deadline_s,
                         orchestrator=orchestrator)
+    chat_repo = ChatRepo(db)
+    chat = ChatService(settings, chat_repo, embed, http, sink)
+    live = LiveService(repo, LiveRepo(db), ref, pipeline, sink, settings.embed_model, settings.embed_dim)
     return Services(settings, db, logs_db, repo, sink, http, ref, system1, embed, mcp, system2, orchestrator,
-                    pipeline, replay, flags)
+                    pipeline, replay, flags, chat_repo=chat_repo, chat=chat, live=live)
 
 
 def get_services(request: Request) -> Services:

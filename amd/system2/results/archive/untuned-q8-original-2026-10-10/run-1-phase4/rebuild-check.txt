@@ -1,0 +1,5 @@
+edae3db Treat cited namespaced IDs in claim text as references; record Q8 decision
+rebuild: identical | 38 held-out flags | /root/tmp/rb-archive/metrics.json
+8494ea1951b9feb2b8d193f9a169e52cfdea7999fe4f153662b2baabe1991f66  /root/results-backup/amd-qwen38-27b-q8/cases.jsonl
+9f48c7884a2c63da75acca3b67dc486bce3ed64bd58a4685b4dd63cd39a1139b  /root/results-backup/amd-qwen38-27b-q8/metrics.json
+4ebe8cff021c00107a3f4f9c0d4a5abce7edced651c64532c4a23ad90f70e923  /root/results-backup/amd-qwen38-27b-q8/report.md

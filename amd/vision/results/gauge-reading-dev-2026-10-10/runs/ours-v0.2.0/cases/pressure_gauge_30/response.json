@@ -1,0 +1,231 @@
+{
+ "media_id": "pressure_gauge_30",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "50",
+   "bbox": [
+    306,
+    188,
+    411,
+    283
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "40",
+   "bbox": [
+    172,
+    225,
+    279,
+    330
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "60",
+   "bbox": [
+    431,
+    221,
+    530,
+    315
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "70",
+   "bbox": [
+    522,
+    305,
+    612,
+    403
+   ],
+   "conf": 0.999
+  },
+  {
+   "text": "30",
+   "bbox": [
+    95,
+    318,
+    203,
+    406
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "MADE FOR",
+   "bbox": [
+    298,
+    334,
+    445,
+    363
+   ],
+   "conf": 0.997
+  },
+  {
+   "text": "CRANECO.",
+   "bbox": [
+    255,
+    359,
+    485,
+    403
+   ],
+   "conf": 0.996
+  },
+  {
+   "text": "ST.PAUL, MINN.",
+   "bbox": [
+    260,
+    402,
+    472,
+    433
+   ],
+   "conf": 0.949
+  },
+  {
+   "text": "20",
+   "bbox": [
+    87,
+    425,
+    168,
+    507
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "80",
+   "bbox": [
+    559,
+    420,
+    649,
+    499
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "10",
+   "bbox": [
+    87,
+    514,
+    183,
+    601
+   ],
+   "conf": 0.996
+  },
+  {
+   "text": "90",
+   "bbox": [
+    537,
+    511,
+    625,
+    587
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "100",
+   "bbox": [
+    462,
+    599,
+    558,
+    668
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "JaaPMarsh",
+   "bbox": [
+    308,
+    705,
+    402,
+    739
+   ],
+   "conf": 0.978
+  },
+  {
+   "text": "&Company",
+   "bbox": [
+    326,
+    725,
+    416,
+    744
+   ],
+   "conf": 0.978
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "pressure",
+   "value": 8.9,
+   "unit": "psi",
+   "confidence": 0.3,
+   "method": "hough_ray_ransac_labels",
+   "flags": [
+    "LABEL_OUTLIER",
+    "UNIT_UNKNOWN"
+   ],
+   "point": [
+    237,
+    598
+   ],
+   "note": "needle at -135° reads 8.9 (unit unknown)"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "psi",
+   "value": 8.9
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 30
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": -135.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 0.57
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.16
+  },
+  {
+   "name": "Full Scale",
+   "units": "psi",
+   "value": 100.0
+  },
+  {
+   "name": "Scale Labels Used",
+   "units": "",
+   "value": "9 of 10"
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 471,
+ "version": {
+  "service": "0.2.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

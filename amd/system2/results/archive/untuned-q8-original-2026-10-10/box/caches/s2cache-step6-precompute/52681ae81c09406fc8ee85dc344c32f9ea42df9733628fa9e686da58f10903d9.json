@@ -1,0 +1,44 @@
+{
+  "key": {
+    "flag_id": 9,
+    "packet_hash": "710393bc0446b01b35a493f116ec9a5b1ebd5a6c2c896637ad96257080d0e307",
+    "model": "qwen3.8-27b-q8_0",
+    "prompt_ver": "analyst-prompt-2026-10-10.3:985c5f635a4eda75"
+  },
+  "response": {
+    "evidence": [
+      {
+        "claim": "VISUAL_DEFECT anomaly at severity HIGH on Heat Exchanger 08",
+        "ids": [
+          "flag:9",
+          "anomaly:AN009"
+        ]
+      },
+      {
+        "claim": "VISUAL_INSPECTION failed with SENSOR_TIMEOUT",
+        "ids": [
+          "flag:9",
+          "action:A0009"
+        ]
+      },
+      {
+        "claim": "Battery 22% is at or below the 25% low threshold",
+        "ids": [
+          "flag:9",
+          "action:A0009"
+        ]
+      }
+    ],
+    "answer": "VISUAL_DEFECT anomaly at severity HIGH on Heat Exchanger 08; VISUAL_INSPECTION failed with SENSOR_TIMEOUT; Battery 22% is at or below the 25% low threshold",
+    "question": "Does Heat Exchanger 08 need a technician before the next route?",
+    "recommended_action": "DISPATCH_TECHNICIAN",
+    "confidence": "high",
+    "insufficient_context": false,
+    "flag_id": 9,
+    "model": "/root/models/q38-27b/Qwen3.8-27B-Q8_0.gguf",
+    "latency_ms": 8864,
+    "tokens_per_sec": 22.729414071259633,
+    "path": "llm"
+  },
+  "created_at": "2026-10-10T20:31:22Z"
+}

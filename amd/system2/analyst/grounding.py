@@ -314,6 +314,15 @@ def _time_ok(claim_t, support_t) -> bool:
             and (claim_t[2] is None or claim_t[2] == support_t[2]))
 
 
+def _mask_cited(text: str, cited_ids) -> str:
+    """Blank exact, whole cited IDs written in the text (action:A0030, flag:14): a cited ID is already allowed
+    as a reference, but a namespaced one would otherwise split into an identifier (A0030) or a number (14).
+    Uncited IDs, partial IDs and every other token are still checked."""
+    spans = [m.span() for i in cited_ids
+             for m in re.finditer(r'(?<![\w:.-])%s(?![\w:-]|\.\d)' % re.escape(i), text)]
+    return _mask(text, spans)
+
+
 def _content_errors(text, support_ids, cited_ids, prepared, catalog, field, claim) -> List[GroundingError]:
     items = [_support_item(prepared.content[i]) for i in support_ids]
     folded = [f for f, _, _ in items]
@@ -325,7 +334,7 @@ def _content_errors(text, support_ids, cited_ids, prepared, catalog, field, clai
         return any(pat.search(f) for f in folded)
 
     found = []
-    tok = _scan(text, catalog)
+    tok = _scan(_mask_cited(text, cited_ids), catalog)
     for a, _, raw in tok['nonfinite']:
         found.append((a, 'nonfinite_number', raw))
     for a, _, raw, date, time in tok['dt']:

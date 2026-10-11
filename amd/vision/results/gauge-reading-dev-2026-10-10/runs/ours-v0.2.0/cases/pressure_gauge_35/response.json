@@ -1,0 +1,431 @@
+{
+ "media_id": "pressure_gauge_35",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "8",
+   "bbox": [
+    194,
+    363,
+    212,
+    385
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "9",
+   "bbox": [
+    231,
+    359,
+    247,
+    378
+   ],
+   "conf": 0.999
+  },
+  {
+   "text": "10",
+   "bbox": [
+    263,
+    359,
+    289,
+    385
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "11",
+   "bbox": [
+    297,
+    375,
+    323,
+    401
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "6.",
+   "bbox": [
+    135,
+    404,
+    149,
+    423
+   ],
+   "conf": 0.843
+  },
+  {
+   "text": "12",
+   "bbox": [
+    323,
+    399,
+    353,
+    429
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "120",
+   "bbox": [
+    205,
+    412,
+    240,
+    443
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "140",
+   "bbox": [
+    237,
+    413,
+    270,
+    440
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "5",
+   "bbox": [
+    113,
+    434,
+    128,
+    454
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "100",
+   "bbox": [
+    178,
+    421,
+    215,
+    452
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "60",
+   "bbox": [
+    263,
+    427,
+    292,
+    453
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "13",
+   "bbox": [
+    342,
+    431,
+    372,
+    461
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "4.5",
+   "bbox": [
+    102,
+    452,
+    130,
+    475
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "80",
+   "bbox": [
+    162,
+    445,
+    191,
+    473
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "180",
+   "bbox": [
+    275,
+    443,
+    311,
+    473
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "4",
+   "bbox": [
+    104,
+    472,
+    117,
+    489
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "60",
+   "bbox": [
+    152,
+    471,
+    182,
+    499
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "200",
+   "bbox": [
+    283,
+    469,
+    323,
+    500
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "14",
+   "bbox": [
+    351,
+    466,
+    383,
+    497
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "3.5",
+   "bbox": [
+    95,
+    487,
+    123,
+    512
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "3",
+   "bbox": [
+    100,
+    508,
+    120,
+    530
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "40",
+   "bbox": [
+    154,
+    500,
+    182,
+    527
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "220",
+   "bbox": [
+    282,
+    496,
+    321,
+    527
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "15",
+   "bbox": [
+    352,
+    508,
+    382,
+    538
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "2.5",
+   "bbox": [
+    101,
+    524,
+    129,
+    550
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "20",
+   "bbox": [
+    168,
+    525,
+    192,
+    548
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "psi",
+   "bbox": [
+    230,
+    517,
+    267,
+    551
+   ],
+   "conf": 0.999
+  },
+  {
+   "text": "2",
+   "bbox": [
+    111,
+    543,
+    132,
+    569
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "bar",
+   "bbox": [
+    237,
+    540,
+    271,
+    567
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "16",
+   "bbox": [
+    337,
+    544,
+    369,
+    575
+   ],
+   "conf": 0.998
+  },
+  {
+   "text": "1.5",
+   "bbox": [
+    120,
+    558,
+    146,
+    584
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": ".5",
+   "bbox": [
+    154,
+    582,
+    166,
+    596
+   ],
+   "conf": 0.861
+  },
+  {
+   "text": "0",
+   "bbox": [
+    155,
+    595,
+    170,
+    614
+   ],
+   "conf": 0.995
+  },
+  {
+   "text": "=100",
+   "bbox": [
+    249,
+    587,
+    296,
+    617
+   ],
+   "conf": 0.923
+  },
+  {
+   "text": "1-0ar",
+   "bbox": [
+    220,
+    600,
+    259,
+    625
+   ],
+   "conf": 0.603
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "pressure",
+   "value": 10.3,
+   "unit": "psi",
+   "confidence": 0.3,
+   "method": "hough_ray_ransac_labels",
+   "flags": [
+    "LABEL_OUTLIER",
+    "AMBIGUOUS_NEEDLE"
+   ],
+   "point": [
+    284,
+    388
+   ],
+   "note": "two needle candidates: 22° -> 10 psi and -130° -> 1 psi (peak ratio 0.88); do not trust this value"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "psi",
+   "value": 10.3
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 30
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": 22.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 0.88
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.0
+  },
+  {
+   "name": "Full Scale",
+   "units": "psi",
+   "value": 16.0
+  },
+  {
+   "name": "Scale Labels Used",
+   "units": "",
+   "value": "19 of 31"
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 713,
+ "version": {
+  "service": "0.2.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

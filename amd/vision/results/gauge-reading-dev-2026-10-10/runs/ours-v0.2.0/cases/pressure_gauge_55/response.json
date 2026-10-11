@@ -1,0 +1,146 @@
+{
+ "media_id": "pressure_gauge_55",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "0.4",
+   "bbox": [
+    439,
+    165,
+    459,
+    184
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "0.6",
+   "bbox": [
+    487,
+    163,
+    512,
+    187
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "TRUSCO",
+   "bbox": [
+    449,
+    183,
+    498,
+    199
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "RESSURE",
+   "bbox": [
+    455,
+    193,
+    497,
+    211
+   ],
+   "conf": 0.999
+  },
+  {
+   "text": "0.2",
+   "bbox": [
+    409,
+    205,
+    430,
+    225
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "0.8",
+   "bbox": [
+    519,
+    207,
+    541,
+    227
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "MPa",
+   "bbox": [
+    500,
+    271,
+    521,
+    284
+   ],
+   "conf": 1.0
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "pressure",
+   "value": 0.5,
+   "unit": "MPa",
+   "confidence": 0.3,
+   "method": "hough_ray_default_sweep",
+   "flags": [
+    "DEFAULT_SWEEP",
+    "AMBIGUOUS_NEEDLE"
+   ],
+   "point": [
+    447,
+    137
+   ],
+   "note": "two needle candidates: 48° -> 1 MPa and 111° -> 1 MPa (peak ratio 0.84); do not trust this value"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "MPa",
+   "value": 0.5
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 30
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": 48.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 0.84
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.1
+  },
+  {
+   "name": "Full Scale",
+   "units": "MPa",
+   "value": 0.8
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 398,
+ "version": {
+  "service": "0.2.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

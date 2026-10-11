@@ -1,7 +1,8 @@
 """Append-only logging to the `app` schema (LOGS_DATABASE_URL): model calls, API requests, job runs.
 
 Writes are fire-and-forget background tasks, so a slow or missing logs DB never slows or breaks a request.
-`drain()` waits for pending writes (tests, shutdown).
+`drain()` waits for pending writes (tests, shutdown, and on serverless before each response: a frozen instance
+would otherwise hold them until its next request, or lose them).
 """
 from __future__ import annotations
 
@@ -42,7 +43,12 @@ class LogSink:
         self._tasks.add(task)
         task.add_done_callback(self._tasks.discard)
 
-    async def drain(self) -> None:
+    async def drain(self, timeout_s: Optional[float] = None) -> None:
+        """Wait for pending writes; with `timeout_s`, at most that long (the rest keep running)."""
+        if timeout_s is not None:
+            if self._tasks:
+                await asyncio.wait(list(self._tasks), timeout=timeout_s)
+            return
         while self._tasks:
             await asyncio.gather(*list(self._tasks), return_exceptions=True)
 

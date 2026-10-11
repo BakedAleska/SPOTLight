@@ -1,0 +1,30 @@
+{
+ "question_id": "pressure_gauge_29",
+ "question": "What is the reading of the pressure meter?",
+ "evaluator": "multi_interval_matching",
+ "evaluator_kwargs": {
+  "intervals": [
+   [
+    18,
+    19
+   ],
+   [
+    1.2,
+    1.4
+   ]
+  ],
+  "units": [
+   [
+    "psi",
+    "pound per square inch"
+   ],
+   [
+    "bar"
+   ]
+  ]
+ },
+ "meta_info": {
+  "source": "https://www.youtube.com/watch?v=VmXdio44FTY",
+  "uploader": ""
+ }
+}

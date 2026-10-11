@@ -33,11 +33,12 @@ header table too) and this page. Ports and contracts are in `docs/backend-servic
 | `embed` | 8081 | local, models | `amd/embed/` | Qwen3-Embedding-0.6B. `TORCH_VARIANT` build arg. HF cache volume `hf-cache`. `EMBED_BATCH=8` (32 OOM-killed it). |
 | `system1` | 8082 | local, models | `amd/system1/service/` | Laya. `TORCH_VARIANT` build arg. Same `hf-cache` volume. Fine-tuned checkpoints are mounted at `/models/checkpoints`. |
 | `mcp` | 8090 | local, hybrid, neon | `amd/mcp/` | Logs in as `spot_mcp_user` (in `spot_mcp_reader`: read-only, plus INSERT on `app.*`). |
-| `backend` | 8000 | local, hybrid, neon | `backend/` | Logs in as `spot_app_user` (in `spot_app`). API docs at http://localhost:8000/docs. `ADMIN_TOKEN` (header `X-Admin-Token`) guards `/ops/*`, `/replay/*` and `POST /events*`; CORS allows `CORS_ORIGINS` only (default `http://localhost:3000`); `REQUEST_DEADLINE_S` (45) bounds `/flags/{id}/context` and `/explain`. |
+| `backend` | 8000 | local, hybrid, neon | `backend/` | Logs in as `spot_app_user` (in `spot_app`). API docs at http://localhost:8000/docs. `ADMIN_TOKEN` (header `X-Admin-Token`) guards `/ops/*`, `/replay/*` and `POST /events*`; CORS allows `CORS_ORIGINS` only (default `http://localhost:3000`); `REQUEST_DEADLINE_S` (45) bounds `/flags/{id}/context` and `/explain`. `/api/v1/chat` (AI Assistance) calls Gemini with `GEMINI_API_KEY` (backend only). |
 | `system2` | 8083 | local, hybrid, neon, system2 | `amd/system2/` | Non-root authenticated `/v1/assess` (contract `2026-10-10.backend.2`): packet-grounded stub (`model: stub`) by default, live checked pipeline when `SYSTEM2_LLAMA_URL`/`SYSTEM2_MODEL` are set (through the gateway, `http://gateway:4000`, or llama-server directly; explanation cache in `SYSTEM2_CACHE_DIR`). Optional multimodal inputs: `context.vision[]` V# rows, `context.ocr[]`, `image_b64` (requests with an image use `SYSTEM2_VISION_MODEL`, default `system2-vision`). Backend/orchestrator supply context; no MCP/database access. The image includes `data/` (approved saved packets); the kit is mounted read-only at `/app/kit` (`SPOT_KIT_DIR`). |
 | `gateway` | 4000 (host: `GATEWAY_PORT`) | local, hybrid, neon, system2 | `amd/gateway/` | LiteLLM proxy (`litellm[proxy]==1.104.1`, hash-locked). One OpenAI-compatible endpoint, `Authorization: Bearer $LITELLM_MASTER_KEY`. Aliases `system2` / `system2-vision` -> llama-server (`LLAMA_URL`, `VISION_LLAMA_URL`; default the SSH tunnel on host port 18080), `system1` -> Laya `/v1/predict`, `embed` -> embed; hidden `qwen3.5-9b-q4km` = `system2`. Retries 0, no fallbacks, no DB/UI/telemetry. `GET /health/liveliness` is public. |
 | `vision` | 8084 | local, hybrid, neon, vision | `amd/vision/` | CPU-only OCR (RapidOCR/onnxruntime) + code readers: thermal colorbar, dial gauge, spectrogram, Orbit Key Results. `POST /v1/vision` returns `V#` readings, vision-vs-log `comparison`, Orbit-style `key_results`/`alert` and an annotated JPEG; never calls a model. Required `VISION_API_KEY` (header `X-API-Key`; the service refuses to start without one; `/health` open). JPEG/PNG/WebP only, 12 MP max, 2 concurrent analyses (503 when busy; plan ~2 GB RSS). Models baked into the image; no runtime internet. Contract: `docs/vision-contract.md`. |
 | `orchestrator` | 8085 | local, hybrid, neon | `amd/orchestrator/` | LangGraph. `POST /v1/assess`: MCP context -> System 1 (packet answers, else gateway `system1`) -> route (escalate / P1-P2 / rules / operator image -> full, else short System 1 answer) -> vision (with an image or `DEMO_IMAGES=1`) -> System 2 -> template fallback, all within `ORCH_DEADLINE_S` (40), with a per-node `trace`. `POST /v1/ask`: the System 2 model with the read-only MCP tools, at most 4 calls in 30 s. `X-API-Key: $ORCHESTRATOR_API_KEY`. `GET /v1/graph` = mermaid. The backend uses it only when `ORCHESTRATOR_URL` is set. Contract: `docs/orchestrator-contract.md`. |
+| `live-runner` | n/a | live | `scripts/live_runner.Dockerfile` | Live simulation runner (`scripts/live_runner.py`, standard library only): claims runs queued on the web console's `/live` page, walks the route's 8 stops and calls Laya, vision, System 2 (Qwen) and the embedder on the AMD box through host SSH tunnels (`LIVE_*_URL`), posting every result to the backend's admin API (`BACKEND_URL`, `ADMIN_TOKEN`). No port and no database credentials; heartbeat healthcheck. Runbook: `docs/LIVE-RUNBOOK.md`. |
 
 Published ports bind to `127.0.0.1` by default (`BIND_ADDR`). Inside the network the services use service names
 (`http://system1:8082`).
@@ -75,19 +76,37 @@ a missing or wrong header gets 401. `make e2e` reads the token from `.env`. Set 
 origin (default `http://localhost:3000`); the dashboard sends `X-Admin-Token` only from the presenter's console.
 If `db/local_pgvector.sh` already holds port 5433, set `DB_PORT=5434` in `.env`.
 
+**AI Assistance chat** (`/assistant` in the dashboard, contract `docs/chat-contract.md`). Put a Google AI Studio key
+in the root `.env` as `GEMINI_API_KEY=...` (never in `.env.example` or any tracked file) and run
+`docker compose up -d --no-deps backend`. Only the backend receives the key; it is sent as the `x-goog-api-key` header
+and never logged or returned. Without it `GET /api/v1/chat/models` says `configured: false` and sending a message
+answers 503 `gemini_unset`. Free tier: 5 requests per minute per model, so a turn makes exactly one Gemini call (the
+backend retrieves documents, graph nodes and SQL digests first, within `CHAT_RETRIEVAL_BUDGET_S`); a 429 reaches the UI
+as `rate_limited` with `retry_after_s`, and the backend never switches models by itself. The picker offers
+`CHAT_MODELS` (default `gemini-3.8-flash,gemini-3.5-flash,gemini-3.5-flash-lite`); Gemma is opt-in (append
+`gemma-4-31b-it`), since on 2026-10-10 it took 37 s to the first byte and then returned a 503. `CHAT_TITLE_MODEL=none`
+keeps auto titles only. `FEATURE_AI_ASSISTANT=false` hides the tab. Chats live in `chat_conversations` /
+`chat_messages` (migration 011; re-run `python db/setup.py migrate` after pulling, as `chat.2` adds
+`chat_messages.error_code`); `/ops/reset-demo` leaves them alone. Degraded retrieval steps (embedding down, a slow
+query) show up in the `sources` event's `retrieval.gaps` and in the backend log at WARNING.
+Quick check: `curl -N -X POST localhost:8000/api/v1/chat/conversations/<id>/messages -H 'content-type: application/json'
+-d '{"content":"Which missions hid failures?","model":"gemini-3.5-flash-lite","mode":"fast"}'` (create the
+conversation first with `POST /api/v1/chat/conversations`).
+
 ## Mode 1: `local` (default): everything in Docker on CPU
 ```bash
 make up        # = docker compose up -d --build --wait
 make e2e       # end-to-end proof, both TRIAGE_MODEs
-make test      # unit suites + the cross-service policy drift guard
+make test      # unit suites, drift guards, contracts (vision, chat) and web lint/tests (make test-web)
 make down      # or `make wipe` to drop the database volume too
 ```
 - The first start downloads ~1.2 GB (embedding model) and ~842 MB (Laya) into the `hf-cache` volume.
 - `db-init` embeds ~500 documents on CPU, which takes a few minutes. The graph step then takes ~20 s the first time
   (~70 node summaries) and ~1 s after that.
 - This mode tests the wiring. It is not for the demo: Docker Desktop on a Mac has no GPU.
-- CI (`.github/workflows/ci.yml`, every push to main and every PR, Python 3.12, no secrets/DB/model weights, nothing
-  pushed) runs the same suites as `make test` (System 1 as `test-system1-fast`), lints and builds `web/`, and:
+- CI (`.github/workflows/ci.yml`, every push to main and every PR, Python 3.12, no secrets/model weights, no
+  `GEMINI_API_KEY`, nothing pushed) runs the same suites as `make test` (System 1 as `test-system1-fast`), lints, tests
+  (`npm run test:chat`, `npm run test:flags`) and builds `web/`, and:
   - `test-compose`: `docker-compose.yml` vs its header table, the ports table in `docs/backend-services-contract.md`
     and the table above; every service has a healthcheck, every `depends_on` target exists (and is
     `required: false` when a profile doesn't start it), every port binds `${BIND_ADDR:-127.0.0.1}`. Update all four
@@ -96,6 +115,14 @@ make down      # or `make wipe` to drop the database volume too
     request parser and `/v1/assess` (V# ids, trust, flags/bound, demo and LOW-row stripping). Runs in the vision
     venv (`make venvs` installs `tests/contract/requirements.txt` there).
   - The vision job runs all 100 tests (slow Orbit sweep included); the RapidOCR models (~30 MB) are cached.
+  - `test-chat-contract` (job `chat-contract`): real backend chat turns (FakeChatRepo, respx-mocked Gemini) against
+    the golden SSE transcripts in `tests/contract/chat_golden/`, plus the shared citation fixtures
+    (`tests/contract/chat_citations.json`). `web/tests/chat-contract.test.ts` (in `test:chat`) replays the same files
+    through the real proxy route, SSE parser and chat store. After an intended change to the events:
+    `UPDATE_GOLDEN=1 make test-chat-contract`, then `make test-web`, and review `git diff tests/contract/chat_golden`.
+  - Job `chat-db`: `test-chat-db`, `test-graph` (`db/tests/test_graph.py`) and `test-db` on a throwaway
+    `pgvector/pgvector:pg17` service container. With no ingested `documents` there, the 3 graph tests that need them
+    skip, as does the live-embed one.
   - `docker compose config -q` for every profile (with and without `--env-file .env.example`); builds backend,
     db-init, mcp, system2; builds gateway, vision and orchestrator and waits for each image's HEALTHCHECK.
 - Measured CPU latencies, 2026-10-10:
@@ -177,6 +204,12 @@ E2E_DATABASE_URL=$DATABASE_URL backend/.venv/bin/python scripts/e2e.py
 `spot_mcp_user` with those passwords. If Neon refuses `CREATE ROLE`, create the users in the Neon console instead,
 then re-run. Make a Neon branch before any `reset`.
 
+### Backend on Vercel (no Docker)
+The backend also deploys as its own Vercel project (Root Directory `backend/`); steps, env vars and checks are in
+`backend/README.md` "Deploy on Vercel". Run `python db/setup.py migrate` against Neon first (`010_replay_runs.sql`).
+On Vercel the replay is `REPLAY_MODE=stepped`: after `POST /api/v1/replay/start`, something must call
+`POST /api/v1/replay/step` in a loop (contract "Serverless deployment and stepped replay"). Docker is unchanged.
+
 ## Timeouts and keys (how the layers nest)
 Each layer gives up before its caller does, so the caller always gets an answer it can store:
 
@@ -201,7 +234,20 @@ deadline. `/v1/ask` has its own 30 s (`ASK_DEADLINE_S`, at most 4 tool calls).
 | `ORCHESTRATOR_API_KEY` | `X-API-Key` | backend -> orchestrator (>= 16 chars; refuses to start without one) |
 | `LITELLM_MASTER_KEY` | `Authorization: Bearer` | system2 (`SYSTEM2_LLAMA_API_KEY`), orchestrator (`GATEWAY_KEY`) -> gateway (`sk-`, >= 16 chars) |
 | `VISION_API_KEY` | `X-API-Key` | orchestrator -> vision (required, >= 16 chars; refuses to start without one) |
-| `MCP_AUTH_TOKEN` | `Authorization: Bearer` | backend, orchestrator -> mcp (optional) |
+| `MCP_AUTH_TOKEN` | `Authorization: Bearer` | backend, orchestrator -> mcp (optional; required by the Vercel deploy) |
+
+## Live simulation (`/live`, profile `live`)
+The judges' demo: an operator starts one of five routes on the web console's `/live` page; the live runner on the
+presenter laptop walks it, calling the AMD box through SSH tunnels and posting results to the backend (Vercel or
+local). The runner holds only `BACKEND_URL` + `ADMIN_TOKEN` (+ the box services' keys); the web needs
+`BACKEND_ADMIN_TOKEN` for the Start/Cancel buttons. Runbook (tunnels, smoke check, Laya dry run, restarts):
+`docs/LIVE-RUNBOOK.md`. Contract: `docs/backend-services-contract.md` "Live simulation".
+```bash
+python scripts/live_runner.py --tunnel spot-amd --check      # one real request to every box service
+python scripts/live_runner.py --tunnel spot-amd --dry-run    # Laya on all 40 stops vs the plan (no writes)
+python scripts/live_runner.py --tunnel spot-amd              # serve runs started on /live
+COMPOSE_PROFILES=live docker compose up live-runner          # the same in Docker (tunnels on the host, 18081-18084)
+```
 
 ## Useful commands
 ```bash
@@ -209,6 +255,7 @@ docker compose run --rm --no-deps --entrypoint db/job.sh db-init status        #
 make smoke                                                                     # 3 RAG queries + graph queries + role checks
 docker compose run --rm --no-deps --entrypoint db/job.sh db-init graph         # rebuild the knowledge graph now
 make test-graph                                                                # graph build + functions on a throwaway DB
+make test-chat-db                                                              # chat migrations + ChatRepo on a throwaway DB
 docker compose up -d --force-recreate backend                                  # after editing .env (e.g. TRIAGE_MODE)
 curl -s localhost:8000/health | jq                                             # every dependency's status
 ADMIN_TOKEN=$(sed -n 's/^ADMIN_TOKEN=//p' .env)
@@ -250,7 +297,8 @@ pipeline: at most two llama-server attempts inside a 15 s deadline, then the che
 |---|---|---|
 | `SYSTEM2_LLAMA_URL` | llama-server base URL (`http(s)://host:port`); loopback or SSH tunnel only | unset = stub |
 | `SYSTEM2_MODEL` | served model name, sent to llama-server and part of the cache key; required when the URL is set | unset |
-| `SYSTEM2_CACHE_DIR` | explanation cache directory | `amd/system2/cache` in a checkout; none in the image unless set to a writable mount |
+| `SYSTEM2_CACHE_DIR` | explanation cache directory; `off` disables it (measurement runs: every request generates) | `amd/system2/cache` in a checkout; none in the image unless set to a writable mount |
+| `SYSTEM2_RECORD_DIR` | measurement runs: append one JSON line per request (raw text of every attempt, checker errors, timings, cache and image status) to `<dir>/system2-records.jsonl` | unset = off |
 | `SYSTEM2_VISION_MODEL` | model for requests that carry `image_b64` (gateway alias `system2-vision`) | compose: `system2-vision`; native: `SYSTEM2_MODEL` |
 | `SYSTEM2_DEADLINE_S` | generation deadline for text requests (the 15 s p95 target); raise only for a slow local model; must be in (0, 120] | `15` |
 | `SYSTEM2_IMAGE_DEADLINE_S` | generation deadline for requests with `image_b64` (text keeps 15 s); must be in (0, 120] | `25` |

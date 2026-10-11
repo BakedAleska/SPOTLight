@@ -1,0 +1,18 @@
+{
+ "question_id": "pressure_gauge_70",
+ "question": "What is the reading of the pressure gauge",
+ "evaluator": "interval_matching",
+ "evaluator_kwargs": {
+  "interval": [
+   5.6,
+   5.6
+  ],
+  "units": [
+   "kg/cm²"
+  ]
+ },
+ "meta_info": {
+  "source": "https://www.youtube.com/watch?v=_f6KQbzqSiU",
+  "uploader": ""
+ }
+}

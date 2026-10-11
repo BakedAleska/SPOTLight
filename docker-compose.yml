@@ -14,6 +14,7 @@
 # mcp        8090  local, hybrid, neon      MCP context server for System 2 (streamable HTTP /mcp)
 # backend    8000  local, hybrid, neon      FastAPI dashboard API (/api/v1, /docs). ADMIN_TOKEN (header
 #                                           X-Admin-Token) guards /ops, /replay, POST /events; CORS_ORIGINS only
+#                                           /api/v1/chat: AI Assistance (Gemini via GEMINI_API_KEY, SSE answers)
 # web        3000  local, hybrid, neon, frontend  Next.js dashboard; reads backend via /api/dashboard
 # system2    8083  local, hybrid, neon, system2  Authenticated System 2 /v1/assess (contract 2026-10-10.backend.2):
 #                                           packet-grounded stub (model=stub) by default; live checked pipeline when
@@ -32,6 +33,10 @@
 #                                           -> template, ORCH_DEADLINE_S 40) and /v1/ask (bounded read-only MCP tool
 #                                           loop). X-API-Key ORCHESTRATOR_API_KEY. The backend uses it only when
 #                                           ORCHESTRATOR_URL is set (else /explain keeps its own MCP -> System 2 path).
+# live-runner -    live                     Live simulation runner (scripts/live_runner.py): claims runs queued on
+#                                           /live, walks the 8 stops, calls Laya/vision/System 2/embed on the AMD
+#                                           box through host SSH tunnels and posts results to BACKEND_URL with
+#                                           ADMIN_TOKEN. No port, no DB credentials. docs/LIVE-RUNBOOK.md.
 #
 # Profiles:
 #   local   everything in Docker on CPU (testing; Laya ~3-8 s per event, embedding ~2.3 s per query)
@@ -42,6 +47,7 @@
 #   system2 System 2 + gateway only, for independent integration checks (stub; live when SYSTEM2_LLAMA_URL is set)
 #   vision  vision/OCR service only, for independent checks (COMPOSE_PROFILES=vision)
 #   models  embed + system1 on CPU, to pair with neon:  COMPOSE_PROFILES=neon,models
+#   live    the live runner only (presenter laptop; the backend can be the Vercel one): COMPOSE_PROFILES=live
 #
 # Conventions (keep them when adding a service):
 #   - `<<: *service` on every long-running service (restart policy + host.docker.internal for SSH tunnels).
@@ -90,6 +96,7 @@ services:
       FEATURE_FLAG_DETAILS: ${FEATURE_FLAG_DETAILS:-true}
       FEATURE_FLAG_ACTIONS: ${FEATURE_FLAG_ACTIONS:-true}
       FEATURE_FLAG_EXPLANATIONS: ${FEATURE_FLAG_EXPLANATIONS:-true}
+      FEATURE_AI_ASSISTANT: ${FEATURE_AI_ASSISTANT:-true}   # false -> /assistant shows a disabled notice
       EXPLAIN_TIMEOUT_MS: ${WEB_EXPLAIN_TIMEOUT_MS:-50000}   # wait for /explain; raise with a slow local System 2 model
     ports: ["${BIND_ADDR:-127.0.0.1}:3000:3000"]
     volumes:
@@ -368,7 +375,38 @@ services:
       # Audit H3: /ops/*, /replay/*, POST /events* need X-Admin-Token. Unset -> those endpoints answer 503.
       ADMIN_TOKEN: ${ADMIN_TOKEN:-}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}   # the dashboard's origin(s), comma-separated
+      # AI Assistance chat (docs/chat-contract.md §7). The key lives only in the root .env (gitignored) and only
+      # this service gets it; empty -> /chat/models says configured=false and sending answers 503 gemini_unset.
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_BASE_URL: ${GEMINI_BASE_URL:-https://generativelanguage.googleapis.com/v1beta}
+      CHAT_MODELS: ${CHAT_MODELS:-gemini-3.8-flash,gemini-3.5-flash,gemini-3.5-flash-lite}   # gemma-4-31b-it is opt-in
+      CHAT_DEFAULT_MODEL: ${CHAT_DEFAULT_MODEL:-gemini-3.8-flash}
+      CHAT_TITLE_MODEL: ${CHAT_TITLE_MODEL:-gemini-3.1-flash-lite}   # `none` = auto titles only (no title call)
+      CHAT_TIMEOUT_S: ${CHAT_TIMEOUT_S:-120}                 # whole Gemini call (thinking mode can be slow)
+      CHAT_RETRIEVAL_BUDGET_S: ${CHAT_RETRIEVAL_BUDGET_S:-8} # retrieval deadline before the call
+      CHAT_HISTORY_MESSAGES: ${CHAT_HISTORY_MESSAGES:-12}    # stored messages sent as history
     ports: ["${BIND_ADDR:-127.0.0.1}:8000:8000"]
+
+  # Live simulation runner (docs/LIVE-RUNBOOK.md): the bridge between the AMD box (SSH tunnels on the host, opened
+  # by `ssh -N -L 18082:127.0.0.1:8082 -L 18081:... spot-amd`) and the backend's admin API. Standard library only.
+  live-runner:
+    <<: *service
+    build: {context: ., dockerfile: scripts/live_runner.Dockerfile}
+    image: spot-live-runner:compose
+    profiles: [live]
+    environment:
+      BACKEND_URL: ${LIVE_BACKEND_URL:-http://host.docker.internal:8000/api/v1}   # or the Vercel backend URL
+      ADMIN_TOKEN: ${ADMIN_TOKEN:-}
+      SYSTEM1_URL: ${LIVE_SYSTEM1_URL:-http://host.docker.internal:18082}   # Laya on the box (tunnel)
+      EMBED_URL: ${LIVE_EMBED_URL:-http://host.docker.internal:18081}       # Qwen3-Embedding on the box (tunnel)
+      SYSTEM2_URL: ${LIVE_SYSTEM2_URL:-http://host.docker.internal:18083}   # System 2 serve.py on the box (tunnel)
+      VISION_URL: ${LIVE_VISION_URL:-http://host.docker.internal:18084}     # vision on the box (tunnel)
+      SYSTEM2_API_KEY: *system2-key
+      VISION_API_KEY: *vision-key
+      LIVE_TRAVEL_S: ${LIVE_TRAVEL_S:-5}     # walking time between stops
+      LIVE_WORK_S: ${LIVE_WORK_S:-3}         # inspection time at a stop
+      RUNNER_NAME: ${RUNNER_NAME:-presenter-laptop}
+    # Non-root runtime (uid 10003) and the heartbeat healthcheck are in the image.
 
 volumes:
   web-node-modules: {}

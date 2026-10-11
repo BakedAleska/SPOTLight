@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Optional
 
+import psycopg
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from ..db.pool import DatabaseUnavailable
@@ -38,7 +39,11 @@ async def jobs(limit: int = Query(20, ge=1, le=200), svc: Services = Depends(get
         rows = await svc.repo.jobs(limit)
     except DatabaseUnavailable:
         rows = []
-    return {"replay": svc.replay.status(), "jobs": rows}
+    try:
+        replay = await svc.replay.get_status()
+    except (DatabaseUnavailable, psycopg.Error):   # stepped mode reads replay_runs
+        replay = svc.replay.status()
+    return {"replay": replay, "jobs": rows}
 
 
 @router.post("/reset-demo", response_model=ResetOut)

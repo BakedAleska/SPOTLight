@@ -1,0 +1,30 @@
+{
+ "question_id": "pressure_gauge_117",
+ "question": "What is the reading of the pressure gauge",
+ "evaluator": "multi_interval_matching",
+ "evaluator_kwargs": {
+  "intervals": [
+   [
+    32.5,
+    33.0
+   ],
+   [
+    2.2,
+    2.3
+   ]
+  ],
+  "units": [
+   [
+    "psi",
+    "Pounds per square inch"
+   ],
+   [
+    "kg/cm²"
+   ]
+  ]
+ },
+ "meta_info": {
+  "source": "https://www.youtube.com/watch?v=znOcgR2aWJ8",
+  "uploader": ""
+ }
+}

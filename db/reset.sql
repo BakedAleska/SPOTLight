@@ -1,6 +1,8 @@
 -- target: main
 -- DESTRUCTIVE. Drops every table and function the migrations create in public. Run only via
 -- `python db/setup.py reset --yes` (which then re-runs the migrations). Keeps the vector extension and the roles.
+DROP TABLE IF EXISTS chat_messages, chat_conversations CASCADE;       -- 011_chat.sql (AI Assistance history)
+DROP TABLE IF EXISTS live_captures, live_runs CASCADE;                -- 013_live.sql (live simulation runs)
 DROP FUNCTION IF EXISTS graph_neighborhood(text[], int, text[], text[], int);
 DROP FUNCTION IF EXISTS match_kg_nodes_text(text, text[], int);
 DROP FUNCTION IF EXISTS match_kg_nodes(vector, text[], int, real);

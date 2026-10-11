@@ -1,0 +1,190 @@
+{
+ "media_id": "pressure_gauge_42",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "30",
+   "bbox": [
+    566,
+    259,
+    589,
+    278
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "20",
+   "bbox": [
+    484,
+    297,
+    505,
+    315
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "40",
+   "bbox": [
+    653,
+    288,
+    672,
+    304
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "50",
+   "bbox": [
+    695,
+    358,
+    717,
+    376
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "10",
+   "bbox": [
+    445,
+    374,
+    466,
+    390
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "bar",
+   "bbox": [
+    534,
+    425,
+    558,
+    440
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "kg/cm²",
+   "bbox": [
+    618,
+    429,
+    666,
+    452
+   ],
+   "conf": 0.979
+  },
+  {
+   "text": "60",
+   "bbox": [
+    685,
+    442,
+    702,
+    456
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "psi",
+   "bbox": [
+    499,
+    470,
+    526,
+    491
+   ],
+   "conf": 0.999
+  },
+  {
+   "text": "bar=kPax100",
+   "bbox": [
+    541,
+    473,
+    629,
+    495
+   ],
+   "conf": 0.992
+  },
+  {
+   "text": "TOPTUL",
+   "bbox": [
+    532,
+    489,
+    630,
+    520
+   ],
+   "conf": 1.0
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "pressure",
+   "value": 25.5,
+   "unit": "bar",
+   "confidence": 0.3,
+   "method": "hough_ray_ransac_labels",
+   "flags": [
+    "AMBIGUOUS_NEEDLE"
+   ],
+   "point": [
+    543,
+    296
+   ],
+   "note": "two needle candidates: -20° -> 26 bar and -178° -> -15 bar (two-ended needle (opposite arm 0.74 r long)); do not trust this value"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "bar",
+   "value": 25.5
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 30
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": -20.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 1.0
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.74
+  },
+  {
+   "name": "Full Scale",
+   "units": "bar",
+   "value": 60.0
+  },
+  {
+   "name": "Scale Labels Used",
+   "units": "",
+   "value": "6 of 6"
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 494,
+ "version": {
+  "service": "0.2.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

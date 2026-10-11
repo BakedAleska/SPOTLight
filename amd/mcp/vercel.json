@@ -1,0 +1,10 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "regions": ["cle1"],
+  "functions": {
+    "asgi.py": {
+      "maxDuration": 60,
+      "excludeFiles": "{tests/**,client_example.py,Dockerfile,README.md,.env*,**/__pycache__/**,.pytest_cache/**}"
+    }
+  }
+}

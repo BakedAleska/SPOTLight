@@ -1,0 +1,44 @@
+{
+  "key": {
+    "flag_id": 14,
+    "packet_hash": "75b4095f33a33fe57645e46ee2ad905f209acf7a2e7bd5f3bcb306f95f0c58da",
+    "model": "qwen3.8-27b-q8_0",
+    "prompt_ver": "analyst-prompt-2026-10-10.3:985c5f635a4eda75"
+  },
+  "response": {
+    "evidence": [
+      {
+        "claim": "GAUGE_READING failed with SENSOR_TIMEOUT",
+        "ids": [
+          "flag:14",
+          "action:A0030"
+        ]
+      },
+      {
+        "claim": "PRESSURE_PSI 114.2 psi has quality QUESTIONABLE",
+        "ids": [
+          "flag:14",
+          "reading:R0053"
+        ]
+      },
+      {
+        "claim": "Battery 17% is at or below the 25% low threshold",
+        "ids": [
+          "flag:14",
+          "action:A0030"
+        ]
+      }
+    ],
+    "answer": "GAUGE_READING failed with SENSOR_TIMEOUT; PRESSURE_PSI 114.2 psi has quality QUESTIONABLE; Battery 17% is at or below the 25% low threshold",
+    "question": "What should the operator do about flag flag:act-A0030?",
+    "recommended_action": "REINSPECT_NOW",
+    "confidence": "high",
+    "insufficient_context": false,
+    "flag_id": 14,
+    "model": "/root/models/q38-27b/Qwen3.8-27B-Q8_0.gguf",
+    "latency_ms": 8606,
+    "tokens_per_sec": 22.728652145216532,
+    "path": "llm"
+  },
+  "created_at": "2026-10-10T20:31:13Z"
+}

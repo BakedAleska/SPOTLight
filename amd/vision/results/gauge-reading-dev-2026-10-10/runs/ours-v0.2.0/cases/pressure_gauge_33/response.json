@@ -1,0 +1,137 @@
+{
+ "media_id": "pressure_gauge_33",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "80",
+   "bbox": [
+    647,
+    87,
+    674,
+    115
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "30 40",
+   "bbox": [
+    559,
+    157,
+    611,
+    242
+   ],
+   "conf": 0.853
+  },
+  {
+   "text": "60",
+   "bbox": [
+    649,
+    150,
+    684,
+    189
+   ],
+   "conf": 0.626
+  },
+  {
+   "text": "MINIERS",
+   "bbox": [
+    701,
+    216,
+    748,
+    286
+   ],
+   "conf": 0.832
+  },
+  {
+   "text": "40",
+   "bbox": [
+    517,
+    233,
+    535,
+    253
+   ],
+   "conf": 0.918
+  },
+  {
+   "text": "PFQ SERIES 500",
+   "bbox": [
+    584,
+    143,
+    646,
+    249
+   ],
+   "conf": 0.963
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "pressure",
+   "value": 2.4,
+   "unit": "psi",
+   "confidence": 0.3,
+   "method": "hough_ray_default_sweep",
+   "flags": [
+    "DEFAULT_SWEEP",
+    "UNIT_UNKNOWN",
+    "AMBIGUOUS_NEEDLE"
+   ],
+   "point": [
+    538,
+    297
+   ],
+   "note": "two needle candidates: -127° -> 2 psi and 48° -> 54 psi (two-ended needle (opposite arm 0.42 r long)); do not trust this value"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "psi",
+   "value": 2.4
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 30
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": -127.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 0.7
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.42
+  },
+  {
+   "name": "Full Scale",
+   "units": "psi",
+   "value": 80.0
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 338,
+ "version": {
+  "service": "0.2.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

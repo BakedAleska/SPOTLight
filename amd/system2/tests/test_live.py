@@ -415,6 +415,32 @@ def test_cache_key_uses_eval_packet_hash(tmp_path):
     assert set(entry) == {'key', 'response', 'created_at'}
 
 
+def test_cache_dir_off_disables_the_cache():
+    assert cache_dir_from_env({'SYSTEM2_CACHE_DIR': 'off'}) is None
+    assert cache_dir_from_env({'SYSTEM2_CACHE_DIR': 'OFF'}) is None
+
+
+def test_recorder_keeps_each_attempts_raw_text_and_the_final_path(tmp_path):
+    from analyst.live import RecordingGenerator, RunRecorder
+    req = equipment_json()
+    bad, good = json.dumps(invalid_candidate(case().request)), json.dumps(valid_candidate(case().request))
+    fake = FakeGen([gen(bad), gen(good)])
+    assessor = LiveAssessor(RecordingGenerator(fake), 'fake-model', PipelineConfig(deadline_s=15.0),
+                            cache=ExplanationCache(tmp_path / 'cache'), recorder=RunRecorder(tmp_path / 'rec'))
+    first, status = assessor.assess(req)
+    again, status2 = assessor.assess(req)
+    assert (status, status2) == ('miss', 'hit') and first == again
+    lines = [json.loads(x) for x in (tmp_path / 'rec' / 'system2-records.jsonl').read_text().splitlines()]
+    assert [r['cache'] for r in lines] == ['miss', 'hit']
+    miss, hit = lines
+    assert [c['text'] for c in miss['calls']] == [bad, good]          # raw model text of both attempts
+    assert miss['calls'][1]['retry_errors']                          # the retry saw the checker's errors
+    assert [a['status'] for a in miss['run']['attempts']] == ['rejected', 'accepted']
+    assert miss['response']['path'] == 'retry' and miss['deadline_s'] == 15.0
+    assert hit['run'] is None and hit['calls'] == [] and hit['response'] == miss['response']
+    assert miss['packet_hash'] == hit['packet_hash'] and miss['prompt_ver'] == assessor.prompt_ver
+
+
 def test_cache_dir_from_env():
     assert cache_dir_from_env({'SYSTEM2_CACHE_DIR': '/tmp/x'}) == Path('/tmp/x')
     assert cache_dir_from_env({'SYSTEM2_CACHE_DIR': '  '}) == ROOT / 'cache'

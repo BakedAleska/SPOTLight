@@ -1,0 +1,180 @@
+name: Deploy SPOTlight to Vercel
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: spotlight-vercel-production
+  cancel-in-progress: false
+
+jobs:
+  neon-migrate:
+    if: >-
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_branch == 'main' &&
+       github.event.workflow_run.head_repository.full_name == github.repository) ||
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: NEON_API_KEY
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+      - name: Install database dependencies
+        run: pip install -r db/requirements.txt
+      - name: Apply migrations and verify database
+        env:
+          DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+        run: |
+          set -euo pipefail
+          test -n "$DATABASE_URL" || {
+            echo "Missing NEON_DATABASE_URL"
+            exit 1
+          }
+          python db/setup.py migrate
+          python db/setup.py status
+
+  deploy:
+    needs: neon-migrate
+    if: >-
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_branch == 'main' &&
+       github.event.workflow_run.head_repository.full_name == github.repository) ||
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: "vercel deploy"
+    env:
+      VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
+      VERCEL_SCOPE: ${{ vars.VERCEL_SCOPE }}
+      VERCEL_CLI_VERSION: ${{ vars.VERCEL_CLI_VERSION }}
+      MCP_PROJECT_ID: ${{ vars.VERCEL_MCP_PROJECT_ID }}
+      BACKEND_PROJECT_ID: ${{ vars.VERCEL_BACKEND_PROJECT_ID }}
+      WEB_PROJECT_ID: ${{ vars.VERCEL_WEB_PROJECT_ID }}
+      MCP_URL: ${{ vars.MCP_PRODUCTION_URL }}
+      BACKEND_URL: ${{ vars.BACKEND_PRODUCTION_URL }}
+      WEB_URL: ${{ vars.WEB_PRODUCTION_URL }}
+      DEPLOY_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+      NO_COLOR: "1"
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ env.DEPLOY_SHA }}
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "24"
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+      - name: Install uv for Vercel Python builds
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: "0.13.0"
+          enable-cache: false
+      - name: Verify uv installation
+        run: uv --version
+      - name: Validate deployment configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          for key in VERCEL_ORG_ID VERCEL_SCOPE VERCEL_CLI_VERSION MCP_PROJECT_ID BACKEND_PROJECT_ID WEB_PROJECT_ID MCP_URL BACKEND_URL WEB_URL; do
+            test -n "${!key}" || { echo "Missing production environment variable: $key" >&2; exit 1; }
+          done
+          [[ "$VERCEL_CLI_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo 'Pin VERCEL_CLI_VERSION to an exact reviewed release.' >&2; exit 1; }
+          python - <<'PY'
+          import os
+          from urllib.parse import urlsplit
+          for key in ("MCP_URL", "BACKEND_URL", "WEB_URL"):
+              value = os.environ[key]
+              url = urlsplit(value)
+              assert url.scheme == "https" and url.hostname.endswith(".vercel.app"), key
+              assert not url.username and not url.password and not url.query and not url.fragment, key
+              assert url.path == "" and not url.port, f"{key}: use the production origin without a trailing slash"
+          ids = [os.environ[key] for key in ("MCP_PROJECT_ID", "BACKEND_PROJECT_ID", "WEB_PROJECT_ID")]
+          assert len(set(ids)) == 3, "Each service needs a separate Vercel project"
+          PY
+      - name: Install pinned Vercel CLI
+        run: npm install --global "vercel@$VERCEL_CLI_VERSION"
+      - name: Verify project ownership and build settings
+        env:
+          DEPLOY_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          python - <<'PY'
+          import json, os, urllib.request
+          from urllib.parse import urlencode
+          assert os.environ.get("DEPLOY_TOKEN"), "Missing protected VERCEL_TOKEN secret"
+          for key, root in (("MCP_PROJECT_ID", "amd/mcp"), ("BACKEND_PROJECT_ID", "backend"), ("WEB_PROJECT_ID", "web")):
+              project_id = os.environ[key]
+              query = urlencode({"teamId": os.environ["VERCEL_ORG_ID"]})
+              request = urllib.request.Request(f"https://api.vercel.com/v9/projects/{project_id}?{query}", headers={"Authorization": "Bearer " + os.environ["DEPLOY_TOKEN"]})
+              with urllib.request.urlopen(request, timeout=30) as response:
+                  project = json.load(response)
+              assert project["id"] == project_id and project["accountId"] == os.environ["VERCEL_ORG_ID"], key
+              assert project.get("rootDirectory") == root, f"{key}: Root Directory must be {root}"
+              if key == "BACKEND_PROJECT_ID":
+                  assert project.get("sourceFilesOutsideRootDirectory") is True, "Enable source files outside the backend Root Directory"
+              print(f"Verified {project['name']}: {root}")
+          PY
+      - name: Deploy MCP, backend, then web and check production routes
+        env:
+          DEPLOY_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          trap 'rm -rf .vercel backend/.vercel amd/mcp/.vercel web/.vercel' EXIT
+          for service in MCP BACKEND WEB; do
+            project_key="${service}_PROJECT_ID"
+            export VERCEL_PROJECT_ID="${!project_key}"
+            # Run at the repo root: Vercel uses each project's Root Directory,
+            # and the backend build can access the shared triage modules and kit.
+            rm -rf .vercel
+            VERCEL_TOKEN="$DEPLOY_TOKEN" vercel pull --yes --environment=production --scope "$VERCEL_SCOPE"
+            env -u DEPLOY_TOKEN -u VERCEL_TOKEN vercel build --prod
+            deployment_url=$(VERCEL_TOKEN="$DEPLOY_TOKEN" vercel deploy --prebuilt --prod --scope "$VERCEL_SCOPE")
+            echo "${service}: ${deployment_url}" >> "$GITHUB_STEP_SUMMARY"
+            case "$service" in
+              MCP)
+                curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 5 "$MCP_URL/healthz" > "$RUNNER_TEMP/mcp-health.json"
+                jq -e '.ok == true' "$RUNNER_TEMP/mcp-health.json"
+                ;;
+              BACKEND)
+                curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 5 "$BACKEND_URL/health?deep=false" > "$RUNNER_TEMP/backend-live.json"
+                curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 5 "$BACKEND_URL/health" > "$RUNNER_TEMP/backend-health.json"
+                jq -e '.ok == true and .database.status == "up" and .mcp.status == "up"' "$RUNNER_TEMP/backend-health.json"
+                curl --fail-with-body --silent --show-error "$BACKEND_URL/docs" > /dev/null
+                curl --fail-with-body --silent --show-error "$BACKEND_URL/api/v1/flags?limit=500" > "$RUNNER_TEMP/flags.json"
+                jq -e '.items | type == "array"' "$RUNNER_TEMP/flags.json"
+                jq '{returned_flags: (.items | length), total_flags: .page.total}' "$RUNNER_TEMP/flags.json" >> "$GITHUB_STEP_SUMMARY"
+                ;;
+              WEB)
+                curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 5 "$WEB_URL/" > /dev/null
+                curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 5 "$WEB_URL/api/dashboard" > "$RUNNER_TEMP/dashboard.json"
+                jq -e 'has("stats") and has("flags") and (has("error") | not)' "$RUNNER_TEMP/dashboard.json"
+                ;;
+            esac
+          done
+      - name: Record production domains
+        run: |
+          {
+            echo "Commit: $DEPLOY_SHA"
+            echo "MCP: $MCP_URL"
+            echo "Backend: $BACKEND_URL"
+            echo "Web: $WEB_URL"
+            echo 'Authenticated MCP checks, browser rendering, and stepped replay still require the runbook verification.'
+          } >> "$GITHUB_STEP_SUMMARY"

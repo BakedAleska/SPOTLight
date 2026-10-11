@@ -1,0 +1,94 @@
+/* Chat-only motion, imported once by ChatApp. Global CSS with a `chat-`
+   prefix rather than a CSS module: next.config's Turbopack rule routes every
+   *.css file through Tailwind `as: "*.css"`, which compiles a .module.css as
+   plain global CSS and leaves its JS export empty.
+
+   Colours come from the theme tokens in globals.css; the reduced-motion rule
+   there already flattens every animation, and the block at the end of this
+   file swaps the shimmer for plain text. */
+
+/* "Thinking…" — a highlight sweeping through muted text. */
+.chat-shimmer {
+  color: var(--c-muted);
+  background: linear-gradient(90deg, var(--c-muted) 0%, var(--c-muted) 35%, var(--c-ink) 50%, var(--c-muted) 65%, var(--c-muted) 100%);
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: chat-shimmer 1.8s linear infinite;
+}
+
+@keyframes chat-shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: -150% 0; }
+}
+
+/* Streaming caret, placed after the last text block of the answer. */
+.chat-streaming > :last-child:is(p, h1, h2, h3, h4, h5, h6, blockquote)::after,
+.chat-streaming > :last-child:is(ul, ol) > li:last-child::after {
+  content: "";
+  display: inline-block;
+  width: 0.5em;
+  height: 1.05em;
+  margin-left: 0.15em;
+  vertical-align: -0.15em;
+  border-radius: 1px;
+  background: var(--c-accent);
+  animation: chat-blink 1s steps(1) infinite;
+}
+
+@keyframes chat-blink {
+  50% { opacity: 0; }
+}
+
+/* New turns settle in with opacity only. No transform: a transformed
+   ancestor would become the containing block for the fixed-position
+   citation popovers inside it. */
+.chat-fade-in {
+  animation: chat-fade-in 280ms var(--ease-settle) both;
+}
+
+@keyframes chat-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Three dots while waiting for the first token in fast mode. */
+.chat-dots span {
+  display: inline-block;
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 9999px;
+  background: var(--c-muted);
+  animation: chat-dot 1.2s ease-in-out infinite;
+}
+.chat-dots span:nth-child(2) { animation-delay: 0.15s; }
+.chat-dots span:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes chat-dot {
+  0%, 80%, 100% { opacity: 0.25; }
+  40% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chat-shimmer {
+    animation: none;
+    background: none;
+    -webkit-text-fill-color: currentColor;
+  }
+  .chat-dots span { animation: none; opacity: 0.6; }
+}
+
+/* Composer focus. The global `:focus-visible` outline is unlayered CSS, so it
+   beats Tailwind's layered `outline-none` and drew a square ring around the
+   textarea, sticking out of the rounded box. Here the textarea drops its own
+   outline (higher specificity, also unlayered) and the rounded container
+   shows the focus instead: a focus-coloured border plus a soft ring. */
+.chat-composer-input:focus-visible {
+  outline: none;
+}
+
+.chat-composer:has(.chat-composer-input:focus-visible) {
+  border-color: var(--c-focus);
+  box-shadow: 0 0 0 1px var(--c-focus), 0 0 0 4px color-mix(in srgb, var(--c-focus) 18%, transparent), var(--c-shadow);
+}

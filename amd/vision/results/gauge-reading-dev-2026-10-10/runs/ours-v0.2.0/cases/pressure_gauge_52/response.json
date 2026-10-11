@@ -1,0 +1,127 @@
+{
+ "media_id": "pressure_gauge_52",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "0.4",
+   "bbox": [
+    423,
+    202,
+    493,
+    261
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "0.6",
+   "bbox": [
+    561,
+    214,
+    637,
+    282
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "0.8",
+   "bbox": [
+    608,
+    344,
+    680,
+    407
+   ],
+   "conf": 0.998
+  },
+  {
+   "text": "MP",
+   "bbox": [
+    384,
+    504,
+    493,
+    572
+   ],
+   "conf": 0.999
+  },
+  {
+   "text": "a",
+   "bbox": [
+    471,
+    524,
+    527,
+    576
+   ],
+   "conf": 0.999
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "pressure",
+   "value": 0.2,
+   "unit": "psi",
+   "confidence": 0.3,
+   "method": "hough_ray_default_sweep",
+   "flags": [
+    "DEFAULT_SWEEP",
+    "UNIT_UNKNOWN",
+    "AMBIGUOUS_NEEDLE"
+   ],
+   "point": [
+    196,
+    319
+   ],
+   "note": "two needle candidates: -83° -> 0 psi and 109° -> 1 psi (two-ended needle (opposite arm 0.64 r long)); do not trust this value"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "psi",
+   "value": 0.2
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 30
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": -83.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 0.89
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.64
+  },
+  {
+   "name": "Full Scale",
+   "units": "psi",
+   "value": 0.8
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 313,
+ "version": {
+  "service": "0.2.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

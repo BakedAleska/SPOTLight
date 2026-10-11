@@ -1,0 +1,220 @@
+{
+ "media_id": "pressure_gauge_102",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "40",
+   "bbox": [
+    453,
+    186,
+    488,
+    216
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "50",
+   "bbox": [
+    497,
+    181,
+    532,
+    209
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "60",
+   "bbox": [
+    544,
+    199,
+    576,
+    227
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "30",
+   "bbox": [
+    424,
+    210,
+    460,
+    239
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "psi",
+   "bbox": [
+    493,
+    232,
+    528,
+    255
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "70",
+   "bbox": [
+    557,
+    228,
+    592,
+    258
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "20",
+   "bbox": [
+    406,
+    244,
+    441,
+    274
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "80",
+   "bbox": [
+    565,
+    266,
+    599,
+    295
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "10",
+   "bbox": [
+    406,
+    286,
+    439,
+    316
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "Tire Gauge",
+   "bbox": [
+    451,
+    302,
+    536,
+    342
+   ],
+   "conf": 0.999
+  },
+  {
+   "text": "90",
+   "bbox": [
+    557,
+    306,
+    589,
+    333
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "JACO",
+   "bbox": [
+    428,
+    337,
+    541,
+    394
+   ],
+   "conf": 0.999
+  },
+  {
+   "text": "100",
+   "bbox": [
+    525,
+    331,
+    568,
+    360
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "Luulun",
+   "bbox": [
+    550,
+    327,
+    604,
+    384
+   ],
+   "conf": 0.644
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "pressure",
+   "value": 87.8,
+   "unit": "psi",
+   "confidence": 0.3,
+   "method": "hough_ray_ransac_labels",
+   "flags": [
+    "AMBIGUOUS_NEEDLE"
+   ],
+   "point": [
+    606,
+    322
+   ],
+   "note": "two needle candidates: 111° -> 88 psi and -123° -> 3 psi (peak ratio 0.89); do not trust this value"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "psi",
+   "value": 87.8
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 30
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": 111.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 0.89
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.0
+  },
+  {
+   "name": "Full Scale",
+   "units": "psi",
+   "value": 100.0
+  },
+  {
+   "name": "Scale Labels Used",
+   "units": "",
+   "value": "10 of 10"
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 411,
+ "version": {
+  "service": "0.1.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

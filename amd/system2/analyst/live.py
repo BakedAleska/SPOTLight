@@ -51,6 +51,8 @@ IMAGE_DEADLINE_S = 25.0   # requests with image_b64 (SYSTEM2_IMAGE_DEADLINE_S); 
 IMAGE_DEADLINE_ENV = 'SYSTEM2_IMAGE_DEADLINE_S'
 DEADLINE_ENV = 'SYSTEM2_DEADLINE_S'   # text requests; default DEADLINE_S (raise only for slow local models)
 URL_ENV, MODEL_ENV, CACHE_ENV = 'SYSTEM2_LLAMA_URL', 'SYSTEM2_MODEL', 'SYSTEM2_CACHE_DIR'
+RECORD_ENV = 'SYSTEM2_RECORD_DIR'   # opt-in: one JSON line per request with every attempt's raw text (measurement runs)
+RECORD_FILE = 'system2-records.jsonl'
 LLAMA_KEY_ENV = 'SYSTEM2_LLAMA_API_KEY'   # Bearer key for a gateway in front of llama-server (never logged)
 VISION_MODEL_ENV = 'SYSTEM2_VISION_MODEL'   # model for requests with an image; default SYSTEM2_MODEL (backend.2)
 IMAGE_USED, IMAGE_TEXT_ONLY, IMAGE_NOT_USED = 'used', 'text_only', 'not_used'   # X-System2-Image values
@@ -86,8 +88,11 @@ def prompt_version(generator) -> str:
 
 
 def cache_dir_from_env(environ: Mapping[str, str] = os.environ) -> Optional[Path]:
-    """SYSTEM2_CACHE_DIR, else amd/system2/cache in a checkout, else None (the image has no writable default)."""
+    """SYSTEM2_CACHE_DIR ('off' disables the cache), else amd/system2/cache in a checkout, else None (the image has
+    no writable default). Measurement runs set 'off' so every request is a genuine generation."""
     env = (environ.get(CACHE_ENV) or '').strip()
+    if env.lower() == 'off':
+        return None
     if env:
         return Path(env)
     root = repo_root()
@@ -219,6 +224,59 @@ class ModelProbe:
 
 # ── assessor ─────────────────────────────────────────────────────────────────────────────────
 
+class RecordingGenerator:
+    """Wraps a generator and keeps every call's raw completion (or error) for the current request's thread.
+
+    Used only when SYSTEM2_RECORD_DIR is set. The pipeline's Attempt records keep statuses, errors and timings but
+    not the model text; measurement runs need the text to audit what the model actually said."""
+
+    def __init__(self, inner):
+        self.inner = inner
+        self._local = threading.local()
+
+    def __getattr__(self, name):   # model, vision_model, examples, ... come from the wrapped generator
+        return getattr(self.inner, name)
+
+    def __repr__(self):
+        return 'RecordingGenerator(%r)' % (self.inner,)
+
+    def start(self) -> None:
+        self._local.calls = []
+
+    def calls(self) -> list:
+        return list(getattr(self._local, 'calls', []))
+
+    def __call__(self, packet, errors=(), timeout_s=None):
+        t0 = time.monotonic()
+        call = {'retry_errors': list(errors), 'timeout_s': timeout_s, 'packet_has_image': packet.image is not None}
+        try:
+            g = self.inner(packet, errors, timeout_s=timeout_s)
+        except Exception as exc:
+            call.update(error='%s: %s' % (type(exc).__name__, str(exc)[:300]),
+                        wall_ms=int((time.monotonic() - t0) * 1000))
+            getattr(self._local, 'calls', []).append(call)
+            raise
+        call.update(text=g.text, model=g.model, finish_reason=g.finish_reason, prompt_tokens=g.prompt_tokens,
+                    completion_tokens=g.completion_tokens, tokens_per_sec=g.tokens_per_sec, image_used=g.image_used,
+                    wall_ms=int((time.monotonic() - t0) * 1000))
+        getattr(self._local, 'calls', []).append(call)
+        return g
+
+
+class RunRecorder:
+    """Appends one JSON line per /v1/assess request to <dir>/system2-records.jsonl (never the API key)."""
+
+    def __init__(self, directory: Path):
+        self.path = Path(directory) / RECORD_FILE
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        self._lock = threading.Lock()
+
+    def write(self, record: dict) -> None:
+        line = json.dumps(record, ensure_ascii=False, sort_keys=True, default=str)
+        with self._lock, open(self.path, 'a', encoding='utf-8') as fh:
+            fh.write(line + '\n')
+
+
 class LiveAssessor:
     """assess(body) -> (response, cache_status) through run_pipeline with `generator` (e.g. LlamaGenerator)."""
 
@@ -267,13 +325,30 @@ class LiveAssessor:
         if has_image:
             image = {True: IMAGE_USED, False: IMAGE_TEXT_ONLY}.get(run.image_used, IMAGE_NOT_USED)
             if run.image_used is False:
-                LOG.warning('system2 flag_id=%d: image rejected by the model server; answered text-only '
+                LOG.warning('system2 flag_id=%d: image not used in the accepted answer; answered text-only '
                             '(image_used=false)', prepared.flag_id)
         if key is None:
-            return response, 'off', False, image
-        if has_image and run.image_used is not True:
-            return response, 'miss', False, image   # never cache a text-only answer under the image key
-        return response, 'miss', self.cache.put(key, response), image
+            status, stored = 'off', False
+        elif has_image and run.image_used is not True:
+            status, stored = 'miss', False   # never cache a text-only answer under the image key
+        else:
+            status, stored = 'miss', self.cache.put(key, response)
+        self._record(body, prepared, status, stored, image, response, run, self.generator.calls() if recording else [],
+                     config.deadline_s)
+        return response, status, stored, image
+
+    def _record(self, body, prepared, status, stored, image, response, run, calls, deadline_s=None) -> None:
+        if self.recorder is None:
+            return
+        self.recorder.write({
+            'recorded_at': datetime.now(timezone.utc).isoformat(timespec='milliseconds'),
+            'request_id': getattr(body, 'request_id', None), 'flag_id': prepared.flag_id,
+            'packet_hash': packet_hash(prepared), 'prompt_ver': self.prompt_ver, 'model': self.model,
+            'vision_model': self.vision_model,
+            'image_sha256': prepared.image.sha256 if prepared.image is not None else None,
+            'deadline_s': deadline_s, 'cache': status, 'stored': stored, 'image_status': image,
+            'response': response.model_dump(mode='json'), 'run': run.to_dict() if run is not None else None,
+            'calls': calls})
 
     def assess_detail(self, body, refresh: bool = False) -> Tuple[BackendAssessResponse, str, bool]:
         """(response, 'hit'|'miss'|'off', stored); ValueError for malformed consumed values before any generation."""
@@ -320,7 +395,10 @@ def assessor_from_env(environ: Mapping[str, str] = os.environ) -> Optional[LiveA
         generator = LlamaGenerator(url, model=model, vision_model=vision_model,
                                    api_key=(environ.get(LLAMA_KEY_ENV) or '').strip() or None,
                                    timeout_s=deadline, image_timeout_s=image_deadline)
-        return LiveAssessor(generator, model, cache=ExplanationCache(cache_dir) if cache_dir is not None else None,
+        record_dir = (environ.get(RECORD_ENV) or '').strip()
+        recorder = RunRecorder(Path(record_dir)) if record_dir else None
+        return LiveAssessor(RecordingGenerator(generator) if recorder else generator, model,
+                            cache=ExplanationCache(cache_dir) if cache_dir is not None else None,
                             config=PipelineConfig(deadline_s=deadline, catalog=default_catalog()),
                             image_deadline_s=image_deadline,
                             probe=ModelProbe(generator.probe, interval_s=probe_s, timeout_s=probe_timeout))

@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
 import { ChevronRight } from "lucide-react";
 import { Panel } from "./Panel";
 import { SeverityBadge, severityAccent } from "./SeverityBadge";
@@ -75,6 +78,19 @@ export function PriorityQueue({
   delay?: number;
   onSelect?: (flag: Flag) => void;
 }) {
+  const list = useRef<HTMLDivElement>(null);
+  const [visibleHeight, setVisibleHeight] = useState<number>();
+
+  useEffect(() => {
+    const rows = Array.from(list.current?.children ?? []).slice(0, 2) as HTMLElement[];
+    if (!rows.length) return;
+    const measure = () => setVisibleHeight(rows.reduce((height, row) => height + row.offsetHeight, 0));
+    measure();
+    const observer = new ResizeObserver(measure);
+    rows.forEach((row) => observer.observe(row));
+    return () => observer.disconnect();
+  }, [flags]);
+
   return (
     <Panel
       title="Needs attention"
@@ -88,11 +104,9 @@ export function PriorityQueue({
           No open escalated flags need attention.
         </p>
       ) : (
-        /* Bounded, not h-full: the real queue is dozens of rows deep, and an
-           unbounded list would set the height of the whole dashboard grid and
-           drag the chart beside it down with it. The list scrolls inside the
-           panel instead. */
-        <div className="max-h-[min(70vh,44rem)] overflow-y-auto">
+        /* Fit exactly two complete rows, including wrapped text. The chart
+           stretches to this shared row height; remaining flags scroll here. */
+        <div ref={list} className="max-h-96 overflow-y-auto" style={{ maxHeight: visibleHeight }}>
           {flags.map((flag) => (
             <QueueRow key={flag.id} flag={flag} onSelect={onSelect} />
           ))}

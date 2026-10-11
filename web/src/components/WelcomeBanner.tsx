@@ -1,4 +1,5 @@
-import { ArrowRight, Radar } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import { SpotlightLogo } from "./SpotlightLogo";
 import { BannerControls } from "./BannerControls";
 import { TypeIn } from "./TypeIn";
 
@@ -33,11 +34,8 @@ import { TypeIn } from "./TypeIn";
    console someone opens at the top of every shift cannot make them wait
    through an intro. Everything below is timed backwards from it.
 
-   The mark deliberately has no motion of its own. Animating it would mean
-   writing motion for a specific glyph, and that work would be thrown away
-   with the placeholder. Dropping real art into the slot below gets the card's
-   entrance for free, and whatever motion it deserves can be decided once it
-   exists and has a shape worth moving. */
+   The supplied radar rings stay still while its offset arrow sweeps around
+   the center. Reduced motion restores the original static composition. */
 const HEADLINE = "What should I check first?";
 
 /** The claim in the body copy is passed in, not written here: the numbers come
@@ -54,18 +52,12 @@ export function WelcomeBanner({
     >
       <BannerControls />
 
-      {/* PLACEHOLDER ART — swap the child for the real logo; the wrapper holds
-          the position and size so nothing else has to change. Decoration only:
-          aria-hidden, and the banner reads fine without it. */}
+      {/* Decorative radar artwork; the offset arrow rotates independently. */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute -right-10 -bottom-16 size-[220px]"
       >
-        <Radar
-          size={220}
-          strokeWidth={1}
-          className="absolute inset-0 text-white/20"
-        />
+        <SpotlightLogo animated blips className="absolute inset-0 h-full w-full" />
       </div>
 
       <div className="relative max-w-2xl pt-8 sm:pt-0">

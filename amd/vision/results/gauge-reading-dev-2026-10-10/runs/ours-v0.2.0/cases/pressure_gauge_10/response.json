@@ -1,0 +1,161 @@
+{
+ "media_id": "pressure_gauge_10",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "0.4",
+   "bbox": [
+    479,
+    79,
+    524,
+    114
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "0.6",
+   "bbox": [
+    567,
+    71,
+    612,
+    105
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "0.8",
+   "bbox": [
+    616,
+    134,
+    660,
+    168
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "122",
+   "bbox": [
+    703,
+    153,
+    739,
+    202
+   ],
+   "conf": 0.646
+  },
+  {
+   "text": "0",
+   "bbox": [
+    460,
+    227,
+    480,
+    252
+   ],
+   "conf": 0.999
+  },
+  {
+   "text": "MPa",
+   "bbox": [
+    526,
+    219,
+    567,
+    242
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "psi",
+   "bbox": [
+    529,
+    237,
+    564,
+    263
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "150",
+   "bbox": [
+    635,
+    265,
+    691,
+    318
+   ],
+   "conf": 1.0
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "pressure",
+   "value": 0.9,
+   "unit": "MPa",
+   "confidence": 0.3,
+   "method": "hough_ray_ransac_labels",
+   "flags": [
+    "LABEL_OUTLIER",
+    "SHORT_NEEDLE"
+   ],
+   "point": [
+    690,
+    240
+   ],
+   "note": "needle at 119° reads 0.9 MPa"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "MPa",
+   "value": 0.9
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 30
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": 119.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 0.34
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.0
+  },
+  {
+   "name": "Full Scale",
+   "units": "MPa",
+   "value": 0.8
+  },
+  {
+   "name": "Scale Labels Used",
+   "units": "",
+   "value": "4 of 6"
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 450,
+ "version": {
+  "service": "0.2.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

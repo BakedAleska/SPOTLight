@@ -1,0 +1,18 @@
+{
+ "question_id": "pressure_gauge_8",
+ "question": "What is the reading of the instrument (brew pressure)?",
+ "evaluator": "interval_matching",
+ "evaluator_kwargs": {
+  "interval": [
+   0.9,
+   1
+  ],
+  "units": [
+   "bar"
+  ]
+ },
+ "meta_info": {
+  "source": "Self-collected",
+  "uploader": "Miguel"
+ }
+}

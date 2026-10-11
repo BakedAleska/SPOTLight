@@ -1,19 +1,16 @@
 """Import the shared System 1 code (`amd/system1/triage`) without copying it.
 
-The package lives at `<TRIAGE_DIR>/triage` (repo: `amd/system1/triage`; image: `/app/amd/system1/triage`).
+The package lives at `<TRIAGE_DIR>/triage` (repo: `amd/system1/triage`; image: `/app/amd/system1/triage`; Vercel:
+`backend/_shared/amd/system1/triage`, copied there at build time by `backend/vercel_build.py`).
 Only the pure-Python modules are imported (events, policy, questions, render, kit): no torch.
 """
 from __future__ import annotations
 
-import os
 import sys
-from pathlib import Path
 
-from ..config import _REPO_ROOT
+from ..config import triage_dir_from_env
 
-_TRIAGE_DIR = Path(os.environ.get("TRIAGE_DIR") or _REPO_ROOT / "amd" / "system1")
-if not _TRIAGE_DIR.is_absolute():
-    _TRIAGE_DIR = _REPO_ROOT / _TRIAGE_DIR
+_TRIAGE_DIR = triage_dir_from_env()
 if str(_TRIAGE_DIR) not in sys.path:
     sys.path.insert(0, str(_TRIAGE_DIR))
 

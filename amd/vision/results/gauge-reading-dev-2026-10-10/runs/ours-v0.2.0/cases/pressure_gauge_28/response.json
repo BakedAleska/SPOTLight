@@ -1,0 +1,213 @@
+{
+ "media_id": "pressure_gauge_28",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "40",
+   "bbox": [
+    466,
+    234,
+    488,
+    251
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "50",
+   "bbox": [
+    494,
+    221,
+    515,
+    242
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "60",
+   "bbox": [
+    526,
+    229,
+    548,
+    246
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "70",
+   "bbox": [
+    548,
+    246,
+    569,
+    264
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "30",
+   "bbox": [
+    448,
+    256,
+    470,
+    274
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "80",
+   "bbox": [
+    560,
+    272,
+    583,
+    289
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "20",
+   "bbox": [
+    439,
+    284,
+    462,
+    302
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "10",
+   "bbox": [
+    447,
+    313,
+    467,
+    328
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "American",
+   "bbox": [
+    466,
+    309,
+    509,
+    325
+   ],
+   "conf": 0.959
+  },
+  {
+   "text": "anby inc.",
+   "bbox": [
+    519,
+    307,
+    557,
+    325
+   ],
+   "conf": 0.915
+  },
+  {
+   "text": "90.",
+   "bbox": [
+    559,
+    301,
+    581,
+    318
+   ],
+   "conf": 0.977
+  },
+  {
+   "text": "100",
+   "bbox": [
+    536,
+    326,
+    565,
+    343
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "NOT",
+   "bbox": [
+    459,
+    350,
+    489,
+    375
+   ],
+   "conf": 0.99
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "pressure",
+   "value": 149.1,
+   "unit": "psi",
+   "confidence": 0.3,
+   "method": "hough_ray_ransac_labels",
+   "flags": [
+    "LABEL_OUTLIER",
+    "NEEDLE_OUTSIDE_SCALE",
+    "UNIT_UNKNOWN",
+    "AMBIGUOUS_NEEDLE"
+   ],
+   "point": [
+    467,
+    411
+   ],
+   "note": "two needle candidates: 153° -> 149 psi and 57° -> 36 psi (peak ratio 0.99); do not trust this value"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "psi",
+   "value": 149.1
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 30
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": 153.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 0.99
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.0
+  },
+  {
+   "name": "Full Scale",
+   "units": "psi",
+   "value": 100.0
+  },
+  {
+   "name": "Scale Labels Used",
+   "units": "",
+   "value": "6 of 8"
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 420,
+ "version": {
+  "service": "0.2.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

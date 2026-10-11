@@ -58,7 +58,7 @@ POST /v1/vision
  "annotated_image_b64": "<base64 JPEG>",
  "annotated_mime": "image/jpeg",
  "latency_ms": 412,
- "version": {"service": "0.1.0", "contract": "2026-10-10.vision.1", "rapidocr": "3.10.0", "onnxruntime": "1.31.0"}}
+ "version": {"service": "0.2.0", "contract": "2026-10-10.vision.1", "rapidocr": "3.10.0", "onnxruntime": "1.31.0"}}
 ```
 
 ### Fields
@@ -110,7 +110,7 @@ POST /v1/vision
 | kind | readings (in V# order) | method | key flags |
 |---|---|---|---|
 | `thermal` | `max_temperature` °C (primary), `p95_temperature`, `median_temperature`, `reference_temperature` (scene median outside the hotspot), `delta_t` | colorbar LUT + OCR'd tick fit (RANSAC, several crops merged), nearest-colour inversion with a distance cut-off, 5×5 smoothing; hotspot = largest blob ≥ max−3 °C | `CLIPPED` (max at the bar top: value = the top label, a lower bound; confidence ≤ 0.8), `LABEL_OUTLIER`, `USED_HINT`, `LOW_PALETTE_MATCH` |
-| `gauge` | `pressure` (psi/bar/kPa from OCR, default psi; `dial_value` for other units) | Hough circle; needle = ray-darkness argmax; OCR'd dial labels → angle↔value RANSAC fit; fallback hint/270° sweep | `AMBIGUOUS_NEEDLE` (second ray peak > 0.6 × first, or a two-ended needle whose opposite arm is ≥ 0.25 r long; confidence ≤ 0.3, note names both candidate values), `LABEL_OUTLIER`, `DEFAULT_SWEEP` (≤ 0.4), `USED_HINT`, `WEAK_NEEDLE`, `NEEDLE_OUTSIDE_SCALE` |
+| `gauge` | `pressure` (psi/bar/kPa/MPa from OCR or the `unit` hint; with neither, the number is shown as psi but flagged `UNIT_UNKNOWN`, confidence ≤ 0.3; `dial_value` for other units) | Hough circle; needle = ray-darkness argmax; OCR'd dial labels → angle↔value RANSAC fit; fallback hint/270° sweep | `AMBIGUOUS_NEEDLE` (second ray peak > 0.6 × first, or a two-ended needle whose opposite arm is ≥ 0.25 r long; confidence ≤ 0.3, note names both candidate values), `LABEL_OUTLIER`, `DEFAULT_SWEEP` (≤ 0.4), `USED_HINT`, `WEAK_NEEDLE`, `NEEDLE_OUTSIDE_SCALE`, `UNIT_UNKNOWN` (≤ 0.3, since 0.2.0), `SHORT_NEEDLE` (followed arm < 0.6 r, usually the counterweight; ≤ 0.3, since 0.2.0) |
 | `spectrogram` | `peak_frequency` kHz (primary), `band_energy_0_2khz`, `_2_5khz`, `_5_10khz`, `_10_20khz` (mean colour level 0–1), `high_frequency_ratio` (share of level above 5 kHz), `burst_count` | OCR axes → calibrate; jet-LUT inversion with off-table pixels masked; bursts = peaks (z > 1.5) of the >5 kHz level over time | always `RELATIVE_ONLY` (`absolute_db_available=false` in key_results; `Burst Times`, `Burst Interval` there too) |
 | `orbit_screenshot` / `acoustic_imager` | each numeric Key Results row: `spl_at_source` dB (primary), `snr_value`, `snr_threshold`, `max_temperature` / `min_temperature` converted to °C (primary = max; the °F value stays in key_results and the note), `reading` (+unit, primary), `reading_confidence` %, `anomaly_prediction`, … Confidence = 0.95 × OCR confidence. | OCR overview (≤2000 px) to find the badge, title and "Key Results"; second near-native OCR pass over the table; `kv_rows` (label … value by y) | `MISSING_VALUE` (label without a value, e.g. occluded by a thumbnail in 11.29.20), `NO_KEY_RESULTS` (dashboards, maps) |
 | `visual` | none | OCR only | — |
@@ -139,7 +139,7 @@ Same limits and errors as `/v1/vision`. Images are OCR'd at ≤2000 px long side
 back to original pixels.
 
 ## `GET /health`
-`{"status": "ok", "ocr_ready": true, "version": "0.1.0"}` (always 200 once the process is up; `ocr_ready=false` until
+`{"status": "ok", "ocr_ready": true, "version": "0.2.0"}` (always 200 once the process is up; `ocr_ready=false` until
 the OCR models have loaded).
 
 ## `GET /v1/info`

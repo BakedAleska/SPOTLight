@@ -4,3 +4,4 @@ uvicorn[standard]==0.34.2
 pydantic==2.11.4
 httpx==0.28.1
 psycopg[binary,pool]==3.2.9
+psycopg-pool>=3.2,<4   # AsyncConnectionPool(check=...) (SERVERLESS) needs >= 3.2; the `pool` extra leaves it unpinned

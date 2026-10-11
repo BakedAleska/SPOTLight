@@ -1,0 +1,444 @@
+{
+ "media_id": "pressure_gauge_6",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "750",
+   "bbox": [
+    342,
+    120,
+    380,
+    142
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "760",
+   "bbox": [
+    428,
+    136,
+    475,
+    176
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "740",
+   "bbox": [
+    246,
+    133,
+    290,
+    167
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "990",
+   "bbox": [
+    288,
+    169,
+    324,
+    196
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "1000",
+   "bbox": [
+    340,
+    166,
+    379,
+    185
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "1010",
+   "bbox": [
+    388,
+    169,
+    433,
+    201
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "1020",
+   "bbox": [
+    434,
+    192,
+    480,
+    235
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "730",
+   "bbox": [
+    175,
+    183,
+    217,
+    227
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "980",
+   "bbox": [
+    237,
+    190,
+    276,
+    227
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "EP",
+   "bbox": [
+    251,
+    214,
+    287,
+    250
+   ],
+   "conf": 0.999
+  },
+  {
+   "text": "CHO",
+   "bbox": [
+    442,
+    236,
+    487,
+    286
+   ],
+   "conf": 0.976
+  },
+  {
+   "text": "1030",
+   "bbox": [
+    474,
+    233,
+    512,
+    279
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "20",
+   "bbox": [
+    145,
+    270,
+    167,
+    298
+   ],
+   "conf": 0.994
+  },
+  {
+   "text": "096",
+   "bbox": [
+    186,
+    283,
+    209,
+    319
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "CYII",
+   "bbox": [
+    467,
+    279,
+    503,
+    357
+   ],
+   "conf": 0.592
+  },
+  {
+   "text": "1040",
+   "bbox": [
+    501,
+    287,
+    525,
+    330
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "780",
+   "bbox": [
+    544,
+    280,
+    569,
+    319
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "950",
+   "bbox": [
+    182,
+    337,
+    207,
+    373
+   ],
+   "conf": 0.941
+  },
+  {
+   "text": "1050",
+   "bbox": [
+    501,
+    339,
+    525,
+    384
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "B",
+   "bbox": [
+    467,
+    355,
+    498,
+    391
+   ],
+   "conf": 0.957
+  },
+  {
+   "text": "940",
+   "bbox": [
+    194,
+    388,
+    226,
+    427
+   ],
+   "conf": 0.928
+  },
+  {
+   "text": "700",
+   "bbox": [
+    169,
+    440,
+    214,
+    488
+   ],
+   "conf": 0.756
+  },
+  {
+   "text": "930",
+   "bbox": [
+    221,
+    432,
+    259,
+    469
+   ],
+   "conf": 0.862
+  },
+  {
+   "text": "CYb",
+   "bbox": [
+    425,
+    379,
+    493,
+    456
+   ],
+   "conf": 0.551
+  },
+  {
+   "text": "1060",
+   "bbox": [
+    475,
+    391,
+    514,
+    439
+   ],
+   "conf": 0.849
+  },
+  {
+   "text": "ANEROID",
+   "bbox": [
+    194,
+    490,
+    285,
+    558
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "r∏a",
+   "bbox": [
+    247,
+    468,
+    284,
+    501
+   ],
+   "conf": 0.838
+  },
+  {
+   "text": "0",
+   "bbox": [
+    303,
+    476,
+    319,
+    495
+   ],
+   "conf": 0.851
+  },
+  {
+   "text": "30",
+   "bbox": [
+    315,
+    492,
+    339,
+    515
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "10",
+   "bbox": [
+    367,
+    497,
+    381,
+    511
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "10",
+   "bbox": [
+    390,
+    461,
+    403,
+    476
+   ],
+   "conf": 0.91
+  },
+  {
+   "text": "mm Hg",
+   "bbox": [
+    418,
+    484,
+    467,
+    521
+   ],
+   "conf": 0.949
+  },
+  {
+   "text": "hPa",
+   "bbox": [
+    419,
+    471,
+    458,
+    504
+   ],
+   "conf": 0.997
+  },
+  {
+   "text": "1070",
+   "bbox": [
+    440,
+    434,
+    486,
+    476
+   ],
+   "conf": 0.875
+  },
+  {
+   "text": "008",
+   "bbox": [
+    488,
+    453,
+    529,
+    493
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "KTEC",
+   "bbox": [
+    322,
+    533,
+    411,
+    565
+   ],
+   "conf": 0.905
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "pressure",
+   "value": 909.0,
+   "unit": "psi",
+   "confidence": 0.3,
+   "method": "hough_ray_ransac_labels",
+   "flags": [
+    "LABEL_OUTLIER",
+    "NEEDLE_OUTSIDE_SCALE",
+    "UNIT_UNKNOWN",
+    "SHORT_NEEDLE",
+    "AMBIGUOUS_NEEDLE"
+   ],
+   "point": [
+    348,
+    530
+   ],
+   "note": "two needle candidates: -179° -> 909 psi and -24° -> 987 psi (two-ended needle (opposite arm 0.28 r long)); do not trust this value"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "psi",
+   "value": 909.0
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 30
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": -179.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 0.78
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.28
+  },
+  {
+   "name": "Full Scale",
+   "units": "psi",
+   "value": 1070.0
+  },
+  {
+   "name": "Scale Labels Used",
+   "units": "",
+   "value": "13 of 27"
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 844,
+ "version": {
+  "service": "0.2.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

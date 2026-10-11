@@ -1,0 +1,30 @@
+{
+ "question_id": "pressure_gauge_11",
+ "question": "What is the reading of the instrument?",
+ "evaluator": "multi_interval_matching",
+ "evaluator_kwargs": {
+  "intervals": [
+   [
+    12000,
+    13000
+   ],
+   [
+    840,
+    860
+   ]
+  ],
+  "units": [
+   [
+    "psi",
+    "pounds per square inch"
+   ],
+   [
+    "bar"
+   ]
+  ]
+ },
+ "meta_info": {
+  "source": "https://commons.wikimedia.org/wiki/File:MAXIMATOR-High-Pressure-Manometer-01a.jpg",
+  "uploader": "CEphoto, Uwe Aranas"
+ }
+}

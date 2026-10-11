@@ -1,0 +1,11 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "python3 vercel_build.py",
+  "regions": ["cle1"],
+  "functions": {
+    "index.py": {
+      "maxDuration": 300,
+      "excludeFiles": "{.env*,tests/**,.pytest_cache/**,.venv/**,**/__pycache__/**,requirements-dev.txt,pytest.ini,Dockerfile,Dockerfile.dockerignore,.dockerignore,README.md,vercel_build.py,.python-version}"
+    }
+  }
+}

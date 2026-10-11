@@ -1,0 +1,19 @@
+{
+ "question_id": "pressure_gauge_40",
+ "question": "What is the reading on the instrument(current reading)?",
+ "evaluator": "interval_matching",
+ "evaluator_kwargs": {
+  "interval": [
+   0.75,
+   0.8
+  ],
+  "units": [
+   "kgf/cm^2",
+   "kgf/cm²"
+  ]
+ },
+ "meta_info": {
+  "source": "https://www.youtube.com/watch?v=Yck8lf-cSzE",
+  "uploader": ""
+ }
+}

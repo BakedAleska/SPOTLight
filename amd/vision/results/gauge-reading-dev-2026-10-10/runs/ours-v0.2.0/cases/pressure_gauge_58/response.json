@@ -1,0 +1,202 @@
+{
+ "media_id": "pressure_gauge_58",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "10",
+   "bbox": [
+    170,
+    311,
+    211,
+    342
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "15",
+   "bbox": [
+    282,
+    311,
+    321,
+    343
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "US",
+   "bbox": [
+    206,
+    357,
+    231,
+    375
+   ],
+   "conf": 0.775
+  },
+  {
+   "text": "5",
+   "bbox": [
+    115,
+    384,
+    142,
+    417
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "Pressu",
+   "bbox": [
+    180,
+    377,
+    239,
+    401
+   ],
+   "conf": 0.922
+  },
+  {
+   "text": "Gauge",
+   "bbox": [
+    254,
+    377,
+    312,
+    405
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "20",
+   "bbox": [
+    332,
+    384,
+    372,
+    416
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "MPa",
+   "bbox": [
+    283,
+    437,
+    346,
+    465
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "0",
+   "bbox": [
+    147,
+    471,
+    171,
+    502
+   ],
+   "conf": 0.996
+  },
+  {
+   "text": "25",
+   "bbox": [
+    298,
+    467,
+    340,
+    501
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "MADE IN",
+   "bbox": [
+    175,
+    535,
+    258,
+    567
+   ],
+   "conf": 0.992
+  },
+  {
+   "text": "V JAPAN",
+   "bbox": [
+    242,
+    529,
+    314,
+    567
+   ],
+   "conf": 0.91
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "pressure",
+   "value": 12.8,
+   "unit": "MPa",
+   "confidence": 0.3,
+   "method": "hough_ray_ransac_labels",
+   "flags": [
+    "LABEL_OUTLIER",
+    "SHORT_NEEDLE",
+    "AMBIGUOUS_NEEDLE"
+   ],
+   "point": [
+    226,
+    296
+   ],
+   "note": "two needle candidates: 3° -> 13 MPa and 159° -> 28 MPa (two-ended needle (opposite arm 0.50 r long)); do not trust this value"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "MPa",
+   "value": 12.8
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 30
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": 3.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 500000.0
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.5
+  },
+  {
+   "name": "Full Scale",
+   "units": "MPa",
+   "value": 25.0
+  },
+  {
+   "name": "Scale Labels Used",
+   "units": "",
+   "value": "5 of 6"
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 399,
+ "version": {
+  "service": "0.2.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

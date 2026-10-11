@@ -1,0 +1,241 @@
+{
+ "media_id": "pressure_gauge_2",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "200",
+   "bbox": [
+    306,
+    239,
+    400,
+    304
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "100",
+   "bbox": [
+    216,
+    289,
+    301,
+    352
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "300",
+   "bbox": [
+    399,
+    286,
+    497,
+    364
+   ],
+   "conf": 0.846
+  },
+  {
+   "text": "DIN",
+   "bbox": [
+    333,
+    317,
+    373,
+    347
+   ],
+   "conf": 0.999
+  },
+  {
+   "text": "S",
+   "bbox": [
+    339,
+    349,
+    363,
+    383
+   ],
+   "conf": 0.991
+  },
+  {
+   "text": "-0",
+   "bbox": [
+    154,
+    388,
+    211,
+    439
+   ],
+   "conf": 0.743
+  },
+  {
+   "text": "400-",
+   "bbox": [
+    442,
+    399,
+    532,
+    459
+   ],
+   "conf": 0.935
+  },
+  {
+   "text": "C",
+   "bbox": [
+    331,
+    459,
+    348,
+    477
+   ],
+   "conf": 0.993
+  },
+  {
+   "text": "100",
+   "bbox": [
+    209,
+    483,
+    298,
+    544
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "1.4571",
+   "bbox": [
+    332,
+    475,
+    368,
+    495
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "500",
+   "bbox": [
+    397,
+    489,
+    489,
+    552
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "kPa",
+   "bbox": [
+    319,
+    510,
+    377,
+    554
+   ],
+   "conf": 0.998
+  },
+  {
+   "text": "5",
+   "bbox": [
+    454,
+    553,
+    479,
+    581
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "DOBBIE",
+   "bbox": [
+    318,
+    567,
+    379,
+    596
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "Kl.1,0",
+   "bbox": [
+    424,
+    587,
+    472,
+    617
+   ],
+   "conf": 0.781
+  },
+  {
+   "text": "Ban",
+   "bbox": [
+    306,
+    599,
+    379,
+    638
+   ],
+   "conf": 0.934
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "pressure",
+   "value": -26.0,
+   "unit": "kPa",
+   "confidence": 0.3,
+   "method": "hough_ray_ransac_labels",
+   "flags": [
+    "LABEL_OUTLIER",
+    "AMBIGUOUS_NEEDLE"
+   ],
+   "point": [
+    140,
+    436
+   ],
+   "note": "two needle candidates: -91° -> -26 kPa and 91° -> 406 kPa (two-ended needle (opposite arm 0.36 r long)); do not trust this value"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "kPa",
+   "value": -26.0
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 30
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": -91.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 0.75
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.36
+  },
+  {
+   "name": "Full Scale",
+   "units": "kPa",
+   "value": 500.0
+  },
+  {
+   "name": "Scale Labels Used",
+   "units": "",
+   "value": "6 of 8"
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 490,
+ "version": {
+  "service": "0.2.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

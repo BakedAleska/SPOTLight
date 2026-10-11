@@ -1,0 +1,19 @@
+{
+ "question_id": "pressure_gauge_15",
+ "question": "What is the reading of the pressure meter at present, which is pointed by the black arrow?",
+ "evaluator": "interval_matching",
+ "evaluator_kwargs": {
+  "interval": [
+   84,
+   86
+  ],
+  "units": [
+   "psi",
+   "pound per square inch"
+  ]
+ },
+ "meta_info": {
+  "source": "https://www.youtube.com/watch?v=HEBBYu_dv9Y",
+  "uploader": ""
+ }
+}

@@ -1,0 +1,222 @@
+{
+ "media_id": "pressure_gauge_110",
+ "kind": "gauge",
+ "router": {
+  "label": "gauge",
+  "method": "kind",
+  "confidence": 1.0
+ },
+ "ocr": [
+  {
+   "text": "250",
+   "bbox": [
+    320,
+    276,
+    371,
+    305
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "300",
+   "bbox": [
+    401,
+    294,
+    458,
+    346
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "200",
+   "bbox": [
+    231,
+    287,
+    288,
+    338
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "50",
+   "bbox": [
+    351,
+    358,
+    367,
+    372
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "2",
+   "bbox": [
+    520,
+    373,
+    548,
+    405
+   ],
+   "conf": 0.71
+  },
+  {
+   "text": "20",
+   "bbox": [
+    201,
+    404,
+    215,
+    420
+   ],
+   "conf": 0.925
+  },
+  {
+   "text": "R-22",
+   "bbox": [
+    318,
+    505,
+    353,
+    524
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "R-12",
+   "bbox": [
+    317,
+    516,
+    352,
+    535
+   ],
+   "conf": 0.994
+  },
+  {
+   "text": "R-502",
+   "bbox": [
+    311,
+    549,
+    349,
+    569
+   ],
+   "conf": 0.996
+  },
+  {
+   "text": "450",
+   "bbox": [
+    414,
+    529,
+    464,
+    579
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "500",
+   "bbox": [
+    333,
+    574,
+    385,
+    607
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "psi",
+   "bbox": [
+    320,
+    601,
+    342,
+    618
+   ],
+   "conf": 1.0
+  },
+  {
+   "text": "kgf/cm2",
+   "bbox": [
+    309,
+    614,
+    360,
+    636
+   ],
+   "conf": 0.894
+  },
+  {
+   "text": "35",
+   "bbox": [
+    354,
+    626,
+    387,
+    653
+   ],
+   "conf": 1.0
+  }
+ ],
+ "readings": [
+  {
+   "id": "V1",
+   "quantity": "pressure",
+   "value": 96.0,
+   "unit": "psi",
+   "confidence": 0.3,
+   "method": "hough_ray_ransac_labels",
+   "flags": [
+    "LABEL_OUTLIER",
+    "NEEDLE_OUTSIDE_SCALE",
+    "AMBIGUOUS_NEEDLE"
+   ],
+   "point": [
+    162,
+    482
+   ],
+   "note": "two needle candidates: -103° -> 96 psi and 79° -> 363 psi (two-ended needle (opposite arm 0.48 r long)); do not trust this value"
+  }
+ ],
+ "key_results": [
+  {
+   "name": "Reading",
+   "units": "psi",
+   "value": 96.0
+  },
+  {
+   "name": "Reading Confidence",
+   "units": "%",
+   "value": 30
+  },
+  {
+   "name": "Needle Angle",
+   "units": "deg",
+   "value": -103.0
+  },
+  {
+   "name": "Needle Peak Ratio",
+   "units": "",
+   "value": 0.89
+  },
+  {
+   "name": "Opposite Arm Length",
+   "units": "r",
+   "value": 0.48
+  },
+  {
+   "name": "Full Scale",
+   "units": "psi",
+   "value": 500.0
+  },
+  {
+   "name": "Scale Labels Used",
+   "units": "",
+   "value": "5 of 8"
+  }
+ ],
+ "comparison": null,
+ "alert": null,
+ "flags": [],
+ "annotated_image_b64": null,
+ "annotated_mime": "image/jpeg",
+ "latency_ms": 480,
+ "version": {
+  "service": "0.1.0",
+  "contract": "2026-10-10.vision.2",
+  "rapidocr": "3.10.0",
+  "onnxruntime": "1.31.0",
+  "opencv": "5.0.0.93"
+ },
+ "work_scale": 1.0
+}

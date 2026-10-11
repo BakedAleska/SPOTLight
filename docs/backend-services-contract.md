@@ -5,7 +5,6 @@ Companion to `docs/system2-rag-contract.md` (Neon tables, embedding API, MCP). *
 ## Services and ports (one container each; see CLAUDE.md "Engineering rules")
 | Service | Folder | Port | Owner |
 |---|---|---|---|
-| Web dashboard (Next.js dev server; calls the backend via `BACKEND_URL`) | `web/` | 3000 | frontend |
 | Backend API (FastAPI) | `backend/` | 8000 | backend agent |
 | System 1: Laya inference | `amd/system1/service/` | 8082 | System 1 service agent |
 | Embedding service | `amd/embed/` | 8081 | pgvector agent |
@@ -63,9 +62,10 @@ is the repo root, so the image can COPY `amd/system1/triage/`. Laya is pinned to
 
 ## Backend API (FastAPI), port 8000
 The route tree agreed with the user (versioned under `/api/v1`):
-`events` (POST ingest, batch, GET feed) · `replay` (start/stop/status) · `flags` (list, get, context, explain, ack) ·
+`events` (POST ingest, batch, GET feed) · `replay` (start/stop/status, + step in stepped mode) · `flags` (list, get, context, explain, ack) ·
 `missions` (list, get, timeline, debrief) · `system1` (predict proxy, forecast) · `assets` · `locations` ·
-`insights` (overview, reliability) · `search` (RAG) · `ops` (model-call stats, jobs, reset-demo) · `/health`.
+`insights` (overview, reliability) · `search` (RAG) · `ops` (model-call stats, jobs, reset-demo) · `ask` (orchestrator proxy) ·
+`chat` (AI Assistance: conversations CRUD, models, suggestions, SSE messages; `docs/chat-contract.md`) · `/health`.
 
 Ingest pipeline for `POST /api/v1/events`:
 1. Append verbatim to `raw.spot_event_log`.
@@ -96,7 +96,7 @@ Every step logs to `app.*` with one `request_id`.
 | `TRIAGE_MODE` | `serial` or `parallel` (see step 6) | `serial` |
 | `SYSTEM1_TIMEOUT_S` / `EMBED_TIMEOUT_S` / `MCP_TIMEOUT_S` / `SYSTEM2_TIMEOUT_S` | per-call timeouts | `5` / `10` / `15` / `60` |
 | `SEARCH_EMBED_TIMEOUT_S` | `/search` waits this long for the query embedding, then falls back to full text (CPU embedder ~2.3 s) | `4` |
-| `MCP_AUTH_TOKEN` | sent as `Authorization: Bearer …` when the MCP server requires it | unset |
+| `MCP_AUTH_TOKEN` | sent as `Authorization: Bearer …` when the MCP server requires it (always on Vercel, `https://<mcp-project>.vercel.app/mcp`; `amd/mcp/README.md`) | unset |
 | `SYSTEM2_API_KEY` | sent as `X-API-Key` to System 2 | unset |
 | `EMBED_DIM`, `EMBED_DOC_PREFIX` | checked on every embedding / prepended to operator-note documents | `1024` / empty |
 | `REPLAY_SPEED`, `REPLAY_MAX_GAP_S` | replay pace (robot seconds per wall second; cap per wait) | `60`, `2` |
@@ -110,6 +110,66 @@ Every step logs to `app.*` with one `request_id`.
 | `ORCHESTRATOR_TIMEOUT_S` | per-call cap for orchestrator calls; `/explain` also caps it at the deadline minus the reserve (45 - 3 = 42) | `42` |
 | `CORS_ORIGINS` | comma-separated browser origins allowed by CORS (the dashboard's origin; `*` is not the default) | `http://localhost:3000` |
 | `DB_POOL_MAX`, `LOG_REQUESTS` | | `10`, `1` |
+| `SERVERLESS` | `1` = no per-process assumptions (see "Serverless deployment"): pool `min_size` 0 + a connection check on checkout, pending log writes awaited before the response. Unset = on when Vercel's `VERCEL` env var is set | auto |
+| `DB_POOL_MIN` | pool connections kept open | `1` (`0` when serverless) |
+| `REPLAY_MODE` | `background` (asyncio task, Docker) or `stepped` (state in `replay_runs`, driven by `POST /replay/step`) | `background` (`stepped` when serverless) |
+| `REPLAY_STEP_BUDGET_S` | default time budget of one `POST /replay/step` | `10` |
+| `GEMINI_API_KEY` | Google AI Studio key for `/api/v1/chat` (header `x-goog-api-key` only; never logged or returned). Unset -> `/chat/models` `configured: false`, `POST .../messages` 503 `gemini_unset` | unset |
+| `GEMINI_BASE_URL` | Gemini API root | `https://generativelanguage.googleapis.com/v1beta` |
+| `CHAT_MODELS` | comma-separated model ids, in picker order (unknown ids work with a derived label). Gemma (`gemma-4-31b-it`) is opt-in | `gemini-3.8-flash,gemini-3.5-flash,gemini-3.5-flash-lite` |
+| `CHAT_DEFAULT_MODEL` | default model (first of `CHAT_MODELS` if not listed there) | `gemini-3.8-flash` |
+| `CHAT_TITLE_MODEL` | one `generateContent` call (6 s, `thinkingLevel: minimal`, 40 output tokens) for a 3-6 word title after the first answer; empty/`none` = auto titles only | `gemini-3.1-flash-lite` |
+| `CHAT_TIMEOUT_S` | whole Gemini streaming call | `120` |
+| `CHAT_RETRIEVAL_BUDGET_S` | retrieval deadline before the call (embed capped at min(`SEARCH_EMBED_TIMEOUT_S`, 60 %)) | `8` |
+| `CHAT_HISTORY_MESSAGES` | stored messages sent as plain history turns (never as evidence) | `12` |
+
+### Serverless deployment and stepped replay (ADDED 2026-10-10; additive)
+The backend also runs as a Vercel Python function (Root Directory `backend/`, entry `backend/index.py`, config
+`backend/vercel.json`; runbook: `backend/README.md` "Deploy on Vercel"). Instances there are not sticky and can be
+frozen between requests, so no state that must survive may live only in process memory. Docker Compose is unchanged
+(`background` replay).
+- **Shared code.** Vercel bundles only the Root Directory, so the build command `python3 vercel_build.py` copies
+  `amd/system1/triage/{__init__,events,kit,policy,questions,render}.py` and `amd/system1/data/kit/` into
+  `backend/_shared/amd/system1/` (git-ignored, never committed). `TRIAGE_DIR`/`KIT_DIR` defaults use the repo copy
+  when it exists (local, Docker, CI) and `_shared` otherwise, so the drift guard keeps testing the one canonical copy.
+- **Stepped replay** (`REPLAY_MODE=stepped`). Same `POST /replay/start` body and `GET /replay/status` /
+  `POST /replay/stop` shapes; the status adds `mode: "stepped"`, `cursor` and `next_due_in_s`. The run lives in table
+  `replay_runs` (`db/migrations/010_replay_runs.sql`): the selected `event_ids` (fixed at start), `next_index`,
+  `counts`, `last_event`, `state` (`running | stopped | finished | error`) and a lease. At most one run is `running`
+  (partial unique index), so a second start is 409 whichever instance gets it.
+- `POST /api/v1/replay/step {"run_id"?, "budget_s"? (0.5-60, default REPLAY_STEP_BUDGET_S), "max_events"? (1-500,
+  default 100)}` (admin): takes the run's lease, ingests the events that are due, stops at the budget or at
+  `max_events`, and returns the status plus `step: {"ingested", "elapsed_ms", "busy", "done"}`. An event is due when
+  its paced offset (the background mode's gaps: robot time / `speed`, each capped at `max_gap_s`; `speed=0` = all
+  due at once) is at most the time since `started_at`. `next_due_in_s` says when the next event is due. A step that
+  finds the lease held by another step returns at once with `busy: true` (no error). With no running run it returns
+  the last run's status with `done: true`. 409 `replay_mode` in `background` mode; 503 without a database.
+- **Idempotent.** `next_index` and `counts` are written after every event, and only by the lease holder; a step
+  killed mid-run loses at most the event in flight, which the next step re-ingests under the same request id
+  `rp<run_id>-<event_id>` (raw log `ON CONFLICT DO NOTHING`, events/flags upserts). A lease expires after the step's
+  budget + 30 s, so a frozen or killed instance never blocks the run for long. `reset-demo` and `stop` end the run.
+- **Driving it.** The client calls start, then `step` in a loop (sleep `min(next_due_in_s, 2)` when it is > 0) until
+  `state != "running"`. Today the driver is the `curl` loop in `backend/README.md` (the web app has no replay
+  control); no process has to stay alive between calls, but the replay only advances while something calls `step`.
+- **Per-instance state (documented, not shared):** circuit breakers, the System 1 `busy` guard, the column cache,
+  `ops/model-calls` `routing.since_start` counters, `/health`'s `replay` (the last status this instance saw) and the
+  ACTION_STARTED detail cache for actions the kit lacks. Each instance learns them on its own; none is needed for
+  the stored data to be correct.
+
+### Web console consumption (updated 2026-10-10)
+The Next.js console (`web/`, :3000) opens no database connection and calls no model service.
+The browser polls `/api/dashboard` every 10 seconds; `web/src/lib/backend.ts` makes server-side,
+uncached reads of `/insights/overview`, `/flags?status=OPEN&limit=500`, `/assets`, `/locations`,
+and `/insights/reliability?group_by=action_type` (the success-by-inspection-type chart). Backend flag order and scores are preserved.
+Overview cards supply mission counts, hidden failures, battery success and matched-battery V2 gain.
+Flag detail, explanation and action routes proxy to FastAPI, controlled by `FEATURE_FLAG_DETAILS`,
+`FEATURE_FLAG_EXPLANATIONS` and `FEATURE_FLAG_ACTIONS`. These switches are not authentication.
+`BACKEND_URL` includes `/api/v1` (Docker default `http://backend:8000/api/v1`, overridden by
+`WEB_BACKEND_URL`); `EXPLAIN_TIMEOUT_MS` defaults to 50000. Neither reaches the browser.
+The server renders the initial dashboard and `/api/dashboard` uses the same loader. Backend failure
+returns explicitly labeled challenge-kit data (`source: "kit"`, `degraded` message), with details,
+actions and explanations disabled so sample IDs never reach live flag routes. Successful backend
+reads return `source: "backend"`; polling can recover automatically. `/api/health` checks frontend liveness.
 
 ### Admin endpoints (ADDED 2026-10-10, audit H3)
 `/api/v1/ops/*`, `/api/v1/replay/*`, `POST /api/v1/events` and `POST /api/v1/events/batch` change or wipe state, so
@@ -173,6 +233,54 @@ is unchanged.
 - `app.model_calls`: orchestrator calls are logged as `system = 'system2'` (the table's CHECK allows
   system1/system2/embed) with `endpoint = 'orchestrator:/v1/assess'` (or `/v1/ask`) and `metadata.via =
   'orchestrator'`, `route`, `source`, `system2_path`.
+
+### Live simulation (ADDED 2026-10-11; additive. Plan: `docs/LIVE-SIM-PLAN.md`, runbook: `docs/LIVE-RUNBOOK.md`)
+An operator queues one of five routes on the web console (`/live`); the **live runner** (`scripts/live_runner.py`, on
+the presenter laptop, the only machine that reaches the AMD box) claims it and walks its 8 stops. Vercel never talks to
+the box: the runner calls Laya, vision, System 2 and the embedder through SSH tunnels and posts every result here.
+Tables: `live_runs`, `live_captures` (`db/migrations/013_live.sql`). Routes: `backend/app/data/live_routes.json`
+(each stop = a kit action, `source_action_id`, with the rules' `planned_verdict`).
+- **What is real.** Each stop's robot log is the kit row of `source_action_id`, re-sent now as a new event under a
+  fresh action id `LIVE-<run_id>-<stop>` (mission `LIVE-<run_id>`), so a re-run never updates an earlier run's flags or
+  predictions. Values are never invented. The photo is a kit sample image picked by action type (`photo.label =
+  "simulated capture"`); vision rows are `pairing: "demo"` and never judge the asset. Red/green is the combined
+  decision of Laya and the rules in `TRIAGE_MODE=parallel` (either escalates; the rules' priority is a floor).
+- **Public** (the console polls every 2 s): `GET /live/routes`; `GET /live/runs?limit` (newest first, with
+  `red`/`green` counts); `GET /live/runs/{run_id}` (`{run, route, captures}`); `GET /live/captures?run_id&after`
+  (captures updated after the cursor, plus a new `cursor`); `GET /live/kg?run_id` (live KG nodes/edges of the run and
+  graph totals); `GET /live/preview?route_id` (every stop's canonical action event + rules verdict; no writes).
+- **Admin** (`X-Admin-Token`): `POST /live/runs {route_id, requested_by}` queues a run (`409 live_conflict` while one
+  is pending/running; a run with no progress for 10 min is marked `error` and stops blocking);
+  `POST /live/runs/{id}/cancel`. The runner: `POST /live/claim {runner}` (oldest pending -> running, logs
+  `MISSION_STARTED`; `{run: null}` when idle) -> per stop `i`:
+  1. `POST /live/runs/{id}/stops/{i}/start` logs `ACTION_STARTED` (no Laya call) and creates the capture
+     (`phase: arrived`, the map shows SPOT there). Returns `action_event`, the canonical action event the result will
+     be triaged on; the runner sets its `timestamp` to the result time.
+  2. The runner calls Laya `/v1/predict` with that event (kind `action`).
+  3. `POST .../stops/{i}/result {timestamp, laya}`: `laya` is `{status: "ok", answers, model, latency_ms, device,
+     fine_tuned}` or `{status: "unavailable", error}` (rules-only, `laya_unavailable`). The 7-step ingest runs with
+     these answers instead of calling `SYSTEM1_URL` (`IngestPipeline.ingest(..., laya=...)`; the Laya call is logged to
+     `app.model_calls` with `metadata.via = "live_runner"`). Writes `raw.spot_event_log` (source `live`), `events`
+     (`mission_id` NULL: live missions are not kit missions; the live ids are in `payload.live`/`payload.mission`),
+     `system1_predictions`, `flags` (red only), the capture (`phase: triaged`, verdict, Laya, rules, decision), the
+     event document `event:act-LIVE-<run>-<stop>` and the live KG rows. Returns `system2_request` (the System 2
+     `/v1/assess` body: a packet in the MCP `get_flag_context` shape, `packet_version: "1-live"`; `flag_id` is the
+     flag for a red stop, the `capture_id` for a green one, which has no flag), the photo, and `embed`: texts to embed.
+  4. The runner (in the background while SPOT walks on) sends the photo to vision, adds the `V#` rows and OCR to
+     `context` and calls System 2 with `image_b64`; then `POST .../stops/{i}/analysis {photo{path, sha256, bytes},
+     vision | vision_error, system2_request, system2 | system2_error, system2_ms, image_status, timings}`. A System 2
+     answer on a model path is stored as `qwen_source: system2` (assessment `DONE` for a red stop, `explanation:<id>`
+     document + KG node); otherwise the backend builds the checked template (`qwen_source: template`, assessment
+     `TEMPLATE`, never indexed) and says why in `qwen.fallback_reason`. Returns `embed` for the explanation.
+  5. `POST /live/runs/{id}/embeddings {model, items[{key, text, vector}]}`: `key` is `doc:<doc_id>` or
+     `node:<node_id>`; a vector is stored only if the row's stored text equals `text` and it has `EMBED_DIM` values.
+     Document-backed KG nodes take their document's vector.
+  `POST /live/runs/{id}/finish {status: done|error, error}` logs `MISSION_COMPLETED` (stored, not triaged) and sets
+  `counts` (`red`, `green`, `qwen`, `template`, `laya_live`, `stops`). Errors: `404 live_not_found`, `409
+  live_conflict` (e.g. a stop on a run that is not running, so a cancelled run stops the runner).
+- **Ingest additions** (all additive): `details.source_action_id` makes an unknown action id inherit that kit row;
+  `details.reading` / `details.anomaly` (kit rows) are used instead of looking them up by action id; `details.mission`
+  is the mission record for a live event; `details.live` marks a live event.
 
 ### Backend details (ADDED 2026-10-10 by the backend agent; additive)
 - **`flags.reasons`** is a list, verdicts first: `{"rule": "laya_verdict", "verdict", "confidence", "priority",

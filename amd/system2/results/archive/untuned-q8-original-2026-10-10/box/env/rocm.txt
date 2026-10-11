@@ -1,0 +1,5 @@
+rocm-sdk version: 10.0.0
+rocm-sdk root: /opt/venv/lib/python3.14/site-packages/_rocm_sdk_devel
+hipconfig --version: 7.15.26333-0000000
+clang: AMD clang version 23.0.0git (https://github.com/ROCm/llvm-project.git 8f497e0992fb7513f7f78a6f6b6f1056c375e961)
+LD_LIBRARY_PATH: /opt/venv/lib/python3.14/site-packages/_rocm_sdk_devel/lib
