@@ -12,8 +12,10 @@ with expected output and a troubleshooting table, is at the top of `docs/AMD-GPU
    `llm`, `embed` and `system1` RUNNING. If not (a relaunch wipes `/root`), run
    `SPOT_REF=main deploy/amd-native/laptop/bootstrap.sh` and then `deploy/amd-native/laptop/push_laya.sh`.
 4. **Tunnel:** `deploy/amd-native/laptop/tunnel.sh`, kept running in its own terminal. `ssh -L` is refused by the
-   box. It serves `localhost:18080` (llama-server), `:18081` (embed) and `:18082` (Laya).
-5. **Stack:** set `.env` as in "Mode 2: `hybrid`" below, run `make up`, then check
+   box. It serves `localhost:18080` (llama-server), `:18081` (embed), `:18082` (Laya) and `:18083` (System 2).
+5. **Vercel deployment:** expose 18082/18081/18083 with `cloudflared tunnel --url ...`, then run
+   `deploy/amd-native/laptop/show_vercel_env.sh <urls>` and set what it prints in Vercel (`deploy/amd-native/README.md`).
+   **Or a local stack:** set `.env` as in "Mode 2: `hybrid`" below, run `make up`, then check
    `curl -s localhost:8000/health | jq .system2`. `model_status: up` means the 27B is answering.
 
 Without the box, `COMPOSE_PROFILES=local` runs everything on CPU. System 2 is then its packet-grounded stub

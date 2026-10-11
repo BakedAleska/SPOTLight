@@ -7,6 +7,7 @@
 #   llm      127.0.0.1:8080  llama-server, Qwen3.8-27B Q8_0 + mmproj (docs/AMD-RUNS-2026-10-10.md)
 #   embed    127.0.0.1:8081  amd/embed, Qwen3-Embedding-0.6B
 #   system1  127.0.0.1:8082  amd/system1/service, Laya (base until ../laptop/push_laya.sh installs the fine-tune)
+#   system2  127.0.0.1:8083  amd/system2, live checked pipeline straight to llm (key: /root/spot-secrets.env)
 #
 # Env overrides: SPOT_REF (git ref of the repo to run, default main; SPOT_REFRESH=1 re-downloads the same ref, e.g.
 # a branch that moved), LLAMA_CPP_REF, SKIP_LLM=1 (no GGUF download or llama.cpp build).
@@ -99,7 +100,19 @@ if [ ! -f /root/venv-gpu/.ok ]; then
   touch /root/venv-gpu/.ok
 fi
 
-# ── 5. services under supervisord (no systemd in the pod) ───────────────────────────────────────────
+# ── 5. System 2 (CPU; amd/system2): own venv, and an API key generated once on the box, never in the repo ───────
+step "system2"
+if [ ! -f /root/venv-s2/.ok ]; then
+  rm -rf /root/venv-s2 && /opt/venv/bin/python -m venv /root/venv-s2
+  /root/venv-s2/bin/pip install -q --retries 10 --timeout 120 -r /root/SpotTheDOT/amd/system2/requirements.txt
+  touch /root/venv-s2/.ok
+fi
+if ! grep -q '^SYSTEM2_API_KEY=' /root/spot-secrets.env 2>/dev/null; then
+  (umask 077; echo "SYSTEM2_API_KEY=s2-$(openssl rand -hex 24)" >> /root/spot-secrets.env)
+fi
+mkdir -p /root/s2cache
+
+# ── 6. services under supervisord (no systemd in the pod) ───────────────────────────────────────────
 step "supervisord"
 cp "$HERE/supervisord.conf" /root/supervisord.conf
 cp "$HERE/stdio_bridge.py" /root/stdio_bridge.py
@@ -107,7 +120,7 @@ cp "$HERE/spot.env" /root/spot.env
 [ -x /root/llama.cpp/build/bin/llama-server ] || sed -i 's/^autostart=true ; llm$/autostart=false ; llm/' /root/supervisord.conf
 if $SUPERVISORCTL pid >/dev/null 2>&1; then
   $SUPERVISORCTL reread && $SUPERVISORCTL update
-  [ "$REPO_CHANGED" = 1 ] && $SUPERVISORCTL restart embed system1
+  [ "$REPO_CHANGED" = 1 ] && $SUPERVISORCTL restart embed system1 system2
 else
   /root/venv-gpu/bin/supervisord -c /root/supervisord.conf
 fi

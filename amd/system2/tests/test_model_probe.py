@@ -225,3 +225,19 @@ def test_env_sets_probe_interval_and_timeout():
 def test_env_rejects_out_of_range(name, value):
     with pytest.raises(RuntimeError, match=name):
         assessor_from_env({'SYSTEM2_LLAMA_URL': 'http://127.0.0.1:18080', 'SYSTEM2_MODEL': 'm', name: value})
+
+
+def test_env_keeps_recorder_and_probe_together(tmp_path):
+    """Regression: a merge of the model probe with SYSTEM2_RECORD_DIR recording once dropped the recorder."""
+    a = assessor_from_env({'SYSTEM2_LLAMA_URL': 'http://127.0.0.1:18080', 'SYSTEM2_MODEL': 'm',
+                           'SYSTEM2_RECORD_DIR': str(tmp_path)})
+    assert a.recorder is not None and a.probe is not None
+    assert a.probe._probe.__self__ is a.generator.inner   # probes the real generator, not the recording wrapper
+
+
+def test_env_keeps_recorder_and_probe_together(tmp_path):
+    """Regression: a merge of the model probe with SYSTEM2_RECORD_DIR recording once dropped the recorder."""
+    a = assessor_from_env({'SYSTEM2_LLAMA_URL': 'http://127.0.0.1:18080', 'SYSTEM2_MODEL': 'm',
+                           'SYSTEM2_RECORD_DIR': str(tmp_path)})
+    assert a.recorder is not None and a.probe is not None
+    assert a.probe._probe.__self__ is a.generator.inner   # probes the real generator, not the recording wrapper

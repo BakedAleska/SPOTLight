@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Laptop -> AMD box tunnel for hybrid mode (docs/RUNNING.md): 127.0.0.1:18080 llama-server, :18081 embed, :18082 Laya.
+# Laptop -> AMD box tunnel: 127.0.0.1:18080 llama-server, :18081 embed, :18082 Laya, :18083 System 2.
 # Keeps one multiplexed SSH master connection up and runs exec_tunnel.py on top of it (the box's sshd refuses -L).
 # Leave it running in a terminal; Ctrl-C stops both. Check: curl -s localhost:18082/health
 set -uo pipefail

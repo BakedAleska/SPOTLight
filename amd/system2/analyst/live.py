@@ -282,8 +282,9 @@ class LiveAssessor:
 
     def __init__(self, generator, model: str, config: Optional[PipelineConfig] = None,
                  cache: Optional[ExplanationCache] = None, image_deadline_s: float = IMAGE_DEADLINE_S,
-                 probe: Optional[ModelProbe] = None):
-        self.generator, self.model, self.cache, self.probe = generator, model, cache, probe
+                 recorder: Optional[RunRecorder] = None, probe: Optional[ModelProbe] = None):
+        self.generator, self.model, self.cache, self.recorder = generator, model, cache, recorder
+        self.probe = probe
         self.vision_model = getattr(generator, 'vision_model', None) or model
         self.config = config if config is not None else PipelineConfig(deadline_s=DEADLINE_S, catalog=default_catalog())
         self.image_config = replace(self.config, deadline_s=float(image_deadline_s))   # only requests with an image
@@ -310,12 +311,18 @@ class LiveAssessor:
         if key is not None and not refresh:
             cached = self.cache.get(key, prepared, self.config.catalog)
             if cached is not None:   # image requests only ever store answers that saw the image
-                return cached, 'hit', True, IMAGE_USED if has_image else None
+                image = IMAGE_USED if has_image else None
+                self._record(body, prepared, 'hit', False, image, cached, None, [])
+                return cached, 'hit', True, image
+        recording = self.recorder is not None and isinstance(self.generator, RecordingGenerator)
+        if recording:
+            self.generator.start()
+        config = self.image_config if has_image else self.config
         if self.probe is not None:
             self.probe.begin()
         answered = False
         try:
-            run = run_pipeline(body, self.generator, self.image_config if has_image else self.config)
+            run = run_pipeline(body, self.generator, config)
             answered = any(a.status in ANSWERED for a in run.attempts)
         finally:
             if self.probe is not None:
@@ -400,7 +407,7 @@ def assessor_from_env(environ: Mapping[str, str] = os.environ) -> Optional[LiveA
         return LiveAssessor(RecordingGenerator(generator) if recorder else generator, model,
                             cache=ExplanationCache(cache_dir) if cache_dir is not None else None,
                             config=PipelineConfig(deadline_s=deadline, catalog=default_catalog()),
-                            image_deadline_s=image_deadline,
+                            image_deadline_s=image_deadline, recorder=recorder,
                             probe=ModelProbe(generator.probe, interval_s=probe_s, timeout_s=probe_timeout))
     except (ValueError, OSError) as exc:
         raise RuntimeError('live System 2 config unusable (%s %s): %s'

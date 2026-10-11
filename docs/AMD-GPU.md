@@ -63,16 +63,21 @@ deploy/amd-native/laptop/push_laya.sh                 # fine-tuned Laya, ~10 min
 ```
 `SPOT_REF` must be a ref already pushed to GitHub, because the box downloads the repo itself.
 
-**8. Connect your laptop to the services.** Use the exec tunnel, not `ssh -L`: the box's sshd refuses port
+**8. Connect your laptop to the box's services.** Use the exec tunnel, not `ssh -L`: the box's sshd refuses port
 forwarding. Keep it running in its own terminal.
 ```bash
 deploy/amd-native/laptop/tunnel.sh
 curl -s localhost:18080/health      # {"status":"ok"}                     llama-server, Qwen3.8-27B
 curl -s localhost:18081/health      # {"status":"ok",...,"device":"cuda"} embed
 curl -s localhost:18082/v1/model    # "fine_tuned": true, "device": "cuda:0"   Laya
+curl -s localhost:18083/health      # "mode":"live", "model_status":"up"         System 2
 ```
 
-**9. Point the Docker stack at the tunnel.** Use `docs/RUNNING.md` "Mode 2" (`COMPOSE_PROFILES=hybrid`, with the
+**9a. Connect the Vercel deployment.** Give Vercel public HTTPS URLs for ports 18082/18081/18083 (`cloudflared
+tunnel --url ...`). Then `deploy/amd-native/laptop/show_vercel_env.sh` prints the exact env vars to set. Steps and
+caveats: `deploy/amd-native/README.md` "Connect the Vercel deployment".
+
+**9b. Or point a local Docker stack at the tunnel.** Use `docs/RUNNING.md` "Mode 2" (`COMPOSE_PROFILES=hybrid`, with the
 model URLs on `host.docker.internal:18080/18081/18082`). Then run `make up` and check:
 ```bash
 curl -s localhost:8000/health | jq '{system1, embed, system2}'
