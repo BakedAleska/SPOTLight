@@ -57,12 +57,6 @@ export default function Dashboard({ initialData }: { initialData: DashboardData 
     <div className="mx-auto flex max-w-[1600px] flex-col gap-4 p-4">
       <h1 className="sr-only">SPOT operator overview</h1>
 
-      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted">
-        <p role="status">{error ? "Connection interrupted. Showing the last successful update." : data.source === "kit" ? "Challenge kit data · checking backend every 2.5 seconds" : "Live backend data · refreshes every 2.5 seconds"}</p>
-        <button type="button" onClick={() => void mutate()} disabled={isValidating} className="rounded border border-line px-3 py-1 disabled:opacity-50">
-          {isValidating ? "Refreshing…" : "Refresh now"}
-        </button>
-      </div>
       <WelcomeBanner hiddenFailures={data.hiddenFailures} />
 
       <section aria-label="Headline metrics">
