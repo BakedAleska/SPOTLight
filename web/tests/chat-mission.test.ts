@@ -142,7 +142,7 @@ test("mission ids normalise to upper case; junk is rejected", () => {
   for (const bad of [null, undefined, "", "   ", "../x", "M 6", "-M6", "a".repeat(33), "M6<script>"]) assert.equal(normalizeMissionId(bad), null, String(bad));
 });
 
-test("hrefs: Ask AI, replay, and the ?mission= toggle that keeps other params", () => {
+test("hrefs: Ask SPOTbot, replay, and the ?mission= toggle that keeps other params", () => {
   assert.equal(assistantHref("M006"), "/assistant?mission=M006");
   assert.equal(assistantHref("M 6&x"), "/assistant?mission=M%206%26x");
   assert.equal(replayHref("M006"), "/missions/replay?mission=M006");
@@ -295,15 +295,15 @@ function assertNoNestedLinks(markup: string) {
   assert.equal(depth, 0);
 }
 
-test("Ask AI links to /assistant?mission= with an accessible name", () => {
+test("Ask SPOTbot links to /assistant?mission= with an accessible name", () => {
   const out = html(createElement(AskAiLink, { missionId: "M006" }));
   assert.match(out, /href="\/assistant\?mission=M006"/);
-  assert.match(out, /aria-label="Ask AI about M006"/);
-  const labelled = html(createElement(AskAiLink, { missionId: "M006", label: "Ask AI about M006" }));
+  assert.match(out, /aria-label="Ask SPOTbot about M006"/);
+  const labelled = html(createElement(AskAiLink, { missionId: "M006", label: "Ask SPOTbot about M006" }));
   assert.ok(!labelled.includes("aria-label"));
 });
 
-test("All missions and Flagged cards carry replay and Ask AI as sibling links", () => {
+test("All missions and Flagged cards carry replay and Ask SPOTbot as sibling links", () => {
   for (const [name, markup] of [["MissionList", html(createElement(MissionList))], ["FlaggedMissions", html(createElement(FlaggedMissions))]] as const) {
     assertNoNestedLinks(markup);
     const ask = markup.match(/href="\/assistant\?mission=M\d+"/g) ?? [];

@@ -5,7 +5,7 @@ import { AskAiLink } from "./AskAiLink";
 
 /* Each card has two sibling actions: the replay link, stretched over the
    whole card with ::after so a click anywhere still opens the replay, and
-   "Ask AI", raised above that overlay. No <a> inside an <a>. */
+   "Ask SPOTbot", raised above that overlay. No <a> inside an <a>. */
 export function MissionList({ query = "" }: { query?: string }) {
   const kit = getKit();
   const missions = kit.missions.filter(m => `${m.mission_id} ${m.mission_name}`.toLowerCase().includes(query.toLowerCase()));

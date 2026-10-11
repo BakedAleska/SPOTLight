@@ -74,7 +74,7 @@ export function FlaggedMissions() {
       <div className="grid gap-3 sm:grid-cols-2">
         {rows.map(({ m, failed, anomalies, worst, review, hidden }) => (
           // Two sibling actions: the replay link is stretched over the card
-          // (::after), and "Ask AI" sits above it. No nested links.
+          // (::after), and "Ask SPOTbot" sits above it. No nested links.
           <article
             key={m.mission_id}
             className="relative overflow-hidden rounded border border-line bg-surface p-4 pl-5 transition-colors hover:border-accent has-[a:focus-visible]:border-accent"
