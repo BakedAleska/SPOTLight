@@ -1,29 +1,10 @@
-/* The Overview: an opened flag is lifted to the head of the queue and drops
-   back into place when closed (lib/overview.ts), and the analytics panel's
-   numbers add up to the Analytics page's (lib/overview-analytics.ts). */
+/* The Overview: the analytics panel's chart choice (lib/overview.ts) and its
+   numbers adding up to the Analytics page's (lib/overview-analytics.ts). */
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { activeChart, bandOf, bandsSpanned, failuresFor, openFirst, parseChart, typesFor } from "../src/lib/overview";
+import { activeChart, bandOf, bandsSpanned, failuresFor, parseChart, typesFor } from "../src/lib/overview";
 import { overviewAnalytics } from "../src/lib/overview-analytics";
 import { fleetAnalytics } from "../src/lib/fleet-analytics";
-
-const queue = ["57", "20", "14", "44", "21"].map((id) => ({ id }));
-const ids = (rows: { id: string }[]) => rows.map((row) => row.id);
-
-test("the open flag moves to the head; everything else keeps queue order", () => {
-  assert.deepEqual(ids(openFirst(queue, "21")), ["21", "57", "20", "14", "44"]);
-  assert.deepEqual(ids(openFirst(queue, "14")), ["14", "57", "20", "44", "21"]);
-});
-
-test("closing, opening the head, or an id the filters hid gives the queue back unchanged", () => {
-  assert.equal(openFirst(queue, null), queue);
-  assert.deepEqual(ids(openFirst(queue, "57")), ids(queue));
-  assert.deepEqual(ids(openFirst(queue, "999")), ids(queue));
-  assert.deepEqual(openFirst([], "21"), []);
-  // The input is never reordered in place: closing really is "back where it was".
-  openFirst(queue, "21");
-  assert.deepEqual(ids(queue), ["57", "20", "14", "44", "21"]);
-});
 
 test("a stored chart choice is trusted only if it is one of today's charts", () => {
   assert.equal(parseChart("battery"), "battery");
@@ -31,7 +12,7 @@ test("a stored chart choice is trusted only if it is one of today's charts", () 
   assert.equal(parseChart(null), null);
 });
 
-test("opening a flag shows Missions until the operator picks a chart with a flag open", () => {
+test("opening a flag shows Missions until the operator picks a chart for that flag", () => {
   assert.equal(activeChart("battery", false, false), "battery");
   assert.equal(activeChart("battery", true, false), "missions");
   assert.equal(activeChart("failures", true, true), "failures");

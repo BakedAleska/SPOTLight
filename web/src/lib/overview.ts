@@ -1,19 +1,10 @@
-/* The Overview page's pure logic: the queue's open-row order and the
-   analytics panel's data and chart choice. Client-safe — no kit, no
+/* The Overview page's pure logic: the analytics panel's data and chart
+   choice. Client-safe — no kit, no
    filesystem; the numbers are built on the server by @/lib/overview-analytics
    and cross into the browser as plain JSON. */
 
 import type { FleetAnalytics } from "./fleet-analytics";
 import { BATTERY_BANDS } from "./breakdown-link";
-
-/** The opened flag first, everything else in queue (backend) order. Closing
-    it (openId null) gives the queue back exactly as it came. */
-export function openFirst<T extends { id: string }>(flags: T[], openId: string | null): T[] {
-  if (!openId) return flags;
-  const i = flags.findIndex((flag) => flag.id === openId);
-  if (i <= 0) return flags;
-  return [flags[i], ...flags.slice(0, i), ...flags.slice(i + 1)];
-}
 
 /** What the analytics panel beside the queue can draw. */
 export interface OverviewAnalyticsData {
@@ -48,8 +39,9 @@ export function parseChart(value: unknown): OverviewChart | null {
 }
 
 /** Opening a flag shows its mission (the chart where it can be pointed at),
-    until the operator picks a chart while a flag is open — from then on their
-    pick holds. With nothing open, the remembered pick. */
+    until the operator picks a chart for that flag — then their pick holds
+    until the next flag is opened. With no flag in context, the remembered
+    pick. */
 export function activeChart(saved: OverviewChart, flagOpen: boolean, pickedWhileOpen: boolean): OverviewChart {
   return flagOpen && !pickedWhileOpen ? "missions" : saved;
 }

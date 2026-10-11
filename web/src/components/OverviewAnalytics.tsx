@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, X } from "lucide-react";
 import {
   Bar,
   BarChart,
@@ -36,7 +36,8 @@ import {
 
 /* The Overview's analytics, beside the queue: four of the Analytics page's
    charts behind a toggle, so the fleet picture is one click from the list it
-   explains. With a flag open the panel turns to that flag — it says so, the
+   explains. Once a flag is opened the panel turns to that flag (and stays on
+   it after the row closes, until another opens) — it says so, the
    flag's mission is marked on the Missions chart, and the other charts set
    the mission's own numbers (in the accent, like the open row) against the
    fleet's.
@@ -85,17 +86,26 @@ type Mission = OverviewAnalyticsData["missions"][number];
 export function OverviewAnalytics({
   data,
   flag,
+  onClear,
   delay,
 }: {
   data: OverviewAnalyticsData;
-  /** The open queue row, if any: the panel becomes context for it. */
+  /** The queue row opened last, if any: the panel becomes context for it. */
   flag: Flag | null;
+  /** Drops the flag context, back to the fleet alone. */
+  onClear?: () => void;
   delay?: number;
 }) {
   const router = useRouter();
   const go = (query: BreakdownQuery) => router.push(breakdownHref(query));
   const [saved, setSaved] = useState<OverviewChart>(DEFAULT_CHART);
   const [pickedWhileOpen, setPickedWhileOpen] = useState(false);
+  // Each newly opened flag starts on its mission again.
+  const [pickedFor, setPickedFor] = useState(flag?.id ?? null);
+  if ((flag?.id ?? null) !== pickedFor) {
+    setPickedFor(flag?.id ?? null);
+    setPickedWhileOpen(false);
+  }
 
   // The last pick is a per-viewer convenience: a blocked or empty store just
   // means the default chart.
@@ -154,9 +164,16 @@ export function OverviewAnalytics({
     >
       {flag && (
         <div key={flag.id} className="anim-rise rounded border border-line-strong bg-surface-2 px-3 py-2 text-xs leading-snug text-muted" style={{ "--rise": "6px" } as React.CSSProperties}>
-          <p className="truncate">
-            Context for <span className="font-medium text-ink" title={flag.title}>{flag.title}</span>
-          </p>
+          <div className="flex items-start gap-2">
+            <p className="min-w-0 flex-1 truncate">
+              Context for <span className="font-medium text-ink" title={flag.title}>{flag.title}</span>
+            </p>
+            {onClear && (
+              <button type="button" onClick={onClear} aria-label="Clear flag context" title="Back to the fleet" className="-my-0.5 shrink-0 rounded p-0.5 text-faint hover:text-ink focus-visible:outline-2 focus-visible:outline-accent">
+                <X className="size-3.5" aria-hidden />
+              </button>
+            )}
+          </div>
           {mission ? (
             <p className="mt-0.5">
               Mission <span className="font-mono text-ink">{mission.id}</span> · {mission.version} · {mission.succeeded} of {mission.succeeded + mission.failed} actions succeeded · reported {mission.reported.toLowerCase()} ·{" "}

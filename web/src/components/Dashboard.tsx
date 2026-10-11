@@ -28,8 +28,16 @@ export default function Dashboard({ initialData, analytics }: {
   analytics?: OverviewAnalyticsData;
 }) {
   const [filter, setFilter] = useState<QueueFilter>(NO_FILTER);
-  /** The queue row that is open; the analytics beside the queue follow it. */
+  /** The queue row that is open. */
   const [openId, setOpenId] = useState<string | null>(null);
+  /** The flag the analytics beside the queue are about: the last row opened.
+      Closing the row keeps it, so the charts only turn when another row is
+      opened or the operator clears the context. */
+  const [contextId, setContextId] = useState<string | null>(null);
+  function openRow(id: string | null) {
+    setOpenId(id);
+    if (id) setContextId(id);
+  }
   const [selectedFlag, setSelectedFlag] = useState<Flag | null>(() => {
     if (typeof window === "undefined") return null;
     const id = new URLSearchParams(window.location.search).get("flag");
@@ -60,8 +68,8 @@ export default function Dashboard({ initialData, analytics }: {
   }
   const { flags } = data;
   const shown = filterFlags(flags, filter);
-  // A row hidden by the filters is not open as far as the charts are concerned.
-  const openFlag = shown.find((flag) => flag.id === openId) ?? null;
+  // A row hidden by the filters (or resolved) is no longer the charts' context.
+  const contextFlag = shown.find((flag) => flag.id === contextId) ?? null;
   return (
     <div className="mx-auto flex max-w-[1600px] flex-col gap-4 p-4">
       <h1 className="sr-only">SPOT operator overview</h1>
@@ -70,7 +78,7 @@ export default function Dashboard({ initialData, analytics }: {
 
       {/* The banner's question, the list that answers it (severity pills in
           its header), and beside the list a few fleet charts that turn to
-          whichever flag is open. On a wide container the queue takes the left
+          the flag opened last. On a wide container the queue takes the left
           ~60% and the charts the rest, both panels the same height. Narrower,
           everything stacks, queue first. The full chart catalogue is
           /analytics. */}
@@ -80,7 +88,7 @@ export default function Dashboard({ initialData, analytics }: {
             <PriorityQueue flags={shown} total={isFiltered(filter) ? flags.length : data.flagCount} delay={STAGGER}
               filters={<QueueFilters flags={flags} total={data.flagCount} value={filter} onChange={setFilter} shown={shown.length} />}
               emptyMessage={isFiltered(filter) ? "No open flags match these filters." : undefined}
-              openId={openId} onOpenChange={setOpenId}
+              openId={openId} onOpenChange={openRow}
               onSelect={data.features.flagDetails ? selectFlag : undefined} />
           </div>
 
@@ -91,7 +99,7 @@ export default function Dashboard({ initialData, analytics }: {
           {analytics && (
             <div className="relative min-w-0 @4xl:min-h-[30rem]">
               <div className="h-full @4xl:absolute @4xl:inset-0">
-                <OverviewAnalytics data={analytics} flag={openFlag} delay={STAGGER * 2} />
+                <OverviewAnalytics data={analytics} flag={contextFlag} onClear={() => setContextId(null)} delay={STAGGER * 2} />
               </div>
             </div>
           )}

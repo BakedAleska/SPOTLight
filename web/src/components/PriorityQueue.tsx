@@ -1,22 +1,20 @@
 "use client";
 
-import { Fragment, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ChevronDown, ClipboardCheck, Route, Search, Sparkles } from "lucide-react";
 import { Panel } from "./Panel";
 import { SeverityBadge, severityAccent } from "./SeverityBadge";
 import type { Flag } from "@/lib/types";
 import { displayText } from "@/lib/display";
-import { openFirst } from "@/lib/overview";
 
 /* Clicking a row opens it: every signal that fired, then the places an
    operator can go from here. The row is a disclosure, not a link, because
    there is no single "right" next page — review it, watch the mission that
    raised it, see what else touches the asset, or ask about it.
 
-   The opened row is lifted to the head of the list, above everything else
-   that needs attention, and the list scrolls up to it. Closing it drops it
-   back into its place in the queue's own order. */
+   The row opens where it is: the queue keeps the backend's order, so the
+   operator never loses their place in it. */
 
 /* A flag carries every rule that fired — often eight or nine. A closed row
    can't show eight bullets and still be scannable, so it shows the heaviest
@@ -272,32 +270,22 @@ export function PriorityQueue({
   const setOpenId = onOpenChange ?? setOwnOpenId;
   const previous = useRef<string | null>(null);
 
-  // Queue order is the backend's; only the open row is lifted out of it.
-  const ordered = openFirst(flags, openId);
-  const position = new Map(flags.map((flag, i) => [flag.id, i + 1]));
-  const lifted = !!openId && ordered[0]?.id === openId;
-
-  /* Opening lifts the row to the head of the list, so the list goes to the
-     top to show it. Closing puts the row back in its place, and the list
-     follows it there, which is also where the operator was reading. */
+  /* Opening or closing a row keeps it in view inside the list: an opened
+     row's head scrolls up to the top edge if it was cut off there, and a
+     closing row the list was scrolled past comes back into view. */
   useEffect(() => {
     const el = list.current;
     const closed = previous.current;
     previous.current = openId;
     if (!el || openId === closed) return;
-    const behavior: ScrollBehavior = reducedMotion() ? "auto" : "smooth";
-    if (openId) {
-      el.scrollTo({ top: 0, behavior });
-      // And if the page has been scrolled past the panel's head, bring it back.
-      const page = el.closest("main")?.getBoundingClientRect().top ?? 0;
-      if (el.getBoundingClientRect().top < page) el.closest("section")?.scrollIntoView({ block: "start", behavior });
-      return;
-    }
-    const row = closed ? el.querySelector<HTMLElement>(`[data-flag-id="${CSS.escape(closed)}"]`) : null;
+    const id = openId ?? closed;
+    const row = id ? el.querySelector<HTMLElement>(`[data-flag-id="${CSS.escape(id)}"]`) : null;
     if (!row) return;
     const box = el.getBoundingClientRect();
     const at = row.getBoundingClientRect();
-    if (at.top < box.top || at.bottom > box.bottom) el.scrollTo({ top: el.scrollTop + at.top - box.top, behavior });
+    if (at.top < box.top || at.top > box.bottom - 48) {
+      el.scrollTo({ top: el.scrollTop + at.top - box.top, behavior: reducedMotion() ? "auto" : "smooth" });
+    }
   }, [openId]);
 
   return (
@@ -318,20 +306,16 @@ export function PriorityQueue({
            banner and filters (never under 28rem), and scrolls inside the
            panel so the analytics beside it stay put. */
         <div ref={list} className="max-h-[max(28rem,calc(100dvh-14rem))] overflow-y-auto overscroll-contain">
-          {ordered.map((flag, i) => (
-            <Fragment key={flag.id}>
-              <QueueRow
-                flag={flag}
-                open={openId === flag.id}
-                position={position.get(flag.id) ?? i + 1}
-                onToggle={() => setOpenId(openId === flag.id ? null : flag.id)}
-                onSelect={onSelect}
-                reviewUnavailable={reviewUnavailable}
-              />
-              {lifted && i === 0 && ordered.length > 1 && (
-                <p className="border-b border-line px-5 pt-2 pb-1.5 text-xs text-faint">Rest of the queue</p>
-              )}
-            </Fragment>
+          {flags.map((flag, i) => (
+            <QueueRow
+              key={flag.id}
+              flag={flag}
+              open={openId === flag.id}
+              position={i + 1}
+              onToggle={() => setOpenId(openId === flag.id ? null : flag.id)}
+              onSelect={onSelect}
+              reviewUnavailable={reviewUnavailable}
+            />
           ))}
         </div>
       )}
