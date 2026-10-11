@@ -6,6 +6,8 @@ export interface PlaybackSegment {
   from?: PathPoint; to?: PathPoint; activity: string; moving: boolean;
   /** The stretch of route walked or climbed during this segment. */
   leg?: Leg;
+  /** The waypoint a travel segment is heading for (its leg may end at a stair on the way). */
+  destination?: PathPoint;
 }
 export const activityLabel = (type?: string) => ({
   NAVIGATION: "Checking route", VISUAL_INSPECTION: "Capturing images",
@@ -32,8 +34,8 @@ export function buildPlayback(mission: PathMission, points: PathPoint[]): Playba
   let cursor = 0;
   let position = first;
   const segments: PlaybackSegment[] = [];
-  function append(duration: number, eventIndex: number, to: PathPoint | undefined, activity: string, moving = false, leg?: Leg) {
-    segments.push({ start: cursor, end: cursor + duration, eventIndex, from: position, to, activity, moving, leg });
+  function append(duration: number, eventIndex: number, to: PathPoint | undefined, activity: string, moving = false, leg?: Leg, destination?: PathPoint) {
+    segments.push({ start: cursor, end: cursor + duration, eventIndex, from: position, to, activity, moving, leg, destination });
     cursor += duration;
     position = to;
   }
@@ -42,8 +44,8 @@ export function buildPlayback(mission: PathMission, points: PathPoint[]): Playba
     if (event.type === "ACTION_STARTED") {
       if (position && target && position.id !== target.id) {
         for (const leg of legs.filter(l => l.travel === travel)) {
-          if (leg.kind === "walk") append(Math.max(400, legLength(leg) * 10), Math.max(0, i - 1), pointAt(leg.points.at(-1)!), `Traveling to ${target.id}`, true, leg);
-          else append(1600, Math.max(0, i - 1), pointAt(leg.to), leg.up ? "Climbing the stairs" : "Descending the stairs", true, leg);
+          if (leg.kind === "walk") append(Math.max(400, legLength(leg) * 10), Math.max(0, i - 1), pointAt(leg.points.at(-1)!), `Traveling to ${target.id}`, true, leg, target);
+          else append(1600, Math.max(0, i - 1), pointAt(leg.to), leg.up ? "Climbing the stairs" : "Descending the stairs", true, leg, target);
         }
         travel++;
         position = target;

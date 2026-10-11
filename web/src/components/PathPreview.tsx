@@ -16,9 +16,10 @@ const control = "flex min-h-11 items-center justify-center gap-2 rounded border 
 export function PathPreview({ points, missions, initialMissionId }: { points: PathPoint[]; missions: PathMission[]; initialMissionId?: string }) {
   const [missionId, setMissionId] = useState(missions.find(m => m.id === initialMissionId)?.id ?? missions[0]?.id ?? "");
   return <div className="mx-auto flex max-w-[1600px] flex-col gap-4 p-4">
-    <header className="flex flex-wrap items-center justify-between gap-4">
+    {/* Same columns as the map and side panels below, so the Mission picker lines up with them. */}
+    <header className="grid items-end gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
       <div><p className="mb-1 text-xs text-muted">MISSION CONTROL</p><h1 className="flex items-center gap-2 text-2xl font-semibold text-ink"><Route size={24} />SPOT path preview</h1><p className="mt-1 text-sm text-muted">Replay a recorded challenge-kit mission. For a running robot, open <Link href="/live" className="text-accent-ink hover:underline">Live patrol</Link>.</p></div>
-      <label className="flex flex-col gap-1 text-xs text-muted">Mission<select className={control} value={missionId} onChange={e => setMissionId(e.target.value)}>{missions.map(m => <option key={m.id} value={m.id}>{m.id} · {m.name}</option>)}</select></label>
+      <label className="flex flex-col gap-1 text-xs text-muted">Mission<select className={`${control} w-full`} value={missionId} onChange={e => setMissionId(e.target.value)}>{missions.map(m => <option key={m.id} value={m.id}>{m.id} · {m.name}</option>)}</select></label>
     </header>
     {missions.find(m => m.id === missionId) && <MissionPath key={missionId} mission={missions.find(m => m.id === missionId)!} points={points} />}
   </div>;
@@ -70,9 +71,12 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
   const floorLabel = `Floor ${frame?.from?.floor} → Floor ${frame?.to?.floor}`;
   const marker = frame ? { x: frame.x, y: frame.y } : current;
   const active = playing && !finished;
+  // On the stairs SPOT fades out at the floor-1 stair, then fades back in on the floor-2 landing (or the reverse).
+  const climbFade = frame?.leg?.kind === "climb" ? Math.abs(1 - 2 * frame.progress) : 1;
   const activity = changingFloor ? `${floorUp ? "Going up" : "Going down"} · ${floorLabel}` : frame?.activity ?? "Ready";
   const errors = located.filter(e => e.error);
-  const selected = points.find(p => p.id === selectedId) ?? current;
+  // Unless one is picked, show where SPOT is headed while it travels, and where it is while it works.
+  const selected = points.find(p => p.id === selectedId) ?? (frame?.moving ? frame.destination : current);
   const battery = events.filter(e => e.battery != null).at(-1)?.battery;
   const last = events.at(-1);
   // Only the trip underway, or the next one while SPOT is stopped, is drawn ahead of it.
@@ -97,11 +101,12 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
             const fault = errors.some(e => e.locationId === p.id);
             return <g key={p.id} role="button" tabIndex={0} aria-label={`${p.id}: ${p.name}${fault ? ", error detected" : ""}`} onClick={() => setSelectedId(p.id)} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSelectedId(p.id); } }} className="cursor-pointer">
               <title>{`${p.id} · ${p.name}`}</title><circle cx={p.x} cy={p.y} r="22" fill="transparent" />
-              {(p.id !== current?.id || frame?.moving) && <circle cx={p.x} cy={p.y} r="7" fill={fault ? "var(--c-bad)" : "var(--c-surface)"} stroke={fault ? "white" : "var(--c-accent-ink)"} strokeWidth={selected?.id === p.id ? 4 : 3} />}
+              {/* The blueprint's beacons mark every waypoint; only faults get a marker of their own. */}
+              {fault && (p.id !== current?.id || frame?.moving) && <circle cx={p.x} cy={p.y} r="7" fill="var(--c-bad)" stroke="white" strokeWidth={selected?.id === p.id ? 4 : 3} />}
               {fault && (p.id !== current?.id || frame?.moving) && <text x={p.x} y={p.y + 5} textAnchor="middle" fill="white" fontSize="15" fontWeight="bold">!</text>}
             </g>;
           })}
-          {current && marker && <g aria-label={`SPOT at ${current.id}`} transform={`translate(${marker.x} ${marker.y})`}>
+          {current && marker && <g aria-label={`SPOT at ${current.id}`} transform={`translate(${marker.x} ${marker.y})`} opacity={climbFade}>
             {active && !frame?.moving && last?.type === "ACTION_STARTED" && <foreignObject x="-15" y="-31" width="30" height="12" transform="scale(2)" aria-label="SPOT working"><div className="spot-working-dots flex h-full items-center justify-center"><LoadingDots color="white" /></div></foreignObject>}
             {last?.error && !frame?.moving && <g aria-label={`Issue detected: ${last.severity ?? "FAILED"}`} className={active ? "spot-issue spot-issue-flash" : "spot-issue"}>
               <path d="M 0 -64 L 14 -39 L -14 -39 Z" fill={issueColor[last.severity ?? ""] ?? "var(--c-bad)"} stroke="white" strokeWidth="2.5" strokeLinejoin="round" />
