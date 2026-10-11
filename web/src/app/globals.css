@@ -799,18 +799,19 @@ body {
   .spot-activity-ring, .spot-activity-icon { animation: none; }
 }
 
-/* Dots catch up, merge and spread around SPOT during inspections. */
+/* Windows-style orbit: a staggered trail catches the leading dot at the top. */
 .spot-working-spinner { filter: drop-shadow(0 1px 2px black); }
 .spot-merging-dot {
   transform-box: view-box;
   transform-origin: 0 0;
-  transform: rotate(var(--dot-start));
-  animation: spot-dots-merge 2.4s ease-in-out infinite;
+  transform: rotate(var(--dot-rest));
+  animation: spot-dots-merge 1.8s ease-in-out infinite both;
 }
 @keyframes spot-dots-merge {
-  0% { transform: rotate(var(--dot-start)); }
-  45%, 55% { transform: rotate(180deg); }
-  100% { transform: rotate(var(--dot-end)); }
+  0% { transform: rotate(0deg); }
+  18% { transform: rotate(65deg); }
+  42% { transform: rotate(300deg); }
+  60%, 100% { transform: rotate(360deg); }
 }
 @media (prefers-reduced-motion: reduce) { .spot-merging-dot { animation: none; } }
 
