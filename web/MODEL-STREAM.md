@@ -1,8 +1,10 @@
 # Live model dashboard
 
-The Overview and Analytics pages render `LiveModelBoard`. Dashboard cards, flag
-queue and open flag details refresh every 2.5 seconds. The model board independently
-polls `/api/model-stream` every 2.5 seconds (SWR prevents overlapping revalidation).
+Model telemetry lives on the Live patrol page (`LiveModelPanels`): per-run Laya
+escalation and per-stage latency come from the run's captures, and the "Model calls ·
+all runs" panel polls `/api/model-stream` every 5 seconds (SWR prevents overlapping
+revalidation). The older `LiveModelBoard` on Analytics was removed; the capture cards
+on Live patrol now carry each stop's Laya and Qwen answers.
 Backend disconnection retains the last successful model snapshot and labels it stale.
 No backend results means empty, explicitly waiting model panels, never kit predictions.
 

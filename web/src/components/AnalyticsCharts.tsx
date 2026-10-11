@@ -75,7 +75,7 @@ function Section({ id, title, blurb, children }: { id: string; title: string; bl
 
 function Plot({ height = 240, children }: { height?: number; children: React.ReactElement }) {
   return (
-    <div className="w-full min-w-0" style={{ height }}>
+    <div className="my-auto w-full min-w-0" style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">{children}</ResponsiveContainer>
     </div>
   );
@@ -101,7 +101,7 @@ export function AnalyticsCharts({ data }: { data: FleetAnalytics }) {
   return (
     <div className="flex flex-col gap-8">
       <Section id="reliability" title="Reliability" blurb="Where SPOT's actions succeed, and the conditions that break them.">
-        <Panel title="Success rate by battery band" aside="95% interval shaded">
+        <Panel collapsible title="Success rate by battery band" aside="95% interval shaded">
           <Plot>
             <ComposedChart data={data.battery} margin={{ top: 8, right: 12, bottom: 0, left: -8 }}>
               <CartesianGrid {...GRID} />
@@ -124,7 +124,7 @@ export function AnalyticsCharts({ data }: { data: FleetAnalytics }) {
           )}
         </Panel>
 
-        <Panel title="Success rate by environment">
+        <Panel collapsible title="Success rate by environment">
           <Plot height={Math.max(180, data.environments.length * 40)}>
             <BarChart data={data.environments} layout="vertical" margin={{ top: 0, right: 40, bottom: 0, left: 8 }} barCategoryGap={8}>
               <CartesianGrid stroke="var(--c-line)" horizontal={false} />
@@ -143,7 +143,7 @@ export function AnalyticsCharts({ data }: { data: FleetAnalytics }) {
       </Section>
 
       <Section id="configuration" title="Configuration" blurb="V1 against V2, by action type and by the battery each mission spends.">
-        <Panel title="V1 vs V2 success by action type">
+        <Panel collapsible title="V1 vs V2 success by action type">
           <Plot>
             <BarChart data={data.config} margin={{ top: 8, right: 12, bottom: 0, left: -8 }} barGap={2}>
               <CartesianGrid {...GRID} />
@@ -161,7 +161,7 @@ export function AnalyticsCharts({ data }: { data: FleetAnalytics }) {
           <Caption>Per-type success on each configuration. Small groups swing hard — hover a bar for its sample size.</Caption>
         </Panel>
 
-        <Panel title="Mean battery drain per mission">
+        <Panel collapsible title="Mean battery drain per mission">
           <Plot height={Math.max(160, data.drain.length * 56)}>
             <BarChart data={data.drain} layout="vertical" margin={{ top: 0, right: 48, bottom: 0, left: 8 }} barCategoryGap={14}>
               <CartesianGrid stroke="var(--c-line)" horizontal={false} />
@@ -182,7 +182,7 @@ export function AnalyticsCharts({ data }: { data: FleetAnalytics }) {
       </Section>
 
       <Section id="missions" title="Missions" blurb="Every mission in time order, and what its reported status was worth.">
-        <Panel title="Action outcomes per mission" className="lg:col-span-2">
+        <Panel collapsible title="Action outcomes per mission" className="lg:col-span-2">
           <Plot height={260}>
             <BarChart data={data.missions} margin={{ top: 8, right: 12, bottom: 0, left: -16 }} barCategoryGap={3}>
               <CartesianGrid {...GRID} />
@@ -197,8 +197,8 @@ export function AnalyticsCharts({ data }: { data: FleetAnalytics }) {
           <Caption>Stacked actions per mission. A red cap on a mission that reported COMPLETED is a failure the status field hid.</Caption>
         </Panel>
 
-        <Panel title="Reported status vs reality">
-          <div className="flex flex-col items-center gap-4 sm:flex-row">
+        <Panel collapsible title="Reported status vs reality">
+          <div className="my-auto flex flex-col items-center justify-center gap-6 sm:flex-row">
             <div className="relative h-48 w-48 shrink-0">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -226,7 +226,7 @@ export function AnalyticsCharts({ data }: { data: FleetAnalytics }) {
           <Caption>{hiding} of {completed} missions that reported COMPLETED had at least one failed action inside.</Caption>
         </Panel>
 
-        <Panel title="Battery spent per mission">
+        <Panel collapsible title="Battery spent per mission">
           <Plot height={220}>
             <BarChart data={data.missions} margin={{ top: 8, right: 12, bottom: 0, left: -8 }} barCategoryGap={3}>
               <CartesianGrid {...GRID} />
@@ -244,7 +244,7 @@ export function AnalyticsCharts({ data }: { data: FleetAnalytics }) {
       </Section>
 
       <Section id="failures" title="Failures & anomalies" blurb="What went wrong, how badly, and whether the measurement held up.">
-        <Panel title="Failure modes">
+        <Panel collapsible title="Failure modes">
           <Plot height={Math.max(180, data.failureModes.length * 36)}>
             <BarChart data={data.failureModes} layout="vertical" margin={{ top: 0, right: 32, bottom: 0, left: 8 }} barCategoryGap={8}>
               <CartesianGrid stroke="var(--c-line)" horizontal={false} />
@@ -257,7 +257,7 @@ export function AnalyticsCharts({ data }: { data: FleetAnalytics }) {
           {topMode && <Caption>{topMode.mode} is the leading cause, behind {topMode.count} failed actions.</Caption>}
         </Panel>
 
-        <Panel title="Anomalies by type and severity">
+        <Panel collapsible title="Anomalies by type and severity">
           <Plot height={Math.max(200, data.anomalies.length * 34 + 40)}>
             <BarChart data={data.anomalies} layout="vertical" margin={{ top: 0, right: 16, bottom: 0, left: 8 }} barCategoryGap={8}>
               <CartesianGrid stroke="var(--c-line)" horizontal={false} />
@@ -283,7 +283,7 @@ export function AnalyticsCharts({ data }: { data: FleetAnalytics }) {
           <Caption>Darker is more severe. High and critical findings are the ones the queue escalates first.</Caption>
         </Panel>
 
-        <Panel title="Action duration vs battery">
+        <Panel collapsible title="Action duration vs battery">
           <Plot height={260}>
             <ScatterChart margin={{ top: 8, right: 12, bottom: 8, left: -8 }}>
               <CartesianGrid stroke="var(--c-line)" />
@@ -301,7 +301,7 @@ export function AnalyticsCharts({ data }: { data: FleetAnalytics }) {
           </Caption>
         </Panel>
 
-        <Panel title="Reading quality by measurement">
+        <Panel collapsible title="Reading quality by measurement">
           <Plot height={Math.max(180, data.readings.length * 34 + 40)}>
             <BarChart data={data.readings} layout="vertical" stackOffset="expand" margin={{ top: 0, right: 16, bottom: 0, left: 8 }} barCategoryGap={8}>
               <CartesianGrid stroke="var(--c-line)" horizontal={false} />
@@ -318,7 +318,7 @@ export function AnalyticsCharts({ data }: { data: FleetAnalytics }) {
       </Section>
 
       <Section id="waypoints" title="Waypoints" blurb="Failure rate at every stop on the route, split by the kind of work done there.">
-        <Panel title="Failure rate by waypoint and action type" className="lg:col-span-2">
+        <Panel collapsible title="Failure rate by waypoint and action type" className="lg:col-span-2">
           <Heatmap heatmap={data.heatmap} />
           {hottest && (
             <Caption>

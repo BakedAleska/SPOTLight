@@ -8,6 +8,7 @@ import {
 import { Panel } from "./Panel";
 import { LoadingDots } from "./LoadingDots";
 import { RouteAhead } from "./RouteAhead";
+import { ModelCallsPanel, RunModelCharts } from "./LiveModelPanels";
 import { anchors } from "@/lib/waypoints";
 import { legsPath, routeLegs } from "@/lib/route-geometry";
 import type { LiveCapture, LiveKg, LiveRoute, LiveRun, LiveRunDetail, LiveStop } from "@/lib/live";
@@ -147,6 +148,8 @@ export function LiveConsole({ initialRoutes }: { initialRoutes: LiveRoute[] }) {
         <KgPanel kg={kg} />
       </div>
     </div>
+    <RunModelCharts captures={captures} route={route} />
+    <ModelCallsPanel />
     <Panel title="Inspection feed" aside={`${captures.length} of ${route?.stops.length ?? 8} stops · newest first`} bodyClassName="p-4">
       {captures.length === 0
         ? <p className="text-sm text-muted">{run && active(run) ? run.status === "pending" ? "Waiting for the robot runner to claim the run…" : "SPOT is heading to stop A…" : "Start a route to watch SPOT inspect the facility."}</p>

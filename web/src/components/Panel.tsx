@@ -1,3 +1,5 @@
+import { CollapsiblePanel } from "./CollapsiblePanel";
+
 /* Every box on the dashboard is this. One primitive means the border, radius,
    header height and shadow are defined once and can never drift between
    panels — which is the single thing that makes a console look built rather
@@ -21,6 +23,7 @@ export function Panel({
   className = "",
   bodyClassName = "p-4",
   delay = 0,
+  collapsible = false,
 }: {
   title: string;
   /** Right-aligned header slot: counts, units, a time range. */
@@ -30,15 +33,26 @@ export function Panel({
   bodyClassName?: string;
   /** ms to hold before this panel floats in, for load cascades. */
   delay?: number;
+  /** Adds a chevron that folds the body away. */
+  collapsible?: boolean;
 }) {
   const id = slugify(title);
+  const style = delay ? { animationDelay: `${delay}ms` } : undefined;
+
+  if (collapsible) {
+    return (
+      <CollapsiblePanel id={id} title={title} aside={aside} className={className} bodyClassName={bodyClassName} style={style}>
+        {children}
+      </CollapsiblePanel>
+    );
+  }
 
   return (
     <section
       aria-labelledby={id}
       // An inline delay rather than a Tailwind arbitrary class: the value is a
       // prop, and Tailwind can only generate classes it can read in the source.
-      style={delay ? { animationDelay: `${delay}ms` } : undefined}
+      style={style}
       className={`anim-float panel-shadow flex flex-col overflow-hidden rounded-panel border border-line bg-surface ${className}`}
     >
       <header className="flex h-9 shrink-0 items-center gap-3 border-b border-line px-4">

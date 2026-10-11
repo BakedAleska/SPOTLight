@@ -2,7 +2,6 @@ import { Suspense } from "react";
 import { connection } from "next/server";
 import { ActionSuccessChart } from "@/components/ActionSuccessChart";
 import { AnalyticsCharts } from "@/components/AnalyticsCharts";
-import { LiveModelBoard } from "@/components/LiveModelBoard";
 import { getDashboard } from "@/lib/dashboard-loader";
 import { fleetAnalytics } from "@/lib/fleet-analytics";
 
@@ -15,7 +14,6 @@ const SECTIONS = [
   { id: "missions", label: "Missions" },
   { id: "failures", label: "Failures & anomalies" },
   { id: "waypoints", label: "Waypoints" },
-  { id: "models", label: "Models" },
 ];
 
 /* The fleet-wide success chart lives here rather than on the Overview, which
@@ -24,7 +22,7 @@ const SECTIONS = [
 async function FleetSuccess() {
   await connection();
   const { actionSuccess } = await getDashboard();
-  return <ActionSuccessChart groups={actionSuccess.groups} caption={actionSuccess.caption} benchmark={actionSuccess.fleetRate} />;
+  return <ActionSuccessChart groups={actionSuccess.groups} caption={actionSuccess.caption} benchmark={actionSuccess.fleetRate} collapsible />;
 }
 
 export default function Analytics() {
@@ -50,9 +48,6 @@ export default function Analytics() {
       </header>
       <Suspense fallback={null}><FleetSuccess /></Suspense>
       <AnalyticsCharts data={data} />
-      <section id="models" className="scroll-mt-4">
-        <LiveModelBoard allowRun />
-      </section>
     </div>
   );
 }
