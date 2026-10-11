@@ -13,6 +13,7 @@ LOCAL_DB   ?= postgresql://postgres:postgres@localhost:$(DB_PORT)/spot
 
 .PHONY: help up down wipe ps logs test test-policy test-compose test-contract test-backend test-backend-integration test-system1 \
         test-system1-fast test-mcp test-system2 test-gateway test-vision test-vision-fast test-orchestrator test-db test-graph \
+        test-chat-db test-chat-contract test-web \
         smoke e2e e2e-serial e2e-parallel venvs
 
 help:
@@ -33,7 +34,7 @@ ps:
 logs:
 	docker compose logs -f --tail 50
 
-test: test-policy test-compose test-backend test-system1 test-mcp test-system2 test-gateway test-vision test-contract test-orchestrator ## all unit suites + drift guards + contract
+test: test-policy test-compose test-backend test-system1 test-mcp test-system2 test-gateway test-vision test-contract test-orchestrator test-chat-contract test-web ## all unit suites + drift guards + contracts + web tests (DB: test-chat-db, test-graph, test-db)
 
 test-policy: ## policy.py vs db/policy_rules.py vs backend validator vs MCP vendored copy, on all 297 kit events
 	$(PY_BACKEND) -m pytest tests/test_policy_consistency.py -q -p no:cacheprovider
@@ -71,6 +72,12 @@ test-vision-fast: ## vision tests without the all-Orbit-screenshots sweep, ~30 s
 test-contract: ## real vision /v1/vision -> orchestrator V# rows -> System 2 parser + /v1/assess (vision venv, ~5 s)
 	$(PY_VISION) -m pytest tests/contract -q -p no:cacheprovider
 
+test-chat-contract: ## chat golden SSE transcripts (real backend turns, mocked Gemini) + shared citation fixtures (backend venv)
+	$(PY_BACKEND) -m pytest tests/contract/test_chat_contract.py -q -p no:cacheprovider
+
+test-web: ## web lint + chat tests (incl. the golden SSE replay) + flag-route tests (needs `npm ci` in web/)
+	cd web && npm run lint && npm run test:chat && npm run test:flags
+
 test-orchestrator: ## orchestrator graph tests (fakes; contract tests vs real System 2 app + System 1 schemas)
 	cd amd/orchestrator && .venv/bin/python -m pytest -q -p no:cacheprovider
 
@@ -79,6 +86,9 @@ test-db: ## seed is non-destructive (audit M5), on a throwaway DB in the running
 
 test-graph: ## knowledge graph (db/graph_build.py + 009_graph.sql) on a throwaway DB in the running compose Postgres
 	DB_PORT=$(DB_PORT) $(PY_BACKEND) -m pytest db/tests -q -p no:cacheprovider
+
+test-chat-db: ## AI Assistance chat (010/011 migrations + backend/app/db/chat.py ChatRepo) on a throwaway DB in the compose Postgres
+	DB_PORT=$(DB_PORT) $(PY_BACKEND) -m pytest db/tests/test_chat.py -q -p no:cacheprovider
 
 smoke: ## db smoke test inside the stack: 3 RAG queries + graph queries + role permissions
 	docker compose run --rm --no-deps --entrypoint db/job.sh db-init smoke --roles

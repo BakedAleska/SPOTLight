@@ -31,8 +31,8 @@ Other profiles: `local` runs everything in Docker on CPU (for testing: Laya take
 
 | Service | Port | What it does | Model | Code |
 |---|---|---|---|---|
-| **web** | 3000 | Operator console. Today: one Overview page (hidden-failures headline, stat tiles, priority queue, battery cliff), read from the backend over HTTP (`BACKEND_URL`) — no database client of its own. Falls back to the kit CSVs with a visible banner when the backend is unreachable. | none | `web/` |
-| **backend** | 8000 | Dashboard API under `/api/v1`: event ingest, replay, flags, explain, ack, missions, insights, forecast, search, ask, ops. | none | `backend/` |
+| **web** | 3000 | Operator console: the Overview page (hidden-failures headline, stat tiles, priority queue, battery cliff) and **AI Assistance** (`/assistant`), a ChatGPT-style chat with stored history. Reads the backend over HTTP (`BACKEND_URL`), with no database client of its own; falls back to the kit CSVs with a visible banner when the backend is unreachable. | none | `web/` |
+| **backend** | 8000 | Dashboard API under `/api/v1`: event ingest, replay, flags, explain, ack, missions, insights, forecast, search, ask, **chat**, ops. | Gemini (chat only, via `GEMINI_API_KEY`) | `backend/` |
 | **db** + **db-init** | 5433 | Postgres 17 + pgvector, or Neon. `db-init` migrates, creates login roles, seeds the kit and embeds the RAG corpus. | none | `db/` |
 | **system1** | 8082 | Laya triage: `POST /v1/predict` answers typed questions per event with calibrated probabilities. | Laya (`convaiinnovations/laya`, ModernBERT-large) | `amd/system1/` |
 | **embed** | 8081 | OpenAI-compatible `/v1/embeddings` for the RAG. | Qwen3-Embedding-0.6B (1024-d) | `amd/embed/` |
@@ -73,12 +73,15 @@ Other profiles: `local` runs everything in Docker on CPU (for testing: Laya take
    - `POST /api/v1/ask` sends a free-text question to the orchestrator's `/v1/ask`. There, the System 2 model may call up to 4 read-only MCP tools within 30 s.
    - `GET /api/v1/search` runs hybrid pgvector + full-text search over the kit, the Spot manual, incidents, policy and operator notes.
 6. **Act.** `POST /api/v1/flags/{id}/ack` handles acknowledge, resolve, escalate and note. Each note is embedded as a RAG document, so later explanations can cite it.
+7. **Chat (AI Assistance, `docs/chat-contract.md`).** `POST /api/v1/chat/conversations/{id}/messages` streams SSE. The backend retrieves first (hybrid or full-text `documents`, knowledge-graph entry nodes and their 2-hop neighbourhood, SQL fleet stats and digests of the missions, assets, waypoints and flags named in the question), then makes **one** Gemini call (free tier: 5 requests/min/model). Fast or Thinking mode and the model are the operator's choice. After the stream, a deterministic check verifies every `[id]` citation and every number against the sources and stores a grounding badge. Chats live in `chat_conversations` / `chat_messages` and are never retrieved as evidence.
 
-## 5. Data (Postgres; schema in `db/migrations/001–008`)
+## 5. Data (Postgres; schema in `db/migrations/001–012`)
 - **`public`:**
   - Kit tables: `missions`, `actions`, `readings`, `anomalies`, `locations`, `assets`.
   - Pipeline tables: `events`, `flags`, `assessments`, `acknowledgements`, `system1_predictions`.
   - RAG: `documents`, with an embedding column and the `match_documents` / `match_documents_hybrid` functions.
+  - Graph RAG: `kg_nodes` / `kg_edges` with `match_kg_nodes`, `match_kg_nodes_text` and `graph_neighborhood` (`009`).
+  - Chat: `chat_conversations`, `chat_messages` (`011`; `spot_app` only, the MCP reader has no access).
 - **`raw`:** the SPOT data verbatim and append-only (`spot_event_log`, `kit_files`, `kit_rows`, `inspection_media`).
 - **`app`:** logs (`model_calls`, `mcp_tool_calls`, `request_log`, `job_runs`). `GET /api/v1/ops/model-calls` turns them into p50/p95 latency and tokens/s per model, which are the AMD numbers.
 - **Roles** (`007_roles.sql`): the backend writes as `spot_app`. The MCP server and System 1's logging use `spot_mcp_reader`, which can read `public` and append to `app`.
@@ -90,6 +93,7 @@ Other profiles: `local` runs everything in Docker on CPU (for testing: Laya take
 | `docs/system2-rag-contract.md` | Embeddings, pgvector, MCP tools, graph-RAG proposal (§7) |
 | `docs/orchestrator-contract.md` | Orchestrator `/v1/assess` and `/v1/ask` |
 | `docs/vision-contract.md` | Vision `/v1/vision` and `/v1/ocr` |
+| `docs/chat-contract.md` | AI Assistance chat: tables, `ChatRepo`, retrieval and grounding rules, chat API + SSE events, UI requirements |
 | `docs/RUNNING.md` | Compose profiles, the AMD hybrid setup, live System 2, timeouts and keys |
 | `amd/system2/schema/`, `amd/system2/fixtures/` | System 2 JSON Schemas and request/response examples |
 | `amd/*/README.md`, `backend/README.md`, `db/README.md` | Per-service details |
@@ -102,13 +106,15 @@ Other profiles: `local` runs everything in Docker on CPU (for testing: Laya take
 | **Hugging Face** | Three open HF models doing real work: Laya (triage), Qwen3-Embedding (RAG), Qwen3.5-9B (explanations). Plan: publish the Laya fine-tune and its dataset card on the Hub. |
 | **Neon** | One database holds the operational tables, pgvector RAG and the audit logs. It runs on Neon with the `neon` profile; the default `.env` is still `local`, so switch it for the demo. |
 | **Figma** | UI and UX rules: status never shown by color alone (color + icon + word), keyboard navigation, WCAG AA contrast, dark operator theme with a light toggle (`winners-design-creative-categories`). |
+| **MLH Gemini API** | AI Assistance answers through the Gemini API (Fast/Thinking, model picker), grounded in our pgvector RAG + knowledge graph with a citation and number check on every answer. |
 | **Best AI** | Gates first, model second: rules ‖ Laya decide what gets AI attention, and System 2 explains with checked citations ("LLM proposes, gates decide", `winners-lablab-ai`). |
 
 ## 8. Known gaps (as of 2026-10-10)
 - **The web app shows only the Overview page.** It now reads the backend (`/insights/overview`, `/flags`, `/missions`, `/assets`, `/locations`; `web/src/lib/dashboard.ts`), but the other nav items are still placeholders and nothing in the UI calls `/flags/{id}/explain`, `/ack` or `/replay/start` yet — the explain-and-act half of the core loop is API-only. `web/src/lib/analysis.ts` survives as the offline fallback (CSV triage in-process), shown behind a banner that says the numbers aren't live.
 - **No System 2 `/v1/debrief`.** The backend's `GET /missions/{id}/debrief` calls it, but `amd/system2` has no such route, so the debrief always comes from a template.
 - **Laya fine-tune:** the best run so far is full FT run2 (0.805 real, 0.846 counterfactual, vs LoRA's 0.733 / 0.602). The LoRA sweep (`scripts/sweep_lora.sh`) has no results in the repo yet. Checkpoints live on the AMD box, not in git.
-- **Graph RAG** (`kg_nodes` / `kg_edges`) is decided but not built: it's in no migration.
+- **Graph RAG** is built (`009_graph.sql`, `db/graph_build.py`: 578 nodes, 1,978 edges locally) and used by MCP and the chat. Node embeddings need the embed service; without it the chat uses the graph's text match only.
+- **Chat:** Gemini free tier (5 requests/min/model and a daily cap), so heavy demo use can hit `rate_limited`; the UI offers another model. Gemma 4 is opt-in (`CHAT_MODELS`): on 2026-10-10 it was too slow and returned 503s.
 - **Qwen vision fine-tune:** a teammate is working on it (`docs/TEAMMATE-qwen-vision-finetune.md`); no result yet.
 
 If time runs short, **cut depth, not the core loop**: replay → triage → explain → act.

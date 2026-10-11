@@ -1,7 +1,8 @@
 """SPOT operator dashboard backend (FastAPI), port 8000.
 
 Route tree (docs/backend-services-contract.md): /health and /api/v1/{events, replay, flags, missions, system1,
-assets, locations, insights, search, ops}. Run: `uvicorn app.main:app --app-dir backend --port 8000`.
+assets, locations, insights, search, ops, ask, chat}; `chat` (docs/chat-contract.md) streams answers as SSE.
+Run: `uvicorn app.main:app --app-dir backend --port 8000`.
 """
 from __future__ import annotations
 
@@ -21,8 +22,8 @@ from fastapi.responses import JSONResponse
 from .config import Settings
 from .db.pool import DatabaseUnavailable
 from .deps import AdminAuthError, Services, build_services
-from .routers import (ask, assets, events, flags, health, insights, locations, missions, ops, replay, search,
-                      system1)
+from .routers import (ask, assets, chat, events, flags, health, insights, locations, missions, ops, replay,
+                      search, system1)
 from .services.calllog import request_id_var
 from .services.flags import FlagNotFound, RequestDeadlineExceeded
 
@@ -43,6 +44,8 @@ TAGS = [
     {"name": "insights", "description": "Headline insights and reliability breakdowns."},
     {"name": "search", "description": "RAG search over documents (hybrid vector + full text)."},
     {"name": "ops", "description": "Model-call latency/throughput, jobs, demo reset."},
+    {"name": "chat", "description": "AI Assistance: stored chats answered by Gemini from the project database "
+                                    "(RAG documents, knowledge graph, SQL), streamed as server-sent events."},
 ]
 
 
@@ -141,7 +144,7 @@ def create_app(settings: Optional[Settings] = None, services: Optional[Services]
         return _err(500, "internal_error", "%s: %s" % (type(exc).__name__, exc))
 
     app.include_router(health.router)
-    for r in (events, replay, flags, missions, system1, assets, locations, insights, search, ops, ask):
+    for r in (events, replay, flags, missions, system1, assets, locations, insights, search, ops, ask, chat):
         app.include_router(r.router, prefix="/api/v1")
     return app
 
