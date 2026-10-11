@@ -9,7 +9,6 @@ import { BatteryCliff } from "@/components/BatteryCliff";
 import { PriorityQueue } from "@/components/PriorityQueue";
 import { StatTile } from "@/components/StatTile";
 import { WelcomeBanner } from "@/components/WelcomeBanner";
-import { DegradedNotice } from "@/components/DegradedNotice";
 import { LoadingIndicator } from "@/components/LoadingIndicator";
 import type { DashboardData } from "@/lib/dashboard";
 
@@ -64,7 +63,6 @@ export default function Dashboard({ initialData }: { initialData: DashboardData 
           {isValidating ? "Refreshing…" : "Refresh now"}
         </button>
       </div>
-      {data.source === "kit" && <DegradedNotice reason={data.degraded ?? "Backend unavailable."} />}
       <WelcomeBanner hiddenFailures={data.hiddenFailures} />
 
       <section aria-label="Headline metrics">
