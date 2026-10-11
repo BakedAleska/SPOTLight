@@ -151,7 +151,7 @@ frozen between requests, so no state that must survive may live only in process 
 The Next.js console (`web/`, :3000) opens no database connection and calls no model service.
 The browser polls `/api/dashboard` every 10 seconds; `web/src/lib/backend.ts` makes server-side,
 uncached reads of `/insights/overview`, `/flags?status=OPEN&limit=500`, `/assets`, `/locations`,
-and `/insights/reliability?group_by=battery_band`. Backend flag order and scores are preserved.
+and `/insights/reliability?group_by=action_type` (the success-by-inspection-type chart). Backend flag order and scores are preserved.
 Overview cards supply mission counts, hidden failures, battery success and matched-battery V2 gain.
 Flag detail, explanation and action routes proxy to FastAPI, controlled by `FEATURE_FLAG_DETAILS`,
 `FEATURE_FLAG_EXPLANATIONS` and `FEATURE_FLAG_ACTIONS`. These switches are not authentication.

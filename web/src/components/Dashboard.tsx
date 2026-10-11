@@ -5,7 +5,7 @@ import { LiveModelBoard } from "./LiveModelBoard";
 import { useState } from "react";
 import { FlagDetails } from "@/components/FlagDetails";
 import type { Flag } from "@/lib/types";
-import { BatteryCliff } from "@/components/BatteryCliff";
+import { ActionSuccessChart } from "@/components/ActionSuccessChart";
 import { PriorityQueue } from "@/components/PriorityQueue";
 import { StatTile } from "@/components/StatTile";
 import { WelcomeBanner } from "@/components/WelcomeBanner";
@@ -52,7 +52,7 @@ export default function Dashboard({ initialData }: { initialData: DashboardData 
       </div>
     );
   }
-  const { stats, flags, batteryBands } = data;
+  const { stats, flags, actionSuccess } = data;
   return (
     <div className="mx-auto flex max-w-[1600px] flex-col gap-4 p-4">
       <h1 className="sr-only">SPOT operator overview</h1>
@@ -72,10 +72,10 @@ export default function Dashboard({ initialData }: { initialData: DashboardData 
           <PriorityQueue flags={flags} total={data.flagCount} delay={STAGGER * stats.length} onSelect={data.features.flagDetails ? selectFlag : undefined} />
         </div>
         <div className="xl:col-span-2">
-          <BatteryCliff
-            bands={batteryBands}
-            caption={data.batteryCaption}
-            benchmark={data.aboveCliffRate}
+          <ActionSuccessChart
+            groups={actionSuccess.groups}
+            caption={actionSuccess.caption}
+            benchmark={actionSuccess.fleetRate}
             delay={STAGGER * (stats.length + 1)}
           />
         </div>

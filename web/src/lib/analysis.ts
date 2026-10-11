@@ -15,6 +15,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { getKit, type Action, type Kit } from "./kit";
+import { summarizeActionSuccess } from "./action-success";
 import type { BatteryBand, Flag, Reason, Severity, Stat } from "./types";
 
 export type { BatteryBand, Flag, Reason, Severity, Stat } from "./types";
@@ -418,8 +419,13 @@ function triage(action: Action, kit: Kit, facts: Derived): Flag | null {
 const kit = getKit();
 const facts = derive(kit);
 
-/** Success rate by battery band — the cliff chart. */
-export const batteryBands = facts.batteryBands;
+/** Success rate by action type — the dashboard's fleet-wide chart. */
+export const actionSuccess = summarizeActionSuccess(
+  [...new Set(kit.actions.map((a) => a.action_type))].map((type) => {
+    const rows = kit.actions.filter((a) => a.action_type === type);
+    return { type, total: rows.length, success: rows.filter((a) => a.status === "SUCCESS").length };
+  }),
+);
 
 /**
  * The priority queue. Worst first — severity leads, score breaks ties.
@@ -496,13 +502,6 @@ export const provenance = {
 export const headline = {
   /** The banner's thesis: mission status is not a safe thing to trust. */
   hiddenFailures: { count: hiddenCount, ofCompleted: facts.completedMissions },
-  /** The battery chart's caption. */
-  batteryCliff:
-    `Success falls to ${facts.cliff.successRate}% below ${CLIFF_CEILING}% battery, from ` +
-    `${facts.cliff.aboveRate}% above it — a hard cue to send SPOT back to dock ` +
-    `before it gets there.`,
-  /** The battery chart's reference line. */
-  aboveCliffRate: facts.cliff.aboveRate,
   /** How much of the queue the mission status field would never have shown. */
   queuedInHiddenMissions: flags.filter((flag) =>
     facts.hiddenFailureMissions.has(flag.missionId),

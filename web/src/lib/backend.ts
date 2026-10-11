@@ -1,6 +1,7 @@
 import type { DashboardData } from "./dashboard";
 import type { Flag, Reason, Severity } from "./types";
 import { dashboardFeatures } from "./features";
+import { summarizeActionSuccess } from "./action-success";
 
 interface Insight {
   key: string;
@@ -49,14 +50,14 @@ export async function loadDashboard(): Promise<DashboardData> {
     read<{ items: BackendFlag[]; page: { total: number } }>("/flags?status=OPEN&limit=500"),
     read<{ asset_id: string; asset_name: string }[]>("/assets"),
     read<{ location_id: string; location_name: string }[]>("/locations"),
-    read<{ rows: { group: string; n: number; success_rate_pct: number | null }[] }>("/insights/reliability?group_by=battery_band"),
+    read<{ rows: { group: string; n: number; n_success: number }[] }>("/insights/reliability?group_by=action_type"),
   ]);
   const assetNames = new Map(assets.map((asset) => [asset.asset_id, asset.asset_name]));
   const locationNames = new Map(locations.map((location) => [location.location_id, location.location_name]));
   const green = overview.insights.find((insight) => insight.key === "green_but_broken");
   const battery = overview.insights.find((insight) => insight.key === "battery_cliff");
   const config = overview.insights.find((insight) => insight.key === "v1_vs_v2_matched_battery");
-  const bands = reliability.rows;
+  const byType = reliability.rows;
   const hiddenFailures = {
     count: green?.detail.completed_with_failures ?? 0,
     ofCompleted: green?.detail.reported_completed ?? 0,
@@ -86,17 +87,15 @@ export async function loadDashboard(): Promise<DashboardData> {
     degraded: null,
     features: dashboardFeatures(),
     stats: [
-      { label: "Missions", value: String(green?.detail.missions ?? 0), note: `${bands.reduce((sum, band) => sum + band.n, 0)} actions at ${locations.length} waypoints.` },
+      { label: "Missions", value: String(green?.detail.missions ?? 0), note: `${byType.reduce((sum, row) => sum + row.n, 0)} actions at ${locations.length} waypoints.` },
       { label: "Hiding failures", value: String(hiddenFailures.count), unit: `of ${hiddenFailures.ofCompleted}`, note: green?.pitch ?? "No completed missions yet." },
       { label: "Success at ≤25% battery", value: battery?.value == null ? "—" : String(battery.value), unit: "%", note: battery?.pitch ?? "No actions in this battery band yet." },
       { label: "V2 vs V1 at matched battery", value: config?.value == null ? "—" : `${config.value > 0 ? "+" : ""}${config.value}`, unit: "pts", note: config?.pitch ?? "Both configurations need actions above 40% battery to compare." },
     ],
     flags,
     flagCount: queue.page.total,
-    batteryBands: bands.map((band) => ({ band: band.group.replace("<=", "≤"), successRate: band.success_rate_pct ?? 0, sampleSize: band.n })),
+    actionSuccess: summarizeActionSuccess(byType.map((row) => ({ type: row.group, total: row.n, success: row.n_success }))),
     hiddenFailures,
-    aboveCliffRate: battery?.detail.above_25_success_pct ?? null,
-    batteryCaption: battery?.pitch ?? "No battery reliability data yet.",
     generatedAt: overview.generated_at,
   };
 }

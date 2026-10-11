@@ -1,4 +1,5 @@
-import type { BatteryBand, Flag, Stat } from "./types";
+import type { ActionSuccess } from "./action-success";
+import type { Flag, Stat } from "./types";
 
 export interface DashboardData {
   source: "backend" | "kit";
@@ -7,9 +8,7 @@ export interface DashboardData {
   stats: Stat[];
   flags: Flag[];
   flagCount: number;
-  batteryBands: BatteryBand[];
+  actionSuccess: ActionSuccess;
   hiddenFailures: { count: number; ofCompleted: number };
-  batteryCaption: string;
-  aboveCliffRate: number | null;
   generatedAt: string;
 }

@@ -16,10 +16,8 @@ export async function getDashboard(): Promise<DashboardData> {
       stats: kit.stats,
       flags: kit.flags,
       flagCount: kit.flags.length,
-      batteryBands: kit.batteryBands,
+      actionSuccess: kit.actionSuccess,
       hiddenFailures: kit.headline.hiddenFailures,
-      batteryCaption: kit.headline.batteryCliff,
-      aboveCliffRate: kit.headline.aboveCliffRate,
       generatedAt: new Date().toISOString(),
     };
   }
