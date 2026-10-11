@@ -798,3 +798,15 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .spot-activity-ring, .spot-activity-icon { animation: none; }
 }
+
+/* Windows-style trailing dots surround the dog during an inspection. */
+.spot-working-spinner {
+  transform-box: view-box;
+  transform-origin: 0 0;
+  animation: spot-working-orbit 1.8s cubic-bezier(0.4, 0, 0.3, 1) infinite;
+  filter: drop-shadow(0 1px 2px black);
+}
+@keyframes spot-working-orbit { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .spot-working-spinner { animation: none; }
+}

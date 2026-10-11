@@ -94,6 +94,7 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
       <Panel title="Facility route" aside={mode === "live" ? "LIVE FEED" : "RECORDED REPLAY"}>
         <div className="mb-4 flex flex-wrap gap-6 text-sm text-muted"><span>Position <strong className="text-ink">{current?.id ?? "Awaiting waypoint"}</strong></span><span>Battery <strong className="text-ink">{battery == null ? "—" : `${battery}%`}</strong></span><span>Errors <strong className="text-bad">{errors.length}</strong></span></div>
         <svg viewBox="0 0 1095 595" className="w-full rounded border border-line bg-surface-2" role="group" aria-label="Facility map with mission route, waypoint buttons and SPOT position">
+          <defs><filter id="spot-marker-contrast" x="-25%" y="-25%" width="150%" height="150%"><feComponentTransfer><feFuncA type="linear" slope="2" /></feComponentTransfer><feDropShadow dx="0" dy="1" stdDeviation="1.5" floodColor="black" floodOpacity="0.9" /></filter></defs>
           <image href="/kit/fictional_floor_plan.png" width="1095" height="595" />
           {mode === "replay" && <polyline points={path(planned)} fill="none" stroke="white" strokeWidth="3" strokeDasharray="8 8" opacity="0.65" />}
           <polyline points={path(visited)} fill="none" stroke="var(--c-accent-ink)" strokeWidth="5" strokeLinejoin="round" />
@@ -102,13 +103,16 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
             const fault = errors.some(e => e.locationId === p.id);
             return <g key={p.id} role="button" tabIndex={0} aria-label={`${p.id}: ${p.name}${fault ? ", error detected" : ""}`} onClick={() => setSelectedId(p.id)} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSelectedId(p.id); } }} className="cursor-pointer">
               <title>{`${p.id} · ${p.name}`}</title><circle cx={p.x} cy={p.y} r="22" fill="transparent" />
-              <circle cx={p.x} cy={p.y} r={selected?.id === p.id ? 12 : 7} fill={fault ? "var(--c-bad)" : "var(--c-surface)"} stroke={fault ? "white" : "var(--c-accent-ink)"} strokeWidth="3" />
-              {fault && <text x={p.x} y={p.y + 5} textAnchor="middle" fill="white" fontSize="15" fontWeight="bold">!</text>}
+              {(p.id !== current?.id || frame?.moving) && <circle cx={p.x} cy={p.y} r="7" fill={fault ? "var(--c-bad)" : "var(--c-surface)"} stroke={fault ? "white" : "var(--c-accent-ink)"} strokeWidth={selected?.id === p.id ? 4 : 3} />}
+              {fault && (p.id !== current?.id || frame?.moving) && <text x={p.x} y={p.y + 5} textAnchor="middle" fill="white" fontSize="15" fontWeight="bold">!</text>}
             </g>;
           })}
           {current && marker && <g aria-label={`SPOT at ${current.id}`} transform={`translate(${marker.x} ${marker.y})`}>
-            <image href="/spotlight-logo-small.svg" x="-18" y="-20" width="36" height="40" />
-            <text y="42" textAnchor="middle" fill="white" stroke="black" strokeWidth="3" paintOrder="stroke" fontSize="15" fontWeight="bold">SPOT</text>
+            {((active && !frame?.moving && last?.type === "ACTION_STARTED") || (mode === "live" && last?.type === "ACTION_STARTED")) && <g className="spot-working-spinner" aria-label="SPOT working">
+              {[0, 1, 2, 3, 4].map(i => <circle key={i} cx={46 * Math.cos((-110 - i * 17) * Math.PI / 180)} cy={46 * Math.sin((-110 - i * 17) * Math.PI / 180)} r="3.5" fill="white" opacity={1 - i * 0.16} />)}
+            </g>}
+            <image href="/spotlight-logo-small.svg" x="-30" y="-34" width="60" height="68" filter="url(#spot-marker-contrast)" />
+            <text y="65" textAnchor="middle" fill="white" stroke="black" strokeWidth="3" paintOrder="stroke" fontSize="15" fontWeight="bold">SPOT</text>
           </g>}
         </svg>
         <p className="mt-3 text-xs text-muted">Dashed: planned route · Solid: visited route · !: error. Travel is interpolated between stops; activity durations are compressed from the logs.</p>
