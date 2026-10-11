@@ -152,6 +152,8 @@
   --ease-settle: cubic-bezier(0.22, 1, 0.36, 1);
   --dur-fast: 150ms;
   --dur-base: 450ms;
+  /* Closing is quicker than opening: what's leaving shouldn't hold the eye. */
+  --dur-collapse: 300ms;
 }
 
 /* DARK via the OS — skipped when the user has explicitly chosen light. */
@@ -750,26 +752,40 @@ body {
 /* A disclosure opening and closing: the grid row grows from 0fr to its
    content's height, so nothing needs measuring. The inner wrapper clips only
    while it runs; once open, the class comes off (see QueueRow) so focus rings
-   inside aren't cut. Closing is shorter and eases in, as things leaving do. */
+   inside aren't cut. The height leads and the content follows it in: it
+   fades and drifts down a few pixels a beat after the row starts to grow, so
+   the text never shows squashed against the bottom edge. Closing reverses
+   it: the content fades out first, then the height closes, on a curve that
+   still decelerates (ease-in made the row snap shut at the end). */
 @keyframes expand {
   from {
     grid-template-rows: 0fr;
-    opacity: 0;
   }
   to {
     grid-template-rows: 1fr;
-    opacity: 1;
   }
 }
 
 @keyframes collapse {
   from {
     grid-template-rows: 1fr;
-    opacity: 1;
   }
   to {
     grid-template-rows: 0fr;
+  }
+}
+
+@keyframes disclose-in {
+  from {
     opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes disclose-out {
+  to {
+    opacity: 0;
+    transform: translateY(-4px);
   }
 }
 
@@ -788,14 +804,48 @@ body {
   animation: expand var(--dur-base) var(--ease-settle) both;
 }
 
+.anim-expand > * {
+  animation: disclose-in 360ms var(--ease-settle) 90ms both;
+}
+
 .anim-collapse {
-  animation: collapse 220ms ease-in both;
+  animation: collapse var(--dur-collapse) cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.anim-collapse > * {
+  animation: disclose-out 160ms ease-in both;
+}
+
+/* A one-line fold that transitions rather than animates, so it can turn
+   around mid-way (the queue row's "+N more signals"). */
+.fold {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition:
+    grid-template-rows var(--dur-base) var(--ease-settle),
+    opacity var(--dur-fast) ease-out;
+}
+
+.fold > * {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.fold[data-folded] {
+  grid-template-rows: 0fr;
+  opacity: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .anim-expand,
-  .anim-collapse {
+  .anim-collapse,
+  .anim-expand > *,
+  .anim-collapse > * {
     animation: none;
+  }
+
+  .fold {
+    transition: none;
   }
 }
 
