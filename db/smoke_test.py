@@ -5,9 +5,13 @@
   python db/smoke_test.py "pump bearing too hot"   # your own query (vector + hybrid)
   python db/smoke_test.py --roles                  # also check spot_mcp_reader permissions (needs a superuser URL)
 (If the knowledge graph exists it also runs a text, a vector and a 2-hop graph query; contract §7.)
+--roles creates a throwaway login smoke_mcp (random password) and always drops it again; its one write probe
+(INSERT into app.mcp_tool_calls) is rolled back, so it leaves no rows behind.
 
-Env: DATABASE_URL, LOGS_DATABASE_URL, EMBED_URL, EMBED_MODEL, EMBED_DIM, EMBED_QUERY_PREFIX.
+Env: DATABASE_URL, LOGS_DATABASE_URL, EMBED_URL, EMBED_MODEL, EMBED_DIM, EMBED_QUERY_PREFIX (unset = the Qwen3
+instruction the backend and MCP server use).
 """
+import secrets
 import sys
 import time
 from pathlib import Path
@@ -67,41 +71,65 @@ def graph(conn, client):
 
 
 def check_roles(conn):
-    """Create a throwaway login in spot_mcp_reader and verify: SELECT public ok, INSERT app ok, writes to public fail."""
+    """Create a throwaway login in spot_mcp_reader and verify: SELECT public ok, INSERT app ok, writes to public fail.
+    The role gets a random password and is dropped in `finally`, whatever happens; the INSERT probe is rolled back."""
     import psycopg
-    from urllib.parse import urlparse
-    conn.execute("DROP ROLE IF EXISTS smoke_mcp")
-    conn.execute("CREATE ROLE smoke_mcp LOGIN PASSWORD 'smoke' IN ROLE spot_mcp_reader")
-    u = urlparse(spotdb.database_url())
-    url = u._replace(netloc="smoke_mcp:smoke@%s:%s" % (u.hostname, u.port or 5432)).geturl()
+    from psycopg import sql
+    from urllib.parse import quote, urlparse
+    password = secrets.token_hex(24)
     ok = True
-    with psycopg.connect(url, autocommit=True) as c:
-        def expect(sql, allowed):
-            nonlocal ok
+    conn.execute("DROP ROLE IF EXISTS smoke_mcp")
+    try:
+        conn.execute(sql.SQL("CREATE ROLE smoke_mcp LOGIN PASSWORD {} IN ROLE spot_mcp_reader").format(
+            sql.Literal(password)))
+        u = urlparse(spotdb.database_url())
+        url = u._replace(netloc="smoke_mcp:%s@%s:%s" % (quote(password), u.hostname, u.port or 5432)).geturl()
+        with spotdb.connect(url, autocommit=True) as c:
+            def expect(stmt, allowed, rollback=False):
+                nonlocal ok
+                try:
+                    if rollback:                         # a write probe: run it, then roll it back
+                        with c.transaction(force_rollback=True):
+                            c.execute(stmt)
+                    else:
+                        c.execute(stmt)
+                    res = True
+                except psycopg.errors.InsufficientPrivilege:
+                    res = False
+                ok &= res == allowed
+                print("   %-6s %-70s %s" % ("ok" if res == allowed else "FAIL", stmt[:70], "allowed" if res else "denied"))
+            print("\n[roles] spot_mcp_reader")
+            expect("SELECT count(*) FROM documents", True)
+            expect("SELECT count(*) FROM flags", True)
+            expect("SELECT count(*) FROM raw.spot_event_log", True)
+            expect("SELECT count(*) FROM raw.get_mission_event_log('M014')", True)
+            expect("INSERT INTO app.mcp_tool_calls (tool, args, ok) VALUES ('smoke', '{}', true) RETURNING call_id", True,
+                   rollback=True)
+            expect("UPDATE flags SET status = status WHERE false", False)
+            expect("DELETE FROM documents WHERE false", False)
+            expect("SELECT * FROM app.model_calls LIMIT 1", False)   # only call_id is readable (for RETURNING)
+            expect("SELECT count(*) FROM raw.kit_rows", False)
+            if spotdb.has_table(conn, "public.kg_nodes"):          # Graph RAG (contract §7)
+                expect("SELECT count(*) FROM kg_edges", True)
+                expect("SELECT count(*) FROM match_kg_nodes_text('HX-204')", True)
+                expect("SELECT count(*) FROM graph_neighborhood(ARRAY['location:WP05'], 2)", True)
+                expect("DELETE FROM kg_nodes WHERE false", False)
+    except psycopg.Error as e:
+        # never print the URL; psycopg messages name host and user only, and the password is masked regardless
+        print("   FAIL   role check aborted: %s: %s" % (type(e).__name__, str(e).replace(password, "***")[:300]),
+              file=sys.stderr)
+        ok = False
+    finally:
+        # Each cleanup step on its own, role first: a failing DELETE (e.g. app.* lives in LOGS_DATABASE_URL, not
+        # here) must never leave the login role behind.
+        for stmt in ("DROP ROLE IF EXISTS smoke_mcp",
+                     "DELETE FROM app.mcp_tool_calls WHERE tool = 'smoke'"):    # belt and braces (rolled back above)
             try:
-                c.execute(sql)
-                res = True
-            except psycopg.errors.InsufficientPrivilege:
-                res = False
-            ok &= res == allowed
-            print("   %-6s %-70s %s" % ("ok" if res == allowed else "FAIL", sql[:70], "allowed" if res else "denied"))
-        print("\n[roles] spot_mcp_reader")
-        expect("SELECT count(*) FROM documents", True)
-        expect("SELECT count(*) FROM flags", True)
-        expect("SELECT count(*) FROM raw.spot_event_log", True)
-        expect("SELECT count(*) FROM raw.get_mission_event_log('M014')", True)
-        expect("INSERT INTO app.mcp_tool_calls (tool, args, ok) VALUES ('smoke', '{}', true) RETURNING call_id", True)
-        expect("UPDATE flags SET status = status WHERE false", False)
-        expect("DELETE FROM documents WHERE false", False)
-        expect("SELECT * FROM app.model_calls LIMIT 1", False)   # only call_id is readable (for RETURNING)
-        expect("SELECT count(*) FROM raw.kit_rows", False)
-        if spotdb.has_table(conn, "public.kg_nodes"):          # Graph RAG (contract §7)
-            expect("SELECT count(*) FROM kg_edges", True)
-            expect("SELECT count(*) FROM match_kg_nodes_text('HX-204')", True)
-            expect("SELECT count(*) FROM graph_neighborhood(ARRAY['location:WP05'], 2)", True)
-            expect("DELETE FROM kg_nodes WHERE false", False)
-    conn.execute("DELETE FROM app.mcp_tool_calls WHERE tool = 'smoke'")
-    conn.execute("DROP ROLE smoke_mcp")
+                conn.execute(stmt)
+            except psycopg.Error as e:
+                print("   warning: cleanup %r failed: %s" % (stmt, type(e).__name__), file=sys.stderr)
+                if "ROLE" in stmt:
+                    ok = False
     return ok
 
 

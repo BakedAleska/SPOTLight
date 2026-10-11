@@ -111,6 +111,11 @@ class ChatRepo:
     async def search_documents(self, q: str, vec: str | None, k: int = 8,
                                kinds: list[str] | None = None) -> tuple[list[dict], str]
         # vec (a pgvector literal) -> match_documents_hybrid, mode 'hybrid'; vec None -> full text, mode 'fulltext'.
+        # Hybrid keeps only rows with similarity >= 0.50 (CHAT_MIN_DOC_SIMILARITY; 0.40 with a mission filter,
+        # CHAT_MISSION_MIN_DOC_SIMILARITY, since the filter already scopes the rows) or text_match (every query term,
+        # or every id-like token, in the row); the function is asked for 2*k rows and at most k are kept; a row
+        # with no embedding needs text_match. The full-text path has no floor. An off-topic question can return
+        # no documents. (CHANGED 2026-10-11, vector-store audit VS-06; mission floor RE-06.)
         # Rows: doc_id, kind, title, content, asset_id, location_id, mission_id, action_id, ts, score
     async def match_graph_nodes(self, q: str, vec: str | None, k: int = 6) -> list[dict]
         # match_kg_nodes_text + (when vec) match_kg_nodes, merged by node_id, best first.
@@ -165,7 +170,9 @@ Per turn, before the Gemini call, within `CHAT_RETRIEVAL_BUDGET_S` (default 8 s)
    mission/asset/location/flag add to those ids.
 4. **In parallel:** `search_documents` (k 8), `match_graph_nodes` (k 6), `fleet_snapshot` (cached 60 s),
    `entity_digests`. Then `graph_neighborhood` from the top 4 entry nodes (2 hops, 25 nodes, instance kinds filtered out
-   when a seed is a hub).
+   when a seed is a hub). With a vector, vector-only graph entry nodes below cosine 0.50 (`MIN_VECTOR_SCORE`, was
+   0.35) and hybrid documents below 0.50 (0.40 when the chat has a mission filter) without a text match are dropped
+   (VS-06: off-topic 0.40-0.54, relevant 0.54-0.83). The snapshot is always kept, and the full-text passes have no floor.
 5. **Sources.** Each becomes a Source (§3) with a stable citation id: documents → `doc_id` (`incident:AN012`,
    `event:act-A0001`, `manual:p52-1`, `policy:battery_low`, `note:3`); graph nodes → `node_id` (`asset:HX-204`,
    `failure_type:LOCALIZATION_FAILURE`), with their neighbourhood as readable triples; digests → `mission:M007`,

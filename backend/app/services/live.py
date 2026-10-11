@@ -14,6 +14,10 @@ the only thing that can reach the AMD box) claims it and walks the route's 8 sto
                assessment (red), explanation document, explanation KG node
   embeddings-> vectors the runner computed for those texts (checked against the stored text)
 
+Logging (audit RW-07): the runner has no database credentials, so this API writes the app.model_calls rows for the
+calls it made: System 1 at `result`, System 2 (Qwen) at `analysis` (the vision time goes in that row's metadata;
+vision is not a model_calls system) and one `embed` row per `embeddings` batch, each with metadata.via 'live_runner'.
+
 What is real: the robot's log is the kit row of `source_action_id`, re-sent now under a fresh action id
 (LIVE-<run>-<stop>), so earlier runs are never overwritten; values are never invented. Photos are a fixed set of
 kit sample images picked by action type: a simulated capture that never judges the asset (decision "demo images
@@ -24,6 +28,7 @@ from __future__ import annotations
 import datetime as dt
 import json
 import logging
+import math
 import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -41,6 +46,11 @@ LIVE_SOURCE = "live"
 DRAFT_MAX_BYTES = 16 * 1024         # a draft's `fields`, serialized (contract: at most 16 KB)
 LIVE_TRIAGE_MODE = "parallel"       # rules run beside Laya: either can escalate, rules set the priority floor
 SYSTEM2_TEMPLATE_PATHS = ("fallback", "insufficient_context")
+VERDICT_RULES = ("laya_verdict", "rules_verdict", "laya_unavailable")   # flag reasons that are not policy rules
+# The laya_unavailable detail live passes on (packet, System 2 request, facts): never the raw exception text, which
+# stays in live_captures.laya.error, events.payload.triage.error and app.model_calls. Same text as the validator's
+# rules-only reason (tests/test_live_logging.py checks they match).
+LAYA_UNAVAILABLE_DETAIL = "System 1 (Laya) unavailable; rules-only verdict"
 
 # Mirrors amd/mcp/spot_mcp/domain.py ALLOWED_ACTIONS / suggested_action (tests/test_live.py checks they match), so a
 # live packet offers System 2 the same action vocabulary as an MCP packet.
@@ -364,11 +374,16 @@ class LiveService:
         t0 = time.perf_counter()
         ts = _iso(_parse_ts(timestamp))
         raw = self._result_raw(run, idx, ts)
+        called = bool(laya)             # the runner called Laya (ok or failed); nothing sent: no call to log
         laya = laya or {"status": "unavailable", "error": "the live runner sent no Laya result"}
-        if laya.get("status") == "ok":
-            self.sink.model_call(system="system1", ok=True, model=laya.get("model"), endpoint="/v1/predict",
-                                 action_id=raw["details"]["action_id"], latency_ms=laya.get("latency_ms"),
-                                 device=laya.get("device"), request_id=request_id,
+        # Only a failed call is logged here (like System1Client): the System 1 service logs every call it answers
+        # itself (LOGS_DATABASE_URL, required on the AMD box; request_id live-<run>-<stop>-laya, same action_id),
+        # so an ok row here would be a duplicate (audit M2 / RBM-07).
+        if called and laya.get("status") == "unavailable":
+            self.sink.model_call(system="system1", ok=False, model=_str(laya.get("model")), endpoint="/v1/predict",
+                                 action_id=raw["details"]["action_id"], latency_ms=_int(laya.get("latency_ms")),
+                                 device=_str(laya.get("device")), request_id=request_id,
+                                 error=str(laya.get("error") or "Laya did not answer")[:300],
                                  metadata={"via": "live_runner", "run_id": run_id, "stop": stop["stop"]})
         out = await self.pipeline.ingest(raw, source="live", request_id=request_id, mode=LIVE_TRIAGE_MODE, laya=laya)
         decision = out.get("decision") or {}
@@ -405,7 +420,7 @@ class LiveService:
         flag_view = packet["flag"]
         s2 = {"flag_id": flag_id or int(capture["capture_id"]), "request_id": request_id, "flag": flag_view,
               "event": {"event_id": raw["event_id"], "event_type": raw["event_type"]},
-              "reasons": [r.get("detail") for r in (out.get("reasons") or []) if isinstance(r, dict) and r.get("detail")],
+              "reasons": [r.get("detail") for r in _reasons(out) if r.get("detail")],
               "context": packet}
         capture = await self.live.get_capture(run_id, idx) or capture
         return {"capture": capture, "verdict": "red" if red else "green", "flag_id": flag_id,
@@ -443,12 +458,15 @@ class LiveService:
             raise LiveError(409, "stop %s of run %s has not been triaged yet" % (stop["stop"], run_id))
         s2 = body.get("system2") if isinstance(body.get("system2"), dict) else None
         s2_req = body.get("system2_request") if isinstance(body.get("system2_request"), dict) else {}
+        self._log_system2(run_id, stop, cap, body, s2, s2_req, request_id)
         flag_like = dict(s2_req.get("flag") or {})
         packet = s2_req.get("context") if isinstance(s2_req.get("context"), dict) else None
         qwen: Dict[str, Any]
         fallback = None
         if s2 and s2.get("answer") and s2.get("path") not in SYSTEM2_TEMPLATE_PATHS and s2.get("model") != "template":
-            qwen = {**normalize_assessment(s2), "source": "system2", "path": s2.get("path"),
+            # severity defaults to the stop's, as /explain defaults to the flag's (System 2 sends none)
+            qwen = {**normalize_assessment(s2, default_severity=cap.get("severity")), "source": "system2",
+                    "path": s2.get("path"),
                     "recommended_action": s2.get("recommended_action"), "confidence_label": s2.get("confidence"),
                     "image": body.get("image_status")}
         else:
@@ -511,17 +529,45 @@ class LiveService:
         return {"capture": capture, "qwen_source": source, "fallback_reason": fallback, "embed": embed,
                 "assessment_id": assessment_id}
 
+    def _log_system2(self, run_id: int, stop: Dict[str, Any], cap: Dict[str, Any], body: Dict[str, Any],
+                     s2: Optional[Dict[str, Any]], s2_req: Dict[str, Any], request_id: str) -> None:
+        """The runner's System 2 call as one app.model_calls row, shaped like System2Client._log: latency_ms is the
+        runner's round trip (system2_ms), the service's own figure is metadata.service_latency_ms. A failed call
+        (system2_error) is logged with ok false; a body with neither field made no call."""
+        err = body.get("system2_error")
+        if s2 is None and not err:
+            return
+        s2 = s2 or {}
+        usage = s2.get("usage") if isinstance(s2.get("usage"), dict) else {}
+        timings = body.get("timings") if isinstance(body.get("timings"), dict) else {}
+        ok = bool(s2.get("answer"))
+        self.sink.model_call(
+            system="system2", ok=ok, endpoint="/v1/assess", request_id=request_id, model=_str(s2.get("model")),
+            latency_ms=_int(body.get("system2_ms")), tokens_per_sec=_num(s2.get("tokens_per_sec")),
+            input_tokens=_int(s2.get("input_tokens") or usage.get("prompt_tokens")),
+            output_tokens=_int(s2.get("output_tokens") or usage.get("completion_tokens")),
+            device=_str(s2.get("device")), flag_id=cap.get("flag_id"), action_id=cap.get("action_id"),
+            error=None if ok else str(err or "System 2 answered without an answer")[:300],
+            metadata=_compact({"via": "live_runner", "run_id": run_id, "stop": stop["stop"],
+                               "path": _str(s2.get("path")), "service_latency_ms": _int(s2.get("latency_ms")),
+                               "vision_ms": _int(timings.get("vision_ms")),
+                               "image_status": _str(body.get("image_status")),
+                               "system2_request_id": _str(s2_req.get("request_id"))}))
+
     async def embeddings(self, run_id: int, body: Dict[str, Any]) -> Dict[str, Any]:
         await self._run(run_id)
         model = str(body.get("model") or self.embed_model)
+        items = body.get("items") or []
         done, skipped = [], []
-        for item in body.get("items") or []:
+        bad_dims: Optional[str] = None
+        for item in items:
             key, text, vec = item.get("key"), item.get("text"), item.get("vector")
             if not (isinstance(key, str) and isinstance(text, str) and isinstance(vec, list)):
                 skipped.append({"key": key, "why": "needs key, text and vector"})
                 continue
             if len(vec) != self.embed_dim:
-                skipped.append({"key": key, "why": "vector has %d dims, EMBED_DIM is %d" % (len(vec), self.embed_dim)})
+                bad_dims = "vector has %d dims, EMBED_DIM is %d" % (len(vec), self.embed_dim)
+                skipped.append({"key": key, "why": bad_dims})
                 continue
             lit = vec_literal(vec)
             if key.startswith("doc:"):
@@ -531,7 +577,22 @@ class LiveService:
             else:
                 ok = False
             (done if ok else skipped).append(key if ok else {"key": key, "why": "no row with exactly this text"})
+        if items:
+            self._log_embed(run_id, body, model, len(items), len(done), len(skipped), bad_dims)
         return {"embedded": done, "skipped": skipped, "model": model}
+
+    def _log_embed(self, run_id: int, body: Dict[str, Any], model: str, n: int, n_done: int, n_skipped: int,
+                   bad_dims: Optional[str]) -> None:
+        """One app.model_calls row (system 'embed') per runner batch: the runner made one /v1/embeddings call for
+        these texts. ok is false when the vectors had the wrong size. Timing fields are read when the body has
+        them (latency_ms, input_tokens, tokens_per_sec, device); the runner does not send them yet, so they are NULL."""
+        ms, tokens = _int(body.get("latency_ms")), _int(body.get("input_tokens"))
+        tps = _num(body.get("tokens_per_sec")) or (round(tokens / (ms / 1000.0), 1) if tokens and ms else None)
+        self.sink.model_call(
+            system="embed", ok=bad_dims is None, endpoint="/v1/embeddings", model=model, latency_ms=ms,
+            input_tokens=tokens, tokens_per_sec=tps, device=_str(body.get("device")), error=bad_dims,
+            metadata={"via": "live_runner", "run_id": run_id, "purpose": "document", "inputs": n,
+                      "embedded": n_done, "skipped": n_skipped})
 
     async def finish(self, run_id: int, status: str, error: Optional[str], request_id: str) -> Dict[str, Any]:
         run = await self._run(run_id)
@@ -565,8 +626,8 @@ class LiveService:
         asset = self.ref.assets.get(d["asset_id"]) or {}
         decision = out.get("decision") or {}
         rules = out.get("rules") or {}
-        reasons = [r for r in (out.get("reasons") or []) if isinstance(r, dict)]
-        fired = [r for r in reasons if r.get("rule") not in ("laya_verdict", "rules_verdict", "laya_unavailable")]
+        reasons = _reasons(out)
+        fired = [r for r in reasons if r.get("rule") not in VERDICT_RULES]
         red = bool(decision.get("escalated"))
         category = decision.get("category") if decision.get("category") in ALLOWED_ACTIONS else "none"
         if not red:
@@ -634,10 +695,9 @@ class LiveService:
             facts.append("Laya (System 1) says escalate=%s with p=%s; the combined decision (%s mode) is %s %s." % (
                 "yes" if lv.get("escalate") else "no", lv.get("p_escalate"), LIVE_TRIAGE_MODE,
                 "ESCALATED" if red else "not escalated", decision.get("priority")))
-        else:
-            facts.append("Laya (System 1) did not answer (%s); the rules decided alone: %s %s." % (
-                (out.get("system1") or {}).get("error") or "unavailable", "ESCALATED" if red else "not escalated",
-                decision.get("priority")))
+        else:   # the raw error stays in the capture's laya view, not in text System 2 or the template repeats
+            facts.append("Laya (System 1) did not answer; the rules decided alone: %s %s." % (
+                "ESCALATED" if red else "not escalated", decision.get("priority")))
         s1 = []
         for q, a in ((out.get("system1") or {}).get("answers") or {}).items():
             if isinstance(a, dict) and a.get("answer") is not None:
@@ -805,6 +865,32 @@ def _meaning(q: str, answer: Any) -> Optional[str]:
         return ((Q.QUESTIONS.get(q) or {}).get("criteria") or {}).get(answer)
     except AttributeError:
         return None
+
+
+def _reasons(out: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """The ingest's flag reasons as live passes them on: laya_unavailable gets the stable detail."""
+    return [{**r, "detail": LAYA_UNAVAILABLE_DETAIL} if r.get("rule") == "laya_unavailable" else r
+            for r in (out.get("reasons") or []) if isinstance(r, dict)]
+
+
+_INT4_MAX = 2 ** 31 - 1     # model_calls latency_ms / *_tokens are integer
+_REAL_MAX = 3.4e38          # model_calls.tokens_per_sec is real
+
+
+def _num(v: Any, hi: float = _REAL_MAX) -> Optional[float]:
+    """A number from the runner's body for a model_calls column, else None. A bad or out-of-range value must not
+    lose the row: LogSink's insert is fire-and-forget, so a value the column rejects drops the whole row silently."""
+    ok = isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v) and 0 <= v <= hi
+    return v if ok else None
+
+
+def _int(v: Any) -> Optional[int]:
+    n = _num(v, _INT4_MAX)
+    return int(n) if n is not None else None
+
+
+def _str(v: Any) -> Optional[str]:
+    return v[:200] if isinstance(v, str) and v else None
 
 
 def _brief(ingest: Dict[str, Any]) -> Dict[str, Any]:

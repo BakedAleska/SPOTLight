@@ -321,8 +321,13 @@ def pack(ranked: Sequence[Dict[str, Any]], nodes: Dict[str, Dict[str, Any]], mea
          token_budget: Optional[int] = None, max_items: Optional[int] = None,
          caps: Optional[Dict[Tuple[int, bool], int]] = None, fill: bool = True) -> List[Dict[str, Any]]:
     """Render facts in rank order under a token and/or item bound. With caps, a first pass takes at most
-    caps[(tier, on_point)] of each kind; with fill, a second pass then fills what's left in rank order."""
+    caps[(tier, on_point)] of each kind; with fill, a second pass then fills what's left in rank order.
+
+    Every returned item has a distinct `id`: a lower-ranked fact that cites a node already cited (a second stat edge
+    of one failure_type, a second link of one manual page or topic) is left out. System 2 rejects a packet that
+    repeats an id with different content (422 'conflicting content for duplicate id')."""
     picked: Dict[int, Dict[str, Any]] = {}
+    cited: Set[str] = set()
     used: Dict[Tuple[int, bool], int] = {}
     for capped in ((True, False) if (caps and fill) else (True,) if caps else (False,)):
         for i, c in enumerate(ranked):
@@ -334,8 +339,11 @@ def pack(ranked: Sequence[Dict[str, Any]], nodes: Dict[str, Dict[str, Any]], mea
             if capped and used.get(key, 0) >= caps.get(key, 0):
                 continue
             item = render(c, nodes)
+            if item["id"] in cited:
+                continue
             if token_budget is not None and measure(list(picked.values()) + [item]) > token_budget:
                 continue  # a shorter fact further down may still fit
             picked[i] = item
+            cited.add(item["id"])
             used[key] = used.get(key, 0) + 1
     return [picked[i] for i in sorted(picked)]

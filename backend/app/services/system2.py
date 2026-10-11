@@ -48,6 +48,51 @@ ACTION_TEXT = {
     "NO_ACTION": "routine event; log only",
 }
 
+# Mirrors amd/mcp/spot_mcp/domain.py ALLOWED_ACTIONS: the codes System 2 may pick for a flag category. The SQL
+# fallback packet sends the flag's set (System 2 answers MANUAL_REVIEW when a packet has none).
+ALLOWED_ACTIONS: Dict[str, Dict[str, str]] = {
+    "equipment": {
+        "DISPATCH_TECHNICIAN": "send a technician to inspect the equipment this shift",
+        "SCHEDULE_MAINTENANCE": "open a maintenance work order for the next maintenance window",
+        "REINSPECT_NEXT_ROUTE": "re-check this asset on SPOT's next route and compare",
+        "ESCALATE_TO_SUPERVISOR": "notify the shift supervisor now (critical asset or critical anomaly)",
+        "MONITOR": "no action now; keep watching the trend",
+    },
+    "data_quality": {
+        "REINSPECT_NOW": "send SPOT back to repeat the inspection now",
+        "MANUAL_READING": "have a technician take the reading by hand",
+        "CHECK_SENSOR_PAYLOAD": "inspect SPOT's sensor payload / camera for faults",
+        "REINSPECT_NEXT_ROUTE": "repeat the inspection on the next route",
+        "MONITOR": "no action now; keep watching",
+    },
+    "navigation": {
+        "REINSPECT_NOW": "retry the waypoint now",
+        "CLEAR_PATH": "have someone remove the obstacle blocking SPOT's path",
+        "ADJUST_WAYPOINT": "move or re-record the waypoint / add fiducials (noisy or low-light area)",
+        "UPDATE_AUTOWALK_MAP": "re-record the Autowalk route segment",
+        "MONITOR": "no action now; keep watching",
+    },
+    "robot_health": {
+        "RETURN_TO_DOCK": "send SPOT to the dock now",
+        "CHARGE_BEFORE_NEXT_MISSION": "fully charge SPOT before the next mission",
+        "CHECK_COMMS": "check radio / network coverage at this waypoint",
+        "ABORT_MISSION": "stop the current mission",
+        "MONITOR": "no action now; keep watching",
+    },
+    "mission": {
+        "REVIEW_MISSION": "review the mission's failed actions and anomalies before signing it off",
+        "RERUN_FAILED_ACTIONS": "schedule a mission that repeats only the failed actions",
+        "CHARGE_BEFORE_NEXT_MISSION": "fully charge SPOT before the next mission",
+        "MONITOR": "no action now",
+    },
+    "none": {
+        "NO_ACTION": "routine event; log only",
+        "MONITOR": "no action now; keep watching",
+    },
+}
+# HTTP statuses that say the service (not this request) is in trouble; any other 4xx never opens the breaker.
+BREAKER_4XX = (408, 429)
+
 
 def suggested_action(category: Optional[str], priority: Optional[str], facts: Dict[str, Any]) -> str:
     batt, ft = facts.get("battery_pct"), facts.get("failure_type")
@@ -256,39 +301,49 @@ class System2Client:
         self.timeout_s = timeout_s
         self.breaker = breaker or Breaker()
         self._no_stream_until = 0.0      # monotonic time until which /v1/assess/stream is known to be missing
+        # /v1/debrief has its own breaker: System 2 does not serve that route yet, and its 404 must never
+        # block /v1/assess (the explanations) for a cooldown.
+        self.debrief_breaker = Breaker(self.breaker.cooldown_s)
 
     @property
     def configured(self) -> bool:
         return bool(self.base_url)
 
     async def _post(self, path: str, body: Dict[str, Any], request_id: Optional[str],
-                    flag_id: Optional[int] = None, action_id: Optional[str] = None) -> Dict[str, Any]:
+                    flag_id: Optional[int] = None, action_id: Optional[str] = None,
+                    breaker: Optional[Breaker] = None) -> Dict[str, Any]:
+        breaker = breaker or self.breaker
         if not self.base_url:
             raise ServiceUnavailable(self.name, "SYSTEM2_URL is not set")
-        if not self.breaker.allow():
-            raise ServiceUnavailable(self.name, "circuit open after: %s" % self.breaker.last_error)
+        if not breaker.allow():
+            raise ServiceUnavailable(self.name, "circuit open after: %s" % breaker.last_error)
         headers = {"X-Request-ID": request_id or ""}
         if self.api_key:
             headers["X-API-Key"] = self.api_key
         t0 = time.perf_counter()
+        trip = True
         try:
             payload = json.loads(json.dumps(body, default=str))  # datetimes/decimals from DB rows -> strings
             r = await self.http.post(self.base_url + path, json=payload, headers=headers, timeout=self.timeout_s)
             if r.status_code != 200:
+                # A 4xx (422 packet, 404 route, 401 key) is this request's problem, not an outage: the caller
+                # still falls back, but the breaker stays closed for the next request.
+                trip = not 400 <= r.status_code < 500 or r.status_code in BREAKER_4XX
                 raise ServiceUnavailable(self.name, "HTTP %d: %s" % (r.status_code, r.text[:200]))
             out = r.json()
             if not isinstance(out, dict):
                 raise ServiceUnavailable(self.name, "response is not a JSON object")
         except ServiceUnavailable as exc:
             self._log(False, path, t0, request_id, flag_id, action_id, error=exc.reason)
-            self.breaker.failure(exc.reason)
+            if trip:
+                breaker.failure(exc.reason)
             raise
         except (httpx.HTTPError, ValueError) as exc:
             err = short_error(exc)
             self._log(False, path, t0, request_id, flag_id, action_id, error=err)
-            self.breaker.failure(err)
+            breaker.failure(err)
             raise ServiceUnavailable(self.name, err) from exc
-        self.breaker.success()
+        breaker.success()
         self._log(True, path, t0, request_id, flag_id, action_id, out=out)
         return out
 
@@ -319,7 +374,8 @@ class System2Client:
         (the `final` response, exactly the /v1/assess body; {stream, drafts, cache, image, mode}).
 
         Same failure semantics as `assess` (breaker, one app.model_calls row, ServiceUnavailable on a transport or
-        HTTP error, an `error` event or a stream without `final`). A 404/405 raises StreamNotSupported (nothing
+        HTTP error, an `error` event or a stream without `final`; a 4xx other than 408/429 does not trip the
+        breaker). A 404/405 raises StreamNotSupported (nothing
         logged, breaker untouched) and is remembered for NO_STREAM_TTL_S, so the caller can use `assess`; a 503
         (System 2's stream slots are busy) raises it too, for this call only. A 200
         `application/json` reply (a proxy or build that does not stream) is read as the final response, no drafts.
@@ -337,6 +393,7 @@ class System2Client:
             headers["X-API-Key"] = self.api_key
         meta: Dict[str, Any] = {"stream": True, "drafts": 0, "cache": None, "image": None}
         t0 = time.perf_counter()
+        trip = True
         try:
             payload = json.loads(json.dumps(body, default=str))  # datetimes/decimals from DB rows -> strings
             async with self.http.stream("POST", self.base_url + path, json=payload, headers=headers,
@@ -348,6 +405,8 @@ class System2Client:
                     raise StreamNotSupported("System 2 streams are busy (HTTP 503)")
                 if r.status_code != 200:
                     await r.aread()
+                    # same rule as _post: a 4xx (422 packet, 401 key) is this request's problem, not an outage
+                    trip = not 400 <= r.status_code < 500 or r.status_code in BREAKER_4XX
                     raise ServiceUnavailable(self.name, "HTTP %d: %s" % (r.status_code, r.text[:200]))
                 ctype = r.headers.get("content-type", "").split(";", 1)[0].strip().lower()
                 if ctype == "application/json":    # not streamed: the body is the /v1/assess answer itself
@@ -366,7 +425,8 @@ class System2Client:
             raise
         except ServiceUnavailable as exc:
             self._log(False, path, t0, request_id, flag_id, action_id, error=exc.reason, extra=meta)
-            self.breaker.failure(exc.reason)
+            if trip:
+                self.breaker.failure(exc.reason)
             raise
         except (httpx.HTTPError, ValueError) as exc:
             err = short_error(exc)
@@ -419,7 +479,7 @@ class System2Client:
         return None
 
     async def debrief(self, body: Dict[str, Any], request_id: Optional[str]) -> Dict[str, Any]:
-        return await self._post("/v1/debrief", body, request_id)
+        return await self._post("/v1/debrief", body, request_id, breaker=self.debrief_breaker)
 
     async def health(self) -> dict:
         if not self.base_url:
@@ -445,11 +505,15 @@ class System2Client:
         return out
 
 
-def normalize_assessment(out: Dict[str, Any]) -> Dict[str, Any]:
-    """Accept System 2's shape (incl. the R3 `evidence[{claim, ids}]` variant) -> the assessments columns."""
+def normalize_assessment(out: Dict[str, Any], default_severity: Optional[str] = None) -> Dict[str, Any]:
+    """Accept System 2's shape (incl. the R3 `evidence[{claim, ids}]` variant) -> the assessments columns.
+    System 2's response has no severity_assessment (it then defaults to `default_severity`, the flag's) and no
+    reasoning (built from the evidence, or the answer itself when there is no evidence, e.g. insufficient context)."""
     reasoning = out.get("reasoning")
     if not reasoning and isinstance(out.get("evidence"), list):
         reasoning = evidence_reasoning(out["evidence"])
+    if not reasoning:
+        reasoning = out.get("answer")
     rec = out.get("recommended_action")
     if isinstance(rec, dict):
         rec = "%s: %s" % (rec.get("action") or rec.get("code"), rec.get("detail") or rec.get("why") or "")
@@ -457,7 +521,7 @@ def normalize_assessment(out: Dict[str, Any]) -> Dict[str, Any]:
     if isinstance(conf, str):
         conf = {"high": 0.85, "medium": 0.6, "low": 0.35}.get(conf.lower())
     return {"question": out.get("question"), "answer": out.get("answer"), "reasoning": reasoning,
-            "recommended_action": rec, "severity_assessment": out.get("severity_assessment"),
+            "recommended_action": rec, "severity_assessment": out.get("severity_assessment") or default_severity,
             "confidence": conf, "model": out.get("model"), "latency_ms": out.get("latency_ms"),
             "tokens_per_sec": out.get("tokens_per_sec"), "insufficient_context": out.get("insufficient_context"),
             "evidence": out.get("evidence"), "source": "system2"}

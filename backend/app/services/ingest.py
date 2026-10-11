@@ -155,6 +155,7 @@ class IngestPipeline:
         if answers is not None and laya is None:
             laya_error = "System 1 answered without an 'escalate' answer"
             s1["status"] = "laya_unavailable"
+            s1["error"] = laya_error          # the reason detail is fixed text; the cause stays in the response
         decision = V.combine(mode, laya, rules, kind)
         reasons = V.build_reasons(mode, laya, laya_error, rules, decision, model)
         title = V.flag_title(kind, ev, decision, rules["rules"])

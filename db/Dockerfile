@@ -5,7 +5,7 @@
 #
 #   docker build -f db/Dockerfile -t spot-db .
 #   docker run --rm -e DATABASE_URL=... -e EMBED_URL=http://host.docker.internal:8081 spot-db all
-#   docker run --rm -e DATABASE_URL=... spot-db migrate      # or: seed | ingest | graph | status | smoke | reset --yes
+#   docker run --rm -e DATABASE_URL=... spot-db migrate      # or: seed | refresh | ingest | graph | status | smoke | reset --yes
 FROM python:3.12-slim
 
 ENV PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1 PIP_DISABLE_PIP_VERSION_CHECK=1 \
@@ -26,5 +26,7 @@ COPY ["SPOTDATA/SPOT_KnightHacks_Challenge_Kit Part One/04_ASSETS/sample_inspect
 
 RUN useradd --create-home --uid 10001 app && chmod +x db/job.sh
 USER app
+# One-shot job (compose: restart "no"); it exits when done, so there is nothing to probe. Explicit per CLAUDE.md.
+HEALTHCHECK NONE
 ENTRYPOINT ["db/job.sh"]
 CMD ["all"]

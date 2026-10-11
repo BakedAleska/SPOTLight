@@ -17,6 +17,9 @@ from typing import Any, Dict, List, Optional
 from .triage import T_policy as P
 
 PRIORITY_RANK = {"P1": 1, "P2": 2, "P3": 3, "P4": 4}
+# Stable text of the laya_unavailable reason. The raw error (connection text, "busy: ...") is not copied into
+# flags.reasons: System 2 reads reason details as evidence. It stays in app.model_calls and the /ingest response.
+LAYA_UNAVAILABLE_DETAIL = "System 1 (Laya) unavailable; rules-only verdict"
 SEVERITY_OF = {"P1": "CRITICAL", "P2": "HIGH", "P3": "MEDIUM", "P4": "LOW"}
 BASE_SCORE = {"P1": 90, "P2": 70, "P3": 45, "P4": 20}
 TIER_WEIGHT = {"P1": 3, "P2": 2, "P3": 1}
@@ -205,12 +208,12 @@ def combine(mode: str, laya: Optional[Dict[str, Any]], rules: Dict[str, Any], ki
 
 def build_reasons(mode: str, laya: Optional[Dict[str, Any]], laya_error: Optional[str], rules: Dict[str, Any],
                   decision: Dict[str, Any], model: Optional[str]) -> List[Dict[str, Any]]:
-    """flags.reasons: both verdicts first, then the fired policy rules ([{rule, detail, weight, ...}])."""
+    """flags.reasons: both verdicts first, then the fired policy rules ([{rule, detail, weight, ...}]).
+    `laya_error` is not stored here (see LAYA_UNAVAILABLE_DETAIL)."""
     reasons: List[Dict[str, Any]] = []
     if laya is None:
         reasons.append({"rule": "laya_unavailable", "source": "system1", "weight": 0,
-                        "detail": "System 1 (Laya) unavailable%s; rules-only verdict"
-                                  % (": " + laya_error if laya_error else "")})
+                        "detail": LAYA_UNAVAILABLE_DETAIL})
     else:
         reasons.append({"rule": "laya_verdict", "source": "system1", "weight": 0, "model": model,
                         "verdict": "escalate" if laya["escalate"] else "log",

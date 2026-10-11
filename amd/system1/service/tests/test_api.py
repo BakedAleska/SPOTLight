@@ -1,5 +1,6 @@
 """Request validation and response shape against docs/backend-services-contract.md (no model needed)."""
 import copy
+import logging
 
 import pytest
 from conftest import FakeEngine, events_for
@@ -137,3 +138,31 @@ MISSION = {
     "worst_anomaly": {"anomaly_type": "THERMAL_HOTSPOT", "severity": "HIGH", "asset_name": "Pump 01",
                       "asset_criticality": "CRITICAL"},
 }
+
+
+# ── /health `logging` and the startup level (ADDED 2026-10-11) ──────────────────────────────────────
+def _ready_records(caplog):
+    return [r for r in caplog.records if r.name == "system1" and "System 1 ready" in r.getMessage()]
+
+
+def test_health_reports_logging_off_and_warns(caplog):
+    caplog.set_level(logging.INFO)
+    with client_for() as c:
+        assert c.get("/health").json()["logging"] is False
+    (rec,) = _ready_records(caplog)
+    assert rec.levelno == logging.WARNING and "OFF: set LOGS_DATABASE_URL" in rec.getMessage()
+
+
+def test_health_reports_logging_on_without_leaking_the_dsn(caplog):
+    caplog.set_level(logging.INFO)
+    with client_for(logs_database_url="postgresql://nobody:SECRETPW@127.0.0.1:1/none") as c:
+        h = c.get("/health").json()
+        assert h["logging"] is True and h["model_loaded"] is True
+    (rec,) = _ready_records(caplog)
+    assert rec.levelno == logging.INFO and rec.getMessage().endswith("(model_calls logging on)")
+    assert all("SECRETPW" not in r.getMessage() for r in caplog.records)
+
+
+def test_health_before_lifespan_says_logging_false():
+    c = TestClient(create_app(Settings(), engine=FakeEngine()))   # no `with`: the lifespan never ran
+    assert c.get("/health").json()["logging"] is False

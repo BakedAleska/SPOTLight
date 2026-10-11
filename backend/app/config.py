@@ -4,7 +4,7 @@ backend degrades (see README "Resilience") instead of failing."""
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass, field
+from dataclasses import InitVar, dataclass, field
 from pathlib import Path
 from typing import List, Optional
 
@@ -24,8 +24,10 @@ DEFAULT_QUERY_PREFIX = ("Instruct: Given an operator question about a SPOT robot
 
 
 def _env(name: str, default: Optional[str] = None) -> Optional[str]:
-    v = os.environ.get(name)
-    return v if v not in (None, "") else default
+    """The stripped value; unset or blank -> `default`. A trailing newline (`echo KEY | vercel env add`) made the
+    Gemini key an illegal header value, and httpx put the key in the error text (fix plan DP-01)."""
+    v = (os.environ.get(name) or "").strip()
+    return v or default
 
 
 def _unescape(s: str) -> str:
@@ -54,6 +56,27 @@ def triage_dir_from_env() -> Path:
 
 def _truthy(v: Optional[str]) -> bool:
     return (v or "").strip().lower() not in ("", "0", "false", "no", "off")
+
+
+LOG_REQUESTS_MODES = ("all", "writes", "off")
+
+
+def log_requests_mode(v: Optional[str]) -> str:
+    """LOG_REQUESTS: `all` | `writes` (default) | `off`. The old boolean values still work: unset, 1 or true mean
+    `writes`, and 0, false, no or off mean `off`."""
+    v = (v or "").strip().lower()
+    if v in ("0", "false", "no", "off"):
+        return "off"
+    return "all" if v == "all" else "writes"
+
+
+def _slow_ms(v: Optional[str]) -> int:
+    """LOG_SLOW_MS (default 1000). Lenient like LOG_REQUESTS: a typo ("1s") keeps the default instead of failing
+    Settings.from_env(), which would take the whole Vercel function down at import."""
+    try:
+        return int(float(v)) if v else 1000
+    except (ValueError, OverflowError):      # "1s", "nan", "inf"
+        return 1000
 
 
 def serverless_from_env() -> bool:
@@ -100,7 +123,10 @@ class Settings:
     cors_origins: List[str] = field(default_factory=lambda: ["http://localhost:3000"])
     admin_token: Optional[str] = None      # X-Admin-Token for /ops, /replay, POST /events (audit H3); unset -> 503
     request_deadline_s: float = 45.0       # overall deadline for /flags/{id}/context and /explain (audit M4)
-    log_requests: bool = True
+    # app.request_log (main.py): `writes` logs non-GET requests, errors (>= 400) and requests slower than
+    # log_slow_ms, so the dashboard's 2-2.5 s polls stop filling the table; `all` logs every request; `off` none.
+    log_requests_mode: str = "writes"
+    log_slow_ms: int = 1000
     service_name: str = "backend"
     # AI Assistance chat (docs/chat-contract.md §7). The key is never printed: repr=False keeps it out of any
     # log line that formats the settings object.
@@ -112,6 +138,15 @@ class Settings:
     chat_timeout_s: float = 120.0
     chat_retrieval_budget_s: float = 8.0
     chat_history_messages: int = 12
+    # Legacy boolean kwarg (tests, old callers): log_requests=False -> mode "off"; True keeps log_requests_mode.
+    log_requests: InitVar[Optional[bool]] = None
+
+    def __post_init__(self, log_requests: Optional[bool]) -> None:
+        if log_requests is False:
+            self.log_requests_mode = "off"
+        if self.log_requests_mode not in LOG_REQUESTS_MODES:
+            raise ValueError("log_requests_mode must be one of %s, got %r" % (LOG_REQUESTS_MODES,
+                                                                           self.log_requests_mode))
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -167,8 +202,9 @@ class Settings:
                           if o.strip()],
             admin_token=_env("ADMIN_TOKEN"),
             request_deadline_s=float(_env("REQUEST_DEADLINE_S", "45") or 45),
-            log_requests=(_env("LOG_REQUESTS", "1") or "1") not in ("0", "false", "no"),
-            gemini_api_key=_env("GEMINI_API_KEY"),
+            log_requests_mode=log_requests_mode(_env("LOG_REQUESTS")),
+            log_slow_ms=_slow_ms(_env("LOG_SLOW_MS")),
+            gemini_api_key=_env("GEMINI_API_KEY"),     # stripped by _env: never a trailing newline
             gemini_base_url=(_env("GEMINI_BASE_URL", cls.gemini_base_url) or "").rstrip("/"),
             chat_models=[m.strip() for m in (_env("CHAT_MODELS") or ",".join(DEFAULT_CHAT_MODELS)).split(",")
                          if m.strip()],

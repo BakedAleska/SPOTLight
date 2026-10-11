@@ -47,7 +47,10 @@ class ContextPacket(Loose):
     """The context packet System 2 reads. From the MCP server (`source: mcp`) or SQL-only (`sql_fallback`)."""
     source: Literal["mcp", "sql_fallback"]
     question: Optional[str] = None
-    gaps: Optional[List[str]] = None
+    gaps: Optional[List[str]] = Field(None, description="Lookups that failed. System 2 treats any gap as "
+                                                        "insufficient context.")
+    notes: Optional[List[str]] = Field(None, description="Non-blocking notices, e.g. 'MCP unavailable ...: SQL-only "
+                                                         "packet' (System 2 ignores this key).")
 
 
 class Explanation(Loose):
@@ -99,13 +102,21 @@ class AskIn(BaseModel):
 
 class AckIn(BaseModel):
     action: Literal["ACKNOWLEDGE", "RESOLVE", "ESCALATE", "NOTE"] = "ACKNOWLEDGE"
-    note: Optional[str] = Field(None, max_length=4000, description="Free text. Indexed for RAG as an operator_note.")
+    note: Optional[str] = Field(None, max_length=4000, description="Free text. Indexed for RAG as an operator_note. "
+                                                                    "Blank or whitespace-only means no note (null).")
     operator: str = Field("operator", min_length=1, max_length=100)
+
+    @field_validator("note")
+    @classmethod
+    def _blank_note_is_none(cls, v: Optional[str]) -> Optional[str]:
+        return v.strip() if v and v.strip() else None
 
 
 class AckOut(BaseModel):
     ack: Dict[str, Any]
     flag_status: str
     rag_indexed: bool = Field(description="True if the note was embedded and upserted as documents.note:<ack_id>.")
-    doc_id: Optional[str] = None
+    doc_id: Optional[str] = Field(None, description="documents.note:<ack_id> when the note document was stored, "
+                                                    "also without a vector while the embedder is down "
+                                                    "(rag_indexed false; full-text search finds it).")
     rag_error: Optional[str] = None

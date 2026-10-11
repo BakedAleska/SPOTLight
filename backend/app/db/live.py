@@ -22,6 +22,7 @@ CAPTURE_FIELDS = ("action_id", "source_action_id", "location_id", "asset_id", "a
                   "severity", "category", "laya", "rules", "decision", "photo", "vision", "qwen", "qwen_source",
                   "doc_id", "kg", "timings")
 STALE_MINUTES = 10      # a pending/running run with no progress for this long no longer blocks a new run
+LIVE_SOURCE = "live"    # props.source on every live kg row (services/live.py LIVE_SOURCE)
 
 
 def _val(col: str, v: Any) -> Any:
@@ -149,8 +150,10 @@ class LiveRepo:
 
     # ── knowledge graph (props.source = 'live') ───────────────────────────────────────────────────
     async def kg_upsert(self, nodes: Iterable[Dict[str, Any]], edges: Iterable[Dict[str, Any]]) -> Dict[str, int]:
-        """Upsert live nodes, then edges whose two ends exist (an edge to a missing kit node is skipped)."""
-        nodes, edges = list(nodes), list(edges)
+        """Upsert live nodes, then edges whose two ends exist (an edge to a missing kit node is skipped).
+        Every row gets props.source = 'live': db/graph_build.py and amd/embed/ingest.py keep live rows on that."""
+        nodes = [{**n, "props": {**(n.get("props") or {}), "source": LIVE_SOURCE}} for n in nodes]
+        edges = [{**e, "props": {**(e.get("props") or {}), "source": LIVE_SOURCE}} for e in edges]
         n_edges = 0
         async with self.db.transaction() as cur:
             for n in nodes:

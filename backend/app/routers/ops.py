@@ -58,6 +58,9 @@ async def reset_demo(body: ResetIn, svc: Services = Depends(get_services)) -> di
     svc.ref.reset()
     for c in (svc.system1, svc.embed, svc.mcp, svc.system2):
         c.breaker.reset()
+    debrief = getattr(svc.system2, "debrief_breaker", None)      # /v1/debrief has its own breaker
+    if debrief is not None:
+        debrief.reset()
     job = await svc.sink.job_start("reset-demo", {"clear_predictions": body.clear_predictions})
     await svc.sink.job_finish(job, "done", deleted)
     return {"deleted": deleted, "replay": status}

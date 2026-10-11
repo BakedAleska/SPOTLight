@@ -8,8 +8,12 @@
   python amd/embed/ingest.py --force              # re-embed everything (e.g. after changing EMBED_MODEL)
 
 doc_ids are stable, so re-runs are upserts. Docs whose title/content and embed_model are unchanged are not
-re-embedded. Docs of a processed kind that no longer exist are deleted (--no-prune keeps them).
-Embedding goes over HTTP (EMBED_URL, OpenAI-compatible); every batch is logged to app.model_calls (system='embed').
+re-embedded. Docs of a processed kind that no longer exist are deleted (--no-prune keeps them); documents the live
+simulation wrote (metadata.source = 'live') are never pruned.
+Embedding goes over HTTP (EMBED_URL, OpenAI-compatible; client.py retries dropped batches); every batch is logged to
+app.model_calls (system='embed'). Before any write the server's /health must report EMBED_MODEL and EMBED_DIM.
+Per kind: read the stored fingerprints (no transaction), embed the changed docs (no transaction open, so a slow
+embedder never leaves a session idle in transaction), then upsert + prune in one short transaction.
 Run `python db/setup.py migrate && python db/setup.py seed` first (incidents come from anomalies + flags).
 """
 import argparse
@@ -65,8 +69,10 @@ def build_events() -> List[dict]:
                     action_type=ev["action_type"], status=ev["status"],
                     anomaly_type=an["anomaly_type"] if an else None, severity=an["severity"] if an else None,
                     ts=ev["timestamp"],
-                    title="%s step %d: %s %s at %s, %s" % (mid, ev["sequence"], _h(ev["action_type"]),
-                                                          asset["asset_id"], loc["location_id"], ev["status"]),
+                    # the action id in the title makes it searchable (content_tsv is built from title + content)
+                    title="%s step %d (%s): %s %s at %s, %s" % (mid, ev["sequence"], ev["action_id"],
+                                                               _h(ev["action_type"]), asset["asset_id"],
+                                                               loc["location_id"], ev["status"]),
                     content=text,
                     metadata={"event_kind": "action", "sequence": ev["sequence"], "battery_pct": ev["battery_pct"],
                               "failure_type": ev["failure_type"], "reading": ev["reading"],
@@ -145,14 +151,20 @@ def build_incidents(conn) -> List[dict]:
       LEFT JOIN missions m ON m.mission_id = f.mission_id
       LEFT JOIN assessments s ON s.flag_id = f.flag_id
       ORDER BY f.flag_id"""
+    import policy_rules as PR
     cur = conn.execute(q)
     cols = [c.name for c in cur.description]
     for row in cur:
         x = dict(zip(cols, row))
-        reasons = x["reasons"] or []
+        reasons = [r for r in (x["reasons"] or []) if isinstance(r, dict)]
+        # Only policy rules are embedded: the verdict entries (laya_verdict / laya_unavailable / rules_verdict) carry
+        # operational text such as ConnectError messages, which would match every "connection" query.
+        pol = [r for r in reasons if r.get("rule") in PR.BY_NAME]
+        rule_names = {r.get("rule") for r in reasons}
+        laya = "unavailable" if "laya_unavailable" in rule_names else "ok" if "laya_verdict" in rule_names else "none"
         txt = "System 1 flag #%d (%s, severity %s, score %g, category %s): %s. Rules fired: %s." % (
             x["flag_id"], x["priority"] or "?", x["severity"], x["score"], x["category"] or "?", x["title"],
-            "; ".join("%s (%s)" % (r["rule"], r["detail"]) for r in reasons))
+            "; ".join("%s (%s)" % (r["rule"], r["detail"]) if r.get("detail") else r["rule"] for r in pol) or "none")
         if x["action_id"]:
             outcome = "action %s %s%s at %s%% battery" % (x["action_id"], x["status"],
                                                          (" (" + _h(x["failure_type"]) + ")") if x["failure_type"] else "",
@@ -174,7 +186,8 @@ def build_incidents(conn) -> List[dict]:
             title="Flag #%d: %s" % (x["flag_id"], x["title"]), content=txt,
             metadata={"source": "flag", "flag_id": x["flag_id"], "triage_event_id": x["triage_event_id"],
                       "priority": x["priority"], "category": x["category"], "flag_status": x["flag_status"],
-                      "rules": [r["rule"] for r in reasons], "score": x["score"]}))
+                      "rules": [r["rule"] for r in pol], "score": x["score"], "failure_type": x["failure_type"],
+                      "action_type": x["action_type"], "laya_status": laya}))
     return docs
 
 
@@ -201,9 +214,35 @@ def build_policy() -> List[dict]:
 CHUNK_WORDS, OVERLAP_WORDS, MIN_WORDS = 220, 40, 20     # ~220 words ≈ 290 tokens; 40-word overlap
 
 
+# Every numbered page starts with its footer: the printed page number and the revision ("44 R 1.1 V A ").
+FOOTER_RX = re.compile(r"^(\d{2}) R \d\.\d V A ")
+PRINTED_OFFSET = 8                                      # PDF page - printed page for PDF pages >= 9
+HEAD_TOKEN_RX = re.compile(r"^[A-Z0-9&/()'\u2019.,:\-\u2013]*[A-Z][A-Z0-9&/()'\u2019.,:\-\u2013]*$")
+HEAD_WORDS = 8
+
+
 def _clean(t: str) -> str:
     t = re.sub(r"(\w)-\n(\w)", r"\1\2", t)              # re-join words hyphenated across lines
     return re.sub(r"\s+", " ", t).strip()
+
+
+def _footer(text: str, pdf_page: int):
+    """(number of leading footer-residue words, printed page number or None)."""
+    m = FOOTER_RX.match(text)
+    if m:
+        return len(m.group(0).split()), int(m.group(1))
+    return 0, (pdf_page - PRINTED_OFFSET if pdf_page > PRINTED_OFFSET else None)
+
+
+def _heading(text: str) -> Optional[str]:
+    """The page's leading all-caps run ("TROUBLESHOOTING AUTOWALK ..."), at most HEAD_WORDS words; None if absent."""
+    words = []
+    for w in text.split()[:HEAD_WORDS]:
+        if not HEAD_TOKEN_RX.match(w):
+            break
+        words.append(w)
+    head = " ".join(words).strip(" ,.:")
+    return head if len(head) >= 3 else None
 
 
 def _chunks(words: List[str]) -> Iterable[List[str]]:
@@ -236,12 +275,21 @@ def build_manual(manual_dir: Path) -> List[dict]:
             words = _clean(page.extract_text() or "").split()
             if len(words) < MIN_WORDS:
                 continue
+            n_footer, printed = _footer(" ".join(words), pno)
+            head = _heading(" ".join(words[n_footer:]))
+            cite = "Spot User Guide %s(PDF p.%d)" % ("p.%d " % printed if printed else "", pno)
+            # Chunk boundaries (and so doc_ids) are computed with the footer words in place, then the footer is cut
+            # from the first chunk. doc_id stays manual:p<PDF page>-<chunk> (cited by the contract and tests); the
+            # title cites the page number printed in the guide.
             for j, part in enumerate(_chunks(words), 1):
+                if j == 1:
+                    part = part[n_footer:]
                 docs.append(_doc(
                     doc_id="manual:p%d-%d" % (pno, j), kind="manual", source_id="p%d" % pno,
-                    title="Spot User Guide, page %d%s" % (pno, "" if j == 1 else " (part %d)" % j),
+                    title="%s%s%s" % (cite, ": " + head if head else "", "" if j == 1 else " (part %d)" % j),
                     content=" ".join(part),
-                    metadata={"file": f.name, "page": pno, "page_in_file": i + 1, "chunk": j,
+                    metadata={"file": f.name, "page": pno, "printed_page": printed, "heading": head,
+                              "page_in_file": i + 1, "chunk": j,
                               "words": len(part), "source": "Boston Dynamics Spot User Guide (NextEra kit part two)"}))
     return docs
 
@@ -305,18 +353,27 @@ def _fingerprint(d: dict) -> str:
     return hashlib.md5(((d["title"] or "") + "\x1f" + d["content"]).encode()).hexdigest()
 
 
-def upsert(conn, docs: List[dict], client: Optional[EmbedClient], force: bool = False) -> Dict[str, int]:
-    """Embed new/changed docs and upsert all of them. Returns {'embedded': n, 'unchanged': n}."""
+def plan(conn, docs: List[dict], model: Optional[str], force: bool = False) -> List[dict]:
+    """Phase 1 (read only): the docs that need a new vector (new, changed title/content, other model, or none)."""
     if not docs:
-        return {"embedded": 0, "unchanged": 0}
-    model = client.model if client else None
+        return []
     existing = {r[0]: r[1:] for r in conn.execute(
         "SELECT doc_id, md5(coalesce(title,'') || chr(31) || content), embed_model, embedding IS NOT NULL "
         "FROM documents WHERE doc_id = ANY(%s)", ([d["doc_id"] for d in docs],))}
-    todo = [d for d in docs if force or d["doc_id"] not in existing
+    return [d for d in docs if force or d["doc_id"] not in existing
             or existing[d["doc_id"]] != (_fingerprint(d), model, True)]
+
+
+def embed_docs(client: Optional[EmbedClient], todo: List[dict]) -> Dict[str, Optional[List[float]]]:
+    """Phase 2 (HTTP, call it with no transaction open): doc_id -> vector (None without a client)."""
     vecs = client.embed([d["content"] for d in todo], kind="doc") if (todo and client) else [None] * len(todo)
-    emb = {d["doc_id"]: v for d, v in zip(todo, vecs)}
+    return {d["doc_id"]: v for d, v in zip(todo, vecs)}
+
+
+def write(conn, docs: List[dict], emb: Dict[str, Optional[List[float]]], model: Optional[str]) -> Dict[str, int]:
+    """Phase 3: upsert the embedded docs (with their vector) and refresh the others' columns. The caller wraps it
+    (and the prune) in one transaction."""
+    todo = [d for d in docs if d["doc_id"] in emb]
     cols = DOC_COLS + ["embedding", "embed_model"]
     upd_meta = ", ".join("%s = EXCLUDED.%s" % (c, c) for c in DOC_COLS if c != "doc_id")
     with conn.cursor() as cur:
@@ -337,6 +394,23 @@ def upsert(conn, docs: List[dict], client: Optional[EmbedClient], force: bool = 
                 [tuple(json.dumps(d[c], default=str) if c == "metadata" else d[c] for c in DOC_COLS[1:])
                  + (d["doc_id"],) for d in same])
     return {"embedded": len(todo), "unchanged": len(docs) - len(todo)}
+
+
+def prune(conn, kind: str, docs: List[dict]) -> int:
+    """Delete docs of `kind` that the builders no longer produce. Live-simulation docs (event:act-LIVE-*,
+    explanation:live-*, metadata.source = 'live') are never built here and always survive."""
+    return conn.execute("DELETE FROM documents WHERE kind = %s AND NOT (doc_id = ANY(%s)) "
+                        "AND coalesce(metadata->>'source', '') <> 'live'",
+                        (kind, [d["doc_id"] for d in docs])).rowcount
+
+
+def upsert(conn, docs: List[dict], client: Optional[EmbedClient], force: bool = False) -> Dict[str, int]:
+    """plan + embed + write in the caller's connection state (the runtime hooks below; the caller commits).
+    Returns {'embedded': n, 'unchanged': n}."""
+    if not docs:
+        return {"embedded": 0, "unchanged": 0}
+    model = client.model if client else None
+    return write(conn, docs, embed_docs(client, plan(conn, docs, model, force)), model)
 
 
 def ingest_operator_note(conn, ack_id: int, client: Optional[EmbedClient] = None) -> Dict[str, int]:
@@ -362,7 +436,7 @@ def main() -> None:
     if bad:
         sys.exit("unknown kinds: %s" % ", ".join(sorted(bad)))
 
-    conn = spotdb.connect(autocommit=True)   # each kind commits in its own transaction() block
+    conn = spotdb.connect(autocommit=True)   # reads in autocommit; each kind's write commits in its own transaction
     builders = {
         "event": build_events, "incident": lambda: build_incidents(conn), "policy": build_policy,
         "manual": lambda: build_manual(args.manual_dir), "operator_note": lambda: build_operator_notes(conn),
@@ -377,7 +451,7 @@ def main() -> None:
         return
 
     client = EmbedClient()
-    with spotdb.job_run("ingest", {"kinds": kinds, "embed_model": client.model, "embed_url": client.url,
+    with spotdb.job_run("ingest", {"kinds": kinds, "embed_model": client.model, "embed_url": spotdb.redact(client.url),
                                    "force": args.force}) as run:
         logs = None
         try:
@@ -392,25 +466,31 @@ def main() -> None:
             if logs is None:
                 return
             tps = (c["input_tokens"] / (c["latency_ms"] / 1000)) if c.get("input_tokens") and c["latency_ms"] else None
-            spotdb.log_model_call(logs, request_id="ingest-%s" % run.run_id, system="embed", model=c["model"],
-                                  endpoint=c["endpoint"], input_tokens=c.get("input_tokens"), output_tokens=0,
-                                  latency_ms=c["latency_ms"], tokens_per_sec=tps, device=c.get("gpu") or c.get("device"),
-                                  ok=True, metadata={"batch": c["n"], "kind": c["kind"], "server_ms": c.get("server_ms"),
-                                                     "job": "ingest"})
+            try:
+                spotdb.log_model_call(logs, request_id="ingest-%s" % run.run_id, system="embed", model=c["model"],
+                                      endpoint=c["endpoint"], input_tokens=c.get("input_tokens"), output_tokens=0,
+                                      latency_ms=c["latency_ms"], tokens_per_sec=tps,
+                                      device=c.get("gpu") or c.get("device"), ok=True,
+                                      metadata={"batch": c["n"], "kind": c["kind"], "server_ms": c.get("server_ms"),
+                                                "job": "ingest"})
+            except Exception as e:  # noqa: BLE001 - logging must never break ingestion
+                print("warning: could not log embedding call: %s" % e, file=sys.stderr)
 
         client.on_call = on_call
         health = client.wait_ready()
         run.metadata["embed_health"] = {k: health.get(k) for k in ("model", "dim", "device", "dtype", "gpu", "hip")}
-        print("embedding with %s (%s, dim %s) at %s" % (health.get("model") or client.model, health.get("device"),
-                                                       health.get("dim"), client.url))
+        client.check_health(health)            # SystemExit on a model/dim mismatch, before any write
+        run.metadata["embed_model"] = client.model
+        print("embedding with %s (%s, dim %s) at %s" % (client.model, health.get("device"), health.get("dim"),
+                                                       spotdb.redact(client.url)))
         for k in kinds:
             docs = built[k]
+            todo = plan(conn, docs, client.model, args.force)    # autocommit read, no transaction
+            # Embed with no transaction open: Neon ends sessions idle in transaction after 5 minutes.
+            emb = embed_docs(client, todo)
             with conn.transaction():
-                res = upsert(conn, docs, client, force=args.force)
-                pruned = 0
-                if not args.no_prune:
-                    pruned = conn.execute("DELETE FROM documents WHERE kind = %s AND NOT (doc_id = ANY(%s))",
-                                          (k, [d["doc_id"] for d in docs])).rowcount
+                res = write(conn, docs, emb, client.model)
+                pruned = 0 if args.no_prune else prune(conn, k, docs)
             run.counts[k] = dict(res, total=len(docs), pruned=pruned)
             print("%-14s %4d docs (%d embedded, %d unchanged, %d pruned)" % (k, len(docs), res["embedded"],
                                                                              res["unchanged"], pruned))

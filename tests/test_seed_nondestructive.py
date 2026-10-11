@@ -55,11 +55,20 @@ def _q(url, sql, *args):
         return cur.fetchall() if cur.description else []
 
 
+ANALYTICS = ("SELECT (SELECT count(*) FROM mission_kpis), (SELECT count(*) FROM risk_scores), "
+             "(SELECT count(*) FROM insights)")
+
+
+def _counts(out: str) -> dict:
+    return json.loads(out[out.index("{"):])
+
+
 def test_seed_is_non_destructive_and_never_refills(db):
     # 1. First seed of a fresh database loads the demo baseline.
     _setup(db, "seed")
     assert _q(db, "SELECT count(*) FROM flags")[0][0] == 58
     assert _q(db, "SELECT count(*) FROM events")[0][0] == 500
+    assert _q(db, ANALYTICS)[0] == (27, 189, 5)
     (live_id, live_reasons), = _q(db, "SELECT flag_id, reasons FROM flags WHERE triage_event_id = 'act-A0029'")
     acked_id, = _q(db, "SELECT flag_id FROM flags WHERE triage_event_id <> 'act-A0029' ORDER BY flag_id LIMIT 1")[0]
 
@@ -93,6 +102,29 @@ def test_seed_is_non_destructive_and_never_refills(db):
     assert _q(db, "SELECT count(*) FROM flags")[0][0] == 58
     assert _q(db, "SELECT count(*) FROM events")[0][0] == 500
     assert _q(db, "SELECT reasons FROM flags WHERE triage_event_id = 'act-A0029'")[0][0] == live_reasons
+
+
+def test_plain_seed_after_a_baseline_still_fills_analytics(db):
+    """A database whose baseline was loaded before seed_analytics existed (Neon): plain `seed` (what db-init runs)
+    fills mission_kpis / risk_scores / insights from the kit and leaves flags and events exactly as they are."""
+    _setup(db, "seed")                                   # loads the baseline only if this database never had it
+    _q(db, "UPDATE flags SET status = 'ACKNOWLEDGED' WHERE flag_id = (SELECT min(flag_id) FROM flags)")
+    for t in ("mission_kpis", "risk_scores", "insights"):
+        _q(db, "DELETE FROM %s" % t)
+    flags = _q(db, "SELECT * FROM flags ORDER BY flag_id")
+    events = _q(db, "SELECT * FROM events ORDER BY event_id")
+    assert flags and events
+
+    out = _setup(db, "seed")
+    assert "skipped" in out
+    counts = _counts(out)
+    assert (counts["mission_kpis"], counts["risk_scores"], counts["insights"]) == (27, 189, 5)
+    assert _q(db, ANALYTICS)[0] == (27, 189, 5)
+    assert _q(db, "SELECT * FROM flags ORDER BY flag_id") == flags
+    assert _q(db, "SELECT * FROM events ORDER BY event_id") == events
+
+    counts = _counts(_setup(db, "seed"))                 # idempotent: a re-run changes no analytics row
+    assert (counts["mission_kpis"], counts["risk_scores"], counts["insights"]) == (0, 0, 0)
 
 
 def test_db_init_never_force_reseeds():

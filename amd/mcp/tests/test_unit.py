@@ -236,6 +236,35 @@ async def test_http_embedder_prefix_dim_and_logging():
         await bad.embed_queries(["q"])
 
 
+@pytest.mark.parametrize("first,retried", [("disconnect", True), (503, True), (429, True), ("timeout", False),
+                                            (400, False)])
+async def test_http_embedder_retries_once_on_a_dropped_connection_only(first, retried):
+    """One dropped tunnel connection must not turn a flag packet into insufficient_context (RE-04); a timeout or a
+    4xx is not retried. Every HTTP attempt is its own app.model_calls row."""
+    import httpx2
+    from spot_mcp.embed import EmbeddingError, HttpEmbedder
+    calls = []
+
+    def handler(req):
+        calls.append(1)
+        if len(calls) == 1:
+            if first == "disconnect":
+                raise httpx2.RemoteProtocolError("Server disconnected without sending a response.", request=req)
+            if first == "timeout":
+                raise httpx2.ReadTimeout("slow", request=req)
+            return httpx2.Response(first, text="busy")
+        return httpx2.Response(200, json={"data": [{"index": 0, "embedding": [0.1] * 4}]})
+    sink = FakeSink()
+    e = HttpEmbedder("http://x", "m", 4, sink=sink, transport=httpx2.MockTransport(handler), retry_delay_s=0.01)
+    if retried:
+        assert len((await e.embed_queries(["q"]))[0]) == 4
+        assert [m["ok"] for m in sink.models] == [False, True]
+    else:
+        with pytest.raises(EmbeddingError):
+            await e.embed_queries(["q"])
+        assert len(calls) == 1 and [m["ok"] for m in sink.models] == [False]
+
+
 def test_vendored_policy_matches_repo():
     """The Docker image only has amd/mcp, so spot_mcp/vendor/ carries copies. Re-copy them when this fails:
     cp amd/system1/triage/{policy,questions}.py amd/mcp/spot_mcp/vendor/"""

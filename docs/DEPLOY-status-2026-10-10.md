@@ -2,6 +2,8 @@
 
 Deployment is **live**: Neon and all three Vercel projects are deployed and verified. Full stepped replay completed successfully with 500/500 events and zero errors. GitHub Actions now successfully runs production migrations and all three Vercel deployments after successful main CI.
 
+> **Update 2026-10-11:** the replay below (run 1, 51 flags) was a deploy check made while System 1 was unreachable, so all 477 triaged events fell back to rules-only (`laya_unavailable`). The data cleanup of 2026-10-11 removes it and restores the seed baseline: 500 events, 58 flags, plus the documents and graph that this report lists as skipped. See "Data cleanup 2026-10-11" at the end and `DEPLOY-neon.md`. The rest of this report is the historical record of 2026-10-10.
+
 ## Source and accounts
 
 - Repository: `JylerTackson/SpotTheDOT`.
@@ -95,7 +97,7 @@ Both GitHub environments currently have no required-reviewer or deployment-branc
 
 ## Skipped steps
 
-- `amd/embed/ingest.py` and `db/graph_build.py`: no reachable embedding service was provided. Both must be run later with `Qwen/Qwen3-Embedding-0.6B`, dimension 1024.
+- `amd/embed/ingest.py` and `db/graph_build.py`: no reachable embedding service was provided. Both must be run later with `Qwen/Qwen3-Embedding-0.6B`, dimension 1024. (2026-10-11: run as part of the data cleanup, through the AMD embedder's SSH bridge.)
 - Embedding/RAG smoke queries: depend on the absent embedder; documents remain empty, so a positive search-result check cannot pass yet.
 - `db/smoke_test.py --roles`: the script runs embedding queries before its role check and creates a temporary login with a fixed password. Equivalent least-privilege checks were run directly against the actual MCP login instead, with the logging insert rolled back.
 - AMD environment variables and related API keys: intentionally not provisioned until the AMD services exist; deploy with rules-only triage, templated explanations, and text-search fallback.
@@ -223,3 +225,30 @@ The initial deployment required no application changes. The subsequently authori
   "error": null
 }
 ```
+
+## Data cleanup 2026-10-11
+
+After a read-only audit of every table, the owner restores production to the documented seed baseline. The exact
+procedure and counts are in `DEPLOY-neon.md` "Data cleanup 2026-10-11". In short:
+
+- **Backup first.** A `pg_dump` taken before any write is kept off-repo (never committed). The `demo-snapshot` branch
+  and Neon point-in-time restore stay available as rollbacks.
+- **Migrations next:** `004` (exact-id ranking), `014` and `015`, before any data change.
+- **Removed (test and verification rows), in one guarded transaction run by an off-repo owner script:**
+  - replay run 1: 51 flags, its `replay_runs` and `app.job_runs` rows, and 500 duplicate `raw.spot_event_log` rows
+    (the 500 `events` it re-ingested were overwritten in place, not deleted);
+  - 6 template assessments and 3 button-test acknowledgements;
+  - 2 test chat conversations (4 messages) and 1 never-claimed test live run;
+  - 80 `app.model_calls` and 7 `app.mcp_tool_calls` rows (dev failures; 21 error texts held the Gemini key, which
+    must be rotated) and 59,848 poll-dominated `app.request_log` rows.
+
+  The kit tables, the seed's `raw.*` rows and the seed's `app.job_runs` row are kept.
+- **Restored and filled:**
+  - in the same transaction (not `seed --force-reseed`): `seed_events` (forced) upserted the 500 events with the seed
+    payload (`enriched` block, no `triage`), `seed_flags` wrote 58 flags with ids 1–58 (sequences reset),
+    `seed_analytics` filled `mission_kpis` 27, `risk_scores` 189 and `insights` 5, and an `UPDATE` added the
+    `raw.inspection_media` hints;
+  - then `ingest` (503 documents, all embedded with Qwen3-Embedding-0.6B on the W7900D) and `graph_build` (574 nodes,
+    1,968 edges).
+- **Verify:** `python db/setup.py status`, then `db/smoke_test.py` and `db/smoke_test.py --roles`. `GET
+  /api/v1/flags?limit=500` should report 58.

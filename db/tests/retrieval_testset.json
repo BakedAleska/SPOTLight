@@ -1,0 +1,354 @@
+{
+ "about": "Retrieval regression set over the kit corpus (audit VS-14, 2026-10-11). Run by db/tests/test_retrieval.py after ingest.py + graph_build.py. Ground truth comes from the kit (amd/system1/data/kit) and the Spot User Guide, never from flag ids (incident:flag-<id> depends on the database's flag numbering). 'stretch' cases are reported but do not fail the run.",
+ "query_prefix": "EMBED_QUERY_PREFIX; unset = the Qwen3 instruction (DEFAULT_QUERY_PREFIX in amd/embed/client.py, backend/app/config.py, amd/mcp/spot_mcp/config.py) + query, no space",
+ "fields": {
+  "mode": "hybrid = match_documents_hybrid(vec, query, kinds, match_count => k); vector = match_documents(vec, kinds, match_count => k)",
+  "expect_any": "at least min_hits (default 1) of these doc_ids in the top k (only 1 when expect_pred is also given)",
+  "expect_pred": "rows matching any/all of the conditions; 'meta.x' reads metadata->>'x'; at least min_hits of them",
+  "first_must_match": "the first row must satisfy expect_pred",
+  "expect_top_sim_below": "the best similarity in the top k is below this"
+ },
+ "documents": [
+  {
+   "id": "T03",
+   "query": "HX-204",
+   "mode": "hybrid",
+   "kinds": null,
+   "k": 5,
+   "expect_pred": {
+    "any": [
+     {
+      "asset_id": "HX-204"
+     }
+    ]
+   },
+   "min_hits": 5,
+   "note": "exact asset id: every hit is an HX-204 event or incident"
+  },
+  {
+   "id": "T04",
+   "query": "What anomalies were found on PANEL-211 in Turbine Hall South?",
+   "mode": "hybrid",
+   "kinds": [
+    "incident"
+   ],
+   "k": 5,
+   "expect_pred": {
+    "any": [
+     {
+      "asset_id": "PANEL-211"
+     }
+    ]
+   },
+   "min_hits": 3,
+   "first_must_match": true,
+   "note": "id inside a sentence: needs the id boost in match_documents_hybrid (004, contract §3)"
+  },
+  {
+   "id": "T18",
+   "query": "Why did action A0061 fail?",
+   "mode": "hybrid",
+   "kinds": null,
+   "k": 3,
+   "expect_any": [
+    "event:act-A0061"
+   ],
+   "note": "action id: needs the action id in event titles (ingest.py) and the id boost"
+  },
+  {
+   "id": "T05",
+   "query": "gauge reading unreliable",
+   "mode": "hybrid",
+   "kinds": [
+    "event"
+   ],
+   "k": 5,
+   "expect_any": [
+    "event:act-A0060",
+    "event:act-A0080",
+    "event:act-A0158"
+   ],
+   "min_hits": 2,
+   "note": "GAUGE_READING actions that failed READING_UNRELIABLE"
+  },
+  {
+   "id": "T01",
+   "query": "What happens to inspection success when Spot's battery is at or below 25 percent?",
+   "mode": "hybrid",
+   "kinds": [
+    "policy"
+   ],
+   "k": 3,
+   "expect_any": [
+    "policy:battery_low",
+    "policy:battery_thresholds"
+   ]
+  },
+  {
+   "id": "T06",
+   "query": "When is a sensor reading considered untrusted?",
+   "mode": "hybrid",
+   "kinds": [
+    "policy"
+   ],
+   "k": 2,
+   "expect_any": [
+    "policy:reading_trust",
+    "policy:reading_untrusted"
+   ]
+  },
+  {
+   "id": "T12",
+   "query": "communication loss while the battery is low",
+   "mode": "hybrid",
+   "kinds": [
+    "policy"
+   ],
+   "k": 1,
+   "expect_any": [
+    "policy:comms_loss_low_battery"
+   ]
+  },
+  {
+   "id": "T16",
+   "query": "What are the safe operating bands for pressure and temperature readings?",
+   "mode": "hybrid",
+   "kinds": [
+    "policy"
+   ],
+   "k": 1,
+   "expect_any": [
+    "policy:safe_bands"
+   ]
+  },
+  {
+   "id": "T13",
+   "query": "A mission reported COMPLETED but hid failed actions and serious anomalies",
+   "mode": "hybrid",
+   "kinds": [
+    "policy",
+    "event"
+   ],
+   "k": 5,
+   "expect_any": [
+    "policy:mission_misleading_serious",
+    "policy:mission_misleading"
+   ]
+  },
+  {
+   "id": "T14",
+   "query": "critical abnormal temperature on a heat exchanger",
+   "mode": "hybrid",
+   "kinds": [
+    "incident"
+   ],
+   "k": 5,
+   "expect_any": [
+    "incident:AN014"
+   ],
+   "expect_pred": {
+    "any": [
+     {
+      "anomaly_type": "ABNORMAL_TEMPERATURE"
+     }
+    ]
+   },
+   "min_hits": 3,
+   "note": "CRITICAL ABNORMAL_TEMPERATURE AN014 on HX-204"
+  },
+  {
+   "id": "T15",
+   "query": "signal degradation in the Pipe Gallery",
+   "mode": "hybrid",
+   "kinds": [
+    "incident"
+   ],
+   "k": 5,
+   "expect_pred": {
+    "all": [
+     {
+      "anomaly_type": "SIGNAL_DEGRADATION"
+     },
+     {
+      "location_id": "WP05"
+     }
+    ]
+   },
+   "min_hits": 2,
+   "note": "SIGNAL_DEGRADATION anomalies at WP05 (AN001, AN010, AN020)"
+  },
+  {
+   "id": "T07",
+   "query": "How does Spot climb stairs and what are the stairway limitations?",
+   "mode": "vector",
+   "kinds": [
+    "manual"
+   ],
+   "k": 3,
+   "expect_any": [
+    "manual:p39-1",
+    "manual:p38-1"
+   ]
+  },
+  {
+   "id": "T08",
+   "query": "What does Spot do when it loses its connection to the controller?",
+   "mode": "vector",
+   "kinds": [
+    "manual"
+   ],
+   "k": 3,
+   "expect_any": [
+    "manual:p32-1",
+    "manual:p19-1"
+   ]
+  },
+  {
+   "id": "T09",
+   "query": "The robot stops and sits down during Autowalk mission replay, how do I fix it?",
+   "mode": "vector",
+   "kinds": [
+    "manual"
+   ],
+   "k": 3,
+   "expect_any": [
+    "manual:p52-1",
+    "manual:p53-1"
+   ]
+  },
+  {
+   "id": "N01",
+   "query": "best recipe for chocolate cake with buttercream frosting",
+   "mode": "vector",
+   "kinds": null,
+   "k": 5,
+   "expect_top_sim_below": 0.45,
+   "note": "negative control: nothing in the corpus is about cake"
+  },
+  {
+   "id": "T01b",
+   "query": "What happens to inspection success when Spot's battery is at or below 25 percent?",
+   "mode": "hybrid",
+   "kinds": null,
+   "k": 5,
+   "expect_any": [
+    "policy:battery_low",
+    "policy:battery_thresholds",
+    "policy:failed_at_critical_battery"
+   ],
+   "stretch": true,
+   "note": "all kinds: policy:battery_low ranks behind flag and manual battery docs (known miss, audit VS-14)"
+  },
+  {
+   "id": "T02",
+   "query": "Which navigation actions failed because the robot lost localization?",
+   "mode": "hybrid",
+   "kinds": [
+    "event",
+    "incident"
+   ],
+   "k": 5,
+   "expect_pred": {
+    "any": [
+     {
+      "meta.failure_type": "LOCALIZATION_FAILURE"
+     },
+     {
+      "anomaly_type": "LOCALIZATION_ISSUE"
+     },
+     {
+      "anomaly_type": "LOCALIZATION_FAILURE"
+     }
+    ]
+   },
+   "min_hits": 3,
+   "stretch": true,
+   "note": "flag incident docs match through metadata.failure_type"
+  },
+  {
+   "id": "T10",
+   "query": "How do I check Spot's battery level and charge the battery?",
+   "mode": "vector",
+   "kinds": [
+    "manual"
+   ],
+   "k": 3,
+   "expect_any": [
+    "manual:p26-1",
+    "manual:p27-1",
+    "manual:p28-1",
+    "manual:p28-2"
+   ],
+   "stretch": true
+  },
+  {
+   "id": "T11",
+   "query": "How do I dock Spot to recharge?",
+   "mode": "vector",
+   "kinds": [
+    "manual"
+   ],
+   "k": 5,
+   "expect_any": [
+    "manual:p26-1",
+    "manual:p27-1",
+    "manual:p28-1",
+    "manual:p28-2"
+   ],
+   "stretch": true
+  },
+  {
+   "id": "T17",
+   "query": "an action failed while the battery was critically low, 15 percent or less",
+   "mode": "hybrid",
+   "kinds": [
+    "policy",
+    "event"
+   ],
+   "k": 3,
+   "expect_any": [
+    "policy:failed_at_critical_battery",
+    "event:act-A0060",
+    "event:act-A0080",
+    "event:act-A0120"
+   ],
+   "stretch": true
+  }
+ ],
+ "graph": [
+  {
+   "id": "G01",
+   "sql": "SELECT node_id FROM match_kg_nodes_text('HX-204', NULL, 3)",
+   "expect_first": "asset:HX-204"
+  },
+  {
+   "id": "G02",
+   "sql": "SELECT node_id FROM match_kg_nodes_text('Turbine Hall', ARRAY['location'], 2)",
+   "expect_set": [
+    "location:WP08",
+    "location:WP09"
+   ]
+  },
+  {
+   "id": "G03",
+   "sql_vec": "SELECT node_id FROM match_kg_nodes(%s::vector, ARRAY['topic','failure_type'], 3)",
+   "query": "robot lost localization",
+   "expect_first": "topic:localization"
+  },
+  {
+   "id": "G04",
+   "sql": "SELECT node_id FROM graph_neighborhood(ARRAY['location:WP05'], 2, NULL, ARRAY['failure_type','topic','manual'], 5)",
+   "expect_contains": [
+    "failure_type:LOCALIZATION_FAILURE"
+   ]
+  },
+  {
+   "id": "G05",
+   "sql": "SELECT node_id FROM graph_neighborhood(ARRAY['action:A0061'], 2, NULL, ARRAY['manual','topic','failure_type'], 10)",
+   "expect_contains": [
+    "failure_type:LOCALIZATION_FAILURE",
+    "topic:localization"
+   ]
+  }
+ ]
+}

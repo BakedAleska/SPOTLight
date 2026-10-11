@@ -120,6 +120,20 @@ async def test_assess_stream_failures_are_service_unavailable_logged_once_and_tr
     assert c.breaker.state == "open"
 
 
+@pytest.mark.parametrize("status,trips", [(422, False), (401, False), (408, True), (429, True)])
+async def test_assess_stream_4xx_is_logged_once_and_trips_only_like_assess(status, trips):
+    """A 422 packet rejection (e.g. a duplicate citation id) is this request's problem: logged, the caller falls
+    back, but the breaker stays closed for the next flag (the same rule as _post / BREAKER_4XX)."""
+    def handler(request):
+        return httpx.Response(status, json={"detail": "conflicting content for duplicate id"})
+    c, sink = client(handler)
+    with pytest.raises(ServiceUnavailable) as exc:
+        await c.assess_stream({}, "r", 1, None, None)
+    assert ("HTTP %d" % status) in exc.value.reason
+    assert len(sink.model_calls) == 1 and not sink.model_calls[0]["ok"]
+    assert c.breaker.state == ("open" if trips else "closed")
+
+
 @pytest.mark.parametrize("status", [404, 405])
 async def test_assess_stream_404_means_old_build_not_down(status):
     calls = []

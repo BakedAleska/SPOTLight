@@ -64,6 +64,7 @@ class PgDatabase:
 class LogSink(Protocol):
     def tool_call(self, row: Dict[str, Any]) -> None: ...
     def model_call(self, row: Dict[str, Any]) -> None: ...
+    async def drain(self, timeout_s: Optional[float] = None) -> None: ...
     async def close(self) -> None: ...
 
 
@@ -72,6 +73,9 @@ class NullLogSink:
         pass
 
     def model_call(self, row: Dict[str, Any]) -> None:
+        pass
+
+    async def drain(self, timeout_s: Optional[float] = None) -> None:
         pass
 
     async def close(self) -> None:
@@ -85,7 +89,8 @@ _MODEL_COLS = ("request_id", "system", "model", "endpoint", "flag_id", "action_i
 
 
 class PgLogSink:
-    """Fire-and-forget INSERTs into app.mcp_tool_calls / app.model_calls on its own connection pool."""
+    """Fire-and-forget INSERTs into app.mcp_tool_calls / app.model_calls on its own connection pool.
+    `drain()` waits for the pending ones (shutdown, tests, and after each request on serverless)."""
 
     def __init__(self, url: str):
         self._url = url
@@ -134,9 +139,18 @@ class PgLogSink:
             if self._warned <= 3 or self._warned % 100 == 0:
                 log.warning("log insert into %s failed (%d so far): %s", table, self._warned, exc)
 
-    async def close(self) -> None:
-        if self._tasks:
+    async def drain(self, timeout_s: Optional[float] = None) -> None:
+        """Wait for pending inserts; with `timeout_s`, at most that long (the rest keep running). On serverless
+        (asgi.py) this runs before each response completes: a frozen instance would hold the inserts or lose them."""
+        if timeout_s is not None:
+            if self._tasks:
+                await asyncio.wait(list(self._tasks), timeout=timeout_s)
+            return
+        while self._tasks:
             await asyncio.gather(*list(self._tasks), return_exceptions=True)
+
+    async def close(self) -> None:
+        await self.drain()
         if self._pool is not None:
             await self._pool.close()
             self._pool = None
