@@ -299,6 +299,7 @@ jobs:
       # backend's golden SSE transcripts (tests/contract/chat_golden/) through the real proxy route, parser and store.
       - run: npm run test:chat
       - run: npm run test:flags
+      - run: npm run test:live
       # Needs network for next/font/google (Fira Sans, Fira Code); no env or secrets.
       - run: npm run build
 
@@ -332,6 +333,8 @@ jobs:
         run: docker build -t spot-system2:ci amd/system2
       - name: Build web (context web)
         run: docker build -t spot-web:ci web
+      - name: Build live-runner (context ., scripts/live_runner.Dockerfile)
+        run: docker build -f scripts/live_runner.Dockerfile -t spot-live-runner:ci .
 
   docker-build:
     name: image ${{ matrix.service }} (build + healthy)

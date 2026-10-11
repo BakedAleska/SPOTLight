@@ -863,3 +863,10 @@ body {
 .spot-floor-arrow { animation: spot-floor-step 1s ease-in-out infinite; filter: drop-shadow(0 1px 2px black); }
 @keyframes spot-floor-step { 50% { transform: translateY(calc(var(--floor-direction) * 8px)); opacity: 0.6; } }
 @media (prefers-reduced-motion: reduce) { .spot-floor-arrow { animation: none; } }
+
+/* Live patrol (/live): a ping ring on the newest stop, and SPOT gliding between stops. */
+.live-ping { animation: live-ping 1.6s ease-out infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes live-ping { 0% { transform: scale(0.6); opacity: 0.9; } 100% { transform: scale(2.6); opacity: 0; } }
+.live-spot { transition: transform 1.6s ease-in-out; }
+.live-card-in { animation: float-in 0.45s ease-out both; }
+@media (prefers-reduced-motion: reduce) { .live-ping { animation: none; } .live-spot { transition: none; } .live-card-in { animation: none; } }

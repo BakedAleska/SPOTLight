@@ -10,6 +10,7 @@ from fastapi import Request
 
 from .config import Settings
 from .db.chat import ChatRepo
+from .db.live import LiveRepo
 from .db.pool import Database
 from .db.queries import Repo
 from .services.calllog import LogSink, request_id_var
@@ -18,6 +19,7 @@ from .services.embed import EmbedClient
 from .services.flags import FlagService
 from .services.http import Breaker
 from .services.ingest import IngestPipeline
+from .services.live import LiveService
 from .services.mcp import MCPClient
 from .services.orchestrator import OrchestratorClient
 from .services.reference import Reference
@@ -45,6 +47,7 @@ class Services:
     flags: FlagService
     chat_repo: Optional[ChatRepo] = None     # AI Assistance chat storage + retrieval (docs/chat-contract.md §1)
     chat: Optional[ChatService] = None       # chat turns: retrieval -> one Gemini call -> SSE
+    live: Optional[LiveService] = None       # live simulation runs (docs/backend-services-contract.md)
 
     async def open(self) -> None:
         await self.db.open()
@@ -100,8 +103,9 @@ def build_services(settings: Settings, *, repo: Optional[Repo] = None,
                         orchestrator=orchestrator)
     chat_repo = ChatRepo(db)
     chat = ChatService(settings, chat_repo, embed, http, sink)
+    live = LiveService(repo, LiveRepo(db), ref, pipeline, sink, settings.embed_model, settings.embed_dim)
     return Services(settings, db, logs_db, repo, sink, http, ref, system1, embed, mcp, system2, orchestrator,
-                    pipeline, replay, flags, chat_repo=chat_repo, chat=chat)
+                    pipeline, replay, flags, chat_repo=chat_repo, chat=chat, live=live)
 
 
 def get_services(request: Request) -> Services:

@@ -11,7 +11,8 @@
     "start": "next start",
     "lint": "eslint",
     "test:flags": "tsx --test tests/flag-routes.test.ts",
-    "test:chat": "tsx --test tests/chat-*.test.ts"
+    "test:chat": "tsx --test tests/chat-*.test.ts",
+    "test:live": "tsx --test tests/live-routes.test.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.2.0",

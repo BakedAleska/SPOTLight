@@ -74,14 +74,22 @@ Other profiles: `local` runs everything in Docker on CPU (for testing: Laya take
    - `GET /api/v1/search` runs hybrid pgvector + full-text search over the kit, the Spot manual, incidents, policy and operator notes.
 6. **Act.** `POST /api/v1/flags/{id}/ack` handles acknowledge, resolve, escalate and note. Each note is embedded as a RAG document, so later explanations can cite it.
 7. **Chat (AI Assistance, `docs/chat-contract.md`).** `POST /api/v1/chat/conversations/{id}/messages` streams SSE. The backend retrieves first (hybrid or full-text `documents`, knowledge-graph entry nodes and their 2-hop neighbourhood, SQL fleet stats and digests of the missions, assets, waypoints and flags named in the question), then makes **one** Gemini call (free tier: 5 requests/min/model). Fast or Thinking mode and the model are the operator's choice. After the stream, a deterministic check verifies every `[id]` citation and every number against the sources and stores a grounding badge. Chats live in `chat_conversations` / `chat_messages` and are never retrieved as evidence.
+8. **Live patrol (`/live`, added 2026-10-11).** An operator starts one of five 8-stop routes; the live runner
+   (`scripts/live_runner.py`, on the presenter laptop, the only machine that reaches the AMD box) walks it. Per stop
+   the backend logs the kit row of that action as a fresh live event, the runner calls Laya, and the backend runs the
+   rules beside it (`parallel`) for a red or green ping; then the runner sends the stop's simulated photo to vision
+   and System 2 (Qwen, with the image) while SPOT walks on, and the backend stores the explanation (or a labelled
+   template), its embedding and the live knowledge-graph rows (`props.source = 'live'`). Tables `live_runs`,
+   `live_captures` (`013`). Runbook: `docs/LIVE-RUNBOOK.md`.
 
-## 5. Data (Postgres; schema in `db/migrations/001–012`)
+## 5. Data (Postgres; schema in `db/migrations/001–013`)
 - **`public`:**
   - Kit tables: `missions`, `actions`, `readings`, `anomalies`, `locations`, `assets`.
   - Pipeline tables: `events`, `flags`, `assessments`, `acknowledgements`, `system1_predictions`.
   - RAG: `documents`, with an embedding column and the `match_documents` / `match_documents_hybrid` functions.
   - Graph RAG: `kg_nodes` / `kg_edges` with `match_kg_nodes`, `match_kg_nodes_text` and `graph_neighborhood` (`009`).
   - Chat: `chat_conversations`, `chat_messages` (`011`; `spot_app` only, the MCP reader has no access).
+  - Live patrol: `live_runs`, `live_captures` (`013`).
 - **`raw`:** the SPOT data verbatim and append-only (`spot_event_log`, `kit_files`, `kit_rows`, `inspection_media`).
 - **`app`:** logs (`model_calls`, `mcp_tool_calls`, `request_log`, `job_runs`). `GET /api/v1/ops/model-calls` turns them into p50/p95 latency and tokens/s per model, which are the AMD numbers.
 - **Roles** (`007_roles.sql`): the backend writes as `spot_app`. The MCP server and System 1's logging use `spot_mcp_reader`, which can read `public` and append to `app`.

@@ -47,10 +47,13 @@ class IngestPipeline:
         self.stats = {"ingested": 0, "triaged": 0, "escalated": 0, "laya_unavailable": 0}
 
     async def ingest(self, raw: Dict[str, Any], *, source: str = "api", request_id: str,
-                     mode: Optional[str] = None) -> Dict[str, Any]:
+                     mode: Optional[str] = None, laya: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """`laya` (live runs only, docs/backend-services-contract.md "Live simulation"): System 1's result computed
+        by the caller instead of calling SYSTEM1_URL: {"status": "ok", "answers", "model", ...} is used as Laya's
+        answer, {"status": "unavailable" | "skipped", "error"} means rules-only. None = call System 1 as usual."""
         token = request_id_var.set(request_id)
         try:
-            return await self._ingest(raw, source, request_id, mode or self.default_mode)
+            return await self._ingest(raw, source, request_id, mode or self.default_mode, laya)
         finally:
             request_id_var.reset(token)
 
@@ -69,7 +72,8 @@ class IngestPipeline:
             log.warning("ingest step %s failed: %s", name, exc)
         return _FAILED
 
-    async def _ingest(self, raw: Dict[str, Any], source: str, request_id: str, mode: str) -> Dict[str, Any]:
+    async def _ingest(self, raw: Dict[str, Any], source: str, request_id: str, mode: str,
+                      laya_given: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         t0 = time.perf_counter()
         warnings: List[str] = []
         etype = raw.get("event_type")
@@ -109,8 +113,11 @@ class IngestPipeline:
         model: Optional[str] = None
         s1: Dict[str, Any] = {}
         try:
-            resp = await self.system1.predict([{"id": ev["event_id"], "kind": kind, "event": ev}],
-                                              request_id=request_id, action_id=action_id, skip_if_busy=True)
+            if laya_given is not None:
+                resp = _given_system1(laya_given, ev["event_id"])
+            else:
+                resp = await self.system1.predict([{"id": ev["event_id"], "kind": kind, "event": ev}],
+                                                  request_id=request_id, action_id=action_id, skip_if_busy=True)
             items = resp.get("items") or []
             item = next((i for i in items if i.get("id") == ev["event_id"]), items[0] if items else None)
             if item is None:
@@ -118,6 +125,8 @@ class IngestPipeline:
             answers, model = item.get("answers") or {}, resp.get("model") or "unknown"
             s1 = {"status": "ok", "model": model, "fine_tuned": resp.get("fine_tuned"), "device": resp.get("device"),
                   "latency_ms": resp.get("latency_ms"), "answers": answers}
+            if laya_given is not None:
+                s1["via"] = "live_runner"
         except ServiceUnavailable as exc:
             laya_error = exc.reason
             s1 = {"status": "laya_unavailable", "error": exc.reason}
@@ -192,6 +201,16 @@ class _Failed:
 
 
 _FAILED = _Failed()
+
+
+def _given_system1(given: Dict[str, Any], event_id: str) -> Dict[str, Any]:
+    """A caller-supplied System 1 result in /v1/predict's response shape; raises ServiceUnavailable for a
+    rules-only result (status unavailable/skipped, or no answers)."""
+    if given.get("status") != "ok" or not isinstance(given.get("answers"), dict) or not given["answers"]:
+        raise ServiceUnavailable("system1", str(given.get("error") or given.get("status") or "no answers")[:300])
+    return {"items": [{"id": event_id, "answers": given["answers"]}], "model": given.get("model"),
+            "fine_tuned": given.get("fine_tuned"), "device": given.get("device"),
+            "latency_ms": given.get("latency_ms")}
 
 
 def _ts(raw: Dict[str, Any]):
