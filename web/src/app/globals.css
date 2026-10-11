@@ -804,19 +804,22 @@ body {
   filter: drop-shadow(0 1px 2px black);
   transform-box: view-box;
   transform-origin: 0 0;
-  animation: spot-dots-orbit 1.8s linear infinite;
+  animation: spot-dots-orbit 2.4s linear infinite;
 }
 .spot-merging-dot {
   transform-box: view-box;
   transform-origin: 0 0;
   transform: rotate(var(--dot-rest));
-  animation: spot-dots-merge 1.8s ease-in-out infinite both;
+  animation: spot-dots-merge 2.4s ease-in-out infinite both;
 }
 @keyframes spot-dots-merge {
-  0%, 100% { transform: rotate(var(--dot-rest)); }
-  50% { transform: rotate(0deg); }
+  0%, 80%, 100% { transform: rotate(0deg); }
+  30%, 50% { transform: rotate(var(--dot-rest)); }
 }
-@keyframes spot-dots-orbit { to { transform: rotate(360deg); } }
+@keyframes spot-dots-orbit {
+  0% { transform: rotate(0deg); }
+  80%, 100% { transform: rotate(360deg); }
+}
 @media (prefers-reduced-motion: reduce) { .spot-working-spinner, .spot-merging-dot { animation: none; } }
 
 .spot-floor-arrow { animation: spot-floor-step 1s ease-in-out infinite; filter: drop-shadow(0 1px 2px black); }
