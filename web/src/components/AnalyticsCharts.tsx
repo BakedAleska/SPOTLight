@@ -20,6 +20,7 @@ import {
 } from "recharts";
 import { Children, cloneElement, isValidElement, useRef, useState } from "react";
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Panel } from "./Panel";
 import { valueBar } from "./ValueBar";
@@ -287,8 +288,8 @@ export function AnalyticsCharts({ data }: { data: FleetAnalytics }) {
               <CartesianGrid {...GRID} />
               <XAxis dataKey="id" tick={AXIS} tickLine={false} axisLine={{ stroke: "var(--c-line)" }} interval="preserveStartEnd" minTickGap={8} />
               <YAxis domain={[0, 100]} unit="%" tick={AXIS} tickLine={false} axisLine={false} width={44} />
-              <Tooltip {...TOOLTIP} formatter={(value, _name, item) => [Array.isArray(value) ? `${value[1]}% → ${value[0]}%` : String(value), `Battery (${item.payload.version})`]} />
-              <Bar dataKey="battery" name="Battery start → end" radius={4} animationDuration={1000} animationEasing="ease-in-out">
+              <Tooltip {...TOOLTIP} formatter={(value, _name, item) => [Array.isArray(value) ? <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>{value[1]}% <ArrowRight size={12} aria-label="to" /> {value[0]}%</span> : String(value), `Battery (${item.payload.version})`]} />
+              <Bar dataKey="battery" name="Battery, start to end" radius={4} animationDuration={1000} animationEasing="ease-in-out">
                 {data.missions.map((m) => <Cell key={m.id} fill={VERSION_FILL[m.version] ?? "var(--c-series-3)"} />)}
               </Bar>
             </BarChart>

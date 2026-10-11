@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, Route, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, Route, Sparkles } from "lucide-react";
 import { Panel } from "@/components/Panel";
 import { breakdown, parseQuery, type ActionRow, type AnomalyRow, type MissionRow, type ReadingRow } from "@/lib/breakdown";
 import { breakdownHref } from "@/lib/breakdown-link";
@@ -113,7 +113,7 @@ function MissionsTable({ rows }: { rows: MissionRow[] }) {
           <td className={`${TD} nums font-mono text-ink`}>{m.succeeded + m.failed}</td>
           <td className={`${TD} nums font-mono ${m.failed ? "text-bad" : "text-muted"}`}>{m.failed}</td>
           <td className={`${TD} nums font-mono text-muted`}>{m.anomalies}</td>
-          <td className={`${TD} nums font-mono ${m.battery[1] <= 25 ? "text-bad" : "text-muted"}`}>{m.battery[0]}% → {m.battery[1]}%</td>
+          <td className={`${TD} nums font-mono ${m.battery[1] <= 25 ? "text-bad" : "text-muted"}`}><span className="inline-flex items-center gap-1">{m.battery[0]}% <ArrowRight size={12} aria-label="to" /> {m.battery[1]}%</span></td>
         </tr>
       ))}</tbody>
     </table>

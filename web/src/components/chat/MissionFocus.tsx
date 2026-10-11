@@ -7,7 +7,7 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
-  ChevronDown, CircleCheck, CircleDot, CircleX, Crosshair, EyeOff, Flag, Info, MessagesSquare, Route, Search, TriangleAlert, X,
+  ArrowRight, ChevronDown, CircleCheck, CircleDot, CircleX, Crosshair, EyeOff, Flag, Info, MessagesSquare, Route, Search, TriangleAlert, X,
 } from "lucide-react";
 import { filterMissions, hiddenFailureText, missionLabel, missionTone, plural, replayHref, stepIndex } from "@/lib/chat/mission";
 import type { MissionRef, MissionSummary } from "@/lib/chat/types";
@@ -66,10 +66,12 @@ export function MissionContextCard({ mission, onClear }: { mission: MissionSumma
           <h2 className="truncate text-base font-semibold text-ink">
             <span className="font-mono">{mission.mission_id}</span> · {mission.mission_name}
           </h2>
-          <p className="mt-0.5 text-xs text-muted">
-            {[mission.scenario, mission.configuration_version, mission.duration_min != null ? `${mission.duration_min} min` : null,
-              mission.start_battery_pct != null && mission.end_battery_pct != null ? `battery ${mission.start_battery_pct}% → ${mission.end_battery_pct}%` : null]
+          <p className="mt-0.5 flex flex-wrap items-center gap-x-1 text-xs text-muted">
+            {[mission.scenario, mission.configuration_version, mission.duration_min != null ? `${mission.duration_min} min` : null]
               .filter(Boolean).join(" · ")}
+            {mission.start_battery_pct != null && mission.end_battery_pct != null && <>
+              {" · "}battery {mission.start_battery_pct}% <ArrowRight size={11} aria-label="to" /> {mission.end_battery_pct}%
+            </>}
           </p>
         </div>
         <Link

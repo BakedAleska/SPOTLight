@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  Activity, BatteryMedium, Brain, Camera, CheckCircle2, CircleDashed, Cpu, Database, Eye, History, Network, Play,
+  Activity, ArrowLeft, BatteryMedium, Brain, Camera, CheckCircle2, CircleDashed, Cpu, Database, Eye, History, Network, Play,
   Radio, ShieldAlert, ShieldCheck, Square, TriangleAlert,
 } from "lucide-react";
 import { Panel } from "./Panel";
@@ -363,7 +363,7 @@ function CaptureCard({ c, stop }: { c: LiveCapture; stop?: LiveStop }) {
           <p className="text-ink">{human(c.action_type)} · <span className={c.status === "FAILED" ? "font-semibold text-bad" : ""}>{c.status}{c.failure_type ? ` (${human(c.failure_type)})` : ""}</span> · battery {c.battery_pct}%</p>
           {c.reading && <p className="text-muted">Reading {human(c.reading.measurement_type)} <strong className="text-ink">{c.reading.value} {c.reading.unit}</strong> · quality {c.reading.quality}</p>}
           {c.anomaly && <p className="text-bad">Anomaly {human(c.anomaly.anomaly_type)} · {c.anomaly.severity}</p>}
-          <p className="font-mono text-[11px] text-faint">{c.action_id} ← {c.source_action_id}</p>
+          <p className="flex items-center gap-1 font-mono text-[11px] text-faint">{c.action_id} <ArrowLeft size={11} aria-label="from" /> {c.source_action_id}</p>
         </Section>
         <Section icon={<Cpu size={14} />} title="Confidence (System 1)">
           {!laya ? <p className="text-muted">Waiting…</p> : laya.status === "ok" ? <>

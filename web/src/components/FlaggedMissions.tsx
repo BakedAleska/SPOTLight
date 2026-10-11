@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { getKit } from "@/lib/kit";
 import type { Severity } from "@/lib/types";
 import { replayHref } from "@/lib/chat/mission";
@@ -124,9 +125,9 @@ export function FlaggedMissions() {
               <Link
                 href={replayHref(m.mission_id)}
                 aria-label={`Investigate ${m.mission_id} · ${m.mission_name} in replay`}
-                className="text-sm text-accent-ink after:absolute after:inset-0 after:content-['']"
+                className="inline-flex items-center gap-1 text-sm text-accent-ink after:absolute after:inset-0 after:content-['']"
               >
-                Investigate in replay →
+                Investigate in replay <ArrowRight size={14} aria-hidden="true" />
               </Link>
               <AskAiLink missionId={m.mission_id} />
             </div>

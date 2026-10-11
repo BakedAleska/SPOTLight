@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowDown, ArrowRight, ArrowUp } from "lucide-react";
 
 export const metadata = { title: "Help · SPOTlight" };
 
@@ -49,7 +50,7 @@ function Kbd({ children }: { children: React.ReactNode }) {
   return <kbd className="rounded border border-line-strong px-1.5 py-0.5 font-mono text-[11px] text-ink">{children}</kbd>;
 }
 
-function Term({ name, children }: { name: string; children: React.ReactNode }) {
+function Term({ name, children }: { name: React.ReactNode; children: React.ReactNode }) {
   return (
     <div className="grid gap-1 border-b border-line py-2.5 last:border-0 sm:grid-cols-[10rem_1fr] sm:gap-4">
       <dt className="font-medium text-ink">{name}</dt>
@@ -195,8 +196,8 @@ export default function HelpPage() {
             <p>The search box in the top bar finds missions, assets and flags.</p>
             <dl>
               <Term name={"⌘K / Ctrl K"}>Jump to search from anywhere.</Term>
-              <Term name="Tab or →">Accept the suggested completion.</Term>
-              <Term name="↑ ↓">Move through the results.</Term>
+              <Term name={<span className="inline-flex items-center gap-1">Tab or <ArrowRight size={14} aria-label="Right arrow" /></span>}>Accept the suggested completion.</Term>
+              <Term name={<span className="inline-flex items-center gap-1"><ArrowUp size={14} aria-label="Up arrow" /><ArrowDown size={14} aria-label="Down arrow" /></span>}>Move through the results.</Term>
               <Term name="Enter">Open the highlighted result, or see every match on the search page.</Term>
               <Term name="Esc">Close search, or close the open flag in the queue.</Term>
             </dl>

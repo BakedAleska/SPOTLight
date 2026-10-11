@@ -78,7 +78,7 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
   const current = frame?.moving ? frame.from : frame?.to;
   const changingFloor = !!frame?.moving && frame.from?.floor !== frame.to?.floor;
   const floorUp = (frame?.to?.floor ?? 0) > (frame?.from?.floor ?? 0);
-  const floorLabel = `Floor ${frame?.from?.floor} → Floor ${frame?.to?.floor}`;
+  const floorLabel = `Floor ${frame?.from?.floor} to Floor ${frame?.to?.floor}`;
   const marker = frame ? { x: frame.x, y: frame.y } : current;
   const active = playing && !finished;
   // On the stairs SPOT fades out at the floor-1 stair, then fades back in on the floor-2 landing (or the reverse).
@@ -143,7 +143,7 @@ function MissionPath({ mission, points }: { mission: PathMission; points: PathPo
         <Panel title="SPOT activity" aside={active ? "IN PROGRESS" : finished ? "COMPLETE" : "PAUSED"}>
           <div className="flex items-center gap-3"><div className={`grid size-12 shrink-0 place-items-center rounded-full border border-line bg-surface-2 text-accent-ink ${active && !frame?.moving ? "spot-activity-icon" : ""}`}>
             {changingFloor ? floorUp ? <ArrowUp size={24} /> : <ArrowDown size={24} /> : frame?.moving ? <ArrowRight size={24} /> : activity.includes("Listening") ? <AudioLines size={24} /> : finished ? <CheckCircle2 size={24} /> : <ScanLine size={24} />}
-          </div><div><p className="text-sm font-semibold text-ink">{activity}</p><p className="mt-1 text-xs text-muted">{frame?.moving ? `${frame.from?.id} → ${frame.to?.id}` : last?.assetName ?? current?.name ?? "Preparing mission"}</p></div></div>
+          </div><div><p className="text-sm font-semibold text-ink">{changingFloor ? <span className="inline-flex flex-wrap items-center gap-1">{floorUp ? "Going up" : "Going down"} · Floor {frame?.from?.floor} <ArrowRight size={14} aria-label="to" /> Floor {frame?.to?.floor}</span> : activity}</p><p className="mt-1 text-xs text-muted">{frame?.moving ? <span className="inline-flex items-center gap-1">{frame.from?.id} <ArrowRight size={12} aria-label="to" /> {frame.to?.id}</span> : last?.assetName ?? current?.name ?? "Preparing mission"}</p></div></div>
           <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-surface-2"><div className="h-full bg-accent-ink" style={{ width: `${(frame?.progress ?? 0) * 100}%` }} /></div>
         </Panel>
         <Panel title="Selected waypoint"><p className="text-lg font-semibold text-ink">{selected?.id ?? "No position yet"}</p><p className="mt-1 text-sm text-muted">{selected?.name ?? "Waiting for a located action."}</p>{selected && <p className="mt-3 text-xs text-muted">Floor {selected.floor} · {errors.filter(e => e.locationId === selected.id).length} observed errors</p>}</Panel>

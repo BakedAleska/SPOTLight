@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { getKit } from "@/lib/kit";
 import { replayHref } from "@/lib/chat/mission";
 import { AskAiLink } from "./AskAiLink";
@@ -22,9 +23,9 @@ export function MissionList({ query = "" }: { query?: string }) {
               <Link
                 href={replayHref(m.mission_id)}
                 aria-label={`Open replay of ${m.mission_id} · ${m.mission_name}`}
-                className="text-sm text-accent-ink after:absolute after:inset-0 after:rounded after:content-['']"
+                className="inline-flex items-center gap-1 text-sm text-accent-ink after:absolute after:inset-0 after:rounded after:content-['']"
               >
-                Open replay →
+                Open replay <ArrowRight size={14} aria-hidden="true" />
               </Link>
               <AskAiLink missionId={m.mission_id} />
             </div>
