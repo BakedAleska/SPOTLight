@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="docs/logo.png" alt="SPOTLight logo" width="200">
-</p>
-
 # SPOTLight
 
 **An operator console that shows what Boston Dynamics SPOT found on an inspection, explains it in plain language, and backs every claim with evidence.**
